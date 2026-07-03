@@ -1,0 +1,50 @@
+body {
+    background: #f8f9fa;
+}
+
+/* Card client */
+.client-card {
+    transition: .2s;
+    border-radius: 12px;
+}
+
+.client-card:hover {
+    box-shadow: 0 5px 20px rgba(0,0,0,.15);
+    transform: translateY(-2px);
+}
+
+/* Photo */
+.photo {
+    width: 160px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Texte */
+.nom {
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.info {
+    color: #6c757d;
+}
+
+/* FORMULAIRE */
+.form-control {
+    width: 100%; /* IMPORTANT Bootstrap */
+}
+
+/* Champs spécifiques */
+#id_date_naissance {
+    width: 150px;
+}
+
+#id_telephone {
+    width: 200px;
+}
+
+#id_photo {
+    width: 100%;
+}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Liste des avances
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <h2 class="text-center mb-4">
+        Liste des avances des clients
+    </h2>
+        <div class="card-body">
+            <form method="get">
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <input type="text" name="nom" value="{{ nom }}" placeholder="Nom ou prénom du client">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <input type="date" name="date" value="{{ date }}" class="form-control">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end mb-3">
+                        <button type="submit" class="btn btn-primary me-2">Rechercher</button>
+                        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">Réinitialiser</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    <div class="mb-2">
+        <strong>
+            Nombre d'avances :
+            {{ avances|length }}
+        </strong>
+    </div>
+    <table class="table table-bordered table-striped table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>N°</th>
+                <th>Client</th>
+                <th>Motif</th>
+                {% comment %} <th class="text-end">Montant</th> {% endcomment %}
+                <th>Type</th>
+                <th>Date</th>
+                <th width="220">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for avance in avances %}
+            <tr>
+                <td>{{ avance.id }}</td>
+                <td><strong>{{ avance.id_client.nom|upper }}</strong>{{ avance.id_client.prenom|title }}</td>
+                <td>{{ avance.motifAv|title }}</td>
+                {% comment %} <td class="text-end">
+                    {{ avance.montantAv|intcomma }} Ar
+                </td> {% endcomment %}
+
+                <td>{{ avance.get_typeAv_display }}</td>
+                <td>{{ avance.dateAv|date:"d/m/Y" }}</td>
+                <td>
+                    <a href="{% url 'avances:avance_detail' avance.id %}"class="btn btn-info btn-sm">Voir</a>
+                    <a href="{% url 'avances:avance_edit' avance.id %}"class="btn btn-warning btn-sm">Modifier</a>
+                    <a href="{% url 'avances:avance_delete' avance.id %}"class="btn btn-danger btn-sm">Supprimer</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted">Aucune avance trouvée</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

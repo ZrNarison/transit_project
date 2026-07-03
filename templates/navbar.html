@@ -1,0 +1,128 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <a class="navbar-brand fw-bold" href="{% url 'clients:client_list' %}">🚚 Transit ERP</a>
+    <div class="container">        
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Personne</a>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Client</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'clients:client_add' %}"><i class="bi bi-person-plus"></i>Ajouter</a></li>
+                                <li><a class="dropdown-item" href="{% url 'clients:client_list' %}">Liste</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Personnel</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Ajoute</a></li>
+                                <li><a class="dropdown-item" href="#">Liste</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Monétaire</a>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Avance</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'avances:avance_add' %}">Ajouter</a></li>
+                                <li><a class="dropdown-item" href="{% url 'avances:avance_list' %}">Liste</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Dépense</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Ajouter</a></li>
+                                <li><a class="dropdown-item" href="#">Liste</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Dépot</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Ajouter</a></li>
+                                <li><a class="dropdown-item" href="#">Liste</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Salaire</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Ajouter</a></li>
+                                <li><a class="dropdown-item" href="#">Liste</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Matériels</a>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Entrant</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Ajouter</a></li>
+                                <li><a class="dropdown-item" href="#">Liste</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Sortie</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Ajouter</a></li>
+                                <li><a class="dropdown-item" href="#">Liste</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Transport</a>
+                    <ul class="dropdown-menu">
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Entrant</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Ajouter</a></li>
+                                <li><a class="dropdown-item" href="#">Liste</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Sortie</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Ajouter</a></li>
+                                <li><a class="dropdown-item" href="#">Liste</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<style>
+    .dropdown-submenu{
+    position: relative;
+}
+
+.dropdown-submenu>.dropdown-menu{
+    top:0;
+    left:100%;
+    margin-top:-1px;
+    display:none;
+}
+
+.dropdown-submenu:hover>.dropdown-menu{
+    display:block;
+}
+
+.dropdown-submenu>a::after{
+    content:"▶";
+    float:right;
+    font-size:10px;
+    margin-top:5px;
+}
+</style>

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Liste des clients
+{% endblock %}
+{% block content %}
+<h2 class="text-center mb-2 fa-bold">Liste des clients</h2>
+<div class="row">
+    {% for client in clients %}
+    <div class="col-md-2 mb-3">
+        <div class="card">
+            {% if client.photo %}
+                <img src="{{ client.photo.url }}"
+                    class="card-img-top"
+                    alt="{{ client.nom }}"
+                    style="height:90px;width:100%;object-fit:cover;">
+            {% else %}
+                <img src="{% static 'images/default.png' %}"
+                    class="card-img-top"
+                    alt="Photo par défaut"
+                    style="height:100px;width:100%;object-fit:cover;">
+            {% endif %}
+            <div class="card-body">
+                {% comment %} <h5><strong>{{ client.nom|upper }}</strong> {{ client.prenom|title }}</h5> {% endcomment %}
+                <p class="mt-0 mb-0">{{ client.telephone }}</p>
+            </div>
+            <a href="{% url 'clients:client_detail' client.id %}" class="btn btn-info btn-sm">Voir</a> 
+            <a href="{% url 'clients:client_edit' client.id %}" class="btn btn-warning btn-sm">Modifier</a> 
+            <a href="{% url 'clients:client_delete' client.id %}" class="btn btn-danger btn-sm">Supprimer</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
