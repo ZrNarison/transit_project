@@ -1,12 +1,13 @@
 from django.db import models
 from clients.models import Client
 
+
 class Avance(models.Model):
 
     TYPE_AVANCE = [
-        ('espece', 'Espèce'),
-        ('cheque', 'Chèque'),
-        ('mobile_money', 'Mobile Money'),
+        ('ESPECE', 'Espèce'),
+        ('CHEQUE', 'Chèque'),
+        ('MOBILE_MONEY', 'Mobile Money'),
     ]
 
     id_client = models.ForeignKey(Client, on_delete=models.CASCADE)
@@ -15,7 +16,8 @@ class Avance(models.Model):
 
     typeAv = models.CharField(
         max_length=20,
-        choices=TYPE_AVANCE
+        choices=TYPE_AVANCE,
+        default='ESPECE'
     )
 
     dateAv = models.DateTimeField(auto_now_add=True)

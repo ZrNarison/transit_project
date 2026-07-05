@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Liste Produit Entrant
+{% endblock %}
+
+{% block content %}
+
+<h2 class="text-center mb-3 fw-bold">
+    🚚 Liste des Transporteur de produits Entrants
+</h2>
+
+<div class="row">
+
+    {% for item in transentrants %}
+
+    <div class="col-md-3 mb-3">
+
+        <div class="card shadow-sm">
+
+            {% if item.photo %}
+                <img src="{{ item.photo.url }}" class="card-img-top" alt="Produit entrant"style="height:120px; object-fit:cover;">
+            {% else %}
+                <img src="{% static 'images/default.png' %}" class="card-img-top" alt="Image par défaut" style="height:120px; object-fit:cover;">
+            {% endif %}
+
+            <div class="card-body">
+
+                <span class="badge bg-primary">
+                    {{ item.Chauf_Ent|upper }}
+                </span>
+
+                <p class="mb-1 mt-2">
+                    🚛 Véhicule : {{ item.NumVeh_Ent }}
+                </p>
+
+                <p class="mb-1">
+                    📄 Permis : {{ item.NumPermis_Ent }}
+                </p>
+
+                <p class="mb-1">
+                    📞 {{ item.telephone }}
+                </p>
+
+            </div>
+
+            <div class="d-flex justify-content-between p-2">
+
+                <a href="{% url 'transentrant:t_transentrant_detail' item.id %}"
+                   class="btn btn-info btn-sm">
+                    👁
+                </a>
+
+                <a href="{% url 'transentrant:t_transentrant_edit' item.id %}"
+                   class="btn btn-warning btn-sm">
+                    ✏
+                </a>
+
+                <a href="{% url 'transentrant:t_transentrant_delete' item.id %}"
+                   class="btn btn-danger btn-sm">
+                    🗑
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% empty %}
+        <p class="text-center text-muted">
+            Aucun produit entrant trouvé
+        </p>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

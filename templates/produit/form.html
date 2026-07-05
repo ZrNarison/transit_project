@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}
+Formulaire Achat Produit
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-3 text-center text-uppercase">
+        {% if form.instance.id %}
+            <span class="text-info">Modifier un produit</span>
+        {% else %}
+            <span class="text-success">Ajouter un produit</span>
+        {% endif %}
+    </h3>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            {{ form.errors }}
+        </div>
+        {% endif %}
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="mb-2">
+                    <label>Client</label>
+                    {{ form.id_client }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Nom du produit</label>
+                    {{ form.Nom_Prod }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Source</label>
+                    {{ form.Source_Prod }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Type</label>
+                    {{ form.Type_Pro }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Montant (Ar)</label>
+                    {{ form.Montant_Pro }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Quantité</label>
+                    {{ form.Qte_Pro }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Pourcentage (%)</label>
+                    {{ form.Pourcentage_Pro }}
+                </div>
+
+            </div>
+
+            <div class="col-md-4 text-center">
+
+                <div class="mb-3">
+                    <label>Photo du produit</label><br>
+                    {{ form.photo }}
+                </div>
+
+                {% if form.instance.photo %}
+                    <img src="{{ form.instance.photo.url }}"
+                         class="img-thumbnail mt-2"
+                         style="width:220px;height:220px;object-fit:cover;">
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <button type="submit" class="btn btn-success">
+            Enregistrer
+        </button>
+
+        <a href="{% url 'produit:p_produit_liste' %}"
+           class="btn btn-secondary">
+            Retour
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

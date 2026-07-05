@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}
+Informations du Personnel
+{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">
+    Informations du client
+</h3>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <p>
+                    <strong>Nom :</strong> 
+                    {{ personnel.nom|upper }} {{ personnel.prenom|title }}
+                </p>
+                <p>
+                    <strong>Adresse :</strong>
+                    {{ personnel.fonction|upper }}
+                </p>
+                <p>
+                    <strong>Adresse :</strong>
+                    {{ personnel.adresse|upper }}
+                </p>
+                <p>
+                    <strong>Adresse :</strong>
+                    {{ personnel.adresse|upper }}
+                </p>
+                <p>
+                    <strong>Class :</strong>
+                    {{ personnel.categorie }}
+                </p>
+                <p>
+                    <strong>Téléphone :</strong>
+                    {{ personnel.telephone }}
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                {% if personnel.photo %}
+                    <div class="text-center">
+                        <img src="{{ personnel.photo.url }}"
+                            class="img-thumbnail shadow rounded-circle"
+                            style="width: 220px; height: 220px; object-fit: cover;">
+                    </div>
+                {% else %}
+                    <div class="alert alert-secondary text-center">
+                        Aucune photo
+                    </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card-footer">
+
+        <a href="{% url 'personnel:personnel_edit' personnel.id %}" class="btn btn-warning">
+            Modifier
+        </a>
+
+        <a href="{% url 'personnel:personnel_delete' personnel.id %}" class="btn btn-danger">
+            Supprimer
+        </a>
+
+        <a href="{% url 'personnel:personnel_list' %}" class="btn btn-secondary">
+            Retour
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

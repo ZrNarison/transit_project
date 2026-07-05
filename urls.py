@@ -8,6 +8,10 @@ urlpatterns = [
 
     path('clients/', include('clients.urls')),
     path('avances/', include('avances.urls')),
+    path('transentrant/', include('transentrant.urls')),
+    path('produit/', include('produit.urls')),
+    path('categorie/', include('categorie.urls')),
+    path('users/', include('users.urls')),
 ]
 
 if settings.DEBUG:

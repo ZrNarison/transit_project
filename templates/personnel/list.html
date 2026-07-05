@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Liste des personnels
+{% endblock %}
+
+{% block content %}
+
+<h2 class="text-center mb-2 fw-bold">
+    Liste des personnels
+</h2>
+
+<div class="row">
+
+    {% for personnel in personnels %}
+
+    <div class="col-md-2 mb-3">
+
+        <div class="card">
+
+            {% if personnel.photo %}
+                <img src="{{ personnel.photo.url }}"
+                     class="card-img-top"
+                     alt="{{ personnel.nom }}"
+                     style="height:90px;width:100%;object-fit:cover;">
+            {% else %}
+                <img src="{% static 'images/default.png' %}"
+                     class="card-img-top"
+                     alt="Photo par défaut"
+                     style="height:100px;width:100%;object-fit:cover;">
+            {% endif %}
+
+            <div class="card-body">
+                <span class="badge bg-primary">
+                    {{ personnel.get_categorie_display|title }}
+                </span>
+                <p class="mt-0 mb-0">
+                    {{ personnel.fonction|title }} 
+                </p>
+
+                <p class="mt-0 mb-0">
+                    📞 {{ personnel.telephone }}
+                </p>
+
+                
+
+            </div>
+
+            <div class="d-flex justify-content-between p-2">
+
+                <a href="{% url 'personnel:personnel_detail' personnel.id %}"
+                   class="btn btn-info btn-sm">
+                    👁
+                </a>
+
+                <a href="{% url 'personnel:personnel_edit' personnel.id %}"
+                   class="btn btn-warning btn-sm">
+                    ✏
+                </a>
+
+                <a href="{% url 'personnel:personnel_delete' personnel.id %}"
+                   class="btn btn-danger btn-sm">
+                    🗑
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+
+    {% empty %}
+        <p class="text-center text-muted">Aucun personnel trouvé</p>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

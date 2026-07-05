@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}
+Formulaire Transport Produit Entrant
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-3 text-center text-uppercase">
+        {% if form.instance.id %}
+            <span class="text-info">Modifier transport entrant</span>
+        {% else %}
+            <span class="text-success">Ajouter transport entrant</span>
+        {% endif %}
+    </h3>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="mb-2">
+                    <label>Client</label>
+                    {{ form.id_client }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Chauffeur</label>
+                    {{ form.Chauf_Ent }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Numéro Véhicule</label>
+                    {{ form.NumVeh_Ent }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Numéro Permis</label>
+                    {{ form.NumPermis_Ent }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Adresse</label>
+                    {{ form.adresse }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Téléphone</label>
+                    {{ form.telephone }}
+                </div>
+
+            </div>
+
+            <div class="col-md-4 text-center">
+
+                <div class="mb-3">
+                    <label>Photo</label><br>
+                    {{ form.photo }}
+                </div>
+
+                {% if form.instance.photo %}
+                    <img src="{{ form.instance.photo.url }}"
+                         class="img-thumbnail mt-2"
+                         width="200">
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <button type="submit" class="btn btn-success">Enregistrer</button>
+        <a href="{% url 'transentrant:t_transentrant_liste' %}" class="btn btn-secondary">Retour</a>
+
+    </form>
+
+</div>
+{% endblock %}

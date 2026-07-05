@@ -1,54 +1,46 @@
 from django.shortcuts import render, get_object_or_404, redirect
-form .models import Personnel
-form .forms import PersonnelForm
+from .models import Personnel
+from .forms import PersonnelForm
 
-# Create your views here.
+
 def personnel_list(request):
-    Personnel = Personnel.objects.all()
-    return render(request, 'personnel/list.html', {'personnel': Personnel})
+    personnels = Personnel.objects.all()
+    return render(request, 'personnel/list.html', {
+        'personnels': personnels
+    })
 
 
 def personnel_add(request):
-    if request.method == "POST":
-        form = PersonnelForm(request.POST, request.FILES)
+    form = PersonnelForm(request.POST or None, request.FILES or None)
 
-        if form.is_valid():
-            form.save()
-            return redirect("personnel:personnel_list")
-        else:
-            print(form.errors)  # Affiche les erreurs dans le terminal
-    else:
-        form = PersonnelForm()
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect("personnel:personnel_list")
 
-    return render(request, "personnel/form.html", {
-        "form": form
-    })
+    return render(request, "personnel/form.html", {"form": form})
+
 
 def personnel_detail(request, id):
-    Personnel = get_object_or_404(Personnel, id=id)
-    return render(request, 'personnel/detail.html', {'personnel': Personnel})
+    personnel = get_object_or_404(Personnel, id=id)
+    return render(request, 'personnel/detail.html', {'personnel': personnel})
 
 
 def personnel_edit(request, id):
-    Personnel = get_object_or_404(Personnel, id=id)
+    personnel = get_object_or_404(Personnel, id=id)
+    form = PersonnelForm(request.POST or None, request.FILES or None, instance=personnel)
 
-    if request.method == "POST":
-        form = PersonnelForm(request.POST, request.FILES, instance=Personnel)
-        if form.is_valid():
-            form.save()
-            return redirect('personnel:personnel_list')
-
-    else:
-        form = PersonnelForm(instance=Personnel)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        return redirect('personnel:personnel_list')
 
     return render(request, 'personnel/form.html', {'form': form})
 
 
 def personnel_delete(request, id):
-    Personnel = get_object_or_404(Personnel, id=id)
+    personnel = get_object_or_404(Personnel, id=id)
 
     if request.method == "POST":
-        Personnel.delete()
+        personnel.delete()
         return redirect('personnel:personnel_list')
 
-    return render(request, 'personnel/confirm_delete.html', {'personnel': Personnel})
+    return render(request, 'personnel/confirm_delete.html', {'personnel': personnel})

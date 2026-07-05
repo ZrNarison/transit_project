@@ -1,65 +1,56 @@
 {% extends "base.html" %}
-
 {% block title %}
 Informations du client
 {% endblock %}
 
 {% block content %}
-
 <h3 class="mb-4">
     Informations du client
 </h3>
-
 <div class="card shadow-sm">
-
     <div class="card-body">
-
         <div class="row">
-
             <div class="col-md-8">
-
-                <p><strong>Nom :</strong> {{ client.nom|upper }} {{ client.prenom|title }}</p>
-
-                <p><strong>Date de naissance :</strong>
+                <p>
+                    <strong>Nom :</strong> 
+                    {{ client.nom|upper }} {{ client.prenom|title }}
+                </p>
+                <p>
+                    <strong>Date de naissance :</strong>
                     {{ client.date_naissance|date:"d/m/Y" }}
                 </p>
-
-                <p><strong>Lieu de naissance :</strong>
+                <p>
+                    <strong>Lieu de naissance :</strong>
                     {{ client.lieu_naissance|title }}
                 </p>
-
-                <p><strong>Père :</strong>
+                <p>
+                    <strong>Père :</strong>
                     {{ client.nom_pere|default:"P.I"|title }}
                 </p>
-
-                <p><strong>Mère :</strong>
+                <p>
+                    <strong>Mère :</strong>
                     {{ client.nom_mere|default:"P.I"|title }}
                 </p>
-
-                <p><strong>Adresse :</strong>
+                <p>
+                    <strong>Adresse :</strong>
                     {{ client.adresse|upper }}
                 </p>
-
-                <p><strong>Téléphone :</strong>
+                <p>
+                    <strong>Téléphone :</strong>
                     {{ client.telephone }}
                 </p>
-
             </div>
-
             <div class="col-md-4 text-center">
-
                 {% if client.photo %}
-
-                    <img src="{{ client.photo.url }}"
-                         class="img-thumbnail shadow"
-                         width="220">
-
+                    <div class="text-center">
+                        <img src="{{ client.photo.url }}"
+                            class="img-thumbnail shadow rounded-circle"
+                            style="width: 220px; height: 220px; object-fit: cover;">
+                    </div>
                 {% else %}
-
-                    <div class="alert alert-secondary">
+                    <div class="alert alert-secondary text-center">
                         Aucune photo
                     </div>
-
                 {% endif %}
 
             </div>

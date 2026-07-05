@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Liste des produits
+{% endblock %}
+
+{% block content %}
+
+<div class=" px-12">
+
+    <h2 class="text-center mb-4">
+        Liste des produits
+    </h2>
+
+    <div class="card mb-3">
+        <div class="card-body">
+
+            <form method="get">
+
+                <div class="row">
+
+                    <div class="col-md-3 mb-2">
+                        <input
+                            type="text"
+                            name="client"
+                            value="{{ client }}"
+                            class="form-control"
+                            placeholder="Nom client">
+                    </div>
+
+                    <div class="col-md-2 mb-2">
+                        <input
+                            type="text"
+                            name="nom"
+                            value="{{ nom }}"
+                            class="form-control"
+                            placeholder="Produit">
+                    </div>
+
+                    <div class="col-md-3 mb-2">
+                        <input
+                            type="text"
+                            name="source"
+                            value="{{ source }}"
+                            class="form-control"
+                            placeholder="Source">
+                    </div>
+
+                    <div class="col-md-4 mb-2">
+
+                        <button class="btn btn-primary">
+                            Rechercher
+                        </button>
+
+                        <a href="{% url 'produit:p_produit_liste' %}"
+                           class="btn btn-secondary">
+                            Réinitialiser
+                        </a>
+
+                        <a href="{% url 'produit:p_produit_add' %}"
+                           class="btn btn-success">
+                            Ajouter
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+    <form method="post" action="{% url 'produit:valider_paiement' %}">
+    {% csrf_token %}
+
+    <div class="row align-items-center mb-3">
+
+        <!-- Nombre de produits -->
+        <div class="col-md-6 text-start">
+            <h5 class="mb-0">
+                <span class="badge bg-primary">
+                    Nombre de produits : {{ produits|length }}
+                </span>
+            </h5>
+        </div>
+
+        <!-- Bouton Valider -->
+        <div class="col-md-6 text-end">
+            <button type="submit"
+                    class="btn btn-success"
+                    onclick="return confirm('Confirmer la validation du paiement des produits sélectionnés ?')">
+                <i class="fas fa-money-check-alt"></i>
+                Valider le paiement
+            </button>
+        </div>
+
+    </div>
+
+        <table class="table table-bordered table-hover table-striped align-middle">
+
+            <thead class="table-dark">
+
+                <tr>
+
+                    <th width="40">
+                        Case
+                    </th>
+
+                    {% comment %} <th>N°</th> {% endcomment %}
+
+                    <th>Photo</th>
+
+                    <th>Client</th>
+
+                    <th>Produit</th>
+
+                    <th>Source</th>
+
+                    <th>Type</th>
+
+                    <th class="text-end">Qté</th>
+
+                    <th class="text-end">Montant</th>
+
+                    <th>%</th>
+
+                    <th>Date</th>
+
+                    <th>Etat</th>
+
+                    <th>Date paiement</th>
+
+                    <th>Actions</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% for produit in produits %}
+
+                <tr>
+
+                    <td class="text-center">
+
+                        {% if not produit.paye %}
+                            <input
+                                type="checkbox"
+                                class="checkItem"
+                                name="produits"
+                                value="{{ produit.id }}">
+                        {% endif %}
+
+                    </td>
+
+                    {% comment %} <td>{{ produit.id }}</td> {% endcomment %}
+
+                    <td class="text-center">
+
+                        {% if produit.photo %}
+
+                            <img
+                                src="{{ produit.photo.url }}"
+                                width="60"
+                                height="60"
+                                class="rounded border"
+                                style="object-fit:cover;">
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+
+                        <strong>{{ produit.id_client.nom|upper }}</strong><br>
+
+                        {{ produit.id_client.prenom }}
+
+                    </td>
+
+                    <td>{{ produit.Nom_Prod|upper }}</td>
+
+                    <td>{{ produit.Source_Prod }}</td>
+
+                    <td>{{ produit.Type_Pro }}</td>
+
+                    <td class="text-end">
+
+                        {{ produit.Qte_Pro|floatformat:2 }}
+
+                    </td>
+
+                    <td class="text-end">
+
+                        {{ produit.Montant_Pro|intcomma }}
+
+                    </td>
+
+                    <td class="text-center">
+
+                        {{ produit.Pourcentage_Pro }} %
+
+                    </td>
+
+                    <td class="text-center">
+
+                        {{ produit.created_at|date:"d/m/Y" }}
+
+                    </td>
+                    
+
+                    <td class="text-center">
+
+                        {% if produit.paye %}
+
+                            <span class="badge bg-success">
+                                PAYÉ
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge bg-warning text-dark">
+                                NON PAYÉ
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+                    <td class="text-center">
+
+    {% if produit.date_paiement %}
+
+        {{ produit.date_paiement|date:"d/m/Y H:i" }}
+
+    {% else %}
+
+        <span class="text-danger">
+            Non payé
+        </span>
+
+    {% endif %}
+
+</td>
+
+                    <td class="text-center">
+
+                        <a href="{% url 'produit:p_produit_edit' produit.id %}"
+                           class="btn btn-warning btn-sm">
+                            ✏
+                        </a>
+
+                        <a href="{% url 'produit:p_produit_delete' produit.id %}"
+                           class="btn btn-danger btn-sm">
+                            🗑
+                        </a>
+
+                    </td>
+
+                </tr>
+
+            {% empty %}
+
+                <tr>
+
+                    <td colspan="13" class="text-center">
+
+                        Aucun produit trouvé.
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </form>
+
+</div>
+
+<script>
+
+document.getElementById("checkAll").addEventListener("change", function(){
+
+    const checks = document.querySelectorAll(".checkItem");
+
+    checks.forEach(function(c){
+
+        c.checked = document.getElementById("checkAll").checked;
+
+    });
+
+});
+
+</script>
+
+{% endblock %}

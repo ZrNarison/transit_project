@@ -14,4 +14,7 @@ class Client(models.Model):
     photo = models.ImageField(upload_to='images/Clients/')
 
     def __str__(self):
-        return self.nom
+        return f"{self.nom.upper()} {self.prenom}"
+    
+    # def __str__(self):
+    #     return self.nom

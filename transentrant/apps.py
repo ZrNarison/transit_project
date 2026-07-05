@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
-
 class TransentrantConfig(AppConfig):
-    name = 'TransEntrant'
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'transentrant'   # ✅ IMPORTANT : minuscule

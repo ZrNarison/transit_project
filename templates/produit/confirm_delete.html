@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+<h3>Confirmation suppression</h3>
+{% block content %}
+
+<p>Voulez-vous vraiment supprimer : <strong>{{ personnel.nom|upper }}</strong> {{ personnel.prenom|title }}?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Oui supprimer</button>
+    <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">Annuler</a>
+</form>
+{% endblock %}
