@@ -10,6 +10,9 @@ urlpatterns = [
     path('transentrant/', include('transentrant.urls')),
     path('produit/', include('produit.urls')),
     path('admin/', admin.site.urls),
+    path('materiels/', include('materiels.urls')),
+    path('materielsort/', include('materielsort.urls')),
+    path('materielEntre/', include('materielEntre.urls')),
 ]
 
 if settings.DEBUG:

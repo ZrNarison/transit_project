@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}
+Suppression
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow p-4">
+
+    <h3 class="text-danger">
+
+        Confirmation de suppression
+
+    </h3>
+
+    <hr>
+
+    <p>
+
+        Voulez-vous vraiment supprimer le matériel
+
+        <strong>
+
+            {{ materiel.nom }}
+
+        </strong>
+
+        ?
+
+    </p>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <button class="btn btn-danger">
+
+            Oui, supprimer
+
+        </button>
+
+        <a href="{% url 'materiels:materiels_list' %}"
+           class="btn btn-secondary">
+
+            Annuler
+
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

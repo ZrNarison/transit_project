@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}
+Confirmation suppression
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow p-4">
+
+    <h3 class="text-danger text-uppercase">
+        Confirmation suppression
+    </h3>
+
+    <hr>
+
+    <p>
+        Voulez-vous vraiment supprimer cette sortie de matériel :
+        l'enregeistrement de {{ materielsort.Nb_MatSort }}<strong> {{ materielsort.id_Materiel.nom|upper }}</strong> {{ materielsort.Res_MatSort }} sorite de vos magasin <strong>?</strong></li>
+    </p>
+    <form method="post">
+
+        {% csrf_token %}
+
+        <button class="btn btn-danger">
+            Oui, supprimer
+        </button>
+
+        <a href="{% url 'materielsort:materielsort_list' %}"
+           class="btn btn-secondary">
+            Annuler
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

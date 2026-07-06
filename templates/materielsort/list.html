@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Liste des sorties matériels{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h3 class="text-center text-uppercase mb-4">
+        Liste des sorties de matériels
+    </h3>
+
+    <a href="{% url 'materielsort:materielsort_add' %}" class="btn btn-success mb-3">
+        + Nouvelle sortie
+    </a>
+
+    <table class="table table-bordered table-hover">
+
+        <thead class="table-dark">
+            <tr>
+                <th>Matériel</th>
+                <th>Responsable</th>
+                <th>Quantité</th>
+                <th>Observation</th>
+                <th>Date sortie</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for s in materielsorts %}
+            <tr>
+                <td>{{ s.id_Materiel.nom }}</td>
+                <td>{{ s.Res_MatSort }}</td>
+                <td>{{ s.Nb_MatSort }}</td>
+                <td>{{ s.Obs_MatSort }}</td>
+                <td>{{ s.dateAv }}</td>
+
+                <td>
+                    {% if s.est_retourne %}
+                        <span class="badge bg-success">Retourné</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">En cours</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <a href="{% url 'materielsort:materielsort_detail' s.id %}" class="btn btn-info btn-sm">
+                        Voir
+                    </a>
+
+                    <a href="{% url 'materielsort:materielsort_edit' s.id %}" class="btn btn-primary btn-sm">
+                        Modifier
+                    </a>
+
+                    <a href="{% url 'materielsort:materielsort_delete' s.id %}" class="btn btn-danger btn-sm">
+                        Supprimer
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">
+                    Aucune sortie enregistrée
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

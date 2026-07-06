@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}
+Liste des sorties matériel
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+
+    <div class="d-flex justify-content-between mb-3">
+
+        <h2 class="text-uppercase">Sorties matériel</h2>
+
+        <a href="{% url 'materielsort:materielsort_add' %}"
+           class="btn btn-primary">
+            Ajouter
+        </a>
+
+    </div>
+
+    <table class="table table-bordered table-hover table-striped">
+
+        <thead class="table-dark">
+
+            <tr>
+                {% comment %} <th>ID</th> {% endcomment %}
+                <th>Matériel</th>
+                <th>Responsable</th>
+                <th>Quantité</th>
+                <th>Date</th>
+                <th width="220" class="text-center">Actions</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        {% for s in materielsorts %}
+
+            <tr>
+
+                {% comment %} <td>{{ s.id }}</td> {% endcomment %}
+
+                <td>{{ s.id_Materiel.nom|upper }}({{ s.id_Materiel.typeMat|title }})</td>
+                <td>{{ s.Res_MatSort }}</td>
+                <td>{{ s.Nb_MatSort }}</td>
+                <td>{{ s.dateAv|date:"d/m/Y H:i" }}</td>
+                <td class="text-center">
+                    <a href="{% url 'materielsort:materielsort_detail' s.id %}"
+                   class="btn btn-info btn-sm">
+                    👁
+                </a>
+                    <a href="{% url 'materielsort:materielsort_edit' s.id %}"
+                   class="btn btn-warning btn-sm">
+                    ✏
+                </a>
+
+                    <a href="{% url 'materielsort:materielsort_delete' s.id %}"
+                   class="btn btn-danger btn-sm">
+                    🗑
+                </a>
+
+                </td>
+
+            </tr>
+
+        {% empty %}
+
+            <tr>
+                <td colspan="6" class="text-center">
+                    Aucune sortie enregistrée
+                </td>
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

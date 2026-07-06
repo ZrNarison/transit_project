@@ -7,6 +7,6 @@
 <form method="post">
     {% csrf_token %}
     <button type="submit" class="btn btn-danger">Oui supprimer</button>
-    <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">Annuler</a>
+    <a href="{% url 'personnel:personnel_list' %}" class="btn btn-secondary">Annuler</a>
 </form>
 {% endblock %}

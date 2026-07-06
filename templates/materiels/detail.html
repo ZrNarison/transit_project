@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+Détail matériel
+{% endblock %}
+
+{% block content %}
+
+<div class="card p-4">
+
+<h3>Détail du matériel</h3>
+
+<hr>
+
+<p><strong>Nom :</strong> {{ materiel.nom }}</p>
+
+<p><strong>Type :</strong> {{ materiel.type }}</p>
+
+<p><strong>Catégorie :</strong> {{ materiel.categorie }}</p>
+
+<a href="{% url 'materiels:materiels_list' %}"
+class="btn btn-secondary">
+
+Retour
+
+</a>
+
+</div>
+
+{% endblock %}

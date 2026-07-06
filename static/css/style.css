@@ -87,7 +87,8 @@ table {
 
 #nom_client,
 #nom_prod,
-#source_prod {
+#source_prod,
+#id_Nb_MatSort {
     width: 20%;
     max-width: 80%;
 }

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Liste des matériels{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h3 class="text-center text-uppercase mb-4">
+        Liste des matériels
+    </h3>
+
+    <a href="{% url 'materiels:materiels_list' %}" class="btn btn-primary mb-3">
+        Actualiser
+    </a>
+
+    <table class="table table-bordered table-striped">
+
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Type</th>
+                <th>Catégorie</th>
+                <th>Stock initial</th>
+                <th>Stock restant</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for m in materiels %}
+            <tr>
+                <td>{{ m.id }}</td>
+                <td>{{ m.nom }}</td>
+                <td>{{ m.typeMat }}</td>
+                <td>{{ m.catMat }}</td>
+                <td>{{ m.stock_initial }}</td>
+                <td>
+                    <strong class="text-success">
+                        {{ m.stock_restant }}
+                    </strong>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">
+                    Aucun matériel trouvé
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

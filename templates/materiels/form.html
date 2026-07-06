@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}
+Formulaire matériel
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm p-4">
+
+    <h3 class="text-center mb-4 text-uppercase">
+
+        {% if form.instance.id %}
+            <span class="text-info">Modifier un matériel</span>
+        {% else %}
+            <span class="text-success">Ajouter un matériel</span>
+        {% endif %}
+
+    </h3>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            {{ form.errors }}
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label>Nom</label>
+            {{ form.nom }}
+        </div>
+
+        <div class="mb-3">
+            <label>Type matériel</label>
+            {{ form.typeMat }}
+        </div>
+
+        <div class="mb-3">
+            <label>Catégorie matériel</label>
+            {{ form.catMat }}
+        </div>
+
+        <div class="mb-3">
+            <label>Stock initial</label>
+            {{ form.stock_initial }}
+        </div>
+
+        <hr>
+
+        <button class="btn btn-success">
+            Enregistrer
+        </button>
+
+        <a href="{% url 'materiels:materiels_list' %}"
+           class="btn btn-secondary">
+            Retour
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -16,17 +16,17 @@ Informations du Personnel
                     {{ personnel.nom|upper }} {{ personnel.prenom|title }}
                 </p>
                 <p>
-                    <strong>Adresse :</strong>
+                    <strong>Fonction :</strong>
                     {{ personnel.fonction|upper }}
                 </p>
                 <p>
                     <strong>Adresse :</strong>
                     {{ personnel.adresse|upper }}
                 </p>
-                <p>
+                {% comment %} <p>
                     <strong>Adresse :</strong>
                     {{ personnel.adresse|upper }}
-                </p>
+                </p> {% endcomment %}
                 <p>
                     <strong>Class :</strong>
                     {{ personnel.categorie }}

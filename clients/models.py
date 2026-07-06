@@ -10,7 +10,6 @@ class Client(models.Model):
     nom_pere = models.CharField(max_length=150, blank=True)
     nom_mere = models.CharField(max_length=150, blank=True)
     adresse = models.TextField(blank=True)
-    telephone = models.CharField(max_length=10)
     photo = models.ImageField(upload_to='images/Clients/')
 
     def __str__(self):

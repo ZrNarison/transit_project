@@ -1,75 +1,53 @@
 from django import forms
-from .models import Client
+from django.forms import inlineformset_factory
 
+from .models import Client
+from contactclient.models import ContactClient
+from comptebancaire.models import CompteBancaire
+
+
+# =========================
+# FORM CLIENT
+# =========================
 class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
         fields = "__all__"
 
         widgets = {
-            "nom": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "text",
-                    "placeholder": "Nom",   # calendrier HTML5
-                }
-            ),
-            "prenom": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "text",
-                    "placeholder": "Prénom",   # calendrier HTML5
-                }
-            ),
-            "date_naissance": forms.DateInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "date",
-                    "placeholder": "Date de naissance",   # calendrier HTML5
-                }
-            ),
-            "lieu_naissance": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "text",
-                    "placeholder": "Lieu de naissance",   # calendrier HTML5
-                }
-            ),
-            "nom_pere": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "text",
-                    "placeholder": "Filiation père",   # calendrier HTML5
-                }
-            ),
-            "nom_mere": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "text",
-                    "placeholder": "Filiation mere",   # calendrier HTML5
-                }
-            ),
-            "adresse": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 2,
-                    "placeholder": "Adresse",
-                    "style": "resize:none;",
-                }
-            ),
-           "telephone": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "maxlength": "10",
-                    "placeholder": "0340100001",
-                    "pattern": "[0-9]{10}",
-                }
-            ),
+            "nom": forms.TextInput(attrs={"class": "form-control"}),
+            "prenom": forms.TextInput(attrs={"class": "form-control"}),
+            "date_naissance": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date"
+            }),
+            "lieu_naissance": forms.TextInput(attrs={"class": "form-control"}),
+            "nom_pere": forms.TextInput(attrs={"class": "form-control"}),
+            "nom_mere": forms.TextInput(attrs={"class": "form-control"}),
+            "adresse": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "telephone": forms.TextInput(attrs={"class": "form-control"}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
-        for name, field in self.fields.items():
-            # Ne pas écraser les attributs déjà définis
-            field.widget.attrs.setdefault("class", "form-control")
+# =========================
+# FORMSET CONTACT CLIENT
+# =========================
+ContactFormSet = inlineformset_factory(
+    Client,
+    ContactClient,
+    fields=("numero", "titulaire", "principal"),
+    extra=1,
+    can_delete=True
+)
+
+
+# =========================
+# FORMSET COMPTE BANCAIRE
+# =========================
+CompteFormSet = inlineformset_factory(
+    Client,
+    CompteBancaire,
+    fields=("nom_banque", "numero_compte", "principal"),
+    extra=1,
+    can_delete=True
+)

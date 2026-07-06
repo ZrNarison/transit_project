@@ -12,6 +12,9 @@ urlpatterns = [
     path('produit/', include('produit.urls')),
     path('categorie/', include('categorie.urls')),
     path('users/', include('users.urls')),
+    path('materiels/', include('materiels.urls')),
+    path('materielsort/', include('materielsort.urls')),
+    path('materielEntre/', include('materielEntre.urls')),
 ]
 
 if settings.DEBUG:

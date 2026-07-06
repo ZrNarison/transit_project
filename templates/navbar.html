@@ -61,10 +61,10 @@
                             <a class="dropdown-item dropdown-toggle" href="#">Dépot</a>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="#">➕ Ajouter</a>
+                                    <a class="dropdown-item" href="#">Ajouter</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">📋 Liste</a>
+                                    <a class="dropdown-item" href="#">Liste</a>
                                 </li>
                             </ul>
                         </li>
@@ -72,10 +72,10 @@
                             <a class="dropdown-item dropdown-toggle" href="#">Salaire</a>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="#">➕ Ajouter</a>
+                                    <a class="dropdown-item" href="#">Ajouter</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">📋 Liste</a>
+                                    <a class="dropdown-item" href="#">Liste</a>
                                 </li>
                             </ul>
                         </li>
@@ -85,13 +85,24 @@
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Matériels</a>
                     <ul class="dropdown-menu">
                         <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle" href="#">Materiel</a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'materiels:materiels_add' %}">Ajouter</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'materiels:materiels_list' %}">Liste</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="dropdown-submenu">
                             <a class="dropdown-item dropdown-toggle" href="#">Entrant</a>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="#">➕ Ajouter</a>
+                                    <a class="dropdown-item" href="#">Ajouter</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">📋 Liste</a>
+                                    <a class="dropdown-item" href="#">Liste</a>
                                 </li>
                             </ul>
                         </li>
@@ -99,10 +110,10 @@
                             <a class="dropdown-item dropdown-toggle" href="#">Sortie</a>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="#">➕ Ajouter</a>
+                                    <a class="dropdown-item" href="{% url 'materielsort:materielsort_add' %}">Ajouter</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">📋 Liste</a>
+                                    <a class="dropdown-item" href="{% url 'materielsort:materielsort_list' %}">Liste</a>
                                 </li>
                             </ul>
                         </li>
@@ -126,10 +137,10 @@
                             <a class="dropdown-item dropdown-toggle" href="#">Sortie</a>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="#">➕ Ajouter</a>
+                                    <a class="dropdown-item" href="#">Ajouter</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">📋 Liste</a>
+                                    <a class="dropdown-item" href="#">Liste</a>
                                 </li>
                             </ul>
                         </li>
