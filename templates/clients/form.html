@@ -5,176 +5,103 @@ Formulaire Client
 {% endblock %}
 
 {% block content %}
-<div class="card shadow-sm p-4 ">
-    <h3 class="mb-2 text-center text-uppercase ">
+
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-3 text-center text-uppercase">
+
         {% if form.instance.id %}
-             <p class="text-justify text-info">Modifier le client</p>
+            <span class="text-info">Modifier le client</span>
         {% else %}
-            <p class="text-justify text-success">Ajouter un client</p>
+            <span class="text-success">Ajouter un client</span>
         {% endif %}
+
     </h3>
-    <form method="post" enctype="multipart/form-data" id="client">
-    {% csrf_token %}
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-2">
-                <label>Nom</label>
-                {{ form.nom }}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+
+            <!-- LEFT -->
+            <div class="col-md-7">
+
+                <div class="mb-2">
+                    <label>Nom</label>
+                    {{ form.nom }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Prénom</label>
+                    {{ form.prenom }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Date de naissance</label>
+                    {{ form.date_naissance }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Lieu de naissance</label>
+                    {{ form.lieu_naissance }}
+                </div>
+                <div class="mb-2">
+                    <label>CIN</label>
+                    {{ form.cin }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Père</label>
+                    {{ form.nom_pere }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Mère</label>
+                    {{ form.nom_mere }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Contact</label>
+                    {{ form.contact }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Adresse</label>
+                    {{ form.adresse }}
+                </div>
+
             </div>
 
-            <div class="mb-2">
-                <label>Prénom</label>
-                {{ form.prenom }}
+            <!-- RIGHT -->
+            <div class="col-md-5 text-center">
+
+                <div class="mb-3">
+                    <label>Photo</label><br>
+                    {{ form.photo }}
+                </div>
+
+                {% if form.instance.photo %}
+                    <img src="{{ form.instance.photo.url }}"
+                         class="img-thumbnail mt-2"
+                         width="200">
+                {% endif %}
+
             </div>
 
-            <div class="mb-2">
-                <label>Date de naissance</label>
-                {{ form.date_naissance }}
-            </div>
-
-            <div class="mb-2">
-                <label>Lieu de naissance</label>
-                {{ form.lieu_naissance }}
-            </div>
-
-            <div class="mb-2">
-                <label>Père</label>
-                {{ form.nom_pere }}
-            </div>
-            <div class="mb-2">
-                <label>Mère</label>
-                {{ form.nom_mere }}
-            </div>
-            <div class="mb-2" >
-                <label>Adresse</label>
-                {{ form.adresse }}
-            </div>
-            <h5>Contacts</h5>
-
-{{ contact_formset.management_form }}
-
-<table class="table" id="contact-table">
-    <tbody>
-        {% for form in contact_formset %}
-        <tr class="contact-form">
-            <td>{{ form.numero }}</td>
-            <td>{{ form.titulaire }}</td>
-            <td>{{ form.principal }}</td>
-            <td>{{ form.DELETE }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<!-- bouton + -->
-<button type="button" class="btn btn-primary btn-sm" id="add-contact">
-    + 
-</button>
-
-<!-- template caché -->
-<div id="empty-contact-form" style="display:none;">
-    <table>
-        <tr class="contact-form">
-            {{ contact_formset.empty_form.numero }}
-            {{ contact_formset.empty_form.titulaire }}
-            {{ contact_formset.empty_form.principal }}
-            {{ contact_formset.empty_form.DELETE }}
-        </tr>
-    </table>
-</div>
-            <h5>Comptes bancaires</h5>
-
-{{ compte_formset.management_form }}
-
-<table class="table" id="compte-table">
-    <tbody>
-        {% for form in compte_formset %}
-        <tr class="compte-form">
-            <td>{{ form.nom_banque }}</td>
-            <td>{{ form.numero_compte }}</td>
-            <td>{{ form.principal }}</td>
-            <td>{{ form.DELETE }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<button type="button" class="btn btn-primary btn-sm" id="add-compte">
-    +
-</button>
-
-<div id="empty-compte-form" style="display:none;">
-    <table>
-        <tr class="compte-form">
-            {{ compte_formset.empty_form.nom_banque }}
-            {{ compte_formset.empty_form.numero_compte }}
-            {{ compte_formset.empty_form.principal }}
-            {{ compte_formset.empty_form.DELETE }}
-        </tr>
-    </table>
-</div>
         </div>
-        <div class="col-md-4 text-center">
-            <div class="mb-3">
-                <label>Photo</label><br>
-                {{ form.photo }}
-            </div>
-            {% if form.instance.photo %}
-                <img src="{{ form.instance.photo.url }}"
-                     class="img-thumbnail mt-2"
-                     width="200">
-            {% endif %}
-        </div>
-    </div>
-    <hr>
-    <button type="submit" class="btn btn-success">Enregistrer</button>
-    <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">Retour</a>
-</form>
+
+        <hr>
+
+        <button type="submit" class="btn btn-success">
+            Enregistrer
+        </button>
+
+        <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">
+            Retour
+        </a>
+
+    </form>
 
 </div>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
 
-    // ================= CONTACT =================
-    const addContactBtn = document.getElementById("add-contact");
-    const contactTable = document.querySelector("#contact-table tbody");
-    const totalContacts = document.querySelector("[name='contact-TOTAL_FORMS']");
-
-    if (addContactBtn && contactTable && totalContacts) {
-
-        addContactBtn.addEventListener("click", function () {
-
-            let formIdx = parseInt(totalContacts.value);
-            let emptyForm = document.querySelector("#empty-contact-form tr").cloneNode(true);
-
-            emptyForm.innerHTML = emptyForm.innerHTML.replace(/__prefix__/g, formIdx);
-
-            contactTable.appendChild(emptyForm);
-            totalContacts.value = formIdx + 1;
-        });
-    }
-
-
-    // ================= COMPTE =================
-    const addCompteBtn = document.getElementById("add-compte");
-    const compteTable = document.querySelector("#compte-table tbody");
-    const totalComptes = document.querySelector("[name='compte-TOTAL_FORMS']");
-
-    if (addCompteBtn && compteTable && totalComptes) {
-
-        addCompteBtn.addEventListener("click", function () {
-
-            let formIdx = parseInt(totalComptes.value);
-            let emptyForm = document.querySelector("#empty-compte-form tr").cloneNode(true);
-
-            emptyForm.innerHTML = emptyForm.innerHTML.replace(/__prefix__/g, formIdx);
-
-            compteTable.appendChild(emptyForm);
-            totalComptes.value = formIdx + 1;
-        });
-    }
-
-});
-</script>
 {% endblock %}

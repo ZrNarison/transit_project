@@ -1,75 +1,89 @@
 {% extends "base.html" %}
 
-{% block title %}
-Liste des sorties matériel
-{% endblock %}
+{% block title %}Liste des entrées matériel{% endblock %}
 
 {% block content %}
 
-<div class="container">
+<div class="container mt-4">
 
-    <div class="d-flex justify-content-between mb-3">
+    <h3 class="text-center text-uppercase mb-4">
+        Entrées de matériel
+    </h3>
 
-        <h2 class="text-uppercase">Sorties matériel</h2>
+    <a href="{% url 'materielEntre:materielEntre_add' %}" class="btn btn-success mb-3">
+        + Nouvelle entrée
+    </a>
 
-        <a href="{% url 'materielsort:materielsort_add' %}"
-           class="btn btn-primary">
-            Ajouter
-        </a>
-
-    </div>
-
-    <table class="table table-bordered table-hover table-striped">
+    <table class="table table-bordered table-striped">
 
         <thead class="table-dark">
-
             <tr>
-                {% comment %} <th>ID</th> {% endcomment %}
+                <th>ID</th>
                 <th>Matériel</th>
-                <th>Responsable</th>
+                <th>Sortie liée</th>
                 <th>Quantité</th>
-                <th>Date</th>
-                <th width="220" class="text-center">Actions</th>
+                <th>Observation</th>
+                <th>Date entrée</th>
+                <th>Actions</th>
             </tr>
-
         </thead>
 
         <tbody>
 
-        {% for s in materielsorts %}
+        {% for e in entrees %}
 
             <tr>
+                <td>{{ e.id }}</td>
 
-                {% comment %} <td>{{ s.id }}</td> {% endcomment %}
-
-                <td>{{ s.id_Materiel.nom|upper }}({{ s.id_Materiel.typeMat|title }})</td>
-                <td>{{ s.Res_MatSort }}</td>
-                <td>{{ s.Nb_MatSort }}</td>
-                <td>{{ s.dateAv|date:"d/m/Y H:i" }}</td>
-                <td class="text-center">
-                    <a href="{% url 'materielsort:materielsort_detail' s.id %}"
-                   class="btn btn-info btn-sm">
-                    👁
-                </a>
-                    <a href="{% url 'materielsort:materielsort_edit' s.id %}"
-                   class="btn btn-warning btn-sm">
-                    ✏
-                </a>
-
-                    <a href="{% url 'materielsort:materielsort_delete' s.id %}"
-                   class="btn btn-danger btn-sm">
-                    🗑
-                </a>
-
+                <!-- MATÉRIEL -->
+                <td>
+                    {% if e.id_MaterielSort and e.id_MaterielSort.id_Materiel %}
+                        {{ e.id_MaterielSort.id_Materiel.nom }}
+                    {% else %}
+                        -
+                    {% endif %}
                 </td>
 
+                <!-- SORTIE LIÉE -->
+                <td>
+                    {% if e.id_MaterielSort %}
+                        {{ e.id_MaterielSort.demandeur |title}}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <td>{{ e.Nb_Entre }}</td>
+
+                <td>
+                    {{ e.observation|default:"-" }}
+                </td>
+
+                <td>{{ e.dateEntre|date:"d/m/Y H:i" }}</td>
+
+                <td>
+                    <a href="{% url 'materielEntre:materielEntre_edit' e.id %}"
+                       class="btn btn-warning btn-sm">
+                        ✏
+                    </a>
+
+                    <a href="{% url 'materielEntre:materielEntre_delete' e.id %}"
+                       class="btn btn-danger btn-sm">
+                        🗑
+                    </a>
+
+                    <a href="{% url 'materielEntre:materielEntre_detail' e.id %}"
+                       class="btn btn-info btn-sm">
+                        👁
+                    </a>
+                </td>
             </tr>
 
         {% empty %}
 
             <tr>
-                <td colspan="6" class="text-center">
-                    Aucune sortie enregistrée
+                <td colspan="7" class="text-center">
+                    Aucune entrée trouvée
                 </td>
             </tr>
 

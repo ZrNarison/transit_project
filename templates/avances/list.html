@@ -13,22 +13,45 @@ Liste des avances
         Liste des avances des clients
     </h2>
         <div class="card-body">
-            <form method="get">
-                <div class="row">
-                    <div class="col-md-5 mb-3">
-                        <input type="text" name="nom" value="{{ nom }}" placeholder="Nom ou prénom du client">
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <input type="date" name="date" value="{{ date }}" class="form-control">
-                    </div>
-                    <div class="col-md-4 d-flex align-items-end mb-3">
-                        <button type="submit" class="btn btn-primary me-2">Rechercher</button>
-                        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">Réinitialiser</a>
-                    </div>
-                </div>
-            </form>
+    <form method="get">
+        <div class="row align-items-end">
+
+            <div class="col-md-4">
+                <label class="form-label">Nom ou prénom</label>
+                <input type="text"
+                       name="nom"
+                       value="{{ nom }}"
+                       class="form-control"
+                       placeholder="Nom ou prénom du client">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Date</label>
+                <input type="date"
+                       name="date"
+                       value="{{ date }}"
+                       class="form-control">
+            </div>
+
+            <div class="col-md-5">
+                <button type="submit" class="btn btn-primary">
+                    Rechercher
+                </button>
+
+                <a href="{% url 'avances:avance_list' %}"
+                   class="btn btn-secondary">
+                    Réinitialiser
+                </a>
+
+                <a href="{% url 'avances:avance_add' %}"
+                   class="btn btn-success">
+                    Nouveau
+                </a>
+            </div>
+
         </div>
-    <div class="mb-2">
+    </form>
+</div>
         <strong>
             Nombre d'avances :
             {{ avances|length }}

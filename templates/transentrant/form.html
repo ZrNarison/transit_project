@@ -1,18 +1,21 @@
 {% extends "base.html" %}
 
 {% block title %}
-Formulaire Transport Produit Entrant
+Formulaire Transport Entrant
 {% endblock %}
 
 {% block content %}
+
 <div class="card shadow-sm p-4">
 
     <h3 class="mb-3 text-center text-uppercase">
+
         {% if form.instance.id %}
             <span class="text-info">Modifier transport entrant</span>
         {% else %}
             <span class="text-success">Ajouter transport entrant</span>
         {% endif %}
+
     </h3>
 
     <form method="post" enctype="multipart/form-data">
@@ -20,40 +23,45 @@ Formulaire Transport Produit Entrant
 
         <div class="row">
 
+            <!-- LEFT SIDE -->
             <div class="col-md-6">
 
-                <div class="mb-2">
+                {% comment %} <div class="mb-2">
                     <label>Client</label>
                     {{ form.id_client }}
-                </div>
+                </div> {% endcomment %}
 
                 <div class="mb-2">
                     <label>Chauffeur</label>
-                    {{ form.Chauf_Ent }}
+                    {{ form.chauffeur }}
+                </div>
+                <div class="mb-2">
+                    <label>CIN</label>
+                    {{ form.cin }}
                 </div>
 
                 <div class="mb-2">
                     <label>Numéro Véhicule</label>
-                    {{ form.NumVeh_Ent }}
+                    {{ form.num_vehicule }}
                 </div>
 
                 <div class="mb-2">
                     <label>Numéro Permis</label>
-                    {{ form.NumPermis_Ent }}
-                </div>
-
-                <div class="mb-2">
-                    <label>Adresse</label>
-                    {{ form.adresse }}
+                    {{ form.permis }}
                 </div>
 
                 <div class="mb-2">
                     <label>Téléphone</label>
                     {{ form.telephone }}
                 </div>
+                <div class="mb-2">
+                    <label>Adresse</label>
+                    {{ form.adresse }}
+                </div>
 
             </div>
 
+            <!-- RIGHT SIDE -->
             <div class="col-md-4 text-center">
 
                 <div class="mb-3">
@@ -73,10 +81,17 @@ Formulaire Transport Produit Entrant
 
         <hr>
 
-        <button type="submit" class="btn btn-success">Enregistrer</button>
-        <a href="{% url 'transentrant:t_transentrant_liste' %}" class="btn btn-secondary">Retour</a>
+        <button type="submit" class="btn btn-success">
+            Enregistrer
+        </button>
+
+        <a href="{% url 'transentrant:t_transentrant_liste' %}"
+           class="btn btn-secondary">
+            Retour
+        </a>
 
     </form>
 
 </div>
+
 {% endblock %}

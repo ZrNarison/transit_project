@@ -42,7 +42,7 @@ def materielsort_list(request):
 
     materielsorts = MaterielSort.objects.select_related(
         "id_Materiel"
-    ).order_by("-dateAv")
+    ).order_by("-dateSortie")
 
     return render(
         request,

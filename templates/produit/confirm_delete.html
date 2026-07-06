@@ -1,12 +1,33 @@
 {% extends "base.html" %}
-<h3>Confirmation suppression</h3>
+
+{% block title %}Confirmation suppression{% endblock %}
+
 {% block content %}
 
-<p>Voulez-vous vraiment supprimer : <strong>{{ personnel.nom|upper }}</strong> {{ personnel.prenom|title }}?</p>
+<div class="card shadow p-4 text-center">
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Oui supprimer</button>
-    <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">Annuler</a>
-</form>
+    <h3 class="text-danger">Confirmation de suppression</h3>
+
+    <p>
+        Voulez-vous vraiment supprimer le produit :
+        <strong>
+            {{ produit.client.nom|upper }} - {{ produit.source }}
+        </strong> ?
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <button class="btn btn-danger">
+            Oui, supprimer
+        </button>
+
+        <a href="{% url 'produit:p_produit_liste' %}" class="btn btn-secondary">
+            Annuler
+        </a>
+
+    </form>
+
+</div>
+
 {% endblock %}

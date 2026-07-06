@@ -1,53 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}
-Suppression
-{% endblock %}
+{% block title %}Suppression matériel{% endblock %}
 
 {% block content %}
 
-<div class="card shadow p-4">
+<div class="container mt-4">
 
-    <h3 class="text-danger">
+    <div class="card p-4">
 
-        Confirmation de suppression
+        <h4 class="text-danger text-center">
+            Confirmation suppression
+        </h4>
 
-    </h3>
+        <p class="text-center mt-3">
+            Voulez-vous vraiment supprimer :
+            <strong>{{ materiel.nom }}</strong> ?
+        </p>
 
-    <hr>
+        <form method="post" class="text-center mt-3">
+            {% csrf_token %}
 
-    <p>
+            <button class="btn btn-danger">Oui supprimer</button>
 
-        Voulez-vous vraiment supprimer le matériel
+            <a href="{% url 'materiels:materiels_list' %}" class="btn btn-secondary">
+                Annuler
+            </a>
+        </form>
 
-        <strong>
-
-            {{ materiel.nom }}
-
-        </strong>
-
-        ?
-
-    </p>
-
-    <form method="post">
-
-        {% csrf_token %}
-
-        <button class="btn btn-danger">
-
-            Oui, supprimer
-
-        </button>
-
-        <a href="{% url 'materiels:materiels_list' %}"
-           class="btn btn-secondary">
-
-            Annuler
-
-        </a>
-
-    </form>
+    </div>
 
 </div>
 

@@ -99,10 +99,10 @@
                             <a class="dropdown-item dropdown-toggle" href="#">Entrant</a>
                             <ul class="dropdown-menu">
                                 <li>
-                                    <a class="dropdown-item" href="#">Ajouter</a>
+                                    <a class="dropdown-item" href="{% url 'materielEntre:materielEntre_add' %}">Ajouter</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">Liste</a>
+                                    <a class="dropdown-item" href="{% url 'materielEntre:materielEntre_list' %}">Liste</a>
                                 </li>
                             </ul>
                         </li>
@@ -120,7 +120,7 @@
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Transport</a>
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Véhicule</a>
                     <ul class="dropdown-menu">
                         <li class="dropdown-submenu">
                             <a class="dropdown-item dropdown-toggle" href="#">Entrant</a>

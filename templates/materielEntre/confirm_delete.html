@@ -1,37 +1,40 @@
 {% extends "base.html" %}
 
-{% block title %}
-Confirmation suppression
-{% endblock %}
+{% block title %}Confirmation suppression{% endblock %}
 
 {% block content %}
 
-<div class="card shadow p-4">
+<div class="container mt-5">
 
-    <h3 class="text-danger text-uppercase">
-        Confirmation suppression
-    </h3>
+    <div class="card shadow p-4 text-center">
 
-    <hr>
+        <h4 class="text-danger mb-3">
+            Confirmer la suppression
+        </h4>
 
-    <p>
-        Voulez-vous vraiment supprimer cette sortie de matériel :
-        l'enregeistrement de {{ materielsort.Nb_MatSort }}<strong> {{ materielsort.id_Materiel.nom|upper }}</strong> {{ materielsort.Res_MatSort }} sorite de vos magasin <strong>?</strong></li>
-    </p>
-    <form method="post">
+        <p>
+            Voulez-vous vraiment supprimer cette entrée de matériel ?
+        </p>
 
-        {% csrf_token %}
+        <p>
+            <strong>{{ entree.id_Materiel.nom }}</strong>
+            - {{ entree.Nb_Entre }}
+        </p>
 
-        <button class="btn btn-danger">
-            Oui, supprimer
-        </button>
+        <form method="post">
+            {% csrf_token %}
 
-        <a href="{% url 'materielsort:materielsort_list' %}"
-           class="btn btn-secondary">
-            Annuler
-        </a>
+            <button type="submit" class="btn btn-danger">
+                Oui supprimer
+            </button>
 
-    </form>
+            <a href="{% url 'materielEntre:materielEntre_list' %}"
+               class="btn btn-secondary">
+                Annuler
+            </a>
+        </form>
+
+    </div>
 
 </div>
 

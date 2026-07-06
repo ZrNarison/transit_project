@@ -6,28 +6,31 @@ class MaterielsForm(forms.ModelForm):
 
     class Meta:
         model = Materiels
-        fields = "__all__"
+        fields = [
+            "nom",
+            "typeMat",
+            "catMat",
+            "stock_initial"
+        ]
 
         widgets = {
+            "nom": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nom du matériel"
+            }),
 
-            "nom": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Nom du matériel"
-                }
-            ),
+            "typeMat": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Type matériel"
+            }),
 
-            "type": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Type"
-                }
-            ),
+            "catMat": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Catégorie"
+            }),
 
-            "categorie": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Catégorie"
-                }
-            ),
+            "stock_initial": forms.NumberInput(attrs={
+                "class": "form-control",
+                "placeholder": "Stock initial"
+            }),
         }

@@ -7,48 +7,40 @@ class ProduitForm(forms.ModelForm):
     class Meta:
         model = Produit
         fields = [
-            'id_client',
-            'Nom_Prod',
-            'Source_Prod',
-            'Type_Pro',
-            'Montant_Pro',
-            'Qte_Pro',
-            'Pourcentage_Pro',
-            'photo'
+            "client",
+            "vehicule",
+            "source",
+            "type_produit",
+            "montant",
+            "quantite",
+            "pourcentage",
+            "photo",
         ]
 
         widgets = {
-            "id_client": forms.Select(attrs={
-                "class": "form-control"
-            }),
+            "client": forms.Select(attrs={"class": "form-control"}),
+            "vehicule": forms.Select(attrs={"class": "form-control"}),
+            "source": forms.TextInput(attrs={"class": "form-control","placeholder": "Tapez ici la lieu de provenance de la marchandise"}),
 
-            "Nom_Prod": forms.TextInput(attrs={
+            "type_reglement": forms.Select(attrs={
+    "class": "form-control"
+}),
+
+            "montant": forms.NumberInput(attrs={
                 "class": "form-control",
-                "placeholder": "Nom du produit"
+                "placeholder": "En nombre",
+                "maxlength": "4"
             }),
 
-            "Source_Prod": forms.TextInput(attrs={
+            "quantite": forms.NumberInput(attrs={
                 "class": "form-control",
-                "placeholder": "Source du produit"
+                "placeholder": "En nombre"
             }),
 
-            "Type_Pro": forms.Select(attrs={
-                "class": "form-control"
-            }),
-
-            "Montant_Pro": forms.NumberInput(attrs={
+            "pourcentage": forms.NumberInput(attrs={
                 "class": "form-control",
-                "placeholder": "Montant"
-            }),
-
-            "Qte_Pro": forms.NumberInput(attrs={
-                "class": "form-control",
-                "placeholder": "Quantité"
-            }),
-
-            "Pourcentage_Pro": forms.NumberInput(attrs={
-                "class": "form-control",
-                "placeholder": "Pourcentage"
+                "placeholder" : "En nombre",
+                "maxlength": "1"
             }),
 
             "photo": forms.ClearableFileInput(attrs={
@@ -60,4 +52,6 @@ class ProduitForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         for field in self.fields.values():
-            field.widget.attrs.setdefault("class", "form-control")
+            field.widget.attrs.update({
+                "class": "form-control"
+            })

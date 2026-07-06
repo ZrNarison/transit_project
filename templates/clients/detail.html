@@ -24,6 +24,10 @@ Informations du client
                     {{ client.lieu_naissance|title }}
                 </p>
                 <p>
+                    <strong>CIN :</strong>
+                    {{ client.cin }}
+                </p>
+                <p>
                     <strong>Père :</strong>
                     {{ client.nom_pere|default:"P.I"|title }}
                 </p>
@@ -37,7 +41,7 @@ Informations du client
                 </p>
                 <p>
                     <strong>Téléphone :</strong>
-                    {{ client.telephone }}
+                    {{ client.contact }}
                 </p>
             </div>
             <div class="col-md-4 text-center">

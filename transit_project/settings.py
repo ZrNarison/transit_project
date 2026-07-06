@@ -45,8 +45,6 @@ INSTALLED_APPS = [
     'produit',
     'categorie',
     'users',
-    'comptebancaire',
-    'contactclient',
     'materiels',
     'materielsort',
     'materielEntre',

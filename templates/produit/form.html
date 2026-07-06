@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}
-Formulaire Achat Produit
-{% endblock %}
+{% block title %}Formulaire Produit{% endblock %}
 
 {% block content %}
 
 <div class="card shadow-sm p-4">
 
-    <h3 class="mb-3 text-center text-uppercase">
+    <h3 class="text-center text-uppercase mb-3">
         {% if form.instance.id %}
             <span class="text-info">Modifier un produit</span>
         {% else %}
@@ -20,9 +18,9 @@ Formulaire Achat Produit
         {% csrf_token %}
 
         {% if form.errors %}
-        <div class="alert alert-danger">
-            {{ form.errors }}
-        </div>
+            <div class="alert alert-danger">
+                {{ form.errors }}
+            </div>
         {% endif %}
 
         <div class="row">
@@ -31,37 +29,37 @@ Formulaire Achat Produit
 
                 <div class="mb-2">
                     <label>Client</label>
-                    {{ form.id_client }}
+                    {{ form.client }}
                 </div>
 
                 <div class="mb-2">
-                    <label>Nom du produit</label>
-                    {{ form.Nom_Prod }}
+                    <label>Véhicule / Chauffeur</label>
+                    {{ form.vehicule }}
                 </div>
 
                 <div class="mb-2">
                     <label>Source</label>
-                    {{ form.Source_Prod }}
+                    {{ form.source }}
                 </div>
 
                 <div class="mb-2">
-                    <label>Type</label>
-                    {{ form.Type_Pro }}
+                    <label>Type de paiement</label>
+                    {{ form.type_produit }}
                 </div>
 
                 <div class="mb-2">
-                    <label>Montant (Ar)</label>
-                    {{ form.Montant_Pro }}
+                    <label>Montant/Kg</label>
+                    {{ form.montant }}
                 </div>
 
                 <div class="mb-2">
-                    <label>Quantité</label>
-                    {{ form.Qte_Pro }}
+                    <label>Quantité(Kg)</label>
+                    {{ form.quantite }}
                 </div>
 
                 <div class="mb-2">
-                    <label>Pourcentage (%)</label>
-                    {{ form.Pourcentage_Pro }}
+                    <label>Pourcentage</label>
+                    {{ form.pourcentage }}
                 </div>
 
             </div>
@@ -69,14 +67,14 @@ Formulaire Achat Produit
             <div class="col-md-4 text-center">
 
                 <div class="mb-3">
-                    <label>Photo du produit</label><br>
+                    <label>Photo</label><br>
                     {{ form.photo }}
                 </div>
 
                 {% if form.instance.photo %}
                     <img src="{{ form.instance.photo.url }}"
                          class="img-thumbnail mt-2"
-                         style="width:220px;height:220px;object-fit:cover;">
+                         style="width:200px;height:200px;object-fit:cover;">
                 {% endif %}
 
             </div>
@@ -85,14 +83,8 @@ Formulaire Achat Produit
 
         <hr>
 
-        <button type="submit" class="btn btn-success">
-            Enregistrer
-        </button>
-
-        <a href="{% url 'produit:p_produit_liste' %}"
-           class="btn btn-secondary">
-            Retour
-        </a>
+        <button class="btn btn-success">Enregistrer</button>
+        <a href="{% url 'produit:p_produit_liste' %}" class="btn btn-secondary">Retour</a>
 
     </form>
 

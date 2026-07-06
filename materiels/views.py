@@ -1,41 +1,96 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.db.models import Sum
+
 from .models import Materiels
 from .forms import MaterielsForm
+from collections import defaultdict
 
-
-# ============================
-# Liste des matériels
-# ============================
 def materiels_list(request):
-    materiels = Materiels.objects.all().order_by("nom")
 
-    return render(
-        request,
-        "materiels/list.html",
-        {
-            "materiels": materiels,
-        },
+    objets = Materiels.objects.prefetch_related(
+        "sorties",
+        "sorties__entrees"
     )
 
+    groupes = defaultdict(lambda: {
+        "stock_initial": 0,
+        "stock_sorti": 0,
+        "stock_entre": 0,
+    })
 
-# ============================
-# Détail
-# ============================
-def materiels_detail(request, id):
-    materiel = get_object_or_404(Materiels, id=id)
+    for m in objets:
 
-    return render(
-        request,
-        "materiels/detail.html",
-        {
-            "materiel": materiel,
-        },
+        cle = (m.nom, m.typeMat, m.catMat)
+
+        groupes[cle]["nom"] = m.nom
+        groupes[cle]["typeMat"] = m.typeMat
+        groupes[cle]["catMat"] = m.catMat
+
+        groupes[cle]["stock_initial"] += m.stock_initial
+        groupes[cle]["stock_sorti"] += m.stock_sorti()
+        groupes[cle]["stock_entre"] += m.stock_entre()
+
+    materiels = []
+
+    for cle, data in groupes.items():
+        data["stock_restant"] = (
+            data["stock_initial"]
+            - data["stock_sorti"]
+            + data["stock_entre"]
+        )
+        materiels.append(data)
+
+    return render(request, "materiels/list.html", {
+        "materiels": materiels
+    })
+
+# =========================
+# DETAIL
+# =========================
+def materiels_detail(request, nom, typeMat, catMat):
+
+    materiels = Materiels.objects.filter(
+        nom=nom,
+        typeMat=typeMat,
+        catMat=catMat
     )
 
+    sorties = []
+    entrees = []
 
-# ============================
-# Ajouter
-# ============================
+    stock_initial = 0
+    stock_sortie = 0
+    stock_entree = 0
+
+    for m in materiels:
+
+        stock_initial += m.stock_initial
+        stock_sortie += m.stock_sorti()
+        stock_entree += m.stock_entre()
+
+        materiel_sorties = m.sorties.all()
+        sorties.extend(materiel_sorties)
+
+        for s in materiel_sorties:
+            entrees.extend(s.entrees.all())
+
+    context = {
+        "nom": nom,
+        "typeMat": typeMat,
+        "catMat": catMat,
+        "stock_initial": stock_initial,
+        "stock_sortie": stock_sortie,
+        "stock_entree": stock_entree,
+        "stock_restant": stock_initial - stock_sortie + stock_entree,
+        "sorties": sorties,
+        "entrees": entrees,
+    }
+
+    return render(request, "materiels/detail.html", context)
+
+# =========================
+# AJOUTER
+# =========================
 def materiels_add(request):
 
     if request.method == "POST":
@@ -48,18 +103,14 @@ def materiels_add(request):
     else:
         form = MaterielsForm()
 
-    return render(
-        request,
-        "materiels/form.html",
-        {
-            "form": form,
-        },
-    )
+    return render(request, "materiels/form.html", {
+        "form": form
+    })
 
 
-# ============================
-# Modifier
-# ============================
+# =========================
+# EDIT
+# =========================
 def materiels_edit(request, id):
 
     materiel = get_object_or_404(Materiels, id=id)
@@ -74,18 +125,14 @@ def materiels_edit(request, id):
     else:
         form = MaterielsForm(instance=materiel)
 
-    return render(
-        request,
-        "materiels/form.html",
-        {
-            "form": form,
-        },
-    )
+    return render(request, "materiels/form.html", {
+        "form": form
+    })
 
 
-# ============================
-# Supprimer
-# ============================
+# =========================
+# DELETE
+# =========================
 def materiels_delete(request, id):
 
     materiel = get_object_or_404(Materiels, id=id)
@@ -94,10 +141,6 @@ def materiels_delete(request, id):
         materiel.delete()
         return redirect("materiels:materiels_list")
 
-    return render(
-        request,
-        "materiels/confirmation.html",
-        {
-            "materiel": materiel,
-        },
-    )
+    return render(request, "materiels/confirm.html", {
+        "materiel": materiel
+    })

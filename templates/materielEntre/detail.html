@@ -14,15 +14,25 @@ Détail sortie matériel
 
     <hr>
 
-    <p><strong>Matériel :</strong> {{ materielsort.id_Materiel.nom }}</p>
+    <p>
+        <strong>Matériel :</strong>
+        {% if materielsort.id_Materiel %}
+            {{ materielsort.id_Materiel.nom }}
+        {% else %}
+            -
+        {% endif %}
+    </p>
 
-    <p><strong>Responsable :</strong> {{ materielsort.Res_MatSort }}</p>
+    <p><strong>Responsable :</strong> {{ materielsort.Res_MatSort|default:"-" }}</p>
 
-    <p><strong>Quantité :</strong> {{ materielsort.Nb_MatSort }}</p>
+    <p><strong>Quantité :</strong> {{ materielsort.Nb_MatSort|default:"0" }}</p>
 
-    <p><strong>Observation :</strong> {{ materielsort.Obs_MatSort }}</p>
+    <p><strong>Observation :</strong> {{ materielsort.Obs_MatSort|default:"-" }}</p>
 
-    <p><strong>Date :</strong> {{ materielsort.dateAv|date:"d/m/Y H:i" }}</p>
+    <p>
+        <strong>Date :</strong>
+        {{ materielsort.dateAv|date:"d/m/Y H:i"|default:"-" }}
+    </p>
 
     <a href="{% url 'materielsort:materielsort_list' %}"
        class="btn btn-secondary">

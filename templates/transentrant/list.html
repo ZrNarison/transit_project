@@ -28,15 +28,11 @@ Liste Produit Entrant
             <div class="card-body">
 
                 <span class="badge bg-primary">
-                    {{ item.Chauf_Ent|upper }}
+                    {{ item.chauffeur|upper }}
                 </span>
 
                 <p class="mb-1 mt-2">
-                    🚛 Véhicule : {{ item.NumVeh_Ent }}
-                </p>
-
-                <p class="mb-1">
-                    📄 Permis : {{ item.NumPermis_Ent }}
+                    🚛 Véhicule N°: {{ item.num_vehicule }}
                 </p>
 
                 <p class="mb-1">

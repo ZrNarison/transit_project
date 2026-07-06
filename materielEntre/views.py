@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import MaterielEntre
 from .forms import MaterielEntreForm
@@ -10,16 +7,16 @@ from .forms import MaterielEntreForm
 # LISTE
 # ==========================
 def materielEntre_list(request):
-
-    materielEntre = materielEntre.objects.select_related(
-        "id_Materiel"
-    ).order_by("-dateAv")
+    entrees = MaterielEntre.objects.select_related(
+    "id_MaterielSort",
+    "id_MaterielSort__id_Materiel"
+    ).order_by("-dateEntre")
 
     return render(
         request,
         "materielEntre/list.html",
         {
-            "materielEntre": materielEntre,
+            "entrees": entrees,
         },
     )
 
@@ -28,14 +25,13 @@ def materielEntre_list(request):
 # DETAIL
 # ==========================
 def materielEntre_detail(request, id):
-
-    materielEntre = get_object_or_404(materielEntre, id=id)
+    entree = get_object_or_404(MaterielEntre, id=id)
 
     return render(
         request,
         "materielEntre/detail.html",
         {
-            "materielEntre": materielEntre,
+            "entree": entree,
         },
     )
 
@@ -46,14 +42,14 @@ def materielEntre_detail(request, id):
 def materielEntre_add(request):
 
     if request.method == "POST":
-        form = materielEntre(request.POST)
+        form = MaterielEntreForm(request.POST)
 
         if form.is_valid():
             form.save()
             return redirect("materielEntre:materielEntre_list")
 
     else:
-        form = MaterielEntre()
+        form = MaterielEntreForm()
 
     return render(
         request,
@@ -67,17 +63,17 @@ def materielEntre_add(request):
 # ==========================
 def materielEntre_edit(request, id):
 
-    materielEntre = get_object_or_404(MaterielEntre, id=id)
+    entree = get_object_or_404(MaterielEntre, id=id)
 
     if request.method == "POST":
-        form = MaterielEntreForm(request.POST, instance=materielsort)
+        form = MaterielEntreForm(request.POST, instance=entree)
 
         if form.is_valid():
             form.save()
             return redirect("materielEntre:materielEntre_list")
 
     else:
-        form = MaterielEntreForm(instance=materielEntre)
+        form = MaterielEntreForm(instance=entree)
 
     return render(
         request,
@@ -91,14 +87,14 @@ def materielEntre_edit(request, id):
 # ==========================
 def materielEntre_delete(request, id):
 
-    materielEntre = get_object_or_404(MaterielEntre, id=id)
+    entree = get_object_or_404(MaterielEntre, id=id)
 
     if request.method == "POST":
-        materielEntre.delete()
+        entree.delete()
         return redirect("materielEntre:materielEntre_list")
 
     return render(
         request,
         "materielEntre/confirm_delete.html",
-        {"materielEntre": materielEntre},
+        {"entree": entree},
     )

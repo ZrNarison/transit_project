@@ -18,29 +18,34 @@ Informations du transport entrant
 
             <div class="col-md-8">
 
-                <p>
+                {% comment %} <p>
                     <strong>Client :</strong>
                     {{ client.id_client }}
-                </p>
+                </p> {% endcomment %}
 
                 <p>
                     <strong>Chauffeur :</strong>
-                    {{ client.Chauf_Ent|upper }}
+                    {{ client.chauffeur|title }}
+                </p>
+
+                <p>
+                    <strong>C.I.N :</strong>
+                    {{ client.cin }}
                 </p>
 
                 <p>
                     <strong>Numéro du véhicule :</strong>
-                    {{ client.NumVeh_Ent }}
+                    {{ client.num_vehicule|upper }}
                 </p>
 
                 <p>
                     <strong>Numéro de permis :</strong>
-                    {{ client.NumPermis_Ent }}
+                    {{ client.permis|upper }}
                 </p>
 
                 <p>
                     <strong>Adresse :</strong>
-                    {{ client.adresse }}
+                    {{ client.adresse|title }}
                 </p>
 
                 <p>
