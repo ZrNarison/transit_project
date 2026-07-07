@@ -11,6 +11,7 @@ class MaterielSort(models.Model):
     )
 
     demandeur = models.CharField(max_length=100)
+
     responsable_sortie = models.CharField(max_length=100)
 
     Nb_MatSort = models.DecimalField(
@@ -18,16 +19,32 @@ class MaterielSort(models.Model):
         decimal_places=0
     )
 
-    observation = models.TextField(blank=True, null=True)
+    observation = models.TextField(
+        blank=True,
+        null=True
+    )
 
-    avec_remise = models.BooleanField(default=False)
+    avec_remise = models.BooleanField(
+        default=False
+    )
 
-    dateSortie = models.DateTimeField(auto_now_add=True)
+    dateSortie = models.DateTimeField(
+        auto_now_add=True
+    )
+
 
     class Meta:
         ordering = ["-dateSortie"]
         verbose_name = "Sortie de matériel"
         verbose_name_plural = "Sorties de matériel"
 
+
     def __str__(self):
-        return f"{self.id_Materiel} - {self.Nb_MatSort}"
+
+        return (
+            f"{self.id_Materiel.nom} | "
+            f"{self.demandeur} | "
+            f"{self.id_Materiel.typeMat} | "
+            f"{self.id_Materiel.catMat} | "
+            f"Qté sortie : {self.Nb_MatSort}"
+        )

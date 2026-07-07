@@ -10,28 +10,61 @@ class MaterielSortForm(forms.ModelForm):
         fields = "__all__"
 
         widgets = {
-            "demandeur": forms.TextInput(attrs={"class": "form-control","placeholder": "Nom du demandeur"}),
-            "responsable_sortie": forms.TextInput(attrs={"class": "form-control","placeholder": "Résponsable de la sortie du matériels"}),
-            "Nb_MatSort": forms.NumberInput(attrs={"class": "form-control","placeholder": "Nombre de matériel à sortir"}),
+            "id_Materiel": forms.Select(attrs={
+                "class": "form-select"
+            }),
+
+            "demandeur": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nom du demandeur"
+            }),
+
+            "responsable_sortie": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Responsable de la sortie du matériel"
+            }),
+
+            "Nb_MatSort": forms.NumberInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nombre de matériel à sortir"
+            }),
+
             "observation": forms.Textarea(attrs={
-                "class": "form-control","placeholder": "Observations éventuelles",
+                "class": "form-control",
+                "placeholder": "Observations éventuelles",
                 "rows": 3
             }),
         }
 
+
     def __init__(self, *args, **kwargs):
+
         super().__init__(*args, **kwargs)
 
-        # un seul matériel par combinaison nom/type/catégorie
         ids = []
-
         deja_vu = set()
 
-        for m in Materiels.objects.order_by("nom", "typeMat", "catMat"):
-            cle = (m.nom, m.typeMat, m.catMat)
+        for m in Materiels.objects.order_by(
+            "nom",
+            "typeMat",
+            "catMat"
+        ):
+
+            cle = (
+                m.nom,
+                m.typeMat,
+                m.catMat
+            )
 
             if cle not in deja_vu:
                 deja_vu.add(cle)
                 ids.append(m.id)
 
-        self.fields["id_Materiel"].queryset = Materiels.objects.filter(id__in=ids)
+
+        self.fields["id_Materiel"].queryset = Materiels.objects.filter(
+            id__in=ids
+        ).order_by(
+            "nom",
+            "typeMat",
+            "catMat"
+        )

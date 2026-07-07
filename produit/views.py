@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Produit
 from .forms import ProduitForm
+from django.utils import timezone
 
 
 def produit_list(request):
@@ -8,7 +9,9 @@ def produit_list(request):
     return render(request, "produit/list.html", {"produits": produits})
 
 def valider_paiement(request):
+
     if request.method == "POST":
+
         ids = request.POST.getlist("produits")
 
         produits = Produit.objects.filter(id__in=ids)

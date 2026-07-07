@@ -14,4 +14,4 @@ class Transentrant(models.Model):
     photo = models.ImageField(upload_to='images/VehiculesEntrant/')
 
     def __str__(self):
-        return f"{self.chauffeur} - {self.num_vehicule}"
+        return f"{self.chauffeur.upper()} - {self.num_vehicule.upper()}"

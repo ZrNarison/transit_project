@@ -38,11 +38,11 @@ Liste des sorties de matériel
             <tr>
                 <td>{{ s.id }}</td>
 
-                <td>{{ s.id_Materiel.nom }}</td>
+                <td>{{ s.id_Materiel.nom |upper}}</td>
 
-                <td>{{ s.demandeur }}</td>
+                <td>{{ s.demandeur|title }}</td>
 
-                <td>{{ s.responsable_sortie }}</td>
+                <td>{{ s.responsable_sortie|title }}</td>
 
                 <td class="text-center">
                     {{ s.Nb_MatSort }}
@@ -50,7 +50,7 @@ Liste des sorties de matériel
 
                 <td>
                     {% if s.observation %}
-                        {{ s.observation }}
+                        {{ s.observation|title }}
                     {% else %}
                         -
                     {% endif %}

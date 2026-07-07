@@ -1,182 +1,402 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Liste Produits{% endblock %}
+{% block title %}
+Liste Produits
+{% endblock %}
+
 
 {% block content %}
 
-<div class=" col-md-12">
+<div class="container-fluid mt-4">
 
-    <h2 class="text-center mb-4">Liste des produits livrés</h2>
+
+    <h2 class="text-center mb-4">
+        Liste des produits livrés
+    </h2>
+
 
     <!-- ================= FILTRE ================= -->
-    <div class="container-fluid mb-3">
-        <div class="card-body">
+
+    <div class=" mb-3 shadow-sm">
+
+        <div>
 
             <form method="get">
+
                 <div class="row">
 
+
                     <div class="col-md-3 mb-2">
-                        <input type="text" name="client"
+
+                        <input type="text"
+                               name="client"
                                value="{{ request.GET.client }}"
                                class="form-control"
                                placeholder="Client">
+
                     </div>
 
+
+
                     <div class="col-md-3 mb-2">
-                        <input type="text" name="source"
+
+                        <input type="text"
+                               name="source"
                                value="{{ request.GET.source }}"
                                class="form-control"
                                placeholder="Source">
+
                     </div>
 
+
+
                     <div class="col-md-3 mb-2">
-                        <input type="text" name="vehicule"
+
+                        <input type="text"
+                               name="vehicule"
                                value="{{ request.GET.vehicule }}"
                                class="form-control"
                                placeholder="Véhicule">
+
                     </div>
 
-                    <!-- 3 BOUTONS -->
+
+
                     <div class="col-md-3 mb-2 d-flex gap-2">
+
 
                         <button class="btn btn-primary w-100">
                             Rechercher
                         </button>
 
-                        <a href="{% url 'produit:p_produit_liste' %}" class="btn btn-secondary w-100">
+
+                        <a href="{% url 'produit:p_produit_liste' %}"
+                           class="btn btn-secondary w-100">
+
                             Reset
+
                         </a>
 
-                        <a href="{% url 'produit:p_produit_add' %}" class="btn btn-success w-100">
+
+                        <a href="{% url 'produit:p_produit_add' %}"
+                           class="btn btn-success w-100">
+
                             Nouveau
+
                         </a>
+
 
                     </div>
 
+
                 </div>
+
+
             </form>
 
-            <!-- ================= BOUTON PAIEMENT (EN DEHORS DU FORM GET) ================= -->
-            <div class="mt-3 text-end">
-
-                <form method="post" action="{% url 'produit:valider_paiement' %}">
-                    {% csrf_token %}
-
-                    <button class="btn btn-success"
-                            onclick="return confirm('Valider paiement sélectionné ?')">
-                        💰 Valider paiement sélectionné
-                    </button>
-
-                </form>
-
-            </div>
 
         </div>
+
     </div>
 
-    <!-- ================= TABLE ================= -->
-    <form method="post" action="{% url 'produit:valider_paiement' %}">
+
+
+
+    <!-- ================= TABLE + PAIEMENT ================= -->
+
+
+    <form method="post"
+          action="{% url 'produit:valider_paiement' %}">
+
         {% csrf_token %}
 
-        <table class="table table-bordered table-hover">
 
-            <thead class="table-dark">
-                <tr>
-                    <th><input type="checkbox" id="checkAll"></th>
-                    <th>Client</th>
-                    <th>N°Véhicule</th>
-                    <th>Chauffeur</th>
-                    <th>Source</th>
-                    <th>Montant</th>
-                    <th>Qté</th>
-                    <th>%</th>
-                    <th>État</th>
-                    <th>Date paiement</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
 
-            <tbody>
+        <div class="text-end mb-3">
 
-            {% for produit in produits %}
 
-                <tr>
+            <button type="submit"
+                    class="btn btn-success"
+                    onclick="return confirm('Valider paiement sélectionné ?')">
 
-                    <td>
-                        {% if not produit.paye %}
+                💰 Valider paiement sélectionné
+
+            </button>
+
+
+        </div>
+
+
+
+
+
+        <div class="table-responsive">
+
+
+            <table class="table table-bordered table-hover align-middle">
+
+
+                <thead class="table-dark text-center">
+
+
+                    <tr>
+
+                        <th>
                             <input type="checkbox"
-                                   name="produits"
-                                   value="{{ produit.id }}"
-                                   class="checkItem">
-                        {% endif %}
-                    </td>
+                                   id="checkAll">
+                        </th>
 
-                    <td>
-                        {{ produit.client.nom|upper }} {{ produit.client.prenom |title}}
-                    </td>
+                        <th>Client</th>
 
-                    <td>
-                        {{ produit.vehicule.num_vehicule |upper}}
-                    </td>
+                        <th>N° Véhicule</th>
 
-                    <td>
-                        {{ produit.vehicule.chauffeur|upper }}
-                    </td>
+                        <th>Chauffeur</th>
 
-                    <td>{{ produit.source |upper}}</td>
+                        <th>Source</th>
 
-                    <td>{{ produit.montant|intcomma }}</td>
+                        <th>Montant</th>
 
-                    <td>{{ produit.quantite }}</td>
+                        <th>Qté</th>
 
-                    <td>{{ produit.pourcentage }}%</td>
+                        <th>%</th>
 
-                    <td>
+                        <th>État</th>
+
+                        <th>Date paiement</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+
+                </thead>
+
+
+
+
+                <tbody>
+
+
+                {% for produit in produits %}
+
+
+                    <tr>
+
+
+                        <td class="text-center">
+
+
+                            {% if not produit.paye %}
+
+                                <input type="checkbox"
+                                       name="produits"
+                                       value="{{ produit.id }}"
+                                       class="checkItem">
+
+                            {% else %}
+
+                                ✔
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+
+                        <td>
+
+                            {{ produit.client.nom|upper }}
+
+                            {{ produit.client.prenom|title }}
+
+                        </td>
+
+
+
+
+                        <td>
+
+                            {{ produit.vehicule.num_vehicule|upper }}
+
+                        </td>
+
+
+
+
+                        <td>
+
+                            {{ produit.vehicule.chauffeur|upper }}
+
+                        </td>
+
+
+
+
+                        <td>
+
+                            {{ produit.source|upper }}
+
+                        </td>
+
+
+
+
+                        <td class="text-end">
+
+                            {{ produit.montant|intcomma }}
+
+                        </td>
+
+
+
+
+                        <td class="text-center">
+
+                            {{ produit.quantite }}
+
+                        </td>
+
+
+
+
+                        <td class="text-center">
+
+                            {{ produit.pourcentage }} %
+
+                        </td>
+
+
+
+
+                        <td class="text-center">
+
+
+                            {% if produit.paye %}
+
+                                <span class="badge bg-success">
+
+                                    PAYÉ
+
+                                </span>
+
+
+                            {% else %}
+
+                                <span class="badge bg-warning text-dark">
+
+                                    NON PAYÉ
+
+                                </span>
+
+
+                            {% endif %}
+
+
+                        </td>
+
+
+
+
+                        <td class="text-center">
+
+
+                            {% if produit.date_paiement %}
+
+                                {{ produit.date_paiement|date:"d/m/Y H:i" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
                         {% if produit.paye %}
-                            <span class="badge bg-success">PAYÉ</span>
+
+                            <button class="btn btn-warning btn-sm" disabled title="Produit déjà payé">
+                                ✏
+                            </button>
+
+                            <button class="btn btn-danger btn-sm" disabled title="Produit déjà payé">
+                                🗑
+                            </button>
+
                         {% else %}
-                            <span class="badge bg-warning text-dark">NON PAYÉ</span>
+
+                            <a href="{% url 'produit:p_produit_edit' produit.id %}"
+                            class="btn btn-warning btn-sm">
+                                ✏
+                            </a>
+
+                            <a href="{% url 'produit:p_produit_delete' produit.id %}"
+                            class="btn btn-danger btn-sm">
+                                🗑
+                            </a>
+
                         {% endif %}
-                    </td>
 
-                    <td>
-                        {% if produit.date_paiement %}
-                            {{ produit.date_paiement|date:"d/m/Y H:i" }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
+                        </td>
 
-                    <td>
-                        <a href="{% url 'produit:p_produit_edit' produit.id %}" class="btn btn-warning btn-sm">✏</a>
-                        <a href="{% url 'produit:p_produit_delete' produit.id %}" class="btn btn-danger btn-sm">🗑</a>
-                    </td>
 
-                </tr>
+                    </tr>
 
-            {% empty %}
 
-                <tr>
-                    <td colspan="11" class="text-center">Aucun produit</td>
-                </tr>
 
-            {% endfor %}
+                {% empty %}
 
-            </tbody>
 
-        </table>
+                    <tr>
+
+                        <td colspan="11"
+                            class="text-center text-danger">
+
+                            Aucun produit
+
+                        </td>
+
+                    </tr>
+
+
+                {% endfor %}
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
 
     </form>
 
+
 </div>
 
+
+
 <script>
-document.getElementById("checkAll").addEventListener("change", function () {
-    document.querySelectorAll(".checkItem").forEach(cb => {
+
+document
+.getElementById("checkAll")
+.addEventListener("change", function(){
+
+
+    document
+    .querySelectorAll(".checkItem")
+    .forEach(cb => {
+
         cb.checked = this.checked;
+
     });
+
+
 });
+
+
 </script>
+
+
 
 {% endblock %}
