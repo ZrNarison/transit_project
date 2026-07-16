@@ -11,6 +11,25 @@ Liste Produit Entrant
     🚚 Liste des Transporteur de produits Entrants
 </h2>
 
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-md-3">
+        <label class="form-label small">Chauffeur</label>
+        <input type="text" name="chauffeur" value="{{ chauffeur }}" class="form-control" placeholder="Chauffeur">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small">N° Véhicule</label>
+        <input type="text" name="num_vehicule" value="{{ num_vehicule }}" class="form-control" placeholder="N° Véhicule">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small">Téléphone</label>
+        <input type="text" name="telephone" value="{{ telephone }}" class="form-control" placeholder="Téléphone">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100">Rechercher</button>
+        <a href="{% url 'transentrant:t_transentrant_liste' %}" class="btn btn-secondary w-100">Réinitialiser</a>
+    </div>
+</form>
+
 <div class="row">
 
     {% for item in transentrants %}

@@ -4,8 +4,24 @@ from .forms import TransentrantForm
 
 
 def t_transentrant_list(request):
-    data = Transentrant.objects.all()
-    return render(request, 'transentrant/list.html', {'transentrants': data})
+    queryset = Transentrant.objects.all()
+    chauffeur = request.GET.get('chauffeur', '').strip()
+    num_vehicule = request.GET.get('num_vehicule', '').strip()
+    telephone = request.GET.get('telephone', '').strip()
+
+    if chauffeur:
+        queryset = queryset.filter(chauffeur__icontains=chauffeur)
+    if num_vehicule:
+        queryset = queryset.filter(num_vehicule__icontains=num_vehicule)
+    if telephone:
+        queryset = queryset.filter(telephone__icontains=telephone)
+
+    return render(request, 'transentrant/list.html', {
+        'transentrants': queryset,
+        'chauffeur': chauffeur,
+        'num_vehicule': num_vehicule,
+        'telephone': telephone,
+    })
 
 
 def t_transentrant_add(request):

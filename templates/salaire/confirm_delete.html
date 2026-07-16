@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer un salaire{% endblock %}
+
+{% block content %}
+<div class="page-card text-center">
+    <h3 class="mb-3">Confirmer la suppression</h3>
+    <p class="text-muted">Êtes-vous sûr de vouloir supprimer le salaire de <strong>{{ item.personnel }}</strong> ?</p>
+    <form method="post">
+        {% csrf_token %}
+        <a href="{% url url_name %}" class="btn btn-outline-secondary me-2">Annuler</a>
+        <button type="submit" class="btn btn-danger">Supprimer</button>
+    </form>
+</div>
+{% endblock %}

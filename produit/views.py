@@ -5,8 +5,26 @@ from django.utils import timezone
 
 
 def produit_list(request):
-    produits = Produit.objects.all()
-    return render(request, "produit/list.html", {"produits": produits})
+    queryset = Produit.objects.select_related('client', 'vehicule').all()
+    client = request.GET.get('client', '').strip()
+    source = request.GET.get('source', '').strip()
+    vehicule = request.GET.get('vehicule', '').strip()
+
+    if client:
+        queryset = queryset.filter(
+            client__nom__icontains=client
+        )
+    if source:
+        queryset = queryset.filter(source__icontains=source)
+    if vehicule:
+        queryset = queryset.filter(vehicule__num_vehicule__icontains=vehicule)
+
+    return render(request, "produit/list.html", {
+        "produits": queryset,
+        "client": client,
+        "source": source,
+        "vehicule": vehicule,
+    })
 
 def valider_paiement(request):
 

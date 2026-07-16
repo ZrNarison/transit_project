@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class SalaireConfig(AppConfig):
-    name = 'Salaire'
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'salaire'

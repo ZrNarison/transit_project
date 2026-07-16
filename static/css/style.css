@@ -1,19 +1,75 @@
 body {
-    background: #f8f9fa;
+    background: linear-gradient(135deg, #f7f9fc 0%, #eef4ff 100%);
+    color: #1f2937;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Card client */
+.navbar {
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+}
+
+.navbar-brand {
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+}
+
+.page-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.empty-state {
+    padding: 24px;
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+    text-align: center;
+    color: #6b7280;
+    background: #f9fafb;
+}
+
+.btn-primary {
+    border-radius: 10px;
+    padding: 0.6rem 1rem;
+}
+
+.form-control {
+    width: 100%;
+    border-radius: 10px;
+    padding: 0.7rem 0.9rem;
+    transition: 0.2s;
+    border: 1px solid #d1d5db;
+}
+
+.form-control:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead {
+    background: #f3f6ff;
+    color: #374151;
+    font-size: 0.92rem;
+}
+
 .client-card {
     transition: .2s;
-    border-radius: 12px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
 }
 
 .client-card:hover {
-    box-shadow: 0 5px 20px rgba(0,0,0,.15);
+    box-shadow: 0 8px 22px rgba(0,0,0,.12);
     transform: translateY(-2px);
 }
 
-/* Photo */
 .photo {
     width: 160px;
     height: 120px;
@@ -21,7 +77,6 @@ body {
     border-radius: 10px;
 }
 
-/* Texte */
 .nom {
     font-size: 22px;
     font-weight: bold;
@@ -31,23 +86,6 @@ body {
     color: #6c757d;
 }
 
-/* FORMULAIRE */
-.form-control {
-    width: 100%; /* IMPORTANT Bootstrap */
-}
-
-/* Champs spécifiques */
-#id_date_naissance {
-    width: 150px;
-}
-
-#id_telephone {
-    width: 200px;
-}
-
-#id_photo {
-    width: 100%;
-}
 .dropdown-submenu {
     position: relative;
 }
@@ -58,31 +96,11 @@ body {
     margin-top: -5px;
     position: absolute;
     z-index: 999;
-    display: none; /* IMPORTANT */
+    display: none;
 }
 
 .dropdown-submenu > .dropdown-menu.show {
     display: block;
-}
-
-.form-control {
-    border-radius: 8px;
-    padding: 8px 12px;
-    transition: 0.2s;
-}
-
-.form-control:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 5px rgba(13,110,253,.3);
-}
-
-table {
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.table thead {
-    font-size: 14px;
 }
 
 #nom_client,
@@ -91,4 +109,22 @@ table {
 #id_Nb_MatSort {
     width: 20%;
     max-width: 80%;
+}
+
+.action-btn {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    margin-right: 4px;
+}
+
+.action-btn:last-child {
+    margin-right: 0;
+}
+
+.alert {
+    border-radius: 12px;
 }

@@ -7,16 +7,30 @@ from .forms import MaterielEntreForm
 # LISTE
 # ==========================
 def materielEntre_list(request):
-    entrees = MaterielEntre.objects.select_related(
-    "id_MaterielSort",
-    "id_MaterielSort__id_Materiel"
+    queryset = MaterielEntre.objects.select_related(
+        "id_MaterielSort",
+        "id_MaterielSort__id_Materiel"
     ).order_by("-dateEntre")
+
+    materiel = request.GET.get('materiel', '').strip()
+    demandeur = request.GET.get('demandeur', '').strip()
+    date = request.GET.get('date', '').strip()
+
+    if materiel:
+        queryset = queryset.filter(id_MaterielSort__id_Materiel__nom__icontains=materiel)
+    if demandeur:
+        queryset = queryset.filter(id_MaterielSort__demandeur__icontains=demandeur)
+    if date:
+        queryset = queryset.filter(dateEntre__date=date)
 
     return render(
         request,
         "materielEntre/list.html",
         {
-            "entrees": entrees,
+            "entrees": queryset,
+            "materiel": materiel,
+            "demandeur": demandeur,
+            "date": date,
         },
     )
 

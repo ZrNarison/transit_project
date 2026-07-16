@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     'materiels',
     'materielsort',
     'materielEntre',
+    'depense',
+    'depot',
+    'salaire',
 ]
 
 MIDDLEWARE = [

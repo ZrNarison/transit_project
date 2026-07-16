@@ -13,6 +13,9 @@ urlpatterns = [
     path('materiels/', include('materiels.urls')),
     path('materielsort/', include('materielsort.urls')),
     path('materielEntre/', include('materielEntre.urls')),
+    path('depense/', include(('depense.urls', 'depense'), namespace='depense')),
+    path('depot/', include(('depot.urls', 'depot'), namespace='depot')),
+    path('salaire/', include(('salaire.urls', 'salaire'), namespace='salaire')),
 ]
 
 if settings.DEBUG:

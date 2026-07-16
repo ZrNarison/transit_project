@@ -3,8 +3,16 @@ from .models import Categorie
 
 
 def categorie_liste(request):
-    categories = Categorie.objects.all()
-    return render(request, "categorie/liste.html", {"categories": categories})
+    queryset = Categorie.objects.all()
+    nom = request.GET.get('nom', '').strip()
+
+    if nom:
+        queryset = queryset.filter(nom__icontains=nom)
+
+    return render(request, "categorie/list.html", {
+        "categories": queryset,
+        "nom": nom,
+    })
 
 
 def categorie_add(request):

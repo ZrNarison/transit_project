@@ -4,9 +4,23 @@ from .forms import PersonnelForm
 
 
 def personnel_list(request):
-    personnels = Personnel.objects.all()
+    queryset = Personnel.objects.all()
+    nom = request.GET.get('nom', '').strip()
+    prenom = request.GET.get('prenom', '').strip()
+    fonction = request.GET.get('fonction', '').strip()
+
+    if nom:
+        queryset = queryset.filter(nom__icontains=nom)
+    if prenom:
+        queryset = queryset.filter(prenom__icontains=prenom)
+    if fonction:
+        queryset = queryset.filter(fonction__icontains=fonction)
+
     return render(request, 'personnel/list.html', {
-        'personnels': personnels
+        'personnels': queryset,
+        'nom': nom,
+        'prenom': prenom,
+        'fonction': fonction,
     })
 
 

@@ -6,11 +6,23 @@ from .forms import MaterielsForm
 from collections import defaultdict
 
 def materiels_list(request):
-
-    objets = Materiels.objects.prefetch_related(
+    queryset = Materiels.objects.prefetch_related(
         "sorties",
         "sorties__entrees"
     )
+
+    nom = request.GET.get('nom', '').strip()
+    typeMat = request.GET.get('typeMat', '').strip()
+    catMat = request.GET.get('catMat', '').strip()
+
+    if nom:
+        queryset = queryset.filter(nom__icontains=nom)
+    if typeMat:
+        queryset = queryset.filter(typeMat__icontains=typeMat)
+    if catMat:
+        queryset = queryset.filter(catMat__icontains=catMat)
+
+    objets = queryset
 
     groupes = defaultdict(lambda: {
         "stock_initial": 0,

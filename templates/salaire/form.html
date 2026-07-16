@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} un salaire{% endblock %}
+
+{% block content %}
+<div class="page-card">
+    <h3 class="mb-3">{{ action }} un salaire</h3>
+    <p class="text-muted">Enregistrez le montant payé et le reste à régler.</p>
+
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Personnel</label>
+                {{ form.personnel }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Montant</label>
+                {{ form.montant }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Reste</label>
+                {{ form.reste }}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-4">Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

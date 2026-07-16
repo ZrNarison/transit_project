@@ -33,18 +33,18 @@ Liste des avances
                        class="form-control">
             </div>
 
-            <div class="col-md-5">
-                <button type="submit" class="btn btn-primary">
+            <div class="col-md-5 d-flex justify-content-end align-items-end gap-2">
+                <button type="submit" class="btn btn-primary btn-sm">
                     Rechercher
                 </button>
 
                 <a href="{% url 'avances:avance_list' %}"
-                   class="btn btn-secondary">
+                   class="btn btn-secondary btn-sm">
                     Réinitialiser
                 </a>
 
                 <a href="{% url 'avances:avance_add' %}"
-                   class="btn btn-success">
+                   class="btn btn-success btn-sm">
                     Nouveau
                 </a>
             </div>

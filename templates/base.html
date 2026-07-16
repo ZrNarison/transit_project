@@ -20,6 +20,21 @@
 {% include 'navbar.html' %}
 
 <div class="container mt-4">
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="toast align-items-center text-bg-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        {{ message }}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
     {% block content %}{% endblock %}
 </div>
 
@@ -30,6 +45,15 @@
 
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'js/ap.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.forEach(function (toastEl) {
+            var toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        });
+    });
+</script>
 
 {% block extra_js %}{% endblock %}
 

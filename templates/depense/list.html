@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des dépenses{% endblock %}
+
+{% block content %}
+<div class="page-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">Liste des dépenses</h3>
+            <p class="text-muted mb-0">Suivi des sorties financières de l’entreprise.</p>
+        </div>
+        <a href="{% url 'depense:depense_add' %}" class="btn btn-primary">+ Nouvelle dépense</a>
+    </div>
+
+    <form method="get" class="row g-2 align-items-end mb-4">
+        <div class="col-md-6">
+            <label class="form-label small">Titre</label>
+            <input type="text" name="titre" value="{{ titre }}" class="form-control" placeholder="Rechercher par titre">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small">Montant</label>
+            <input type="text" name="montant" value="{{ montant }}" class="form-control" placeholder="Montant">
+        </div>
+        <div class="col-md-2 d-flex justify-content-end align-items-end gap-2">
+            <button type="submit" class="btn btn-outline-primary btn-sm">Rechercher</button>
+            <a href="{% url 'depense:depense_list' %}" class="btn btn-secondary btn-sm">Réinitialiser</a>
+        </div>
+    </form>
+
+    {% if depenses %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Titre</th>
+                    <th>Montant</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for depense in depenses %}
+                <tr>
+                    <td><strong>{{ depense.titre }}</strong></td>
+                    <td class="text-danger fw-bold">{{ depense.montant|floatformat:"-2" }} Ar</td>
+                    <td>{{ depense.date }}</td>
+                    <td>{{ depense.description|default:'Aucune description' }}</td>
+                    <td>
+                        <a href="{% url 'depense:depense_edit' depense.id %}" class="btn btn-sm btn-outline-warning action-btn" title="Modifier">✏</a>
+                        <button type="button" class="btn btn-sm btn-outline-danger action-btn" data-bs-toggle="modal" data-bs-target="#deleteDepenseModal{{ depense.id }}" title="Supprimer">🗑</button>
+                    </td>
+                </tr>
+                <div class="modal fade" id="deleteDepenseModal{{ depense.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirmer la suppression</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                            </div>
+                            <div class="modal-body">
+                                Voulez-vous vraiment supprimer la dépense <strong>{{ depense.titre }}</strong> ?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <form method="post" action="{% url 'depense:depense_delete' depense.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p class="mb-0">Aucune dépense enregistrée pour le moment.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

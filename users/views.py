@@ -3,8 +3,20 @@ from .models import AppUser
 from django.contrib.auth.hashers import make_password
 
 def users_liste(request):
-    users = AppUser.objects.all()
-    return render(request, "users/list.html", {"users": users})
+    queryset = AppUser.objects.all()
+    username = request.GET.get('username', '').strip()
+    email = request.GET.get('email', '').strip()
+
+    if username:
+        queryset = queryset.filter(username__icontains=username)
+    if email:
+        queryset = queryset.filter(email__icontains=email)
+
+    return render(request, "users/list.html", {
+        "users": queryset,
+        "username": username,
+        "email": email,
+    })
 
 
 def users_add(request):

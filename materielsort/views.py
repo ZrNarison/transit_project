@@ -39,16 +39,29 @@ def materielsort_add(request):
 # LISTE
 # ==========================
 def materielsort_list(request):
-
-    materielsorts = MaterielSort.objects.select_related(
+    queryset = MaterielSort.objects.select_related(
         "id_Materiel"
     ).order_by("-dateSortie")
+
+    materiel = request.GET.get('materiel', '').strip()
+    demandeur = request.GET.get('demandeur', '').strip()
+    date = request.GET.get('date', '').strip()
+
+    if materiel:
+        queryset = queryset.filter(id_Materiel__nom__icontains=materiel)
+    if demandeur:
+        queryset = queryset.filter(demandeur__icontains=demandeur)
+    if date:
+        queryset = queryset.filter(dateSortie__date=date)
 
     return render(
         request,
         "materielsort/list.html",
         {
-            "materielsorts": materielsorts,
+            "materielsorts": queryset,
+            "materiel": materiel,
+            "demandeur": demandeur,
+            "date": date,
         },
     )
 

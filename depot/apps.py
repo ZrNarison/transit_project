@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class DepotConfig(AppConfig):
-    name = 'Depot'
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'depot'

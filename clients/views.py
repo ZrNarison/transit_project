@@ -5,8 +5,24 @@ from .forms import ClientForm
 
 # ================= LISTE =================
 def client_list(request):
-    clients = Client.objects.all()
-    return render(request, "clients/list.html", {"clients": clients})
+    queryset = Client.objects.all()
+    nom = request.GET.get('nom', '').strip()
+    prenom = request.GET.get('prenom', '').strip()
+    contact = request.GET.get('contact', '').strip()
+
+    if nom:
+        queryset = queryset.filter(nom__icontains=nom)
+    if prenom:
+        queryset = queryset.filter(prenom__icontains=prenom)
+    if contact:
+        queryset = queryset.filter(contact__icontains=contact)
+
+    return render(request, "clients/list.html", {
+        "clients": queryset,
+        "nom": nom,
+        "prenom": prenom,
+        "contact": contact,
+    })
 
 
 # ================= AJOUT =================

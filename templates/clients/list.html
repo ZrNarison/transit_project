@@ -11,6 +11,25 @@ Liste des clients
     Liste des clients
 </h2>
 
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-md-3">
+        <label class="form-label small">Nom</label>
+        <input type="text" name="nom" value="{{ nom }}" class="form-control" placeholder="Nom">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small">Prénom</label>
+        <input type="text" name="prenom" value="{{ prenom }}" class="form-control" placeholder="Prénom">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small">Contact</label>
+        <input type="text" name="contact" value="{{ contact }}" class="form-control" placeholder="Contact">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary w-100">Rechercher</button>
+        <a href="{% url 'clients:client_list' %}" class="btn btn-secondary w-100">Réinitialiser</a>
+    </div>
+</form>
+
 <div class="row">
 
     {% for client in clients %}
