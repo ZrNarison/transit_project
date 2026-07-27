@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load money_filters %}
 
 {% block title %}Liste des dépenses{% endblock %}
 
@@ -43,7 +44,7 @@
                 {% for depense in depenses %}
                 <tr>
                     <td><strong>{{ depense.titre }}</strong></td>
-                    <td class="text-danger fw-bold">{{ depense.montant|floatformat:"-2" }} Ar</td>
+                    <td class="text-danger fw-bold">{{ depense.montant|money }} Ar</td>
                     <td>{{ depense.date }}</td>
                     <td>{{ depense.description|default:'Aucune description' }}</td>
                     <td>

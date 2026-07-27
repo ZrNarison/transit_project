@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load money_filters %}
 
 {% block title %}{{ action }} un salaire{% endblock %}
 
@@ -18,9 +19,16 @@
                 <label class="form-label">Montant</label>
                 {{ form.montant }}
             </div>
+            {% if form.instance.pk %}
+            <div class="col-md-6">
+                <label class="form-label">Reste calculé</label>
+                <input type="text" class="form-control" disabled value="{{ form.instance.reste|money }} Ar">
+            </div>
+            {% endif %}
             <div class="col-12">
-                <label class="form-label">Reste</label>
-                {{ form.reste }}
+                <div class="alert alert-secondary mt-3">
+                    Le reste est calculé automatiquement à partir des avances enregistrées pour ce personnel.
+                </div>
             </div>
         </div>
         <button type="submit" class="btn btn-primary mt-4">Enregistrer</button>

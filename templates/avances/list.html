@@ -10,7 +10,7 @@ Liste des avances
 <div class="container">
 
     <h2 class="text-center mb-4">
-        Liste des avances des clients
+        Liste des avances du personnel
     </h2>
         <div class="card-body">
     <form method="get">
@@ -19,10 +19,10 @@ Liste des avances
             <div class="col-md-4">
                 <label class="form-label">Nom ou prénom</label>
                 <input type="text"
-                       name="nom"
-                       value="{{ nom }}"
+                       name="personnel"
+                       value="{{ personnel }}"
                        class="form-control"
-                       placeholder="Nom ou prénom du client">
+                       placeholder="Nom ou prénom du personnel">
             </div>
 
             <div class="col-md-3">
@@ -61,7 +61,7 @@ Liste des avances
         <thead class="table-dark">
             <tr>
                 <th>N°</th>
-                <th>Client</th>
+                <th>Personnel</th>
                 <th>Motif</th>
                 {% comment %} <th class="text-end">Montant</th> {% endcomment %}
                 <th>Type</th>
@@ -73,7 +73,7 @@ Liste des avances
             {% for avance in avances %}
             <tr>
                 <td>{{ avance.id }}</td>
-                <td><strong>{{ avance.id_client.nom|upper }}</strong> {{ avance.id_client.prenom|title }}</td>
+                <td><strong>{{ avance.personnel.nom|upper }}</strong> {{ avance.personnel.prenom|title }}</td>
                 <td>{{ avance.motifAv|title }}</td>
                 {% comment %} <td class="text-end">
                     {{ avance.montantAv|intcomma }} Ar

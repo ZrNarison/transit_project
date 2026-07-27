@@ -19,16 +19,16 @@ def avance_add(request):
 
 # LISTE + RECHERCHE
 def avance_list(request):
-    avances = Avance.objects.select_related("id_client").all()
+    avances = Avance.objects.select_related("personnel").all()
 
-    nom = request.GET.get("nom", "").strip()
+    personnel = request.GET.get("personnel", "").strip()
     date = request.GET.get("date", "").strip()
 
     # Recherche par nom ou prénom
-    if nom:
+    if personnel:
         avances = avances.filter(
-            Q(id_client__nom__icontains=nom) |
-            Q(id_client__prenom__icontains=nom)
+            Q(personnel__nom__icontains=personnel) |
+            Q(personnel__prenom__icontains=personnel)
         )
 
     # Recherche par date
@@ -37,7 +37,7 @@ def avance_list(request):
 
     context = {
         "avances": avances,
-        "nom": nom,
+        "personnel": personnel,
         "date": date,
     }
 

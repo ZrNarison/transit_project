@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load money_filters %}
 
 {% block title %}Liste des dépôts{% endblock %}
 
@@ -43,7 +44,7 @@
                 {% for depot in depots %}
                 <tr>
                     <td><strong>{{ depot.nom }}</strong></td>
-                    <td class="text-success fw-bold">{{ depot.montant|floatformat:"-2" }} Ar</td>
+                    <td class="text-success fw-bold">{{ depot.montant|money }} Ar</td>
                     <td>{{ depot.date }}</td>
                     <td>{{ depot.description|default:'Aucune description' }}</td>
                     <td>

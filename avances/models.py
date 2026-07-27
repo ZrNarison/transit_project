@@ -1,5 +1,5 @@
 from django.db import models
-from clients.models import Client
+from personnel.models import Personnel
 
 
 class Avance(models.Model):
@@ -10,7 +10,7 @@ class Avance(models.Model):
         ('MOBILE_MONEY', 'Mobile Money'),
     ]
 
-    id_client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    personnel = models.ForeignKey(Personnel, on_delete=models.CASCADE, related_name='avances', null=True, blank=True)
     motifAv = models.CharField(max_length=255)
     montantAv = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -23,4 +23,4 @@ class Avance(models.Model):
     dateAv = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.id_client} - {self.montantAv}"
+        return f"{self.personnel} - {self.montantAv}"

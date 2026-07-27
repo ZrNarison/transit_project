@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load money_filters %}
 
 {% block title %}Liste des salaires{% endblock %}
 
@@ -43,8 +44,8 @@
                 {% for salaire in salaires %}
                 <tr>
                     <td><strong>{{ salaire.personnel }}</strong></td>
-                    <td class="fw-bold">{{ salaire.montant|floatformat:"-2" }} Ar</td>
-                    <td>{{ salaire.reste|floatformat:"-2" }} Ar</td>
+                    <td class="fw-bold">{{ salaire.montant|money }} Ar</td>
+                    <td>{{ salaire.reste|money }} Ar</td>
                     <td>{{ salaire.date }}</td>
                     <td>
                         <a href="{% url 'salaire:salaire_edit' salaire.id %}" class="btn btn-sm btn-outline-warning action-btn" title="Modifier">✏</a>

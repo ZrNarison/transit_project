@@ -8,17 +8,17 @@ from .models import Salaire
 class SalaireForm(forms.ModelForm):
     class Meta:
         model = Salaire
-        fields = ['personnel', 'montant', 'reste']
+        fields = ['personnel', 'montant']
         widgets = {
             'personnel': forms.Select(attrs={'class': 'form-select'}),
             'montant': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'reste': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['personnel'].queryset = Personnel.objects.order_by('nom', 'prenom')
-        self.fields['personnel'].required = True
+        self.fields['personnel'].required = False
+        self.fields['personnel'].empty_label = 'Journey'
 
 
 from django.db.models import Q

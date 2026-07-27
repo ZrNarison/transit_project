@@ -1,4 +1,5 @@
 from django import forms
+from personnel.models import Personnel
 from .models import Avance
 
 
@@ -6,10 +7,10 @@ class AvanceForm(forms.ModelForm):
 
     class Meta:
         model = Avance
-        fields = ['id_client', 'motifAv', 'montantAv', 'typeAv']
+        fields = ['personnel', 'motifAv', 'montantAv', 'typeAv']
 
         widgets = {
-            "id_client": forms.Select(attrs={
+            "personnel": forms.Select(attrs={
                 "class": "form-control"
             }),
 

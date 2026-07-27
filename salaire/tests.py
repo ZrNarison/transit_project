@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.test import TestCase
 from django.urls import reverse
 
+from avances.models import Avance
 from personnel.models import Personnel
 from .models import Salaire
 
@@ -28,9 +29,17 @@ class SalaireModuleTests(TestCase):
 
         response = self.client.post(
             reverse('salaire:salaire_add'),
-            {'personnel': personnel.id, 'montant': '300', 'reste': '100'},
+            {'personnel': personnel.id, 'montant': '300'},
         )
 
         self.assertEqual(response.status_code, 302)
         salaire = Salaire.objects.get(personnel=personnel)
         self.assertEqual(salaire.personnel, personnel)
+
+    def test_salaire_reste_is_calculated_from_avance(self):
+        personnel = Personnel.objects.create(nom='Rajaona', prenom='Alice', telephone='0340000000', fonction='Employé', categorie='User', photo='images/Personnel/default.png')
+        Avance.objects.create(personnel=personnel, motifAv='Avance', montantAv=Decimal('2.00'), typeAv='ESPECE')
+
+        salaire = Salaire.objects.create(personnel=personnel, montant=Decimal('10.00'))
+
+        self.assertEqual(salaire.reste, Decimal('8.00'))
