@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}
+Formulaire Client
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-3 text-center text-uppercase">
+
+        {% if form.instance.id %}
+            <span class="text-info">Modifier le client</span>
+        {% else %}
+            <span class="text-success">Ajouter un client</span>
+        {% endif %}
+
+    </h3>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+
+            <!-- LEFT -->
+            <div class="col-md-7">
+
+                <div class="mb-2">
+                    <label>Nom</label>
+                    {{ form.nom }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Prénom</label>
+                    {{ form.prenom }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Date de naissance</label>
+                    {{ form.date_naissance }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Lieu de naissance</label>
+                    {{ form.lieu_naissance }}
+                </div>
+                <div class="mb-2">
+                    <label>CIN</label>
+                    {{ form.cin }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Père</label>
+                    {{ form.nom_pere }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Mère</label>
+                    {{ form.nom_mere }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Contact</label>
+                    {{ form.contact }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Adresse</label>
+                    {{ form.adresse }}
+                </div>
+
+            </div>
+
+            <!-- RIGHT -->
+            <div class="col-md-5 text-center">
+
+                <div class="mb-3">
+                    <label>Photo</label><br>
+                    {{ form.photo }}
+                </div>
+
+                {% if form.instance.photo %}
+                    <img src="{{ form.instance.photo.url }}"
+                         class="img-thumbnail mt-2"
+                         width="200">
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <button type="submit" class="btn btn-success">
+            Enregistrer
+        </button>
+
+        <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">
+            Retour
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

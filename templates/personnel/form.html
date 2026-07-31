@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Formulaire Personnel{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-3 text-center text-uppercase">
+        {% if form.instance.id %}
+            <span class="text-info">Modifier le personnel</span>
+        {% else %}
+            <span class="text-success">Ajouter un personnel</span>
+        {% endif %}
+    </h3>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+
+            <div class="col-md-6">
+
+                <div class="mb-2">
+                    <label>Nom</label>
+                    {{ form.nom }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Prénom</label>
+                    {{ form.prenom }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Adresse</label>
+                    {{ form.adresse }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Téléphone</label>
+                    {{ form.telephone }}
+                </div>
+                <div class="mb-2">
+                    <label>Fonction</label>
+                    {{ form.fonction }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Catégorie</label>
+                    {{ form.categorie }}
+                </div>
+
+            </div>
+
+            <div class="col-md-4 text-center">
+
+                <div class="mb-3">
+                    <label>Photo</label><br>
+                    {{ form.photo }}
+                </div>
+
+                {% if form.instance.photo %}
+                    <img src="{{ form.instance.photo.url }}"
+                         class="img-thumbnail mt-2"
+                         width="200">
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <button type="submit" class="btn btn-success">
+            Enregistrer
+        </button>
+
+        <a href="{% url 'personnel:personnel_list' %}" class="btn btn-secondary">
+            Retour
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

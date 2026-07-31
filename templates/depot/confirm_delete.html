@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}
+Supprimer un dépôt
+{% endblock %}
+{% block content %}
+<div class="page-card text-center">
+<h3 class="mb-3">Confirmer la suppression</h3>
+
+<p class="text-muted">Êtes-vous sûr de vouloir supprimer ce dépôt ?<br><br> Déposant : <strong>{{ depot.deposant }}</strong>
+
+    <br>Montant :
+    <strong>{{ depot.montantG }} Ar</strong>
+</p>
+<form method="post">
+    {% csrf_token %}
+    <a href="{% url 'depot:depot_list' %}" class="btn btn-outline-secondary me-2"> Annuler</a>
+    <button type="submit" class="btn btn-danger">Supprimer</button>
+</form>
+</div>
+
+
+{% endblock %}

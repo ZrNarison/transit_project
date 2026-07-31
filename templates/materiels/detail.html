@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}
+Détail matériel
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <div class="card-header bg-dark text-white">
+            <h4>Détail du matériel</h4>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6">
+
+                    <p><strong>Nom :</strong> {{ nom|upper }}</p>
+
+                    <p><strong>Type :</strong> {{ typeMat|title }}</p>
+
+                    <p><strong>Catégorie :</strong> {{ catMat|upper }}</p>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <p><strong>Stock initial :</strong> {{ stock_initial }}</p>
+
+                    <p class="text-danger">
+                        <strong>Sorties :</strong> {{ stock_sortie }}
+                    </p>
+
+                    <p class="text-success">
+                        <strong>Entrées :</strong> {{ stock_entree }}
+                    </p>
+
+                    <p>
+                        <strong>Stock restant :</strong>
+
+                        {% if stock_restant > 0 %}
+                            <span class="badge bg-success">
+                                {{ stock_restant }}
+                            </span>
+                        {% elif stock_restant == 0 %}
+                            <span class="badge bg-warning text-dark">
+                                {{ stock_restant }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                {{ stock_restant }}
+                            </span>
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <h5 class="text-danger">
+                Historique des sorties
+            </h5>
+
+            <table class="table table-bordered table-striped">
+
+                <thead class="table-danger">
+
+                    <tr>
+                        <th>Date</th>
+                        <th>Demandeur</th>
+                        <th>Responsable</th>
+                        <th>Quantité</th>
+                        <th>Observation</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for s in sorties %}
+
+                    <tr>
+
+                        <td>{{ s.dateSortie|date:"d/m/Y H:i" }}</td>
+
+                        <td>{{ s.demandeur|title }}</td>
+
+                        <td>{{ s.responsable_sortie|title }}</td>
+
+                        <td class="text-end text-danger">
+                            {{ s.Nb_MatSort }}
+                        </td>
+
+                        <td>{{ s.observation|title }}</td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            Aucune sortie.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+            <hr>
+
+            <h5 class="text-success">
+                Historique des entrées (Remises)
+            </h5>
+
+            <table class="table table-bordered table-striped">
+
+                <thead class="table-success">
+
+                    <tr>
+                        <th>Date</th>
+                        <th>Responsable</th>
+                        <th>Quantité</th>
+                        <th>Observation</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for e in entrees %}
+
+                    <tr>
+
+                        <td>{{ e.dateEntre|date:"d/m/Y H:i" }}</td>
+
+                        <td>{{ e.responsable_entree }}</td>
+
+                        <td class="text-end text-success">
+                            {{ e.Nb_Entre }}
+                        </td>
+
+                        <td>{{ e.observation }}</td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="4" class="text-center">
+                            Aucune entrée.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+            <a href="{% url 'materiels:materiels_list' %}"
+               class="btn btn-secondary">
+                Retour
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Liste des dépôts
+{% endblock %}
+
+{% block content %}
+
+<div class="page-card">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <h3>Liste des dépôts</h3>
+        <a href="{% url 'depot:depot_add' %}" class="btn btn-primary">+ Nouveau dépôt</a>
+    </div>
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label class="form-label">Personnel</label>
+            <select name="personnel" class="form-select">
+                <option value="">Tous</option>
+                {% for p in personnels %}
+                    <option value="{{ p.id }}"
+                        {% if personnel == p.id|stringformat:"s" %}
+                            selected
+                        {% endif %}>
+                        {{ p }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Date début</label>
+            <input type="date" name="date_debut" value="{{ date_debut }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Date fin</label>
+            <input type="date" name="date_fin" value="{{ date_fin }}" class="form-control">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">Filtrer</button>
+            <a href="{% url 'depot:depot_list' %}" class="btn btn-secondary">Réinitialiser</a>
+        </div>
+    </form>
+    <div class="alert alert-info">
+        <strong>Total des montants :</strong>
+        <span class="fs-5">{{ total_montant|floatformat:0 }} Ar</span>
+        <div class="float-end">
+            <strong>Montants :</strong>
+            <span class="fs-5">{{ total_personnel|floatformat:0}} Ar</span> 
+        </div>
+    </div>
+    <table class="table table-hover table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Déposant</th>
+                <th>Montant global</th>
+                <th>Distributions</th>
+                <th>Reste</th>
+                <th>Date</th>
+                <th width="170">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for depot in depots %}
+            <tr>
+                <td><strong>{{ depot.deposant }}</strong></td>
+                <td class="text-success fw-bold">{{ depot.montantG|floatformat:0 }} Ar</td>
+                <td>
+                    {% for d in depot.distributions.all %}
+                    <div>
+                        <strong>{{ d.distributeur }}</strong>:
+                        {{ d.montant|floatformat:0}} Ar
+                    </div>
+                    {% empty %}
+                        <span class="text-muted">
+                            Aucune distribution
+                        </span>
+                    {% endfor %}
+                </td>
+                <td class="text-danger fw-bold">{{ depot.reste|floatformat:0 }} Ar</td>
+                <td>{{ depot.date|date:"d/m/Y" }}</td>
+                <td>
+                    <a href="{% url 'depot:depot_edit' depot.id %}" class="btn btn-warning btn-sm">✏ </a>
+                    <form method="post" action="{% url 'depot:depot_delete' depot.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Supprimer ce dépôt ?');">🗑</button>
+                    </form>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">Aucun dépôt trouvé.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

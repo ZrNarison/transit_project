@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}
+Informations du client
+{% endblock %}
+
+{% block content %}
+<h3 class="mb-4">
+    Informations du client
+</h3>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <p>
+                    <strong>Nom :</strong> 
+                    {{ client.nom|upper }} {{ client.prenom|title }}
+                </p>
+                <p>
+                    <strong>Date de naissance :</strong>
+                    {{ client.date_naissance|date:"d/m/Y" }}
+                </p>
+                <p>
+                    <strong>Lieu de naissance :</strong>
+                    {{ client.lieu_naissance|title }}
+                </p>
+                <p>
+                    <strong>CIN :</strong>
+                    {{ client.cin }}
+                </p>
+                <p>
+                    <strong>Père :</strong>
+                    {{ client.nom_pere|default:"P.I"|title }}
+                </p>
+                <p>
+                    <strong>Mère :</strong>
+                    {{ client.nom_mere|default:"P.I"|title }}
+                </p>
+                <p>
+                    <strong>Adresse :</strong>
+                    {{ client.adresse|upper }}
+                </p>
+                <p>
+                    <strong>Téléphone :</strong>
+                    {{ client.contact }}
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                {% if client.photo %}
+                    <div class="text-center">
+                        <img src="{{ client.photo.url }}"
+                            class="img-thumbnail shadow rounded-circle"
+                            style="width: 220px; height: 220px; object-fit: cover;">
+                    </div>
+                {% else %}
+                    <div class="alert alert-secondary text-center">
+                        Aucune photo
+                    </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card-footer">
+
+        <a href="{% url 'clients:client_edit' client.id %}" class="btn btn-warning">
+            Modifier
+        </a>
+
+        <a href="{% url 'clients:client_delete' client.id %}" class="btn btn-danger">
+            Supprimer
+        </a>
+
+        <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">
+            Retour
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

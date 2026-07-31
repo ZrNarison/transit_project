@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}
+Sortie de matériel
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-3 text-center text-uppercase">
+
+        {% if form.instance.id %}
+            <span class="text-info">Modifier sortie matériel</span>
+        {% else %}
+            <span class="text-success">Ajouter sortie matériel</span>
+        {% endif %}
+
+    </h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="row">
+
+            <!-- GAUCHE -->
+            <div class="col-md-6">
+
+                <div class="mb-2">
+                    <label>Matériel</label>
+                    {{ form.id_Materiel }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Demandeur</label>
+                    {{ form.demandeur }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Responsable de sortie</label>
+                    {{ form.responsable_sortie }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Quantité sortie</label>
+                    {{ form.Nb_MatSort }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Observation (raison)</label>
+                    {{ form.observation }}
+                </div>
+
+            </div>
+
+            <!-- DROITE -->
+            <div class="col-md-4 text-center">
+
+                <div class="mb-3">
+                    <label>Date de sortie</label><br>
+                    <small class="text-muted">Automatique</small>
+                </div>
+
+                {% if form.instance.dateSortie %}
+                    <div class="alert alert-info mt-2">
+                        {{ form.instance.dateSortie|date:"d/m/Y H:i" }}
+                    </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <button type="submit" class="btn btn-success">
+            Enregistrer
+        </button>
+
+        <a href="{% url 'materielsort:materielsort_list' %}" class="btn btn-secondary">
+            Retour
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

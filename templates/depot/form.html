@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}
+{{ action }} dépôt
+{% endblock %}
+
+{% block content %}
+
+<div class="page-card">
+    <h3 class="mb-4">{{ action }} un dépôt</h3>
+    <form method="post">
+    {% csrf_token %}
+    <!-- Erreurs  -->
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            {{ form.errors }}
+        </div>
+    {% endif %}
+
+    <!-- Erreurs format -->
+
+    {% if formset.errors %}
+        <div class="alert alert-danger">
+            {{ formset.errors }}
+        </div>
+
+    {% endif %}
+
+    <h5>Informations dépôt</h5>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Déposant</label>
+            <input type="text" class="form-control" value="{{ form.instance.deposant|default:'BANK' }}" readonly>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Montant global</label>
+            {{ form.montantG }}
+        </div>
+    </div>
+    <hr>
+    <h5>Distribution de l'argent</h5>
+    {{ formset.management_form }}
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th width="45%">Distributeur</th>
+                <th width="35%">Montant reçu</th>
+                <th width="20%">Supprimer</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in formset %}
+            <tr>
+                <td>
+                    {{ f.id }}{{ f.distributeur }}{% if f.distributeur.errors %}
+                    <div class="text-danger">{{ f.distributeur.errors }}</div>
+                    {% endif %}
+                </td>
+                <td>
+                    {{ f.montant }}{% if f.montant.errors %}
+                        <div class="text-danger">{{ f.montant.errors }}</div>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    {% if f.instance.pk %}{{ f.DELETE }}
+                        <label>Supprimer</label>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary"> <i class="fa fa-save"></i>Enregistrer</button>
+        <a href="{% url 'depot:depot_list' %}" class="btn btn-secondary"> Annuler</a>
+    </div>
+    </form>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}
+Formulaire Entrée Matériel
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow-sm p-4">
+
+        <h3 class="text-center mb-4 text-uppercase">
+
+            {% if form.instance.id %}
+                <span class="text-info">Modifier une entrée matériel</span>
+            {% else %}
+                <span class="text-success">Ajouter une entrée matériel</span>
+            {% endif %}
+
+        </h3>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="row">
+
+                <!-- GAUCHE -->
+                <div class="col-md-6">
+
+                    <!-- SORTIE LIÉE -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Sortie liée (MaterielSort)
+                        </label>
+                        {{ form.id_MaterielSort }}
+                        {% if form.id_MaterielSort.errors %}
+                            <div class="text-danger">
+                                {{ form.id_MaterielSort.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- QUANTITÉ -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Quantité entrée
+                        </label>
+                        {{ form.Nb_Entre }}
+                        {% if form.Nb_Entre.errors %}
+                            <div class="text-danger">
+                                {{ form.Nb_Entre.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- OBSERVATION -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Observation (optionnel)
+                        </label>
+                        {{ form.observation }}
+                        {% if form.observation.errors %}
+                            <div class="text-danger">
+                                {{ form.observation.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <!-- DROITE -->
+                <div class="col-md-6">
+
+                    <div class="mb-3">
+                        <label class="form-label">Date entrée</label>
+                        <input type="text" class="form-control" value="Auto (système)" disabled>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>Info :</strong><br>
+                        Cette entrée est liée à une sortie existante du stock.
+                    </div>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <!-- BUTTONS -->
+            <div class="d-flex justify-content-between">
+
+                <a href="{% url 'materielEntre:materielEntre_list' %}"
+                   class="btn btn-secondary">
+                    ← Retour
+                </a>
+
+                <button type="submit" class="btn btn-success">
+                    💾 Enregistrer
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

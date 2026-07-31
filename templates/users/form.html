@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}
+Formulaire Avance
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-3 text-center text-uppercase">
+        {% if form.instance.id %}
+            <span class="text-info">Modifier une avance</span>
+        {% else %}
+            <span class="text-success">Ajouter une avance</span>
+        {% endif %}
+    </h3>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                {{ form.errors }}
+            </div>
+        {% endif %}
+
+        <div class="row">
+
+            <!-- COLONNE PRINCIPALE -->
+            <div class="col-md-6">
+
+                <div class="mb-2">
+                    <label>Client</label>
+                    {{ form.id_client }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Motif</label>
+                    {{ form.motifAv }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Montant</label>
+                    {{ form.montantAv }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Type d'avance</label>
+                    {{ form.typeAv }}
+                </div>
+
+            </div>
+
+            <!-- COLONNE RESUME -->
+            <div class="col-md-4 text-center">
+
+                <div class="card p-3 bg-light shadow-sm">
+                    <h5 class="text-center">Résumé</h5>
+                    <hr>
+
+                    <p>
+                        <strong>Client :</strong><br>
+                        {{ form.id_client.value }}
+                    </p>
+
+                    <p>
+                        <strong>Montant :</strong><br>
+                        {{ form.montantAv.value }}
+                    </p>
+
+                    <p>
+                        <strong>Type :</strong><br>
+                        {{ form.typeAv.value }}
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <button type="submit" class="btn btn-success">
+            Enregistrer
+        </button>
+
+        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">
+            Retour
+        </a>
+
+    </form>
+
+</div>
+{% endblock %}

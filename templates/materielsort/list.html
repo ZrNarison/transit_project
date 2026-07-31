@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}
+Liste des sorties de matériel
+{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h3 class="text-center text-uppercase mb-4">
+        Sorties de matériel
+    </h3>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'materielsort:materielsort_add' %}" class="btn btn-success">+ Nouvelle sortie</a>
+    </div>
+
+    <form method="get" class="row g-2 align-items-end mb-4">
+        <div class="col-md-4">
+            <label class="form-label small">Matériel</label>
+            <input type="text" name="materiel" value="{{ materiel }}" class="form-control" placeholder="Nom du matériel">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small">Demandeur</label>
+            <input type="text" name="demandeur" value="{{ demandeur }}" class="form-control" placeholder="Demandeur">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small">Date</label>
+            <input type="date" name="date" value="{{ date }}" class="form-control">
+        </div>
+    </form>
+
+    <table class="table table-bordered table-striped table-hover">
+
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Matériel</th>
+                <th>Demandeur</th>
+                <th>Responsable</th>
+                <th>Quantité</th>
+                <th>Observation</th>
+                <th>Date sortie</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+        {% for s in materielsorts %}
+
+            <tr>
+                <td>{{ s.id }}</td>
+
+                <td>{{ s.id_Materiel.nom |upper}}</td>
+
+                <td>{{ s.demandeur|title }}</td>
+
+                <td>{{ s.responsable_sortie|title }}</td>
+
+                <td class="text-center">
+                    {{ s.Nb_MatSort }}
+                </td>
+
+                <td>
+                    {% if s.observation %}
+                        {{ s.observation|title }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+
+                <td class="text-center">
+                    {{ s.dateSortie|date:"d/m/Y H:i" }}
+                </td>
+
+                <td class="text-center">
+
+                    <a href="{% url 'materielsort:materielsort_edit' s.id %}"
+                       class="btn btn-warning btn-sm">
+                        ✏
+                    </a>
+
+                    <a href="{% url 'materielsort:materielsort_delete' s.id %}"
+                       class="btn btn-danger btn-sm">
+                        🗑
+                    </a>
+
+                </td>
+
+            </tr>
+
+        {% empty %}
+
+            <tr>
+                <td colspan="8" class="text-center">
+                    Aucune sortie enregistrée
+                </td>
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

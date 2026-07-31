@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Détail avance
+{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-4">Informations de l'avance</h3>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <p><strong>Client :</strong>{{ avance.id_client.nom|upper }}{{ avance.id_client.prenom|title }}</p>
+                <p><strong>Motif :</strong>{{ avance.motifAv|title }}</p>
+                <p><strong>Montant :</strong>{{ avance.montantAv|intcomma }} Ar</p>
+                <p><strong>Type :</strong>{{ avance.get_typeAv_display }}</p>
+                <p><strong>Date :</strong>{{ avance.dateAv|date:"d/m/Y" }}</p>
+            </div>
+            <div class="col-md-4 text-center">
+                {% if avance.id_client.photo %}
+                    <img src="{{ avance.id_client.photo.url }}" alt="{{ avance.id_client.nom }}" class="img-thumbnail shadow" style="width:120px;height:120px;object-fit:cover;">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'avances:avance_edit' avance.id %}" class="btn btn-warning">Modifier</a>
+        <a href="{% url 'avances:avance_delete' avance.id %}" class="btn btn-danger">Supprimer</a>
+        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">Retour</a>
+    </div>
+</div>
+{% endblock %}

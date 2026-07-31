@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}
+Formulaire Matériel
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-3 text-center text-uppercase">
+
+        {% if form.instance.id %}
+            <span class="text-info">Modifier matériel</span>
+        {% else %}
+            <span class="text-success">Ajouter matériel</span>
+        {% endif %}
+
+    </h3>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row">
+
+            <!-- COLONNE GAUCHE -->
+            <div class="col-md-6">
+
+                <div class="mb-2">
+                    <label>Nom du matériel</label>
+                    {{ form.nom }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Type matériel</label>
+                    {{ form.typeMat }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Catégorie matériel</label>
+                    {{ form.catMat }}
+                </div>
+
+                <div class="mb-2">
+                    <label>Stock initial</label>
+                    {{ form.stock_initial }}
+                </div>
+
+            </div>
+
+            <!-- COLONNE DROITE -->
+            <div class="col-md-4 text-center">
+
+                <div class="mb-3">
+                    <label>Date de dépôt</label><br>
+                    <small class="text-muted">
+                        Automatique (auto_now_add)
+                    </small>
+                </div>
+
+                {% if form.instance.dateDepot %}
+                    <div class="alert alert-info mt-2">
+                        {{ form.instance.dateDepot|date:"d/m/Y H:i" }}
+                    </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <button type="submit" class="btn btn-success">
+            Enregistrer
+        </button>
+
+        <a href="{% url 'materiels:materiels_list' %}" class="btn btn-secondary">
+            Retour
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

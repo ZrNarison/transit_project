@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}
+Confirmation suppression
+{% endblock %}
+
+{% block content %}
+
+<h3 class="text-danger">Confirmation suppression</h3>
+
+<p>
+    Voulez-vous vraiment supprimer cette avance de :
+    <strong>{{ avance.motifAv|title }} </strong>
+    de
+    <strong>{{ avance.personnel.nom|upper }} {{ avance.personnel.prenom|title }} </strong>
+    du
+    <strong>
+        {{ avance.dateAv|date:"d/m/Y H:i" }}
+    </strong>
+    dont la somme est 
+    <strong>
+        {{ avance.montantAv}}
+    </strong>
+    ?
+</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    <button type="submit" class="btn btn-danger">
+        Oui, supprimer
+    </button>
+
+    <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">
+        Annuler
+    </a>
+</form>
+
+{% endblock %}
