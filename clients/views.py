@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.core.paginator import Paginator
 from .models import Client
 from .forms import ClientForm
 
@@ -17,8 +18,16 @@ def client_list(request):
     if contact:
         queryset = queryset.filter(contact__icontains=contact)
 
+    paginator = Paginator(queryset, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+
     return render(request, "clients/list.html", {
-        "clients": queryset,
+        "clients": page_obj.object_list,
+        "page_obj": page_obj,
+        "query_params": query_params.urlencode(),
         "nom": nom,
         "prenom": prenom,
         "contact": contact,

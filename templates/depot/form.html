@@ -18,12 +18,68 @@
                 <label class="form-label">Montant</label>
                 {{ form.montant }}
             </div>
+            <div class="col-md-6">
+                <label class="form-label">Personnel 1</label>
+                {{ form.personnel_1 }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Personnel 2</label>
+                {{ form.personnel_2 }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Part personnel 1</label>
+                {{ form.part_1 }}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Part personnel 2</label>
+                {{ form.part_2 }}
+            </div>
             <div class="col-12">
                 <label class="form-label">Description</label>
                 {{ form.description }}
             </div>
         </div>
-        <button type="submit" class="btn btn-primary mt-4">Enregistrer</button>
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'depot:depot_list' %}" class="btn btn-secondary">Annuler</a>
+        </div>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const personnel1 = document.getElementById('id_personnel_1');
+        const personnel2 = document.getElementById('id_personnel_2');
+
+        if (!personnel1 || !personnel2) {
+            return;
+        }
+
+        const allPersonnel2Options = Array.from(personnel2.options);
+
+        function refreshPersonnel2Options() {
+            const selectedPersonnel1 = personnel1.value;
+            const currentValue = personnel2.value;
+
+            personnel2.innerHTML = '';
+
+            allPersonnel2Options.forEach(function (option) {
+                if (!option.value || option.value !== selectedPersonnel1) {
+                    personnel2.appendChild(option.cloneNode(true));
+                }
+            });
+
+            if (currentValue && Array.from(personnel2.options).some(function (option) {
+                return option.value === currentValue;
+            })) {
+                personnel2.value = currentValue;
+            } else {
+                personnel2.value = '';
+            }
+        }
+
+        personnel1.addEventListener('change', refreshPersonnel2Options);
+        refreshPersonnel2Options();
+    });
+</script>
 {% endblock %}

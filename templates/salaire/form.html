@@ -31,7 +31,10 @@
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary mt-4">Enregistrer</button>
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+            <a href="{% url 'salaire:salaire_list' %}" class="btn btn-secondary">Annuler</a>
+        </div>
     </form>
 </div>
 {% endblock %}

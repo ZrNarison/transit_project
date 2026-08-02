@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.core.paginator import Paginator
 from .models import Categorie
 
 
@@ -9,8 +10,16 @@ def categorie_liste(request):
     if nom:
         queryset = queryset.filter(nom__icontains=nom)
 
+    paginator = Paginator(queryset, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+
     return render(request, "categorie/list.html", {
-        "categories": queryset,
+        "categories": page_obj.object_list,
+        "page_obj": page_obj,
+        "query_params": query_params.urlencode(),
         "nom": nom,
     })
 

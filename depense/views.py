@@ -1,46 +1,9 @@
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
-from django import forms
+
+from .forms import DepenseForm
 from .models import Depense
-from depot.models import Depot
-
-
-class DepenseForm(forms.ModelForm):
-    class Meta:
-        model = Depense
-        fields = ['titre', 'depot', 'montant', 'description']
-        widgets = {
-            'titre': forms.TextInput(attrs={'class': 'form-control'}),
-            'depot': forms.Select(attrs={'class': 'form-select'}),
-            'montant': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['depot'].queryset = Depot.objects.order_by('nom')
-        self.fields['depot'].required = True
-
-    def clean(self):
-        cleaned = super().clean()
-        depot = cleaned.get('depot')
-        montant = cleaned.get('montant')
-        if depot and montant is not None:
-            from django.db.models import Sum
-            qs = Depense.objects.filter(depot=depot)
-            if self.instance and self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
-            total = qs.aggregate(total=Sum('montant'))['total'] or 0
-            remaining = depot.montant - total
-            if montant > remaining:
-                # Simple, clear message showing only remaining available amount
-                try:
-                    remaining_display = f"{int(remaining):,}"
-                except Exception:
-                    remaining_display = str(remaining)
-                msg = f"Dépense disponible est de {remaining_display} Ar"
-                self.add_error('montant', msg)
-        return cleaned
 
 
 def depense_list(request):
@@ -53,8 +16,12 @@ def depense_list(request):
     if montant:
         queryset = queryset.filter(montant__icontains=montant)
 
-    depenses = queryset
-    return render(request, 'depense/list.html', {'depenses': depenses, 'titre': titre, 'montant': montant})
+    paginator = Paginator(queryset, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+    return render(request, 'depense/list.html', {'depenses': page_obj.object_list, 'page_obj': page_obj, 'query_params': query_params.urlencode(), 'titre': titre, 'montant': montant})
 
 
 def depense_add(request):
@@ -94,10 +61,15 @@ def depense_edit(request, id):
 
 
 def depense_delete(request, id):
-    depense = get_object_or_404(Depense, id=id)
+    depense = Depense.objects.filter(id=id).first()
+    if depense is None:
+        messages.warning(request, 'Cette dépense n’existe plus.')
+        return redirect('depense:depense_list')
+
     if request.method == 'POST':
         depense.delete()
         messages.success(request, 'Dépense supprimée avec succès.')
         return redirect('depense:depense_list')
+
     messages.info(request, 'Veuillez confirmer la suppression depuis la liste.')
     return redirect('depense:depense_list')

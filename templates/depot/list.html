@@ -14,17 +14,17 @@
     </div>
 
     <form method="get" class="row g-2 align-items-end mb-4">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label class="form-label small">Nom</label>
             <input type="text" name="nom" value="{{ nom }}" class="form-control" placeholder="Nom du dépôt">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label class="form-label small">Montant</label>
             <input type="text" name="montant" value="{{ montant }}" class="form-control" placeholder="Montant">
         </div>
-        <div class="col-md-2 d-flex justify-content-end align-items-end gap-2">
-            <button type="submit" class="btn btn-outline-primary btn-sm">Rechercher</button>
-            <a href="{% url 'depot:depot_list' %}" class="btn btn-secondary btn-sm">Réinitialiser</a>
+        <div class="col-md-5 d-flex justify-content-end align-items-end gap-2">
+            <button type="submit" class="btn btn-outline-primary btn-sm px-3">Rechercher</button>
+            <a href="{% url 'depot:depot_list' %}" class="btn btn-secondary btn-sm px-3">Réinitialiser</a>
         </div>
     </form>
 
@@ -35,6 +35,7 @@
                 <tr>
                     <th>Nom</th>
                     <th>Montant</th>
+                    <th>Répartition</th>
                     <th>Date</th>
                     <th>Description</th>
                     <th>Actions</th>
@@ -45,6 +46,18 @@
                 <tr>
                     <td><strong>{{ depot.nom }}</strong></td>
                     <td class="text-success fw-bold">{{ depot.montant|money }} Ar</td>
+                    <td>
+                        {% if depot.personnel_1 and depot.personnel_2 and depot.part_1 and depot.part_2 and depot.part_1 > 0 and depot.part_2 > 0 %}
+                            {{ depot.personnel_1 }} : {{ depot.montant_reparti_1|money }} Ar<br>
+                            {{ depot.personnel_2 }} : {{ depot.montant_reparti_2|money }} Ar
+                        {% elif depot.personnel_1 and depot.part_1 and depot.part_1 > 0 and depot.personnel_2 is None %}
+                            {{ depot.personnel_1 }} : {{ depot.montant|money }} Ar
+                        {% elif depot.personnel_2 and depot.part_2 and depot.part_2 > 0 and depot.personnel_1 is None %}
+                            {{ depot.personnel_2 }} : {{ depot.montant|money }} Ar
+                        {% else %}
+                            <span class="text-muted">Sans répartition</span>
+                        {% endif %}
+                    </td>
                     <td>{{ depot.date }}</td>
                     <td>{{ depot.description|default:'Aucune description' }}</td>
                     <td>
@@ -77,6 +90,23 @@
             </tbody>
         </table>
     </div>
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4" aria-label="Pagination des dépôts">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if nom %}&nom={{ nom }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">Précédent</a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if nom %}&nom={{ nom }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if nom %}&nom={{ nom }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">Suivant</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
     {% else %}
     <div class="empty-state">
         <p class="mb-0">Aucun dépôt enregistré pour le moment.</p>

@@ -35,8 +35,10 @@ def salaire_list(request):
         )
     if montant:
         queryset = queryset.filter(montant__icontains=montant)
-    salaires = queryset
-    return render(request, 'salaire/list.html', {'salaires': salaires, 'personnel': personnel, 'montant': montant})
+    paginator = Paginator(queryset, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'salaire/list.html', {'salaires': page_obj.object_list, 'page_obj': page_obj, 'personnel': personnel, 'montant': montant})
 
 
 def salaire_add(request):
