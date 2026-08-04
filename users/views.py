@@ -1,70 +1,94 @@
 from django.shortcuts import (
     render,
-    get_object_or_404,
-    redirect
+    redirect,
+    get_object_or_404
 )
 
 from django.contrib import messages
+
 from django.contrib.auth.hashers import (
     make_password,
     check_password
 )
 
+from django.core.paginator import Paginator
+
 from .models import AppUser
 from .forms import UserForm
-from .decorators import role_required
 
 
-# ==========================
+
+# ==================================================
 # LOGIN
-# ==========================
+# ==================================================
+
 def users_login(request):
 
     if request.method == "POST":
 
-        username = request.POST.get("username")
-        password = request.POST.get("password")
+        username = request.POST.get(
+            "username"
+        )
+
+        password = request.POST.get(
+            "password"
+        )
+
 
         try:
 
-            user = AppUser.objects.select_related(
-                "personnel"
-            ).get(
-                username=username
+            user = (
+                AppUser.objects
+                .select_related("personnel")
+                .get(
+                    username=username
+                )
             )
-            if check_password(password, user.password):
+
+
+            if check_password(
+                password,
+                user.password
+            ):
+
+
                 request.session["user_id"] = user.id
-                request.session["username"] = user.username
-            
-                request.session["role"] = user.role
 
-                if user.photo:
+                request.session["username"] = (
+                    user.username
+                )
 
-                    request.session["photo"] = (
-                        user.photo.url
-                    )
+                request.session["role"] = (
+                    user.role
+                )
 
-                else:
 
-                    request.session["photo"] = None
+                request.session["photo"] = (
+                    user.photo.url
+                    if user.photo
+                    else None
+                )
+
 
                 return redirect("/")
 
 
-            else:
 
-                messages.error(
-                    request,
-                    "Mot de passe incorrect."
-                )
+            messages.error(
+                request,
+                "Mot de passe incorrect."
+            )
+
 
 
         except AppUser.DoesNotExist:
 
+
             messages.error(
                 request,
-                "Nom d'utilisateur introuvable."
+                "Utilisateur introuvable."
             )
+
 
 
     return render(
@@ -72,9 +96,13 @@ def users_login(request):
         "users/login.html"
     )
 
-# ==========================
-# DECONNEXION
-# ==========================
+
+
+
+
+# ==================================================
+# LOGOUT
+# ==================================================
 
 def users_logout(request):
 
@@ -88,14 +116,21 @@ def users_logout(request):
 
 
 
-# ==========================
-# LISTE
-# ==========================
-def users_liste(request):
+# ==================================================
+# LISTE UTILISATEURS
+# ==================================================
 
-    queryset = AppUser.objects.select_related(
-        "personnel"
-    ).all()
+def users_list(request):
+
+    queryset = (
+        AppUser.objects
+        .select_related(
+            "personnel"
+        )
+        .order_by(
+            "username"
+        )
+    )
 
 
     username = request.GET.get(
@@ -118,6 +153,7 @@ def users_liste(request):
         )
 
 
+
     if email:
 
         queryset = queryset.filter(
@@ -126,11 +162,23 @@ def users_liste(request):
 
 
 
+    paginator = Paginator(
+        queryset,
+        10
+    )
+
+
+    page_obj = paginator.get_page(
+        request.GET.get("page")
+    )
+
+
     return render(
         request,
         "users/list.html",
         {
-            "users": queryset,
+            "users": page_obj,
+            "page_obj": page_obj,
             "username": username,
             "email": email,
         }
@@ -140,103 +188,25 @@ def users_liste(request):
 
 
 
-# ==========================
-# AJOUT
-# ==========================
+# ==================================================
+# AJOUT UTILISATEUR
+# ==================================================
 
 def users_add(request):
+
+
     if request.method == "POST":
+
+
         form = UserForm(
             request.POST,
             request.FILES
         )
 
 
-        if form.is_valid():
-
-            user = form.save(
-                commit=False
-            )
-
-
-            user.password = make_password(
-                form.cleaned_data["password"]
-            )
-
-
-            user.save()
-
-
-            messages.success(
-                request,
-                "Utilisateur ajouté avec succès."
-            )
-
-
-            return redirect(
-                "users:users_liste"
-            )
-
-
-    else:
-
-        form = UserForm()
-
-
-    return render(
-        request,
-        "users/form.html",
-        {
-            "form": form
-        }
-    )
-
-# ==========================
-# DETAIL
-# ==========================
-def users_detail(request, id):
-
-    user = get_object_or_404(
-        AppUser,
-        id=id
-    )
-
-
-    return render(
-        request,
-        "users/detail.html",
-        {
-            "user": user
-        }
-    )
-
-
-
-
-
-# ==========================
-# MODIFICATION
-# ==========================
-def users_edit(request, id):
-
-    user = get_object_or_404(
-        AppUser,
-        id=id
-    )
-
-
-
-    if request.method == "POST":
-
-        form = UserForm(
-            request.POST,
-            request.FILES,
-            instance=user
-        )
-
-
 
         if form.is_valid():
+
 
             user = form.save(
                 commit=False
@@ -261,12 +231,137 @@ def users_edit(request, id):
 
             messages.success(
                 request,
+                "Utilisateur ajouté avec succès."
+            )
+
+
+            return redirect(
+                "users:users_list"
+            )
+
+
+
+    else:
+
+        form = UserForm()
+
+
+
+    return render(
+        request,
+        "users/form.html",
+        {
+            "form": form,
+            "action": "Ajouter"
+        }
+    )
+
+
+
+
+
+# ==================================================
+# DETAIL
+# ==================================================
+
+def users_detail(request, id):
+
+    user = get_object_or_404(
+        AppUser,
+        id=id
+    )
+
+
+    return render(
+        request,
+        "users/detail.html",
+        {
+            "user": user
+        }
+    )
+
+
+
+
+
+# ==================================================
+# MODIFICATION
+# ==================================================
+
+def users_edit(request, id):
+
+    user = get_object_or_404(
+        AppUser,
+        id=id
+    )
+
+
+    if request.method == "POST":
+
+
+        form = UserForm(
+            request.POST,
+            request.FILES,
+            instance=user
+        )
+
+
+        if form.is_valid():
+
+
+            user = form.save(
+                commit=False
+            )
+
+
+            password = form.cleaned_data.get(
+                "password"
+            )
+
+
+            if password:
+
+                user.password = make_password(
+                    password
+                )
+
+
+            user.save()
+
+
+
+            # Mise à jour session utilisateur connecté
+
+            if request.session.get(
+                "user_id"
+            ) == user.id:
+
+
+                request.session["username"] = (
+                    user.username
+                )
+
+                request.session["role"] = (
+                    user.role
+                )
+
+
+                request.session["photo"] = (
+                    user.photo.url
+                    if user.photo
+                    else None
+                )
+
+
+
+            messages.success(
+                request,
                 "Utilisateur modifié avec succès."
             )
 
 
             return redirect(
-                "users:users_liste"
+                "users:users_list"
             )
 
 
@@ -283,7 +378,8 @@ def users_edit(request, id):
         request,
         "users/form.html",
         {
-            "form": form
+            "form": form,
+            "action": "Modifier"
         }
     )
 
@@ -291,9 +387,9 @@ def users_edit(request, id):
 
 
 
-# ==========================
+# ==================================================
 # SUPPRESSION
-# ==========================
+# ==================================================
 
 def users_delete(request, id):
 
@@ -305,17 +401,18 @@ def users_delete(request, id):
 
     if request.method == "POST":
 
+
         user.delete()
 
 
         messages.success(
             request,
-            "Utilisateur supprimé."
+            "Utilisateur supprimé avec succès."
         )
 
 
         return redirect(
-            "users:users_liste"
+            "users:users_list"
         )
 
 
@@ -328,9 +425,14 @@ def users_delete(request, id):
         }
     )
 
-# ==========================
+
+
+
+
+# ==================================================
 # CHANGER PHOTO
-# ==========================
+# ==================================================
+
 def change_photo(request, id):
 
     user = get_object_or_404(
@@ -341,16 +443,32 @@ def change_photo(request, id):
 
     if request.method == "POST":
 
-        photo = request.FILES.get("photo")
+
+        photo = request.FILES.get(
+            "photo"
+        )
+
+
         if photo:
+
+
             user.photo = photo
+
             user.save()
 
 
-            if request.session.get("user_id") == user.id:
 
-                request.session["photo"] = user.photo.url
+            if request.session.get(
+                "user_id"
+            ) == user.id:
+
+
+                request.session["photo"] = (
+                    user.photo.url
+                )
+
                 request.session.modified = True
+
 
 
             messages.success(
@@ -365,6 +483,7 @@ def change_photo(request, id):
             )
 
 
+
     return render(
         request,
         "users/change_photo.html",
@@ -372,9 +491,15 @@ def change_photo(request, id):
             "user": user
         }
     )
-# ==========================
+
+
+
+
+
+# ==================================================
 # CHANGER USERNAME
-# =========================
+# ==================================================
+
 def change_username(request, id):
 
     user = get_object_or_404(
@@ -383,14 +508,30 @@ def change_username(request, id):
     )
 
 
+
     if request.method == "POST":
+
 
         username = request.POST.get(
             "username"
-        )
+        ).strip()
 
 
-        if username:
+
+        if AppUser.objects.filter(
+            username=username
+        ).exclude(
+            id=id
+        ).exists():
+
+
+            messages.error(
+                request,
+                "Ce nom utilisateur existe déjà."
+            )
+
+
+        else:
 
 
             user.username = username
@@ -399,10 +540,14 @@ def change_username(request, id):
 
 
 
-            if request.session.get("user_id") == user.id:
+            if request.session.get(
+                "user_id"
+            ) == user.id:
 
-                request.session["username"] = username
 
+                request.session["username"] = (
+                    username
+                )
 
 
             messages.success(
@@ -430,9 +575,9 @@ def change_username(request, id):
 
 
 
-# ==========================
+# ==================================================
 # CHANGER MOT DE PASSE
-# ==========================
+# ==================================================
 
 def change_password(request, id):
 
@@ -440,6 +585,7 @@ def change_password(request, id):
         AppUser,
         id=id
     )
+
 
 
     if request.method == "POST":
@@ -456,7 +602,17 @@ def change_password(request, id):
 
 
 
-        if password == confirmation:
+        if password != confirmation:
+
+
+            messages.error(
+                request,
+                "Les mots de passe ne correspondent pas."
+            )
+
+
+
+        else:
 
 
             user.password = make_password(
@@ -470,23 +626,13 @@ def change_password(request, id):
 
             messages.success(
                 request,
-                "Mot de passe modifié."
+                "Mot de passe modifié avec succès."
             )
 
 
             return redirect(
                 "users:users_detail",
                 id=id
-            )
-
-
-
-        else:
-
-
-            messages.error(
-                request,
-                "Les mots de passe ne correspondent pas."
             )
 
 

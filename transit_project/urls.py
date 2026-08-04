@@ -20,6 +20,5 @@ urlpatterns = [
     path('categorie/', include(('categorie.urls', 'categorie'), namespace='categorie')),
 ]
 
-
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,4 +1,5 @@
 from django import forms
+
 from .models import Personnel
 from categorie.models import Categorie
 
@@ -7,6 +8,7 @@ class PersonnelForm(forms.ModelForm):
 
     class Meta:
         model = Personnel
+
         fields = [
             "nom",
             "prenom",
@@ -47,8 +49,8 @@ class PersonnelForm(forms.ModelForm):
             "telephone": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "0340100001",
                     "maxlength": "10",
+                    "placeholder": "0340100001",
                     "pattern": "[0-9]{10}",
                 }
             ),
@@ -63,8 +65,8 @@ class PersonnelForm(forms.ModelForm):
             "psalaire": forms.NumberInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Salaire",
                     "step": "0.01",
+                    "placeholder": "Salaire",
                 }
             ),
 
@@ -88,47 +90,40 @@ class PersonnelForm(forms.ModelForm):
             ),
         }
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Liste déroulante des catégories
         self.fields["categorie"].queryset = (
             Categorie.objects.all().order_by("nom")
         )
 
-        # Tous les champs en Bootstrap
         for field in self.fields.values():
-            field.widget.attrs.update({
-                "class": "form-control"
-            })
-
+            field.widget.attrs.setdefault(
+                "class",
+                "form-control"
+            )
 
     def clean_nom(self):
         nom = self.cleaned_data.get("nom")
-        if nom:
-            return nom.upper()
-        return nom
-
+        return nom.upper() if nom else nom
 
     def clean_prenom(self):
         prenom = self.cleaned_data.get("prenom")
-        if prenom:
-            return prenom.title()
-        return prenom
-
+        return prenom.title() if prenom else prenom
 
     def clean_telephone(self):
         telephone = self.cleaned_data.get("telephone")
 
-        if telephone and not telephone.isdigit():
-            raise forms.ValidationError(
-                "Le téléphone doit contenir uniquement des chiffres."
-            )
+        if telephone:
 
-        if telephone and len(telephone) != 10:
-            raise forms.ValidationError(
-                "Le numéro doit contenir exactement 10 chiffres."
-            )
+            if not telephone.isdigit():
+                raise forms.ValidationError(
+                    "Le téléphone doit contenir uniquement des chiffres."
+                )
+
+            if len(telephone) != 10:
+                raise forms.ValidationError(
+                    "Le numéro doit contenir exactement 10 chiffres."
+                )
 
         return telephone

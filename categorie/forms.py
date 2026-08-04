@@ -5,11 +5,14 @@ from .models import Categorie
 class CategorieForm(forms.ModelForm):
 
     class Meta:
+
         model = Categorie
+
         fields = [
             "nom",
             "description"
         ]
+
 
         widgets = {
 
@@ -20,6 +23,7 @@ class CategorieForm(forms.ModelForm):
                 }
             ),
 
+
             "description": forms.Textarea(
                 attrs={
                     "class": "form-control",
@@ -28,4 +32,5 @@ class CategorieForm(forms.ModelForm):
                     "style": "resize:none;"
                 }
             ),
+
         }

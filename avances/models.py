@@ -1,4 +1,5 @@
 from django.db import models
+
 from personnel.models import Personnel
 from clients.models import Client
 from users.models import AppUser
@@ -7,25 +8,37 @@ from users.models import AppUser
 class Avance(models.Model):
 
     TYPE_AVANCE = [
-        ('ESPECE', 'Espèce'),
-        ('CHEQUE', 'Chèque'),
-        ('MOBILE_MONEY', 'Mobile Money'),
+        ("ESPECE", "Espèce"),
+        ("CHEQUE", "Chèque"),
+        ("MOBILE_MONEY", "Mobile Money"),
     ]
 
 
+    # Bénéficiaire personnel
     personnel = models.ForeignKey(
         Personnel,
         on_delete=models.CASCADE,
-        related_name='avances',
+        related_name="avances",
         null=True,
         blank=True
     )
 
 
+    # Bénéficiaire client
     client = models.ForeignKey(
         Client,
         on_delete=models.CASCADE,
-        related_name='avances',
+        related_name="avances",
+        null=True,
+        blank=True
+    )
+
+
+    # Distribution concernée
+    distribution = models.ForeignKey(
+        "depot.Distribution",
+        on_delete=models.CASCADE,
+        related_name="avances",
         null=True,
         blank=True
     )
@@ -41,19 +54,11 @@ class Avance(models.Model):
         decimal_places=0
     )
 
-    distribution = models.ForeignKey(
-    "depot.Distribution",
-    on_delete=models.CASCADE,
-    related_name="avances",
-    null=True,
-    blank=True
-)
-
 
     typeAv = models.CharField(
         max_length=20,
         choices=TYPE_AVANCE,
-        default='ESPECE'
+        default="ESPECE"
     )
 
 
@@ -63,19 +68,28 @@ class Avance(models.Model):
 
 
     enregistre_par = models.ForeignKey(
-    AppUser,
-    on_delete=models.SET_NULL,
-    null=True,
-    blank=True,
-    related_name="avances_enregistrees"
-)
+        AppUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="avances_enregistrees"
+    )
+
 
     def __str__(self):
 
         if self.personnel:
-            return f"{self.personnel} - {self.montantAv} Ar"
+            return (
+                f"{self.personnel.nom} "
+                f"{self.personnel.prenom} - "
+                f"{self.montantAv} Ar"
+            )
 
         if self.client:
-            return f"{self.client} - {self.montantAv} Ar"
+            return (
+                f"{self.client.nom} "
+                f"{self.client.prenom} - "
+                f"{self.montantAv} Ar"
+            )
 
         return f"Avance {self.montantAv} Ar"

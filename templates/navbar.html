@@ -1,60 +1,171 @@
 {% if request.session.user_id %}
+
 <div class="text-white">
     ROLE SESSION = {{ request.session.role }}
 </div>
+
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+
     <div class="container-fluid px-4">
-        <a class="navbar-brand fw-bold" href="/">🚚 Transit ERP</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+        <a class="navbar-brand fw-bold" href="/">
+            🚚 Transit ERP
+        </a>
+
+
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+
             <span class="navbar-toggler-icon"></span>
+
         </button>
+
+
         <div class="collapse navbar-collapse" id="navbarNav">
+
+
             <ul class="navbar-nav me-auto">
+
+
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'produit:p_produit_liste' %}">📦 Produit</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">👥 Personnes</a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'clients:client_list' %}">Client</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'personnel:personnel_list' %}">Personnel</a>
-                        </li>
-                        {% if request.session.role != "User" %}
-                        <li>
-                            <a class="dropdown-item" href="{% url 'categorie:categorie_liste' %}">Classement</a>
-                        </li>
-                        {% endif %}
-                        {% if request.session.role == "Admin" %}
-                        <li>
-                            <a class="dropdown-item" href="{% url 'users:users_liste' %}">Utilisateurs</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">💰 Finance</a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="{% url 'avances:avance_list' %}">Avances</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'depense:depense_list' %}">Dépenses</a>
-                        </li>
-                        {% if request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                        <li>
-                            <a class="dropdown-item" href="{% url 'depot:depot_list' %}">Banque</a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{% url 'salaire:salaire_list' %}">Salaire</a>
-                        </li>
-                        {% endif %}
-                    </ul>
+                    <a class="nav-link"
+                       href="{% url 'produit:p_produit_liste' %}">
+                        📦 Produit
+                    </a>
                 </li>
 
-                <!-- MATERIELS -->
+
+
+                <!-- PERSONNES -->
+
+                <li class="nav-item dropdown">
+
+                    <a class="nav-link dropdown-toggle"
+                       href="#"
+                       data-bs-toggle="dropdown">
+
+                        👥 Personnes
+
+                    </a>
+
+
+                    <ul class="dropdown-menu">
+
+
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'clients:client_list' %}">
+                                Client
+                            </a>
+                        </li>
+
+
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'personnel:personnel_list' %}">
+                                Personnel
+                            </a>
+                        </li>
+
+
+                        {% if request.session.role != "User" %}
+
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'categorie:categorie_liste' %}">
+                                Classement
+                            </a>
+                        </li>
+
+                        {% endif %}
+
+
+
+                        {% if request.session.role == "Admin" %}
+
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'users:users_list' %}">
+                                Utilisateurs
+                            </a>
+                        </li>
+
+                        {% endif %}
+
+
+                    </ul>
+
+                </li>
+
+
+
+
+                <!-- FINANCE -->
+
+                <li class="nav-item dropdown">
+
+                    <a class="nav-link dropdown-toggle"
+                       href="#"
+                       data-bs-toggle="dropdown">
+
+                        💰 Finance
+
+                    </a>
+
+
+                    <ul class="dropdown-menu">
+
+
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'avances:avance_list' %}">
+                                Avances
+                            </a>
+                        </li>
+
+
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'depense:depense_list' %}">
+                                Dépenses
+                            </a>
+                        </li>
+
+
+                        {% if request.session.role == "Admin" or request.session.role == "Superviseur" %}
+
+
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'depot:depot_list' %}">
+                                Banque
+                            </a>
+                        </li>
+
+
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'salaire:salaire_list' %}">
+                                Salaire
+                            </a>
+                        </li>
+
+
+                        {% endif %}
+
+
+                    </ul>
+
+
+                </li>
+
+
+
+
+
+                <!-- MATERIEL -->
 
 
                 <li class="nav-item dropdown">
@@ -69,7 +180,6 @@
                     </a>
 
 
-
                     <ul class="dropdown-menu">
 
 
@@ -81,14 +191,12 @@
                         </li>
 
 
-
                         <li>
                             <a class="dropdown-item"
                                href="{% url 'materielEntre:materielEntre_list' %}">
                                 Entrée matériel
                             </a>
                         </li>
-
 
 
                         <li>
@@ -108,17 +216,43 @@
 
 
 
+                <!-- VEHICULE -->
 
                 <!-- VEHICULE -->
 
-                <li class="nav-item">
+                <li class="nav-item dropdown">
 
-                    <a class="nav-link"
-                       href="{% url 'transentrant:t_transentrant_liste' %}">
+
+                    <a class="nav-link dropdown-toggle"
+                    href="#"
+                    data-bs-toggle="dropdown">
 
                         🚛 Véhicules
 
                     </a>
+
+
+                    <ul class="dropdown-menu">
+
+
+                        <li>
+                            <a class="dropdown-item"
+                            href="{% url 'transentrant:t_transentrant_liste' %}">
+                                Entrant
+                            </a>
+                        </li>
+
+
+                        <li>
+                            <a class="dropdown-item"
+                            href="#">
+                                Sortant
+                            </a>
+                        </li>
+
+
+                    </ul>
+
 
                 </li>
 
@@ -129,9 +263,7 @@
 
 
 
-
-
-            <!-- PROFIL UTILISATEUR -->
+            <!-- PROFIL -->
 
             <ul class="navbar-nav ms-auto">
 
@@ -144,7 +276,6 @@
                        data-bs-toggle="dropdown">
 
 
-
                         {% if request.session.photo %}
 
                         <img src="{{ request.session.photo }}"
@@ -154,62 +285,48 @@
                              style="object-fit:cover;">
 
                         {% endif %}
+
+
                         {{ request.session.username|title }}
+
+
                     </a>
+
+
+
                     <ul class="dropdown-menu dropdown-menu-end">
+
+
                         <li>
                             <a class="dropdown-item"
                                href="{% url 'users:users_detail' request.session.user_id %}">
-
                                 👤 Mon profil
-
                             </a>
-
                         </li>
 
 
-
-
                         <li>
-
                             <a class="dropdown-item"
                                href="{% url 'users:change_photo' request.session.user_id %}">
-
                                 📷 Changer photo
-
                             </a>
-
                         </li>
 
 
-
-
                         <li>
-
                             <a class="dropdown-item"
                                href="{% url 'users:change_username' request.session.user_id %}">
-
                                 ✏️ Modifier utilisateur
-
                             </a>
-
                         </li>
-
-
 
 
                         <li>
-
                             <a class="dropdown-item"
                                href="{% url 'users:change_password' request.session.user_id %}">
-
                                 🔑 Modifier mot de passe
-
                             </a>
-
                         </li>
-
-
 
 
                         <li>
@@ -217,22 +334,15 @@
                         </li>
 
 
-
-
                         <li>
-
                             <a class="dropdown-item text-danger"
                                href="{% url 'users:logout' %}">
-
                                 🚪 Déconnexion
-
                             </a>
-
                         </li>
 
 
                     </ul>
-
 
 
                 </li>
@@ -241,12 +351,9 @@
             </ul>
 
 
-
         </div>
 
-
     </div>
-
 
 </nav>
 

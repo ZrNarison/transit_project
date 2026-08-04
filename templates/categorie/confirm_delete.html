@@ -8,73 +8,112 @@ Suppression catégorie
 
 
 
+
 {% block content %}
+
+
 
 
 <div class="container mt-4">
 
 
+
     <div class="card shadow">
+
 
 
         <div class="card-header bg-danger text-white">
 
+
             Confirmation suppression
 
+
         </div>
+
+
+
 
 
 
         <div class="card-body">
 
 
+
             <h5>
+
                 Voulez-vous supprimer cette catégorie ?
+
             </h5>
+
+
 
 
             <p class="text-danger fw-bold">
 
+
                 {{ categorie.nom }}
+
 
             </p>
 
 
 
+
+
+
             <form method="post">
 
+
                 {% csrf_token %}
+
 
 
 
                 <button type="submit"
                         class="btn btn-danger">
 
+
                     🗑 Oui supprimer
 
+
                 </button>
+
+
+
 
 
 
                 <a href="{% url 'categorie:categorie_liste' %}"
                    class="btn btn-secondary">
 
+
                     Annuler
 
+
                 </a>
+
+
 
 
             </form>
 
 
 
+
         </div>
+
+
 
 
     </div>
 
 
+
+
 </div>
+
+
+
 
 
 {% endblock %}

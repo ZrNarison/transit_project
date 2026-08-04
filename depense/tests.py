@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from django.test import TestCase
 from django.urls import reverse
-
+from depot.models import Depot
+from .forms import DepenseForm
 from .models import Depense
 
 
@@ -19,3 +20,18 @@ class DepenseModuleTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context['depenses']), [depense])
+
+
+    def test_depense_validation_uses_total_available_amount_across_all_depots(self):
+        depot_1 = Depot.objects.create(nom='Dépôt 1', montant=Decimal('5.00'))
+        Depot.objects.create(nom='Dépôt 2', montant=Decimal('6.00'))
+        Depot.objects.create(nom='Dépôt 3', montant=Decimal('4.00'))
+
+        form = DepenseForm(data={
+            'titre': 'Achat',
+            'depot': depot_1.id,
+            'montant': '6.00',
+            'description': 'Test',
+        })
+
+        self.assertTrue(form.is_valid(), form.errors)

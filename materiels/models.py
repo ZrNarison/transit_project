@@ -8,6 +8,12 @@ class Materiels(models.Model):
     typeMat = models.CharField(max_length=100)
 
     catMat = models.CharField(max_length=100)
+    
+    photo = models.ImageField(
+            upload_to="images/materiaux/",
+            blank=True,
+            null=True
+        )
 
     stock_initial = models.DecimalField(
         max_digits=10,

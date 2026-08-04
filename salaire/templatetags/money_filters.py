@@ -36,6 +36,7 @@ def money(value):
     except Exception:
         return value
 
+    d = d.quantize(Decimal('0.01'))
     # Normalize decimal to plain string without exponent
     s = format(d.normalize(), 'f')
     if s.startswith('-'):

@@ -5,6 +5,7 @@ from .models import Depense
 class DepenseForm(forms.ModelForm):
 
     class Meta:
+
         model = Depense
 
         fields = [
@@ -17,20 +18,21 @@ class DepenseForm(forms.ModelForm):
 
             "titre": forms.TextInput(
                 attrs={
-                    "class":"form-control"
+                    "class": "form-control"
                 }
             ),
 
             "montant": forms.NumberInput(
                 attrs={
-                    "class":"form-control"
+                    "class": "form-control",
+                    "step": "1"
                 }
             ),
 
             "description": forms.Textarea(
                 attrs={
-                    "class":"form-control",
-                    "rows":3
+                    "class": "form-control",
+                    "rows": 3
                 }
             ),
         }

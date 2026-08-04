@@ -4,141 +4,386 @@
 Liste des matériels
 {% endblock %}
 
+
 {% block content %}
 
 <div class="container mt-4">
 
+
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">
-            Liste des matériels
-        </h2>
-        <a href="{% url 'materiels:materiels_add' %}" class="btn btn-primary">Nouveau matériel</a>
+
+        <div>
+            <h2 class="mb-1">
+                Liste des matériels
+            </h2>
+
+            <p class="text-muted mb-0">
+                Gestion du stock des matériels.
+            </p>
+        </div>
+
+
+        <a href="{% url 'materiels:materiels_add' %}"
+           class="btn btn-primary">
+
+            + Nouveau matériel
+
+        </a>
+
     </div>
 
-    <form method="get" class="row g-2 align-items-end mb-4">
+
+
+
+    <!-- Recherche -->
+
+    <form method="get"
+          class="row g-2 align-items-end mb-4">
+
+
         <div class="col-md-4">
-            <label class="form-label small">Nom</label>
-            <input type="text" name="nom" value="{{ nom }}" class="form-control" placeholder="Nom du matériel">
+
+            <label class="form-label small">
+                Nom
+            </label>
+
+            <input type="text"
+                   name="nom"
+                   value="{{ nom }}"
+                   class="form-control"
+                   placeholder="Nom matériel">
+
         </div>
+
+
+
         <div class="col-md-4">
-            <label class="form-label small">Type</label>
-            <input type="text" name="typeMat" value="{{ typeMat }}" class="form-control" placeholder="Type">
+
+            <label class="form-label small">
+                Type
+            </label>
+
+            <input type="text"
+                   name="typeMat"
+                   value="{{ typeMat }}"
+                   class="form-control"
+                   placeholder="Type matériel">
+
         </div>
+
+
+
         <div class="col-md-4">
-            <label class="form-label small">Catégorie</label>
-            <input type="text" name="catMat" value="{{ catMat }}" class="form-control" placeholder="Catégorie">
+
+            <label class="form-label small">
+                Catégorie
+            </label>
+
+            <input type="text"
+                   name="catMat"
+                   value="{{ catMat }}"
+                   class="form-control"
+                   placeholder="Catégorie">
+
         </div>
+
+
+
+        <div class="col-md-12 mt-2">
+
+
+            <button type="submit"
+                    class="btn btn-primary">
+
+                🔍 Rechercher
+
+            </button>
+
+
+            <a href="{% url 'materiels:materiels_list' %}"
+               class="btn btn-secondary">
+
+                Réinitialiser
+
+            </a>
+
+
+        </div>
+
+
     </form>
+
+
+
+
+
+    <!-- Tableau -->
 
     <div class="table-responsive">
 
+
         <table class="table table-bordered table-hover table-striped align-middle">
+
 
             <thead class="table-dark text-center">
 
+
                 <tr>
-                    <th>N°</th>
-                    <th>Nom</th>
-                    <th>Type</th>
-                    <th>Catégorie</th>
-                    <th>Stock initial</th>
-                    <th>Sorties</th>
-                    <th>Entrées</th>
-                    <th>Stock restant</th>
-                    <th>Actions</th>
+
+                    <th>
+                        N°
+                    </th>
+                    <th>
+                        Photo
+                    </th>
+
+
+                    <th>
+                        Nom
+                    </th>
+
+
+                    <th>
+                        Type
+                    </th>
+
+
+                    <th>
+                        Catégorie
+                    </th>
+
+
+                    <th>
+                        Stock initial
+                    </th>
+
+
+                    <th>
+                        Sorties
+                    </th>
+
+
+                    <th>
+                        Entrées
+                    </th>
+
+
+                    <th>
+                        Stock restant
+                    </th>
+
+
+                    <th>
+                        Actions
+                    </th>
+
+
                 </tr>
+
 
             </thead>
 
+
+
+
+
             <tbody>
+
 
             {% for m in materiels %}
 
+
                 <tr>
+
 
                     <td class="text-center">
                         {{ forloop.counter }}
                     </td>
 
-                    <td>{{ m.nom|upper }}</td>
+                    <td class="text-center">
 
-                    <td>{{ m.typeMat|title }}</td>
+        {% if m.photo %}
 
-                    <td>{{ m.catMat|title }}</td>
+            <img src="{{ m.photo.url }}"
+                 alt="{{ m.nom }}"
+                 class="img-thumbnail"
+                 width="70"
+                 height="70">
+
+        {% else %}
+
+            <span class="text-muted">
+                Aucune photo
+            </span>
+
+        {% endif %}
+
+    </td>
+
+                    <td>
+                        {{ m.nom|upper }}
+                    </td>
+
+
+
+                    <td>
+                        {{ m.typeMat|title }}
+                    </td>
+
+
+
+                    <td>
+                        {{ m.catMat|title }}
+                    </td>
+
+
 
                     <td class="text-end">
+
                         {{ m.stock_initial }}
+
                     </td>
+
+
 
                     <td class="text-end text-danger fw-bold">
+
                         {{ m.stock_sorti }}
+
                     </td>
+
+
 
                     <td class="text-end text-success fw-bold">
+
                         {{ m.stock_entre }}
-                    </td>
-
-                    <td class="text-end">
-
-                        {% if m.stock_restant > 0 %}
-                            <span class="badge bg-success">
-                                {{ m.stock_restant }}
-                            </span>
-
-                        {% elif m.stock_restant == 0 %}
-                            <span class="badge bg-warning text-dark">
-                                {{ m.stock_restant }}
-                            </span>
-
-                        {% else %}
-                            <span class="badge bg-danger">
-                                {{ m.stock_restant }}
-                            </span>
-                        {% endif %}
 
                     </td>
+
+
+
 
                     <td class="text-center">
 
-                        <a href="{% url 'materiels:materiels_detail' m.nom m.typeMat m.catMat %}"
-                           class="btn btn-info btn-sm">
-                            👁
-                        </a>
+
+                        {% if m.stock_restant > 0 %}
+
+                            <span class="badge bg-success">
+
+                                {{ m.stock_restant }}
+
+                            </span>
+
+
+                        {% elif m.stock_restant == 0 %}
+
+                            <span class="badge bg-warning text-dark">
+
+                                {{ m.stock_restant }}
+
+                            </span>
+
+
+                        {% else %}
+
+                            <span class="badge bg-danger">
+
+                                {{ m.stock_restant }}
+
+                            </span>
+
+
+                        {% endif %}
+
+
 
                     </td>
 
+
+
+
+
+                    <td class="text-center">
+
+
+                        <a href="{% url 'materiels:materiels_detail' m.nom m.typeMat m.catMat %}"
+                           class="btn btn-info btn-sm"
+                           title="Voir détail">
+
+                            👁
+
+                        </a>
+
+
+                    </td>
+
+
+
                 </tr>
+
 
             {% empty %}
 
+
                 <tr>
-                    <td colspan="9" class="text-center text-danger">
+
+                    <td colspan="9"
+                        class="text-center text-danger">
+
                         Aucun matériel enregistré.
+
                     </td>
+
                 </tr>
+
 
             {% endfor %}
 
+
+
             </tbody>
+
+
+
+
 
             <tfoot class="table-secondary">
 
+
                 <tr>
-                    <th colspan="4" class="text-end">
-                        Total articles
+
+
+                    <th colspan="8"
+                        class="text-end">
+
+                        Total matériels :
+
                     </th>
 
-                    <th colspan="5" class="text-start">
+
+
+                    <th class="text-center">
+
                         {{ materiels|length }}
+
                     </th>
+
+
                 </tr>
+
 
             </tfoot>
 
+
+
         </table>
+
 
     </div>
 
+
+
 </div>
+
 
 {% endblock %}

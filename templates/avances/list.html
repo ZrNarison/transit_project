@@ -5,28 +5,85 @@
 Liste des avances
 {% endblock %}
 
+
 {% block content %}
 
 <div class="container-fluid mt-4">
-    <h2 class="text-center mb-4">Liste des avances</h2>
+
+    <h2 class="text-center mb-4">
+        Liste des avances
+    </h2>
+
+
+    <!-- ================= FILTRE ================= -->
+
     <div class="card shadow-sm mb-3">
+
         <div class="card-body">
+
             <form method="get">
+
                 <div class="row align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label">Nom ou prénom</label>
-                        <input type="text" name="personnel" value="{{ personnel }}" class="form-control" placeholder="Personnel ou Client">
+
+
+                    <div class="col-md-4 mb-2">
+
+                        <label class="form-label">
+                            Nom ou prénom
+                        </label>
+
+                        <input type="text"
+                               name="personnel"
+                               value="{{ personnel }}"
+                               class="form-control"
+                               placeholder="Personnel ou Client">
+
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Date</label>
-                        <input type="date" name="date" value="{{ date }}" class="form-control">
+
+
+
+                    <div class="col-md-3 mb-2">
+
+                        <label class="form-label">
+                            Date
+                        </label>
+
+                        <input type="date"
+                               name="date"
+                               value="{{ date }}"
+                               class="form-control">
+
                     </div>
-                    <div class="col-md-5 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">🔎 Rechercher</button>
-                        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">Reset</a>
+
+
+
+                    <div class="col-md-5 mb-2 d-flex gap-2">
+
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            🔎 Rechercher
+                        </button>
+
+
+
+                        <a href="{% url 'avances:avance_list' %}"
+                           class="btn btn-secondary">
+                            Reset
+                        </a>
+
+
+
                         {% if request.session.role == "User" %}
-                        <a href="{% url 'avances:avance_add' %}" class="btn btn-success"> + Nouveau</a>
+
+                        <a href="{% url 'avances:avance_add' %}"
+                           class="btn btn-success">
+                            + Nouveau
+                        </a>
+
                         {% endif %}
+
+
                     </div>
 
 
@@ -35,10 +92,14 @@ Liste des avances
 
             </form>
 
+
         </div>
 
     </div>
 
+
+
+    <!-- ================= INFORMATION ================= -->
 
 
     <div class="mb-3">
@@ -52,9 +113,11 @@ Liste des avances
 
 
 
-    <!-- Tableau -->
+    <!-- ================= TABLEAU ================= -->
+
 
     <div class="table-responsive">
+
 
         <table class="table table-bordered table-striped table-hover align-middle">
 
@@ -69,7 +132,7 @@ Liste des avances
 
                     <th>Motif</th>
 
-                    <th class="text-end">
+                    <th>
                         Montant
                     </th>
 
@@ -77,8 +140,13 @@ Liste des avances
                         Type
                     </th>
 
-                    <th>Date</th>
-                    <th>Enregistré par</th>
+                    <th>
+                        Date
+                    </th>
+
+                    <th>
+                        Enregistré par
+                    </th>
 
                     <th width="220">
                         Actions
@@ -95,6 +163,7 @@ Liste des avances
 
             {% for avance in avances %}
 
+
                 <tr>
 
 
@@ -104,12 +173,14 @@ Liste des avances
 
 
 
-                    <!-- Personnel ou Client -->
+                    <!-- BENEFICIAIRE -->
+
 
                     <td>
 
 
                         {% if avance.personnel %}
+
 
                             <strong>
                                 {{ avance.personnel.nom|upper }}
@@ -117,11 +188,14 @@ Liste des avances
 
                             {{ avance.personnel.prenom|title }}
 
+
                             <br>
+
 
                             <span class="badge bg-primary">
                                 Personnel
                             </span>
+
 
 
                         {% elif avance.client %}
@@ -133,11 +207,14 @@ Liste des avances
 
                             {{ avance.client.prenom|title }}
 
+
                             <br>
+
 
                             <span class="badge bg-success">
                                 Client
                             </span>
+
 
 
                         {% else %}
@@ -151,19 +228,31 @@ Liste des avances
 
 
 
+
+                    <!-- MOTIF -->
+
+
                     <td>
                         {{ avance.motifAv|title }}
                     </td>
 
 
 
-                    <td class="text-end">
+
+                    <!-- MONTANT -->
+
+
+                    <td class="text-end fw-bold">
 
                         {{ avance.montantAv|intcomma }}
                         Ar
 
                     </td>
 
+
+
+
+                    <!-- TYPE -->
 
 
                     <td class="text-center">
@@ -174,55 +263,118 @@ Liste des avances
 
 
 
+
+                    <!-- DATE -->
+
+
                     <td class="text-center">
 
                         {{ avance.dateAv|date:"d/m/Y" }}
 
                     </td>
 
+
+
+
+                    <!-- ENREGISTRE PAR -->
+
+
                     <td>
+
+
                         {% if avance.enregistre_par %}
-                            {{ avance.enregistre_par.username|title}}
+
+                            {{ avance.enregistre_par.username|title }}
+
                         {% else %}
+
                             -
+
                         {% endif %}
+
+
                     </td>
+
+
+
+
+                    <!-- ACTIONS -->
+
 
                     <td class="text-center">
 
-{% if avance.enregistre_par_id == request.session.user_id %}
 
-    <a href="{% url 'avances:avance_edit' avance.id %}"
-       class="btn btn-warning btn-sm">
-        ✏
-    </a>
+                        <!-- DETAIL visible par tous -->
 
-    <a href="{% url 'avances:avance_delete' avance.id %}"
-       class="btn btn-danger btn-sm">
-        🗑
-    </a>
 
-{% else %}
+                        <a href="{% url 'avances:avance_detail' avance.id %}"
+                           class="btn btn-info btn-sm"
+                           title="Voir">
 
-    <button class="btn btn-secondary btn-sm" disabled>
-        🔒
-    </button>
+                            👁
 
-{% endif %}
+                        </a>
 
-</td>
+
+
+                        {% if avance.enregistre_par_id == request.session.user_id %}
+
+
+
+                            <a href="{% url 'avances:avance_edit' avance.id %}"
+                               class="btn btn-warning btn-sm"
+                               title="Modifier">
+
+                                ✏
+
+                            </a>
+
+
+
+
+                            <a href="{% url 'avances:avance_delete' avance.id %}"
+                               class="btn btn-danger btn-sm"
+                               title="Supprimer">
+
+                                🗑
+
+                            </a>
+
+
+
+                        {% else %}
+
+
+
+                            <button class="btn btn-secondary btn-sm"
+                                    disabled
+                                    title="Vous n'avez pas le droit">
+
+                                🔒
+
+                            </button>
+
+
+
+                        {% endif %}
+
+
+
+                    </td>
 
 
 
                 </tr>
 
 
+
             {% empty %}
+
 
 
                 <tr>
 
-                    <td colspan="7"
+                    <td colspan="8"
                         class="text-center text-muted">
 
                         Aucune avance trouvée
@@ -230,6 +382,7 @@ Liste des avances
                     </td>
 
                 </tr>
+
 
 
             {% endfor %}
@@ -243,6 +396,76 @@ Liste des avances
 
 
     </div>
+
+
+
+
+    <!-- ================= PAGINATION ================= -->
+
+
+    {% if page_obj %}
+
+
+    <nav>
+
+        <ul class="pagination justify-content-center">
+
+
+            {% if page_obj.has_previous %}
+
+            <li class="page-item">
+
+                <a class="page-link"
+                   href="?page={{ page_obj.previous_page_number }}&{{ query_params }}">
+
+                    Précédent
+
+                </a>
+
+            </li>
+
+            {% endif %}
+
+
+
+
+            <li class="page-item active">
+
+                <span class="page-link">
+
+                    {{ page_obj.number }}
+
+                </span>
+
+            </li>
+
+
+
+
+            {% if page_obj.has_next %}
+
+            <li class="page-item">
+
+                <a class="page-link"
+                   href="?page={{ page_obj.next_page_number }}&{{ query_params }}">
+
+                    Suivant
+
+                </a>
+
+            </li>
+
+            {% endif %}
+
+
+
+        </ul>
+
+
+    </nav>
+
+
+    {% endif %}
 
 
 

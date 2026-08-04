@@ -1,90 +1,397 @@
 {% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+
+{% block title %}
+Personnel
+{% endblock %}
+
+
 
 {% block content %}
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between mb-3">
-        <h3>Liste du personnel</h3>
-        {% if request.session.role == "Admin" %}
-        <a href="{% url 'personnel:personnel_add' %}" class="btn btn-primary"> + Nouveau</a>
-        {% endif %}
-    </div>
-    <form method="GET" class="row g-2 mb-4">
-        <div class="col-md-3">
-            <input type="text" name="nom" value="{{ nom }}" class="form-control" placeholder="Nom">
-        </div>
-        <div class="col-md-3">
-            <input type="text" name="prenom" value="{{ prenom }}" class="form-control" placeholder="Prénom">
-        </div>
-        <div class="col-md-3">
-            <input type="text" name="fonction" value="{{ fonction }}"  class="form-control" placeholder="Fonction">
-        </div>
-        <div class="col-md-3">
-            <input type="text" name="categorie" value="{{ categorie }}" class="form-control" placeholder="Catégorie">
-        </div>
-        <div class="col-md-12">
-            <button class="btn btn-success"> Rechercher </button>
-            <a href="{% url 'personnel:personnel_list' %}" class="btn btn-secondary"> Réinitialiser </a>
-        </div>
-    </form>
 
-    <div class="table-responsive">
-    <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Photo</th>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Fonction</th>
-                <th>Catégorie</th>
-                <th>Téléphone</th>
-                <th>Salaire</th>
-                <th>Date contrat</th>
-                {% if request.session.role == "Admin" %}
-                <th>Actions</th>
-                {% endif %}
-            </tr>
-        </thead>
+<div class="container-fluid mt-4">
 
-        <tbody>
-        {% for personnel in personnels %}
-            <tr>
-                <td>{{ personnel.id }}</td>
-                <td>
-                    {% if personnel.photo %}
-                    <img src="{{ personnel.photo.url }}" width="50" height="50" class="rounded">
-                    {% else %}
-                    -
-                    {% endif %}
-                </td>
-                <td>{{ personnel.nom|upper }}</td>
-                <td>{{ personnel.prenom|title }}</td>
-                <td>{{ personnel.fonction }}</td>
-                <td>{% if personnel.categorie %}{{ personnel.categorie.nom }}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-                <td>{{ personnel.telephone }}</td>
-                <td>{{ personnel.psalaire }}</td>
-                <td>{{ personnel.debutContrat|date:"d/m/Y" }}</td>
-                {% if request.session.role == "Admin" %}
-                <td>
-                    <a href="{% url 'personnel:personnel_detail' personnel.id %}" class="btn btn-info btn-sm"> Voir </a>
-                    <a href="{% url 'personnel:personnel_edit' personnel.id %}" class="btn btn-warning btn-sm"> Modifier </a>
-                    <a href="{% url 'personnel:personnel_delete' personnel.id %} class="btn btn-danger btn-sm"> Supprimer </a>
-                </td>
-                {% endif %}
 
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="10" class="text-center">Aucun personnel trouvé</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h2 class="fw-bold">
+        👥 Liste du personnel
+    </h2>
+
+
+    {% if request.session.role == "Admin" %}
+
+    <a href="{% url 'personnel:personnel_add' %}"
+       class="btn btn-primary">
+
+        + Nouveau personnel
+
+    </a>
+
+    {% endif %}
+
+
 </div>
+
+
+
+
+
+<!-- FILTRE -->
+
+<div class="card shadow-sm mb-4">
+
+<div class="card-body">
+
+
+<form method="get">
+
+
+<div class="row g-2">
+
+
+<div class="col-md-3">
+
+<input type="text"
+       name="nom"
+       value="{{ nom }}"
+       class="form-control"
+       placeholder="Nom">
+
+</div>
+
+
+
+<div class="col-md-3">
+
+<input type="text"
+       name="prenom"
+       value="{{ prenom }}"
+       class="form-control"
+       placeholder="Prénom">
+
+</div>
+
+
+
+<div class="col-md-3">
+
+<input type="text"
+       name="fonction"
+       value="{{ fonction }}"
+       class="form-control"
+       placeholder="Fonction">
+
+</div>
+
+
+
+<div class="col-md-3 d-flex gap-2">
+
+
+<button class="btn btn-success w-50">
+
+🔎 Chercher
+
+</button>
+
+
+
+<a href="{% url 'personnel:personnel_list' %}"
+   class="btn btn-secondary w-50">
+
+Reset
+
+</a>
+
+
+</div>
+
+
+</div>
+
+
+</form>
+
+
+</div>
+
+</div>
+
+
+
+
+
+<!-- CARDS -->
+
+
+<div class="row">
+
+
+{% for personnel in personnels %}
+
+
+<div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+
+
+<div class="card shadow-sm h-100">
+
+
+
+{% if personnel.photo %}
+
+<img src="{{ personnel.photo.url }}"
+     class="card-img-top"
+     style="height:180px;object-fit:cover;">
+
+
+{% else %}
+
+<img src="{% static 'images/default.png' %}"
+     class="card-img-top"
+     style="height:180px;object-fit:cover;">
+
+
+{% endif %}
+
+
+
+
+<div class="card-body">
+
+
+<h5 class="fw-bold">
+
+{{ personnel.nom|upper }}
+
+{{ personnel.prenom|title }}
+
+</h5>
+
+
+
+<p class="mb-1">
+
+<b>Fonction :</b>
+
+{{ personnel.fonction }}
+
+</p>
+
+
+
+<p class="mb-1">
+
+<b>Catégorie :</b>
+
+{% if personnel.categorie %}
+
+<span class="badge bg-primary">
+
+{{ personnel.categorie.nom }}
+
+</span>
+
+
+{% else %}
+
+-
+
+{% endif %}
+
+
+</p>
+
+
+
+<p class="mb-1">
+
+📞 {{ personnel.telephone }}
+
+</p>
+
+
+
+<p class="mb-1">
+
+💰 
+{{ personnel.psalaire|intcomma }}
+Ar
+
+</p>
+
+
+
+<p>
+
+📅
+{{ personnel.debutContrat|date:"d/m/Y" }}
+
+</p>
+
+
+
+</div>
+
+
+
+
+
+<div class="card-footer d-flex justify-content-between">
+
+
+<a href="{% url 'personnel:personnel_detail' personnel.id %}"
+class="btn btn-info btn-sm">
+
+👁
+
+</a>
+
+
+
+{% if request.session.role == "Admin" %}
+
+
+<a href="{% url 'personnel:personnel_edit' personnel.id %}"
+class="btn btn-warning btn-sm">
+
+✏
+
+</a>
+
+
+
+<form method="post"
+      action="{% url 'personnel:personnel_delete' personnel.id %}">
+
+{% csrf_token %}
+
+
+<button type="submit"
+        class="btn btn-danger btn-sm"
+        onclick="return confirm('Supprimer ce personnel ?')">
+
+🗑
+
+</button>
+
+
+</form>
+
+
+{% endif %}
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+{% empty %}
+
+
+<div class="text-center text-muted">
+
+Aucun personnel trouvé
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+
+
+
+<!-- PAGINATION -->
+
+
+{% if page_obj.has_other_pages %}
+
+
+<nav>
+
+<ul class="pagination justify-content-center">
+
+
+{% if page_obj.has_previous %}
+
+<li class="page-item">
+
+<a class="page-link"
+href="?page={{ page_obj.previous_page_number }}">
+
+Précédent
+
+</a>
+
+</li>
+
+{% endif %}
+
+
+
+{% for num in page_obj.paginator.page_range %}
+
+
+<li class="page-item 
+{% if page_obj.number == num %}active{% endif %}">
+
+
+<a class="page-link"
+href="?page={{ num }}">
+
+{{ num }}
+
+</a>
+
+
+</li>
+
+
+{% endfor %}
+
+
+
+
+{% if page_obj.has_next %}
+
+<li class="page-item">
+
+<a class="page-link"
+href="?page={{ page_obj.next_page_number }}">
+
+Suivant
+
+</a>
+
+</li>
+
+{% endif %}
+
+
+
+</ul>
+
+</nav>
+
+
+{% endif %}
+
+
+
+</div>
+
+
 {% endblock %}

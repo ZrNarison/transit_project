@@ -1,7 +1,7 @@
 from django.shortcuts import (
     render,
-    get_object_or_404,
-    redirect
+    redirect,
+    get_object_or_404
 )
 
 from django.contrib import messages
@@ -11,32 +11,38 @@ from .forms import CategorieForm
 
 
 
-
 def categorie_liste(request):
 
-    queryset = Categorie.objects.all()
+    categories = (
+        Categorie.objects
+        .all()
+        .order_by("nom")
+    )
 
-    nom = request.GET.get('nom', '').strip()
+
+    nom = request.GET.get(
+        "nom",
+        ""
+    ).strip()
+
 
     if nom:
-        queryset = queryset.filter(
+
+        categories = categories.filter(
             nom__icontains=nom
         )
+
 
     return render(
         request,
         "categorie/list.html",
         {
-            "categories": queryset,
+            "categories": categories,
             "nom": nom,
         }
     )
 
 
-
-# ==========================
-# AJOUT CATEGORIE
-# ==========================
 
 def categorie_add(request):
 
@@ -44,32 +50,33 @@ def categorie_add(request):
         request.POST or None
     )
 
+
     if request.method == "POST" and form.is_valid():
 
         form.save()
+
 
         messages.success(
             request,
             "Catégorie ajoutée avec succès."
         )
 
+
         return redirect(
             "categorie:categorie_liste"
         )
+
 
     return render(
         request,
         "categorie/form.html",
         {
-            "form": form
+            "form": form,
+            "titre": "Ajouter une catégorie"
         }
     )
 
 
-
-# ==========================
-# MODIFICATION CATEGORIE
-# ==========================
 
 def categorie_edit(request, id):
 
@@ -78,37 +85,39 @@ def categorie_edit(request, id):
         id=id
     )
 
+
     form = CategorieForm(
         request.POST or None,
         instance=categorie
     )
 
+
     if request.method == "POST" and form.is_valid():
 
         form.save()
+
 
         messages.success(
             request,
             "Catégorie modifiée avec succès."
         )
 
+
         return redirect(
             "categorie:categorie_liste"
         )
+
 
     return render(
         request,
         "categorie/form.html",
         {
-            "form": form
+            "form": form,
+            "titre": "Modifier une catégorie"
         }
     )
 
 
-
-# ==========================
-# SUPPRESSION CATEGORIE
-# ==========================
 
 def categorie_delete(request, id):
 
@@ -117,18 +126,22 @@ def categorie_delete(request, id):
         id=id
     )
 
+
     if request.method == "POST":
 
         categorie.delete()
+
 
         messages.success(
             request,
             "Catégorie supprimée avec succès."
         )
 
+
         return redirect(
             "categorie:categorie_liste"
         )
+
 
     return render(
         request,

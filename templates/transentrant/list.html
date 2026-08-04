@@ -8,30 +8,82 @@ Liste Transport Entrant
 
 {% block content %}
 
-<h2 class="text-center mb-3 fw-bold">🚚 Liste des Transporteurs de produits Entrants</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+    <h2 class="mb-0 fw-bold">
+        🚚 Liste des Transporteurs de produits Entrants
+    </h2>
+
+    <a href="{% url 'transentrant:t_transentrant_add' %}" 
+       class="btn btn-primary">
+        + Nouveau véhicule
+    </a>
+
+</div>
 
 
 <form method="get" class="row g-2 align-items-end mb-4">
+
     <div class="col-md-3">
-        <label class="form-label small">Chauffeur</label>
-        <input type="text" name="chauffeur" value="{{ chauffeur }}" class="form-control" placeholder="Chauffeur">
+        <label class="form-label small">
+            Chauffeur
+        </label>
+
+        <input type="text"
+               name="chauffeur"
+               value="{{ chauffeur }}"
+               class="form-control"
+               placeholder="Chauffeur">
     </div>
+
+
     <div class="col-md-3">
-        <label class="form-label small">N° Véhicule</label>
-        <input type="text" name="num_vehicule" value="{{ num_vehicule }}" class="form-control" placeholder="N° Véhicule">
+
+        <label class="form-label small">
+            N° Véhicule
+        </label>
+
+        <input type="text"
+               name="num_vehicule"
+               value="{{ num_vehicule }}"
+               class="form-control"
+               placeholder="N° Véhicule">
+
     </div>
+
+
     <div class="col-md-3">
-        <label class="form-label small">Téléphone</label>
-        <input type="text" name="telephone" value="{{ telephone }}" class="form-control" placeholder="Téléphone">
+
+        <label class="form-label small">
+            Téléphone
+        </label>
+
+        <input type="text"
+               name="telephone"
+               value="{{ telephone }}"
+               class="form-control"
+               placeholder="Téléphone">
+
     </div>
+
+
     <div class="col-md-3 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">🔎</button>
-        <a href="{% url 'transentrant:t_transentrant_liste' %}" class="btn btn-secondary">↺</a>
-        <a href="{% url 'transentrant:t_transentrant_add' %}" class="btn btn-info">+ Nouveau</a>
+
+        <button type="submit"
+                class="btn btn-primary">
+            🔎
+        </button>
+
+
+        <a href="{% url 'transentrant:t_transentrant_liste' %}"
+           class="btn btn-secondary">
+            ↺
+        </a>
+
+
     </div>
+
 </form>
-
-
 
 
 
@@ -41,137 +93,115 @@ Liste Transport Entrant
 {% for item in transentrants %}
 
 
-
 <div class="col-md-3 mb-3">
 
-
-<div class="card shadow-sm h-100">
-
+    <div class="card shadow-sm h-100">
 
 
-{% if item.photo %}
+        {% if item.photo %}
 
-<img src="{{ item.photo.url }}"
-     class="card-img-top"
-     style="height:120px;object-fit:cover;">
+        <img src="{{ item.photo.url }}"
+             class="card-img-top"
+             style="height:120px;object-fit:cover;">
 
-{% else %}
+        {% else %}
 
-<img src="{% static 'images/default.png' %}"
-     class="card-img-top"
-     style="height:120px;object-fit:cover;">
+        <img src="{% static 'images/default.png' %}"
+             class="card-img-top"
+             style="height:120px;object-fit:cover;">
 
-{% endif %}
+        {% endif %}
 
 
 
+        <div class="card-body">
 
-<div class="card-body">
 
-
-<h6 class="badge bg-primary">
-
-{{ item.chauffeur|upper }}
-
-</h6>
+            <span class="badge bg-primary">
+                {{ item.chauffeur|upper }}
+            </span>
 
 
 
-<p class="mb-1">
-
-🚛 Véhicule :
-<strong>
-{{ item.num_vehicule }}
-</strong>
-
-</p>
+            <p class="mb-1 mt-2">
+                🚛 Véhicule :
+                <strong>
+                    {{ item.num_vehicule }}
+                </strong>
+            </p>
 
 
-
-<p class="mb-1">
-
-📞 {{ item.telephone }}
-
-</p>
+            <p class="mb-1">
+                📞 {{ item.telephone }}
+            </p>
 
 
 
+            <p class="small text-muted mb-1">
 
-<p class="small text-muted">
+                Créé par :
+                {{ item.created_by.username|default:"Ancien" }}
 
-Créé par :
-{{ item.created_by.username|default:"Ancien" }}
-
-</p>
-
+            </p>
 
 
-<p class="small text-muted">
 
-Date :
-{{ item.created_at|date:"d/m/Y H:i" }}
+            <p class="small text-muted">
 
-</p>
+                Date :
+                {{ item.created_at|date:"d/m/Y H:i" }}
+
+            </p>
+
+
+        </div>
+
+
+
+
+        <div class="d-flex justify-content-between p-2">
+
+
+            <a href="{% url 'transentrant:t_transentrant_detail' item.id %}"
+               class="btn btn-info btn-sm">
+
+                👁
+
+            </a>
+
+
+
+            {% if item.created_by_id == user_id %}
+
+
+            <a href="{% url 'transentrant:t_transentrant_edit' item.id %}"
+               class="btn btn-warning btn-sm">
+
+                ✏
+
+            </a>
+
+
+
+            <a href="{% url 'transentrant:t_transentrant_delete' item.id %}"
+               class="btn btn-danger btn-sm">
+
+                🗑
+
+            </a>
+
+
+            {% endif %}
+
+
+
+        </div>
+
+
+    </div>
 
 
 </div>
-
-
-
-
-
-<div class="d-flex justify-content-between p-2">
-
-
-<!-- Détail accessible par tous -->
-
-<a href="{% url 'transentrant:t_transentrant_detail' item.id %}"
-   class="btn btn-info btn-sm">
-
-👁
-
-</a>
-
-
-
-
-<!-- Seulement le créateur -->
-
-{% if item.created_by_id == user_id %}
-
-
-
-<a href="{% url 'transentrant:t_transentrant_edit' item.id %}"
-   class="btn btn-warning btn-sm">
-
-✏
-
-</a>
-
-
-
-<a href="{% url 'transentrant:t_transentrant_delete' item.id %}"
-   class="btn btn-danger btn-sm">
-
-🗑
-
-</a>
-
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
 
 
 {% empty %}
@@ -179,11 +209,9 @@ Date :
 
 <div class="col-12">
 
-<p class="text-center text-muted">
-
-Aucun transport entrant trouvé
-
-</p>
+    <p class="text-center text-muted">
+        Aucun transport entrant trouvé
+    </p>
 
 </div>
 
@@ -191,8 +219,84 @@ Aucun transport entrant trouvé
 {% endfor %}
 
 
-
 </div>
+
+
+
+
+{% if page_obj.has_other_pages %}
+
+
+<nav class="mt-4">
+
+<ul class="pagination justify-content-center">
+
+
+{% if page_obj.has_previous %}
+
+<li class="page-item">
+
+<a class="page-link"
+href="?page={{ page_obj.previous_page_number }}&chauffeur={{ chauffeur }}&num_vehicule={{ num_vehicule }}&telephone={{ telephone }}">
+
+Précédent
+
+</a>
+
+</li>
+
+{% endif %}
+
+
+
+{% for num in page_obj.paginator.page_range %}
+
+
+<li class="page-item {% if page_obj.number == num %}active{% endif %}">
+
+
+<a class="page-link"
+href="?page={{ num }}&chauffeur={{ chauffeur }}&num_vehicule={{ num_vehicule }}&telephone={{ telephone }}">
+
+{{ num }}
+
+</a>
+
+
+</li>
+
+
+{% endfor %}
+
+
+
+{% if page_obj.has_next %}
+
+
+<li class="page-item">
+
+
+<a class="page-link"
+href="?page={{ page_obj.next_page_number }}&chauffeur={{ chauffeur }}&num_vehicule={{ num_vehicule }}&telephone={{ telephone }}">
+
+Suivant
+
+</a>
+
+
+</li>
+
+
+{% endif %}
+
+
+
+</ul>
+
+</nav>
+
+
+{% endif %}
 
 
 

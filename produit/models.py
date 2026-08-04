@@ -3,8 +3,6 @@ from django.db import models
 from clients.models import Client
 from transentrant.models import Transentrant
 from depot.models import Distribution
-
-
 class Produit(models.Model):
 
     TYPE_CHOICES = [
@@ -22,13 +20,13 @@ class Produit(models.Model):
     montant = models.DecimalField(max_digits=3, decimal_places=0)
     quantite = models.DecimalField(max_digits=10, decimal_places=0)
     pourcentage = models.DecimalField(max_digits=3, decimal_places=0)
-
+    montant = models.DecimalField(max_digits=4, decimal_places=0)
+    quantite = models.DecimalField(max_digits=10, decimal_places=0)
+    pourcentage = models.DecimalField(max_digits=2, decimal_places=0)
     photo = models.ImageField(upload_to='images/Produits/')
-
     paye = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     date_paiement = models.DateTimeField(null=True, blank=True)
-
     @property
     def montant_net(self):
         return (
@@ -65,3 +63,5 @@ class PaiementProduit(models.Model):
 
     def __str__(self):
         return f"{self.distribution} -> {self.produit} ({self.montant} Ar)"
+    def __str__(self):
+        return f"{self.client.nom} - {self.vehicule.Chauf_Ent|upper}"

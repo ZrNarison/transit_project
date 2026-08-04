@@ -1,20 +1,19 @@
 from decimal import Decimal
-
-from django.shortcuts import (
-    render,
-    redirect,
-    get_object_or_404
-)
-
+from django.shortcuts import (render, redirect,get_object_or_404)
 from django.db.models import Sum
 from django.contrib import messages
-
 from .models import Depense
 from .forms import DepenseForm
 from depot.models import Distribution
 from personnel.models import Personnel
 from users.models import AppUser
 from django.utils import timezone
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect, get_object_or_404
+
+from .forms import DepenseForm
+from .models import Depense
 
 
 def depense_list(request):
@@ -313,3 +312,5 @@ def depense_delete(request, id):
     return redirect(
         'depense:depense_list'
     )
+
+

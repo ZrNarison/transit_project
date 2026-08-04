@@ -138,8 +138,12 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"
+<<<<<<< HEAD
 MEDIA_ROOT = BASE_DIR / "media"
 
 LOGIN_URL = "users:login"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "users:login"
+=======
+MEDIA_ROOT = BASE_DIR / "media"
+>>>>>>> faae338ba63a4632fd01a81edf3d0780ac49d84a

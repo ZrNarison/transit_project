@@ -1,126 +1,195 @@
 {% extends "base.html" %}
-{% load humanize %}
 
 {% block title %}
 Détail utilisateur
 {% endblock %}
 
 
+
 {% block content %}
 
-
-<h3 class="mb-4">
-    Informations de l'utilisateur
-</h3>
+<div class="container mt-4">
 
 
-<div class="card shadow-sm">
+    <h3 class="mb-4">
+        Informations de l'utilisateur
+    </h3>
 
 
-    <div class="card-body">
 
-        <div class="row">
-
-
-            <!-- INFORMATIONS -->
-
-            <div class="col-md-8">
+    <div class="card shadow-sm">
 
 
-                <p>
-                    <strong>Personnel :</strong>
-                    {{ user.personnel.nom|upper }}
-                    {{ user.personnel.prenom|title }}
-                </p>
+        <div class="card-body">
 
 
-                <p>
-                    <strong>Fonction :</strong>
-                    {{ user.personnel.fonction|title }}
-                </p>
+            <div class="row">
 
 
-                <p>
-                    <strong>Catégorie utilisation :</strong>
-                    {{ user.get_role_display }}
-                </p>
+
+                <!-- INFORMATIONS UTILISATEUR -->
+
+                <div class="col-md-8">
 
 
-                <p>
-                    <strong>Nom utilisateur :</strong>
-                    {{ user.username }}
-                </p>
+                    <p>
+                        <strong>Personnel :</strong>
+
+                        {% if user.personnel %}
+
+                            {{ user.personnel.nom|upper }}
+                            {{ user.personnel.prenom|title }}
+
+                        {% else %}
+
+                            Non affecté
+
+                        {% endif %}
+
+                    </p>
 
 
-                <p>
-                    <strong>Email :</strong>
-                    {{ user.email }}
-                </p>
+
+                    <p>
+                        <strong>Fonction :</strong>
+
+                        {% if user.personnel %}
+
+                            {{ user.personnel.fonction|title }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </p>
 
 
-                <p>
-                    <strong>Date création :</strong>
-                    {{ user.date_creation|date:"d/m/Y H:i" }}
-                </p>
+
+                    <p>
+                        <strong>Rôle :</strong>
+
+                        {{ user.get_role_display }}
+
+                    </p>
+
+
+
+
+                    <p>
+                        <strong>Nom utilisateur :</strong>
+
+                        {{ user.username }}
+
+                    </p>
+
+
+
+
+                    <p>
+                        <strong>Email :</strong>
+
+                        {{ user.email|default:"-" }}
+
+                    </p>
+
+
+
+
+                    <p>
+                        <strong>Date création :</strong>
+
+                        {{ user.date_creation|date:"d/m/Y H:i" }}
+
+                    </p>
+
+
+
+                </div>
+
+
+
+
+
+                <!-- PHOTO -->
+
+                <div class="col-md-4 text-center">
+
+
+                    {% if user.photo %}
+
+
+                        <img src="{{ user.photo.url }}"
+                             alt="{{ user.username }}"
+                             class="img-thumbnail shadow"
+                             style="width:160px;height:160px;object-fit:cover;">
+
+
+                    {% else %}
+
+
+                        <div class="text-muted">
+
+                            Pas de photo
+
+                        </div>
+
+
+                    {% endif %}
+
+
+
+                </div>
+
 
 
             </div>
-
-
-
-            <!-- PHOTO -->
-
-            <div class="col-md-4 text-center">
-
-
-                {% if user.personnel.photo %}
-
-                    <img src="{{ user.personnel.photo.url }}"
-                         alt="{{ user.username }}"
-                         class="img-thumbnail shadow"
-                         style="width:150px;height:150px;object-fit:cover;">
-
-                {% endif %}
-
-
-            </div>
-
 
 
         </div>
 
 
-    </div>
 
 
 
-    <div class="card-footer">
+        <!-- ACTIONS -->
 
 
-        <a href="{% url 'users:users_edit' user.id %}"
-           class="btn btn-warning">
-
-            Modifier
-
-        </a>
+        <div class="card-footer">
 
 
+            <a href="{% url 'users:users_edit' user.id %}"
+               class="btn btn-warning">
 
-        <a href="{% url 'users:users_delete' user.id %}"
-           class="btn btn-danger">
+                ✏ Modifier
 
-            Supprimer
-
-        </a>
+            </a>
 
 
 
-        <a href="{% url 'users:users_liste' %}"
-           class="btn btn-secondary">
 
-            Retour
+            <a href="{% url 'users:users_delete' user.id %}"
+               class="btn btn-danger">
 
-        </a>
+                🗑 Supprimer
+
+            </a>
+
+
+
+
+            <a href="{% url 'users:users_list' %}"
+               class="btn btn-secondary">
+
+                ↩ Retour
+
+            </a>
+
+
+
+        </div>
+
 
 
     </div>

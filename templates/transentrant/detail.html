@@ -4,13 +4,17 @@
 Informations du transport entrant
 {% endblock %}
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> faae338ba63a4632fd01a81edf3d0780ac49d84a
 {% block content %}
 
 <h3 class="mb-4">
     Informations du transport entrant
 </h3>
 
+<<<<<<< HEAD
 
 
 <div class="card shadow-sm">
@@ -166,4 +170,90 @@ Retour
 </div>
 
 
+=======
+<div class="card shadow-sm">
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-8">
+
+                {% comment %} <p>
+                    <strong>Client :</strong>
+                    {{ client.id_client }}
+                </p> {% endcomment %}
+
+                <p>
+                    <strong>Chauffeur :</strong>
+                    {{ client.chauffeur|title }}
+                </p>
+
+                <p>
+                    <strong>C.I.N :</strong>
+                    {{ client.cin }}
+                </p>
+
+                <p>
+                    <strong>Numéro du véhicule :</strong>
+                    {{ client.num_vehicule|upper }}
+                </p>
+
+                <p>
+                    <strong>Numéro de permis :</strong>
+                    {{ client.permis|upper }}
+                </p>
+
+                <p>
+                    <strong>Adresse :</strong>
+                    {{ client.adresse|title }}
+                </p>
+
+                <p>
+                    <strong>Téléphone :</strong>
+                    {{ client.telephone }}
+                </p>
+
+            </div>
+
+            <div class="col-md-4 text-center">
+
+                {% if client.photo %}
+                    <img src="{{ client.photo.url }}"
+                         class="img-thumbnail shadow"
+                         style="width:220px;height:220px;object-fit:cover;">
+                {% else %}
+                    <div class="alert alert-secondary">
+                        Aucune photo
+                    </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card-footer">
+
+        <a href="{% url 'transentrant:t_transentrant_edit' client.id %}"
+           class="btn btn-warning">
+            Modifier
+        </a>
+
+        <a href="{% url 'transentrant:t_transentrant_delete' client.id %}"
+           class="btn btn-danger">
+            Supprimer
+        </a>
+
+        <a href="{% url 'transentrant:t_transentrant_liste' %}"
+           class="btn btn-secondary">
+            Retour
+        </a>
+
+    </div>
+
+</div>
+
+>>>>>>> faae338ba63a4632fd01a81edf3d0780ac49d84a
 {% endblock %}

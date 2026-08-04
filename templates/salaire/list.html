@@ -1,86 +1,471 @@
 {% extends 'base.html' %}
 {% load money_filters %}
 
-{% block title %}Liste des salaires{% endblock %}
+
+{% block title %}
+Liste des salaires
+{% endblock %}
+
+
 
 {% block content %}
+
+
 <div class="page-card">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="mb-1">Liste des salaires</h3>
-            <p class="text-muted mb-0">Suivi des paiements et du reste à payer.</p>
-        </div>
-        <a href="{% url 'salaire:salaire_add' %}" class="btn btn-primary">+ Nouveau salaire</a>
-    </div>
 
-    <form method="get" class="row g-2 align-items-end mb-4">
-        <div class="col-md-6">
-            <label class="form-label small">Personnel</label>
-            <input type="text" name="personnel" value="{{ personnel }}" class="form-control" placeholder="Nom du personnel">
-        </div>
-        <div class="col-md-4">
-            <label class="form-label small">Montant</label>
-            <input type="text" name="montant" value="{{ montant }}" class="form-control" placeholder="Montant">
-        </div>
-        <div class="col-md-2 d-flex justify-content-end align-items-end gap-2">
-            <button type="submit" class="btn btn-outline-primary btn-sm">Rechercher</button>
-            <a href="{% url 'salaire:salaire_list' %}" class="btn btn-secondary btn-sm">Réinitialiser</a>
-        </div>
-    </form>
 
-    {% if salaires %}
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>Personnel</th>
-                    <th>Montant</th>
-                    <th>Reste</th>
-                    <th>Date</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for salaire in salaires %}
-                <tr>
-                    <td><strong>{{ salaire.personnel }}</strong></td>
-                    <td class="fw-bold">{{ salaire.montant|money }} Ar</td>
-                    <td>{{ salaire.reste|money }} Ar</td>
-                    <td>{{ salaire.date }}</td>
-                    <td>
-                        <a href="{% url 'salaire:salaire_edit' salaire.id %}" class="btn btn-sm btn-outline-warning action-btn" title="Modifier">✏</a>
-                        <button type="button" class="btn btn-sm btn-outline-danger action-btn" data-bs-toggle="modal" data-bs-target="#deleteSalaireModal{{ salaire.id }}" title="Supprimer">🗑</button>
-                    </td>
-                </tr>
-                <div class="modal fade" id="deleteSalaireModal{{ salaire.id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Confirmer la suppression</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                            </div>
-                            <div class="modal-body">
-                                Voulez-vous vraiment supprimer le salaire de <strong>{{ salaire.personnel }}</strong> ?
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                <form method="post" action="{% url 'salaire:salaire_delete' salaire.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger">Supprimer</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="empty-state">
-        <p class="mb-0">Aucun salaire enregistré pour le moment.</p>
-    </div>
-    {% endif %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+<div>
+
+<h3 class="mb-1">
+Liste des salaires
+</h3>
+
+
+<p class="text-muted mb-0">
+Suivi des paiements et du reste à payer.
+</p>
+
+
 </div>
+
+
+
+<a href="{% url 'salaire:salaire_add' %}"
+class="btn btn-primary">
+
++ Nouveau salaire
+
+</a>
+
+
+</div>
+
+
+
+
+
+<form method="get" class="row g-2 align-items-end mb-4">
+
+
+<div class="col-md-6">
+
+<label class="form-label small">
+Personnel
+</label>
+
+
+<input type="text"
+name="personnel"
+value="{{ personnel }}"
+class="form-control"
+placeholder="Nom du personnel">
+
+
+</div>
+
+
+
+
+<div class="col-md-4">
+
+<label class="form-label small">
+Montant
+</label>
+
+
+<input type="text"
+name="montant"
+value="{{ montant }}"
+class="form-control"
+placeholder="Montant">
+
+
+</div>
+
+
+
+
+<div class="col-md-2 d-flex justify-content-end align-items-end gap-2">
+
+
+<button type="submit"
+class="btn btn-outline-primary btn-sm">
+
+Rechercher
+
+</button>
+
+
+
+<a href="{% url 'salaire:salaire_list' %}"
+class="btn btn-secondary btn-sm">
+
+Réinitialiser
+
+</a>
+
+
+</div>
+
+
+</form>
+
+
+
+
+
+
+{% if salaires %}
+
+
+
+<div class="table-responsive">
+
+
+<table class="table table-hover align-middle">
+
+
+<thead>
+
+
+<tr>
+
+<th>
+Personnel
+</th>
+
+<th>
+Montant
+</th>
+
+<th>
+Reste
+</th>
+
+<th>
+Date
+</th>
+
+<th>
+Actions
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+
+<tbody>
+
+
+
+{% for salaire in salaires %}
+
+
+
+<tr>
+
+
+<td>
+
+<strong>
+{{ salaire.personnel }}
+</strong>
+
+</td>
+
+
+
+<td class="fw-bold">
+
+{{ salaire.montant|money }} Ar
+
+</td>
+
+
+
+<td>
+
+{{ salaire.reste|money }} Ar
+
+</td>
+
+
+
+<td>
+
+{{ salaire.date }}
+
+</td>
+
+
+
+<td>
+
+
+<a href="{% url 'salaire:salaire_edit' salaire.id %}"
+class="btn btn-sm btn-outline-warning"
+title="Modifier">
+
+✏
+
+</a>
+
+
+
+<button type="button"
+class="btn btn-sm btn-outline-danger"
+data-bs-toggle="modal"
+data-bs-target="#deleteSalaireModal{{ salaire.id }}">
+
+🗑
+
+</button>
+
+
+</td>
+
+
+
+</tr>
+
+
+
+
+
+
+<div class="modal fade"
+id="deleteSalaireModal{{ salaire.id }}"
+tabindex="-1">
+
+
+<div class="modal-dialog modal-dialog-centered">
+
+
+<div class="modal-content">
+
+
+<div class="modal-header">
+
+<h5 class="modal-title">
+
+Confirmer la suppression
+
+</h5>
+
+
+<button type="button"
+class="btn-close"
+data-bs-dismiss="modal">
+
+</button>
+
+
+</div>
+
+
+
+
+<div class="modal-body">
+
+Voulez-vous vraiment supprimer le salaire de :
+
+<strong>
+{{ salaire.personnel }}
+</strong>
+
+?
+
+</div>
+
+
+
+
+<div class="modal-footer">
+
+
+<button type="button"
+class="btn btn-secondary"
+data-bs-dismiss="modal">
+
+Annuler
+
+</button>
+
+
+
+
+<form method="post"
+action="{% url 'salaire:salaire_delete' salaire.id %}">
+
+{% csrf_token %}
+
+
+<button type="submit"
+class="btn btn-danger">
+
+Supprimer
+
+</button>
+
+
+</form>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+
+
+
+
+{% if page_obj.has_other_pages %}
+
+
+<nav class="mt-4">
+
+
+<ul class="pagination justify-content-center">
+
+
+
+{% if page_obj.has_previous %}
+
+
+<li class="page-item">
+
+
+<a class="page-link"
+href="?page={{ page_obj.previous_page_number }}{% if personnel %}&personnel={{ personnel }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">
+
+Précédent
+
+</a>
+
+
+</li>
+
+
+{% endif %}
+
+
+
+
+
+
+{% for num in page_obj.paginator.page_range %}
+
+
+
+<li class="page-item {% if page_obj.number == num %}active{% endif %}">
+
+
+<a class="page-link"
+href="?page={{ num }}{% if personnel %}&personnel={{ personnel }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">
+
+{{ num }}
+
+</a>
+
+
+</li>
+
+
+
+{% endfor %}
+
+
+
+
+
+
+{% if page_obj.has_next %}
+
+
+
+<li class="page-item">
+
+
+<a class="page-link"
+href="?page={{ page_obj.next_page_number }}{% if personnel %}&personnel={{ personnel }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">
+
+Suivant
+
+</a>
+
+
+</li>
+
+
+
+{% endif %}
+
+
+
+</ul>
+
+
+</nav>
+
+
+{% endif %}
+
+
+
+
+
+{% else %}
+
+
+<div class="empty-state">
+
+<p class="mb-0">
+
+Aucun salaire enregistré pour le moment.
+
+</p>
+
+</div>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
 {% endblock %}

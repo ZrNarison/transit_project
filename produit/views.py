@@ -1,157 +1,384 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Produit
-from .forms import ProduitForm
-from django.utils import timezone
-from django.shortcuts import redirect
+from django.shortcuts import (
+    render,
+    redirect,
+    get_object_or_404
+)
+
 from django.contrib import messages
-from django.utils import timezone
 from django.db import transaction
+from django.utils import timezone
+from django.core.paginator import Paginator
+
 from .models import Produit, PaiementProduit
+from .forms import ProduitForm
+
 from depot.models import Distribution
 
 
+
+# =========================
+# LISTE PRODUITS
+# =========================
+
 def produit_list(request):
-    queryset = Produit.objects.select_related('client', 'vehicule').all()
-    client = request.GET.get('client', '').strip()
-    source = request.GET.get('source', '').strip()
-    vehicule = request.GET.get('vehicule', '').strip()
+
+    queryset = (
+        Produit.objects
+        .select_related(
+            "client",
+            "vehicule"
+        )
+        .order_by(
+            "-created_at"
+        )
+    )
+
+
+    client = request.GET.get(
+        "client",
+        ""
+    ).strip()
+
+
+    source = request.GET.get(
+        "source",
+        ""
+    ).strip()
+
+
+    vehicule = request.GET.get(
+        "vehicule",
+        ""
+    ).strip()
+
+
 
     if client:
+
         queryset = queryset.filter(
             client__nom__icontains=client
         )
-    if source:
-        queryset = queryset.filter(source__icontains=source)
-    if vehicule:
-        queryset = queryset.filter(vehicule__num_vehicule__icontains=vehicule)
 
-    return render(request, "produit/list.html", {
-        "produits": queryset,
-        "client": client,
-        "source": source,
-        "vehicule": vehicule,
-    })
+
+    if source:
+
+        queryset = queryset.filter(
+            source__icontains=source
+        )
+
+
+    if vehicule:
+
+        queryset = queryset.filter(
+            vehicule__num_vehicule__icontains=vehicule
+        )
+
+
+
+    paginator = Paginator(
+        queryset,
+        20
+    )
+
+
+    page_obj = paginator.get_page(
+        request.GET.get("page")
+    )
+
+
+
+    return render(
+        request,
+        "produit/list.html",
+        {
+            "produits": page_obj,
+            "page_obj": page_obj,
+
+            "client": client,
+            "source": source,
+            "vehicule": vehicule,
+        }
+    )
+
+
+
+
+
+# =========================
+# VALIDATION PAIEMENT
+# =========================
+
 
 @transaction.atomic
 def valider_paiement(request):
 
-    if request.method == "POST":
+    if request.method != "POST":
 
-        ids = request.POST.getlist("produits")
-
-        if not ids:
-            messages.warning(
-                request,
-                "Aucun produit sélectionné."
-            )
-            return redirect("produit:p_produit_liste")
-
-
-        produits = Produit.objects.filter(
-            id__in=ids,
-            paye=False
-        ).order_by("created_at")
-
-
-        # Anciennes distributions en premier
-        distributions = Distribution.objects.all().order_by(
-            "depot__date",
-            "id"
+        return redirect(
+            "produit:p_produit_liste"
         )
 
 
-        for produit in produits:
-
-            reste_a_payer = produit.montant_net
-
-
-            for distribution in distributions:
+    ids = request.POST.getlist(
+        "produits"
+    )
 
 
-                solde = distribution.solde
+    if not ids:
+
+        messages.warning(
+            request,
+            "Aucun produit sélectionné."
+        )
+
+        return redirect(
+            "produit:p_produit_liste"
+        )
 
 
-                # Distribution vide
-                if solde <= 0:
-                    continue
+
+    produits = (
+        Produit.objects
+        .filter(
+            id__in=ids,
+            paye=False
+        )
+        .order_by(
+            "created_at"
+        )
+    )
 
 
-                paiement = min(
-                    solde,
-                    reste_a_payer
-                )
+
+    distributions = (
+        Distribution.objects
+        .select_related(
+            "depot"
+        )
+        .order_by(
+            "depot__date",
+            "id"
+        )
+    )
 
 
-                # Enregistrement de la liaison
-                PaiementProduit.objects.create(
-                    distribution=distribution,
-                    produit=produit,
-                    montant=paiement
-                )
+
+    total_non_paye = 0
 
 
-                reste_a_payer -= paiement
+
+    for produit in produits:
 
 
-                # Produit entièrement payé
-                if reste_a_payer <= 0:
-
-                    produit.paye = True
-                    produit.date_paiement = timezone.now()
-                    produit.save()
-
-                    break
+        reste = produit.montant_net
 
 
-            # Si aucun dépôt ne suffit
-            if reste_a_payer > 0:
 
-                messages.warning(
-                    request,
-                    f"Solde insuffisant pour payer le produit {produit.id}. "
-                    f"Reste : {reste_a_payer} Ar"
-                )
+        for distribution in distributions:
+
+
+            disponible = distribution.solde
+
+
+
+            if disponible <= 0:
+
+                continue
+
+
+
+            montant = min(
+                disponible,
+                reste
+            )
+
+
+
+            PaiementProduit.objects.create(
+
+                distribution=distribution,
+
+                produit=produit,
+
+                montant=montant
+
+            )
+
+
+            reste -= montant
+
+
+
+            if reste <= 0:
+
+                produit.paye = True
+
+                produit.date_paiement = timezone.now()
+
+                produit.save()
+
+                break
+
+
+
+        if reste > 0:
+
+            total_non_paye += reste
+
+
+            messages.warning(
+                request,
+                f"Produit {produit.id} : reste {reste} Ar"
+            )
+
+
+
+    if total_non_paye == 0:
+
+        messages.success(
+            request,
+            "Paiement validé avec répartition automatique."
+        )
+
+
+
+    return redirect(
+        "produit:p_produit_liste"
+    )
+
+
+
+
+
+# =========================
+# AJOUT
+# =========================
+
+
+def produit_add(request):
+
+    form = ProduitForm(
+        request.POST or None,
+        request.FILES or None
+    )
+
+
+    if request.method == "POST" and form.is_valid():
+
+        form.save()
 
 
         messages.success(
             request,
-            "Paiement effectué avec répartition automatique."
+            "Produit ajouté."
         )
 
 
-    return redirect("produit:p_produit_liste")
+        return redirect(
+            "produit:p_produit_liste"
+        )
 
-def produit_add(request):
-    if request.method == "POST":
-        form = ProduitForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect("produit:p_produit_liste")
-    else:
-        form = ProduitForm()
 
-    return render(request, "produit/form.html", {"form": form})
+
+    return render(
+        request,
+        "produit/form.html",
+        {
+            "form": form,
+            "action": "Ajouter"
+        }
+    )
+
+
+
+
+
+# =========================
+# MODIFICATION
+# =========================
 
 
 def produit_edit(request, pk):
-    produit = get_object_or_404(Produit, pk=pk)
 
-    if request.method == "POST":
-        form = ProduitForm(request.POST, request.FILES, instance=produit)
-        if form.is_valid():
-            form.save()
-            return redirect("produit:p_produit_liste")
-    else:
-        form = ProduitForm(instance=produit)
+    produit = get_object_or_404(
+        Produit,
+        pk=pk
+    )
 
-    return render(request, "produit/form.html", {"form": form})
+
+    form = ProduitForm(
+        request.POST or None,
+        request.FILES or None,
+        instance=produit
+    )
+
+
+
+    if request.method == "POST" and form.is_valid():
+
+        form.save()
+
+
+        messages.success(
+            request,
+            "Produit modifié."
+        )
+
+
+        return redirect(
+            "produit:p_produit_liste"
+        )
+
+
+
+    return render(
+        request,
+        "produit/form.html",
+        {
+            "form": form,
+            "action": "Modifier"
+        }
+    )
+
+
+
+
+
+# =========================
+# SUPPRESSION
+# =========================
 
 
 def produit_delete(request, pk):
-    produit = get_object_or_404(Produit, pk=pk)
+
+    produit = get_object_or_404(
+        Produit,
+        pk=pk
+    )
+
+
 
     if request.method == "POST":
-        produit.delete()
-        return redirect("produit:p_produit_liste")
 
-    return render(request, "produit/delete.html", {"produit": produit})
+        produit.delete()
+
+
+        messages.success(
+            request,
+            "Produit supprimé."
+        )
+
+
+        return redirect(
+            "produit:p_produit_liste"
+        )
+
+
+
+    return render(
+        request,
+        "produit/delete.html",
+        {
+            "produit": produit
+        }
+    )

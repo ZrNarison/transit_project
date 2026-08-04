@@ -1,88 +1,111 @@
 {% extends 'base.html' %}
 {% load money_filters %}
 
+
 {% block title %}
 Liste des dépenses
 {% endblock %}
 
 
+
 {% block content %}
+
 
 <div class="page-card">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
 
-        <div>
-            <h3 class="mb-1">
-                Liste des dépenses
-            </h3>
-
-            <p class="text-muted mb-0">
-                Suivi des sorties financières.
-            </p>
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
 
 
-        <a href="{% url 'depense:depense_add' %}"
-           class="btn btn-primary">
-            + Nouvelle dépense
-        </a>
+<div>
 
-    </div>
+<h3 class="mb-1">
+Liste des dépenses
+</h3>
+
+
+<p class="text-muted mb-0">
+Suivi des sorties financières.
+</p>
+
+
+</div>
 
 
 
-    <form method="get" class="row g-2 mb-4">
+<a href="{% url 'depense:depense_add' %}"
+class="btn btn-primary">
+
++ Nouvelle dépense
+
+</a>
 
 
-        <div class="col-md-5">
-
-            <label class="form-label small">
-                Titre
-            </label>
-
-            <input type="text"
-                   name="titre"
-                   value="{{ titre }}"
-                   class="form-control"
-                   placeholder="Recherche titre">
-
-        </div>
+</div>
 
 
 
-        <div class="col-md-4">
 
-            <label class="form-label small">
-                Montant
-            </label>
-
-            <input type="text"
-                   name="montant"
-                   value="{{ montant }}"
-                   class="form-control"
-                   placeholder="Montant">
-
-        </div>
+<form method="get" class="row g-2 mb-4">
 
 
+<div class="col-md-5">
 
-        <div class="col-md-3 d-flex align-items-end gap-2">
+<label class="form-label small">
+Titre
+</label>
 
-            <button class="btn btn-outline-primary">
-                Rechercher
-            </button>
+<input type="text"
+name="titre"
+value="{{ titre }}"
+class="form-control"
+placeholder="Recherche titre">
 
-
-            <a href="{% url 'depense:depense_list' %}"
-               class="btn btn-secondary">
-                Reset
-            </a>
-
-        </div>
+</div>
 
 
-    </form>
+
+
+<div class="col-md-4">
+
+<label class="form-label small">
+Montant
+</label>
+
+<input type="text"
+name="montant"
+value="{{ montant }}"
+class="form-control"
+placeholder="Montant">
+
+</div>
+
+
+
+
+<div class="col-md-3 d-flex align-items-end gap-2">
+
+
+<button class="btn btn-outline-primary">
+Rechercher
+</button>
+
+
+
+<a href="{% url 'depense:depense_list' %}"
+class="btn btn-secondary">
+
+Reset
+
+</a>
+
+
+</div>
+
+
+</form>
+
+
 
 
 
@@ -91,10 +114,12 @@ Liste des dépenses
 
 <div class="table-responsive">
 
+
 <table class="table table-hover align-middle">
 
 
 <thead class="table-primary">
+
 
 <tr>
 
@@ -126,7 +151,9 @@ Description
 Actions
 </th>
 
+
 </tr>
+
 
 </thead>
 
@@ -153,7 +180,7 @@ Actions
 
 <small class="text-muted">
 
-Distribution du 
+Distribution du
 {{ depense.distribution.depot.date }}
 
 </small>
@@ -169,6 +196,7 @@ Aucune distribution
 
 
 </td>
+
 
 
 
@@ -191,11 +219,13 @@ Aucune distribution
 
 
 
+
 <td>
 
 {{ depense.date }}
 
 </td>
+
 
 
 
@@ -217,12 +247,13 @@ Aucune distribution
 
 
 
+
 <td>
 
-{{ depense.description|default:"Aucune description" |title}}
-
+{{ depense.description|default:"Aucune description" }}
 
 </td>
+
 
 
 
@@ -230,7 +261,7 @@ Aucune distribution
 
 
 <a href="{% url 'depense:depense_edit' depense.id %}"
-   class="btn btn-sm btn-outline-warning">
+class="btn btn-sm btn-outline-warning">
 
 ✏
 
@@ -239,18 +270,16 @@ Aucune distribution
 
 
 <button type="button"
-        class="btn btn-sm btn-outline-danger"
-        data-bs-toggle="modal"
-        data-bs-target="#delete{{depense.id}}">
+class="btn btn-sm btn-outline-danger"
+data-bs-toggle="modal"
+data-bs-target="#delete{{depense.id}}">
 
 🗑
 
 </button>
 
 
-
 </td>
-
 
 
 </tr>
@@ -258,10 +287,8 @@ Aucune distribution
 
 
 
-<!-- Suppression -->
-
 <div class="modal fade"
-     id="delete{{depense.id}}">
+id="delete{{depense.id}}">
 
 
 <div class="modal-dialog modal-dialog-centered">
@@ -281,7 +308,9 @@ Suppression
 data-bs-dismiss="modal">
 </button>
 
+
 </div>
+
 
 
 
@@ -296,6 +325,7 @@ Voulez-vous supprimer :
 ?
 
 </div>
+
 
 
 
@@ -330,7 +360,6 @@ Supprimer
 </div>
 
 
-
 </div>
 
 </div>
@@ -349,6 +378,81 @@ Supprimer
 
 
 </div>
+
+
+
+{% if page_obj.has_other_pages %}
+
+
+<nav class="mt-4">
+
+
+<ul class="pagination justify-content-center">
+
+
+{% if page_obj.has_previous %}
+
+<li class="page-item">
+
+<a class="page-link"
+href="?page={{ page_obj.previous_page_number }}{% if titre %}&titre={{ titre }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">
+
+Précédent
+
+</a>
+
+</li>
+
+{% endif %}
+
+
+
+{% for num in page_obj.paginator.page_range %}
+
+
+<li class="page-item {% if page_obj.number == num %}active{% endif %}">
+
+
+<a class="page-link"
+href="?page={{ num }}{% if titre %}&titre={{ titre }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">
+
+{{ num }}
+
+</a>
+
+
+</li>
+
+
+{% endfor %}
+
+
+
+{% if page_obj.has_next %}
+
+
+<li class="page-item">
+
+<a class="page-link"
+href="?page={{ page_obj.next_page_number }}{% if titre %}&titre={{ titre }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">
+
+Suivant
+
+</a>
+
+</li>
+
+
+{% endif %}
+
+
+</ul>
+
+
+</nav>
+
+
+{% endif %}
 
 
 

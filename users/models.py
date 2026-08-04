@@ -4,19 +4,19 @@ from personnel.models import Personnel
 
 class AppUser(models.Model):
 
-    ROLE_CHOICES = (
-        ("Admin", "Administrateur"),
-        ("Superviseur", "Super Viseur"),
-        ("User", "Utilisateur"),
-    )
+    ROLE_CHOICES = [
+        ('Admin', 'Administrateur'),
+        ('Superviseur', 'Superviseur'),
+        ('User', 'Utilisateur'),
+    ]
 
 
     personnel = models.OneToOneField(
         Personnel,
-        on_delete=models.CASCADE,
-        related_name="compte",
+        on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
+        related_name="user"
     )
 
 
@@ -27,8 +27,8 @@ class AppUser(models.Model):
 
 
     email = models.EmailField(
-        max_length=100,
-        unique=True
+        blank=True,
+        null=True
     )
 
 
