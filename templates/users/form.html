@@ -1,94 +1,186 @@
 {% extends "base.html" %}
 
 {% block title %}
-Formulaire Avance
+{% if form.instance.pk %}
+Modifier un utilisateur
+{% else %}
+Nouvel utilisateur
+{% endif %}
 {% endblock %}
 
 {% block content %}
-<div class="card shadow-sm p-4">
 
-    <h3 class="mb-3 text-center text-uppercase">
-        {% if form.instance.id %}
-            <span class="text-info">Modifier une avance</span>
-        {% else %}
-            <span class="text-success">Ajouter une avance</span>
-        {% endif %}
-    </h3>
+<div class="container mt-4">
 
-    <form method="post">
-        {% csrf_token %}
+    <div class="card shadow">
 
-        {% if form.errors %}
-            <div class="alert alert-danger">
-                {{ form.errors }}
-            </div>
-        {% endif %}
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                {% if form.instance.pk %}
+                    Modifier un utilisateur
+                {% else %}
+                    Créer un utilisateur
+                {% endif %}
+            </h4>
+        </div>
 
-        <div class="row">
+        <div class="card-body">
 
-            <!-- COLONNE PRINCIPALE -->
-            <div class="col-md-6">
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
 
-                <div class="mb-2">
-                    <label>Client</label>
-                    {{ form.id_client }}
+            <form method="post" enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                <div class="row">
+
+                    <!-- Personnel -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Personnel
+                        </label>
+
+                        {{ form.personnel }}
+
+                        {% if form.personnel.errors %}
+                            <div class="text-danger">
+                                {{ form.personnel.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Catégorie -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Catégorie utilisateur
+                        </label>
+
+                        {{ form.role }}
+
+                        {% if form.categorieUser.errors %}
+                            <div class="text-danger">
+                                {{ form.categorieUser.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Username -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Nom d'utilisateur
+                        </label>
+
+                        {{ form.username }}
+
+                        {% if form.username.errors %}
+                            <div class="text-danger">
+                                {{ form.username.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Adresse e-mail
+                        </label>
+
+                        {{ form.email }}
+
+                        {% if form.email.errors %}
+                            <div class="text-danger">
+                                {{ form.email.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Mot de passe -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Mot de passe
+                        </label>
+
+                        {{ form.password }}
+
+                        {% if form.password.errors %}
+                            <div class="text-danger">
+                                {{ form.password.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Confirmation -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Confirmation
+                        </label>
+
+                        {{ form.confirm_password }}
+
+                        {% if form.confirm_password.errors %}
+                            <div class="text-danger">
+                                {{ form.confirm_password.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Photo -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">
+                            Photo
+                        </label>
+
+                        {{ form.photo }}
+
+                        {% if form.photo.errors %}
+                            <div class="text-danger">
+                                {{ form.photo.errors }}
+                            </div>
+                        {% endif %}
+
+                        {% if form.instance.photo %}
+                            <div class="mt-2">
+                                <img src="{{ form.instance.photo.url }}"
+                                     class="img-thumbnail"
+                                     width="150">
+                            </div>
+                        {% endif %}
+                    </div>
+
                 </div>
 
-                <div class="mb-2">
-                    <label>Motif</label>
-                    {{ form.motifAv }}
+                <hr>
+
+                <div class="d-flex justify-content-between">
+
+                    <a href="{% url 'users:users_liste' %}"
+                       class="btn btn-secondary">
+                        Retour
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-success">
+
+                        {% if form.instance.pk %}
+                            Modifier
+                        {% else %}
+                            Enregistrer
+                        {% endif %}
+
+                    </button>
+
                 </div>
 
-                <div class="mb-2">
-                    <label>Montant</label>
-                    {{ form.montantAv }}
-                </div>
-
-                <div class="mb-2">
-                    <label>Type d'avance</label>
-                    {{ form.typeAv }}
-                </div>
-
-            </div>
-
-            <!-- COLONNE RESUME -->
-            <div class="col-md-4 text-center">
-
-                <div class="card p-3 bg-light shadow-sm">
-                    <h5 class="text-center">Résumé</h5>
-                    <hr>
-
-                    <p>
-                        <strong>Client :</strong><br>
-                        {{ form.id_client.value }}
-                    </p>
-
-                    <p>
-                        <strong>Montant :</strong><br>
-                        {{ form.montantAv.value }}
-                    </p>
-
-                    <p>
-                        <strong>Type :</strong><br>
-                        {{ form.typeAv.value }}
-                    </p>
-                </div>
-
-            </div>
+            </form>
 
         </div>
 
-        <hr>
-
-        <button type="submit" class="btn btn-success">
-            Enregistrer
-        </button>
-
-        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">
-            Retour
-        </a>
-
-    </form>
+    </div>
 
 </div>
+
 {% endblock %}

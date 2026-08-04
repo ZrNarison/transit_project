@@ -1,76 +1,97 @@
 {% extends "base.html" %}
-{% block title %}
-Informations du Personnel
-{% endblock %}
+
 
 {% block content %}
-<h3 class="mb-4">
-    Informations du client
-</h3>
-<div class="card shadow-sm">
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-8">
-                <p>
-                    <strong>Nom :</strong> 
-                    {{ personnel.nom|upper }} {{ personnel.prenom|title }}
-                </p>
-                <p>
-                    <strong>Fonction :</strong>
-                    {{ personnel.fonction|upper }}
-                </p>
-                <p>
-                    <strong>Adresse :</strong>
-                    {{ personnel.adresse|upper }}
-                </p>
-                {% comment %} <p>
-                    <strong>Adresse :</strong>
-                    {{ personnel.adresse|upper }}
-                </p> {% endcomment %}
-                <p>
-                    <strong>Class :</strong>
-                    {{ personnel.categorie }}
-                </p>
-                <p>
-                    <strong>Téléphone :</strong>
-                    {{ personnel.telephone }}
-                </p>
-            </div>
-            <div class="col-md-4 text-center">
-                {% if personnel.photo %}
-                    <div class="text-center">
-                        <img src="{{ personnel.photo.url }}"
-                            class="img-thumbnail shadow rounded-circle"
-                            style="width: 220px; height: 220px; object-fit: cover;">
-                    </div>
-                {% else %}
-                    <div class="alert alert-secondary text-center">
-                        Aucune photo
-                    </div>
-                {% endif %}
 
-            </div>
 
-        </div>
+<div class="container mt-4">
 
-    </div>
 
-    <div class="card-footer">
+<h3>Détail personnel</h3>
 
-        <a href="{% url 'personnel:personnel_edit' personnel.id %}" class="btn btn-warning">
-            Modifier
-        </a>
 
-        <a href="{% url 'personnel:personnel_delete' personnel.id %}" class="btn btn-danger">
-            Supprimer
-        </a>
+<div class="card">
 
-        <a href="{% url 'personnel:personnel_list' %}" class="btn btn-secondary">
-            Retour
-        </a>
+<div class="card-body">
 
-    </div>
+
+{% if personnel.photo %}
+
+<img src="{{ personnel.photo.url }}"
+     width="150"
+     class="mb-3 rounded float-end">
+
+{% endif %}
+
+
+
+<p>
+<strong>Nom :</strong>
+{{ personnel.nom |upper}}
+</p>
+
+
+<p>
+<strong>Prénom :</strong>
+{{ personnel.prenom }}
+</p>
+
+
+<p>
+<strong>Fonction :</strong>
+{{ personnel.fonction }}
+</p>
+
+
+<p>
+<strong>Catégorie :</strong>
+
+{% if personnel.categorie %}
+{{ personnel.categorie.nom }}
+{% else %}
+-
+{% endif %}
+
+</p>
+
+
+<p>
+<strong>Téléphone :</strong>
+{{ personnel.telephone }}
+</p>
+
+
+<p>
+<strong>Salaire :</strong>
+{{ personnel.psalaire }}
+</p>
+
+
+<p>
+<strong>Date contrat :</strong>
+{{ personnel.debutContrat|date:"d/m/Y" }}
+</p>
+
+
+<p>
+<strong>Adresse :</strong>
+{{ personnel.adresse|title }}
+</p>
+
+
+
+<a href="{% url 'personnel:personnel_list' %}"
+class="btn btn-secondary">
+Retour
+</a>
+
 
 </div>
+
+</div>
+
+
+</div>
+
 
 {% endblock %}

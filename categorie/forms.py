@@ -1,16 +1,31 @@
 from django import forms
-from .models import categorie
+from .models import Categorie
 
-class categorieForm(forms.ModelForm):
+
+class CategorieForm(forms.ModelForm):
+
     class Meta:
-        model = categorie
+        model = Categorie
         fields = [
-            'nom'
+            "nom",
+            "description"
         ]
+
         widgets = {
-            "nom":forms.TextInput(attrs={
-                "class":"form-control",
-                "placeholder":"Tapez ici le class d'utilisateur"
-            })
+
+            "nom": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom catégorie"
+                }
+            ),
+
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Description",
+                    "rows": 3,
+                    "style": "resize:none;"
+                }
+            ),
         }
-        

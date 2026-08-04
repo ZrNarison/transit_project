@@ -4,91 +4,311 @@
 Formulaire Avance
 {% endblock %}
 
+
 {% block content %}
-<div class="card shadow-sm p-4">
 
-    <h3 class="mb-3 text-center text-uppercase">
-        {% if form.instance.id %}
-            <span class="text-info">Modifier une avance</span>
-        {% else %}
-            <span class="text-success">Ajouter une avance</span>
-        {% endif %}
-    </h3>
+<div class="container mt-4">
 
-    <form method="post">
-        {% csrf_token %}
+    <div class="card shadow-sm p-4">
 
-        {% if form.errors %}
-            <div class="alert alert-danger">
-                {{ form.errors }}
+        <h3 class="mb-4 text-center text-uppercase">
+
+            {% if form.instance.id %}
+                <span class="text-info">
+                    Modifier une avance
+                </span>
+            {% else %}
+                <span class="text-success">
+                    Ajouter une avance
+                </span>
+            {% endif %}
+
+        </h3>
+
+
+        <form method="post">
+
+            {% csrf_token %}
+
+
+            {% if form.errors %}
+
+                <div class="alert alert-danger">
+
+                    {{ form.non_field_errors }}
+
+                    {% for field in form %}
+
+                        {% if field.errors %}
+
+                            <strong>
+                                {{ field.label }}
+                            </strong>
+
+                            {{ field.errors }}
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+
+
+            <div class="row">
+
+
+                <!-- COLONNE FORMULAIRE -->
+
+                <div class="col-md-6">
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-bold">
+                            Personnel
+                        </label>
+
+                        {{ form.personnel }}
+
+                        <small class="text-muted">
+                            Sélectionner si l'avance concerne un employé
+                        </small>
+
+                    </div>
+
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-bold">
+                            Client
+                        </label>
+
+                        {{ form.client }}
+
+                        <small class="text-muted">
+                            Sélectionner si l'avance concerne un client
+                        </small>
+
+                    </div>
+
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-bold">
+                            Motif
+                        </label>
+
+                        {{ form.motifAv }}
+
+                    </div>
+
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-bold">
+                            Montant
+                        </label>
+
+                        {{ form.montantAv }}
+
+                    </div>
+
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-bold">
+                            Type d'avance
+                        </label>
+
+                        {{ form.typeAv }}
+
+                    </div>
+
+
+                </div>
+
+
+
+
+                <!-- COLONNE RESUME -->
+
+                <div class="col-md-4">
+
+
+                    <div class="card shadow-sm bg-light p-3">
+
+
+                        <h5 class="text-center text-primary">
+                            Résumé
+                        </h5>
+
+
+                        <hr>
+
+
+
+                        <p>
+
+                            <strong>
+                                Personnel :
+                            </strong>
+
+                            <br>
+
+                            {{ form.personnel.value|default:"-" }}
+
+                        </p>
+
+
+
+                        <p>
+
+                            <strong>
+                                Client :
+                            </strong>
+
+                            <br>
+
+                            {{ form.client.value|default:"-" }}
+
+                        </p>
+
+
+
+                        <p>
+
+                            <strong>
+                                Montant :
+                            </strong>
+
+                            <br>
+
+                            {{ form.montantAv.value|default:"0" }}
+
+                            Ar
+
+                        </p>
+
+
+
+                        <p>
+
+                            <strong>
+                                Type :
+                            </strong>
+
+                            <br>
+
+                            {{ form.typeAv.value }}
+
+                        </p>
+
+
+                    </div>
+
+
+                </div>
+
+
             </div>
-        {% endif %}
 
-        <div class="row">
 
-            <!-- COLONNE PRINCIPALE -->
-            <div class="col-md-6">
 
-                <div class="mb-2">
-                    <label>Personnel</label>
-                    {{ form.personnel }}
-                </div>
 
-                <div class="mb-2">
-                    <label>Motif</label>
-                    {{ form.motifAv }}
-                </div>
+            <hr>
 
-                <div class="mb-2">
-                    <label>Montant</label>
-                    {{ form.montantAv }}
-                </div>
 
-                <div class="mb-2">
-                    <label>Type d'avance</label>
-                    {{ form.typeAv }}
-                </div>
 
-            </div>
+            <div class="text-end">
 
-            <!-- COLONNE RESUME -->
-            <div class="col-md-4 text-center">
+                <button type="submit"
+                        class="btn btn-success">
 
-                <div class="card p-3 bg-light shadow-sm">
-                    <h5 class="text-center">Résumé</h5>
-                    <hr>
+                    💾 Enregistrer
 
-                    <p>
-                        <strong>Personnel :</strong><br>
-                        {{ form.personnel.value }}
-                    </p>
+                </button>
 
-                    <p>
-                        <strong>Montant :</strong><br>
-                        {{ form.montantAv.value }}
-                    </p>
 
-                    <p>
-                        <strong>Type :</strong><br>
-                        {{ form.typeAv.value }}
-                    </p>
-                </div>
+
+                <a href="{% url 'avances:avance_list' %}"
+                   class="btn btn-secondary">
+
+                    ↩ Retour
+
+                </a>
+
 
             </div>
 
-        </div>
 
-        <hr>
 
-        <button type="submit" class="btn btn-success">
-            Enregistrer
-        </button>
+        </form>
 
-        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">
-            Retour
-        </a>
 
-    </form>
+    </div>
+
 
 </div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const personnel = document.getElementById("id_personnel");
+    const client = document.getElementById("id_client");
+
+    const blocPersonnel = personnel.closest(".mb-3");
+    const blocClient = client.closest(".mb-3");
+
+
+    function verifierChoix(){
+
+        if(personnel.value){
+
+            blocClient.style.display = "none";
+            client.value = "";
+
+        }
+        else if(client.value){
+
+            blocPersonnel.style.display = "none";
+            personnel.value = "";
+
+        }
+        else{
+
+            blocPersonnel.style.display = "block";
+            blocClient.style.display = "block";
+
+        }
+
+    }
+
+
+    personnel.addEventListener(
+        "change",
+        verifierChoix
+    );
+
+
+    client.addEventListener(
+        "change",
+        verifierChoix
+    );
+
+
+    verifierChoix();
+
+});
+
+</script>
+
+
 {% endblock %}

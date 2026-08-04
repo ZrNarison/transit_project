@@ -1,5 +1,7 @@
 from django.db import models
 from personnel.models import Personnel
+from clients.models import Client
+from users.models import AppUser
 
 
 class Avance(models.Model):
@@ -10,9 +12,43 @@ class Avance(models.Model):
         ('MOBILE_MONEY', 'Mobile Money'),
     ]
 
-    personnel = models.ForeignKey(Personnel, on_delete=models.CASCADE, related_name='avances', null=True, blank=True)
-    motifAv = models.CharField(max_length=255)
-    montantAv = models.DecimalField(max_digits=10, decimal_places=2)
+
+    personnel = models.ForeignKey(
+        Personnel,
+        on_delete=models.CASCADE,
+        related_name='avances',
+        null=True,
+        blank=True
+    )
+
+
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name='avances',
+        null=True,
+        blank=True
+    )
+
+
+    motifAv = models.CharField(
+        max_length=255
+    )
+
+
+    montantAv = models.DecimalField(
+        max_digits=12,
+        decimal_places=0
+    )
+
+    distribution = models.ForeignKey(
+    "depot.Distribution",
+    on_delete=models.CASCADE,
+    related_name="avances",
+    null=True,
+    blank=True
+)
+
 
     typeAv = models.CharField(
         max_length=20,
@@ -20,7 +56,26 @@ class Avance(models.Model):
         default='ESPECE'
     )
 
-    dateAv = models.DateTimeField(auto_now_add=True)
+
+    dateAv = models.DateTimeField(
+        auto_now_add=True
+    )
+
+
+    enregistre_par = models.ForeignKey(
+    AppUser,
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name="avances_enregistrees"
+)
 
     def __str__(self):
-        return f"{self.personnel} - {self.montantAv}"
+
+        if self.personnel:
+            return f"{self.personnel} - {self.montantAv} Ar"
+
+        if self.client:
+            return f"{self.client} - {self.montantAv} Ar"
+
+        return f"Avance {self.montantAv} Ar"

@@ -4,94 +4,166 @@
 Informations du transport entrant
 {% endblock %}
 
+
 {% block content %}
 
 <h3 class="mb-4">
     Informations du transport entrant
 </h3>
 
+
+
 <div class="card shadow-sm">
 
-    <div class="card-body">
 
-        <div class="row">
+<div class="card-body">
 
-            <div class="col-md-8">
 
-                {% comment %} <p>
-                    <strong>Client :</strong>
-                    {{ client.id_client }}
-                </p> {% endcomment %}
+<div class="row">
 
-                <p>
-                    <strong>Chauffeur :</strong>
-                    {{ client.chauffeur|title }}
-                </p>
 
-                <p>
-                    <strong>C.I.N :</strong>
-                    {{ client.cin }}
-                </p>
 
-                <p>
-                    <strong>Numéro du véhicule :</strong>
-                    {{ client.num_vehicule|upper }}
-                </p>
+<div class="col-md-8">
 
-                <p>
-                    <strong>Numéro de permis :</strong>
-                    {{ client.permis|upper }}
-                </p>
 
-                <p>
-                    <strong>Adresse :</strong>
-                    {{ client.adresse|title }}
-                </p>
+<p>
+    <strong>Chauffeur :</strong>
+    {{ client.chauffeur|title }}
+</p>
 
-                <p>
-                    <strong>Téléphone :</strong>
-                    {{ client.telephone }}
-                </p>
 
-            </div>
 
-            <div class="col-md-4 text-center">
+<p>
+    <strong>C.I.N :</strong>
+    {{ client.cin }}
+</p>
 
-                {% if client.photo %}
-                    <img src="{{ client.photo.url }}"
-                         class="img-thumbnail shadow"
-                         style="width:220px;height:220px;object-fit:cover;">
-                {% else %}
-                    <div class="alert alert-secondary">
-                        Aucune photo
-                    </div>
-                {% endif %}
 
-            </div>
 
-        </div>
+<p>
+    <strong>Numéro du véhicule :</strong>
+    {{ client.num_vehicule|upper }}
+</p>
 
-    </div>
 
-    <div class="card-footer">
 
-        <a href="{% url 'transentrant:t_transentrant_edit' client.id %}"
-           class="btn btn-warning">
-            Modifier
-        </a>
+<p>
+    <strong>Numéro de permis :</strong>
+    {{ client.permis|upper }}
+</p>
 
-        <a href="{% url 'transentrant:t_transentrant_delete' client.id %}"
-           class="btn btn-danger">
-            Supprimer
-        </a>
 
-        <a href="{% url 'transentrant:t_transentrant_liste' %}"
-           class="btn btn-secondary">
-            Retour
-        </a>
 
-    </div>
+<p>
+    <strong>Adresse :</strong>
+    {{ client.adresse|title }}
+</p>
+
+
+
+<p>
+    <strong>Téléphone :</strong>
+    {{ client.telephone }}
+</p>
+
+
+
+<p>
+    <strong>Créé par :</strong>
+    {{ client.created_by.username }}
+</p>
+
+
+
+<p>
+    <strong>Date création :</strong>
+    {{ client.created_at|date:"d/m/Y H:i" }}
+</p>
+
+
 
 </div>
+
+
+
+
+<div class="col-md-4 text-center">
+
+
+{% if client.photo %}
+
+<img src="{{ client.photo.url }}"
+     class="img-thumbnail shadow"
+     style="width:220px;height:220px;object-fit:cover;">
+
+
+{% else %}
+
+<div class="alert alert-secondary">
+
+Aucune photo
+
+</div>
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="card-footer">
+
+
+<!-- Boutons seulement pour le propriétaire -->
+
+{% if client.created_by_id == user_id %}
+
+
+
+<a href="{% url 'transentrant:t_transentrant_edit' client.id %}"
+   class="btn btn-warning">
+
+✏ Modifier
+
+</a>
+
+
+
+<a href="{% url 'transentrant:t_transentrant_delete' client.id %}"
+   class="btn btn-danger">
+
+🗑 Supprimer
+
+</a>
+
+
+
+{% endif %}
+
+
+
+
+<a href="{% url 'transentrant:t_transentrant_liste' %}"
+   class="btn btn-secondary">
+
+Retour
+
+</a>
+
+
+</div>
+
+
+</div>
+
 
 {% endblock %}

@@ -4,54 +4,210 @@
 Liste des catégories
 {% endblock %}
 
+
 {% block content %}
 
 <div class="container mt-4">
 
+
     <div class="d-flex justify-content-between align-items-center mb-4">
+
         <div>
-            <h2 class="mb-1">Liste des catégories</h2>
-            <p class="text-muted mb-0">Gestion des catégories du catalogue.</p>
+
+            <h2 class="mb-1">
+                Liste des catégories
+            </h2>
+
+            <p class="text-muted mb-0">
+                Gestion des catégories du personnel.
+            </p>
+
         </div>
-        <a href="{% url 'categorie:categorie_add' %}" class="btn btn-primary">+ Nouvelle catégorie</a>
+
+
+        <a href="{% url 'categorie:categorie_add' %}"
+           class="btn btn-primary">
+
+            + Nouvelle catégorie
+
+        </a>
+
     </div>
 
-    <form method="get" class="row g-2 align-items-end mb-4">
+
+
+
+    <!-- Recherche -->
+
+    <form method="get"
+          class="row g-2 align-items-end mb-4">
+
+
         <div class="col-md-6">
-            <label class="form-label small">Nom</label>
-            <input type="text" name="nom" value="{{ nom }}" class="form-control" placeholder="Nom de la catégorie">
+
+            <label class="form-label small">
+                Nom
+            </label>
+
+
+            <input type="text"
+                   name="nom"
+                   value="{{ nom }}"
+                   class="form-control"
+                   placeholder="Nom de la catégorie">
+
         </div>
+
+
+
         <div class="col-md-6 d-flex gap-2">
-            <button type="submit" class="btn btn-primary w-100">Rechercher</button>
-            <a href="{% url 'categorie:categorie_liste' %}" class="btn btn-secondary w-100">Réinitialiser</a>
+
+
+            <button type="submit"
+                    class="btn btn-primary w-100">
+
+                Rechercher
+
+            </button>
+
+
+
+            <a href="{% url 'categorie:categorie_liste' %}"
+               class="btn btn-secondary w-100">
+
+                Réinitialiser
+
+            </a>
+
+
         </div>
+
+
     </form>
 
+
+
+
+
     <div class="table-responsive">
+
+
         <table class="table table-bordered table-striped table-hover align-middle">
+
+
             <thead class="table-dark">
+
                 <tr>
-                    <th>Nom</th>
-                    <th>Actions</th>
+
+                    <th width="80">
+                        ID
+                    </th>
+
+
+                    <th>
+                        Nom
+                    </th>
+
+
+                    <th>
+                        Description
+                    </th>
+
+
+                    <th width="150">
+                        Actions
+                    </th>
+
+
                 </tr>
+
+
             </thead>
+
+
+
+
             <tbody>
-                {% for categorie in categories %}
+
+
+            {% for categorie in categories %}
+
+
                 <tr>
-                    <td>{{ categorie.nom }}</td>
-                    <td class="text-center">
-                        <a href="{% url 'categorie:categorie_edit' categorie.id %}" class="btn btn-warning btn-sm">✏</a>
-                        <a href="{% url 'categorie:categorie_delete' categorie.id %}" class="btn btn-danger btn-sm">🗑</a>
+
+
+                    <td>
+                        {{ categorie.id }}
                     </td>
+
+
+                    <td>
+                        {{ categorie.nom }}
+                    </td>
+
+
+                    <td>
+                        {{ categorie.description|default:"-" }}
+                    </td>
+
+
+
+                    <td class="text-center">
+
+
+                        <a href="{% url 'categorie:categorie_edit' categorie.id %}"
+                           class="btn btn-warning btn-sm">
+
+                            ✏
+
+                        </a>
+
+
+
+                        <a href="{% url 'categorie:categorie_delete' categorie.id %}"
+                           class="btn btn-danger btn-sm">
+
+                            🗑
+
+                        </a>
+
+
+                    </td>
+
+
                 </tr>
-                {% empty %}
+
+
+
+            {% empty %}
+
+
                 <tr>
-                    <td colspan="2" class="text-center text-muted">Aucune catégorie trouvée</td>
+
+                    <td colspan="4"
+                        class="text-center text-muted">
+
+                        Aucune catégorie trouvée
+
+                    </td>
+
                 </tr>
-                {% endfor %}
+
+
+
+            {% endfor %}
+
+
             </tbody>
+
+
         </table>
+
+
     </div>
+
+
 </div>
+
 
 {% endblock %}

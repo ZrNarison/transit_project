@@ -2,9 +2,7 @@
 {% block title %}
 {{ action }} dépôt
 {% endblock %}
-
 {% block content %}
-
 <div class="page-card">
     <h3 class="mb-4">{{ action }} un dépôt</h3>
     <form method="post">
@@ -22,9 +20,7 @@
         <div class="alert alert-danger">
             {{ formset.errors }}
         </div>
-
     {% endif %}
-
     <h5>Informations dépôt</h5>
     <div class="row mb-3">
         <div class="col-md-6">

@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.db import models
+from django.db.models import Sum
 from personnel.models import Personnel
 
 
@@ -13,7 +14,7 @@ class Depot(models.Model):
 
     montantG = models.DecimalField(
         max_digits=15,
-        decimal_places=2,
+        decimal_places=0,
         default=0
     )
 
@@ -53,16 +54,54 @@ class Depot(models.Model):
 
 class Distribution(models.Model):
 
-    depot = models.ForeignKey(Depot, on_delete=models.CASCADE,related_name="distributions")
+    depot = models.ForeignKey(
+        Depot,
+        on_delete=models.CASCADE,
+        related_name="distributions"
+    )
 
-    distributeur = models.ForeignKey( Personnel,on_delete=models.CASCADE,related_name="distributions_recues")
-
+    distributeur = models.ForeignKey(
+        Personnel,
+        on_delete=models.CASCADE,
+        related_name="distributions_recues"
+    )
 
     montant = models.DecimalField(
         max_digits=15,
-        decimal_places=2,
+        decimal_places=0,
         default=0
     )
+
+
+    @property
+    def montant_depenses(self):
+        return self.depenses.aggregate(
+            total=Sum("montant")
+        )["total"] or Decimal("0")
+
+
+    @property
+    def montant_produits(self):
+        return self.paiements_produits.aggregate(
+            total=Sum("montant")
+        )["total"] or Decimal("0")
+
+
+    @property
+    def montant_avances(self):
+        return self.avances.aggregate(
+            total=Sum("montantAv")
+        )["total"] or Decimal("0")
+
+
+    @property
+    def solde(self):
+        return (
+            self.montant
+            - self.montant_depenses
+            - self.montant_avances
+            - self.montant_produits
+        )
 
 
     def __str__(self):

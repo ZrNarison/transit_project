@@ -36,7 +36,11 @@ Liste des dépôts
         </div>
         <div class="col-md-3 d-flex align-items-end">
             <button type="submit" class="btn btn-primary me-2">Filtrer</button>
-            <a href="{% url 'depot:depot_list' %}" class="btn btn-secondary">Réinitialiser</a>
+            <a href="{% url 'depot:depot_list' %}" class="btn btn-secondary">Réinitialiser</a>            
+            <a href="{% url 'depot:depot_print' %}{% if personnel %}?personnel={{ personnel }}{% endif %}{% if date_debut %}{% if personnel %}&{% else %}?{% endif %}date_debut={{ date_debut }}{% endif %}{% if date_fin %}{% if personnel or date_debut %}&{% else %}?{% endif %}date_fin={{ date_fin }}{% endif %}"
+                class="btn btn-success m-md-2">
+                    Imprimer
+                </a>
         </div>
     </form>
     <div class="alert alert-info">

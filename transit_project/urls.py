@@ -16,7 +16,10 @@ urlpatterns = [
     path('depense/', include(('depense.urls', 'depense'), namespace='depense')),
     path('depot/', include(('depot.urls', 'depot'), namespace='depot')),
     path('salaire/', include(('salaire.urls', 'salaire'), namespace='salaire')),
+    path('users/', include(('users.urls', 'users'), namespace='users')),
+    path('categorie/', include(('categorie.urls', 'categorie'), namespace='categorie')),
 ]
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

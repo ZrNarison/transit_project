@@ -1,97 +1,90 @@
 {% extends "base.html" %}
-{% load static %}
-
-{% block title %}
-Liste des personnels
-{% endblock %}
 
 {% block content %}
 
-<h2 class="text-center mb-2 fw-bold">
-    Liste des personnels
-</h2>
-<a href="{% url 'personnel:personnel_add'%}" class="btn btn-info btn-sm"> + Nouveau </a>
-<form method="get" class="row g-2 align-items-end mb-4">
-    <div class="col-md-3">
-        <label class="form-label small">Nom</label>
-        <input type="text" name="nom" value="{{ nom }}" class="form-control" placeholder="Nom">
+<div class="container mt-4">
+    <div class="d-flex justify-content-between mb-3">
+        <h3>Liste du personnel</h3>
+        {% if request.session.role == "Admin" %}
+        <a href="{% url 'personnel:personnel_add' %}" class="btn btn-primary"> + Nouveau</a>
+        {% endif %}
     </div>
-    <div class="col-md-3">
-        <label class="form-label small">Prénom</label>
-        <input type="text" name="prenom" value="{{ prenom }}" class="form-control" placeholder="Prénom">
-    </div>
-    <div class="col-md-3">
-        <label class="form-label small">Fonction</label>
-        <input type="text" name="fonction" value="{{ fonction }}" class="form-control" placeholder="Fonction">
-    </div>
-    <div class="col-md-3 d-flex gap-2">
-        <button type="submit" class="btn btn-primary w-100">Rechercher</button>
-        <a href="{% url 'personnel:personnel_list' %}" class="btn btn-secondary w-100">Réinitialiser</a>
-    </div>
-</form>
-
-<div class="row">
-
-    {% for personnel in personnels %}
-
-    <div class="col-md-2 mb-3">
-
-        <div class="card">
-
-            {% if personnel.photo %}
-                <img src="{{ personnel.photo.url }}"
-                     class="card-img-top"
-                     alt="{{ personnel.nom }}"
-                     style="height:90px;width:100%;object-fit:cover;">
-            {% else %}
-                <img src="{% static 'images/default.png' %}"
-                     class="card-img-top"
-                     alt="Photo par défaut"
-                     style="height:100px;width:100%;object-fit:cover;">
-            {% endif %}
-
-            <div class="card-body">
-                <span class="badge bg-primary">
-                    {{ personnel.get_categorie_display|title }}
-                </span>
-                <p class="mt-0 mb-0">
-                    {{ personnel.fonction|title }} 
-                </p>
-
-                <p class="mt-0 mb-0">
-                    📞 {{ personnel.telephone }}
-                </p>
-
-                
-
-            </div>
-
-            <div class="d-flex justify-content-between p-2">
-
-                <a href="{% url 'personnel:personnel_detail' personnel.id %}"
-                   class="btn btn-info btn-sm">
-                    👁
-                </a>
-
-                <a href="{% url 'personnel:personnel_edit' personnel.id %}"
-                   class="btn btn-warning btn-sm">
-                    ✏
-                </a>
-
-                <a href="{% url 'personnel:personnel_delete' personnel.id %}"
-                   class="btn btn-danger btn-sm">
-                    🗑
-                </a>
-
-            </div>
-
+    <form method="GET" class="row g-2 mb-4">
+        <div class="col-md-3">
+            <input type="text" name="nom" value="{{ nom }}" class="form-control" placeholder="Nom">
         </div>
+        <div class="col-md-3">
+            <input type="text" name="prenom" value="{{ prenom }}" class="form-control" placeholder="Prénom">
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="fonction" value="{{ fonction }}"  class="form-control" placeholder="Fonction">
+        </div>
+        <div class="col-md-3">
+            <input type="text" name="categorie" value="{{ categorie }}" class="form-control" placeholder="Catégorie">
+        </div>
+        <div class="col-md-12">
+            <button class="btn btn-success"> Rechercher </button>
+            <a href="{% url 'personnel:personnel_list' %}" class="btn btn-secondary"> Réinitialiser </a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Photo</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Fonction</th>
+                <th>Catégorie</th>
+                <th>Téléphone</th>
+                <th>Salaire</th>
+                <th>Date contrat</th>
+                {% if request.session.role == "Admin" %}
+                <th>Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for personnel in personnels %}
+            <tr>
+                <td>{{ personnel.id }}</td>
+                <td>
+                    {% if personnel.photo %}
+                    <img src="{{ personnel.photo.url }}" width="50" height="50" class="rounded">
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td>{{ personnel.nom|upper }}</td>
+                <td>{{ personnel.prenom|title }}</td>
+                <td>{{ personnel.fonction }}</td>
+                <td>{% if personnel.categorie %}{{ personnel.categorie.nom }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ personnel.telephone }}</td>
+                <td>{{ personnel.psalaire }}</td>
+                <td>{{ personnel.debutContrat|date:"d/m/Y" }}</td>
+                {% if request.session.role == "Admin" %}
+                <td>
+                    <a href="{% url 'personnel:personnel_detail' personnel.id %}" class="btn btn-info btn-sm"> Voir </a>
+                    <a href="{% url 'personnel:personnel_edit' personnel.id %}" class="btn btn-warning btn-sm"> Modifier </a>
+                    <a href="{% url 'personnel:personnel_delete' personnel.id %} class="btn btn-danger btn-sm"> Supprimer </a>
+                </td>
+                {% endif %}
+
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="10" class="text-center">Aucun personnel trouvé</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
     </div>
-
-    {% empty %}
-        <p class="text-center text-muted">Aucun personnel trouvé</p>
-    {% endfor %}
-
 </div>
-
 {% endblock %}

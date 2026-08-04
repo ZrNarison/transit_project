@@ -1,4 +1,5 @@
 from django.db import models
+from categorie.models import Categorie
 
 
 class Personnel(models.Model):
@@ -15,25 +16,33 @@ class Personnel(models.Model):
     )
 
     telephone = models.CharField(
-        max_length=20
+        max_length=10
+    )
+
+    psalaire = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
     )
 
     fonction = models.CharField(
-        max_length=20,
+        max_length=50,
         default="Employé"
     )
 
-    categorie = models.CharField(
-        max_length=20,
-        choices=[
-            ('User', 'Client'),
-            ('Admin', 'Administrateur'),
-            ('SuperAdmin', 'SuperViseur'),
-        ]
-    )
+    debutContrat = models.DateField()
+
+    categorie = models.ForeignKey(
+    Categorie,
+    on_delete=models.CASCADE,
+    null=True,
+    blank=True,
+    related_name="personnels"
+)
 
     photo = models.ImageField(
-        upload_to='images/Personnel/'
+        upload_to='images/Personnel/',
+        blank=True,
+        null=True
     )
 
 

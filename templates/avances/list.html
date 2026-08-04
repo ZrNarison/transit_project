@@ -7,93 +7,246 @@ Liste des avances
 
 {% block content %}
 
-<div class="container">
-
-    <h2 class="text-center mb-4">
-        Liste des avances du personnel
-    </h2>
+<div class="container-fluid mt-4">
+    <h2 class="text-center mb-4">Liste des avances</h2>
+    <div class="card shadow-sm mb-3">
         <div class="card-body">
-    <form method="get">
-        <div class="row align-items-end">
+            <form method="get">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Nom ou prénom</label>
+                        <input type="text" name="personnel" value="{{ personnel }}" class="form-control" placeholder="Personnel ou Client">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" value="{{ date }}" class="form-control">
+                    </div>
+                    <div class="col-md-5 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">🔎 Rechercher</button>
+                        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">Reset</a>
+                        {% if request.session.role == "User" %}
+                        <a href="{% url 'avances:avance_add' %}" class="btn btn-success"> + Nouveau</a>
+                        {% endif %}
+                    </div>
 
-            <div class="col-md-4">
-                <label class="form-label">Nom ou prénom</label>
-                <input type="text"
-                       name="personnel"
-                       value="{{ personnel }}"
-                       class="form-control"
-                       placeholder="Nom ou prénom du personnel">
-            </div>
 
-            <div class="col-md-3">
-                <label class="form-label">Date</label>
-                <input type="date"
-                       name="date"
-                       value="{{ date }}"
-                       class="form-control">
-            </div>
+                </div>
 
-            <div class="col-md-5 d-flex justify-content-end align-items-end gap-2">
-                <button type="submit" class="btn btn-primary btn-sm">
-                    Rechercher
-                </button>
 
-                <a href="{% url 'avances:avance_list' %}"
-                   class="btn btn-secondary btn-sm">
-                    Réinitialiser
-                </a>
-
-                <a href="{% url 'avances:avance_add' %}"
-                   class="btn btn-success btn-sm">
-                    Nouveau
-                </a>
-            </div>
+            </form>
 
         </div>
-    </form>
-</div>
+
+    </div>
+
+
+
+    <div class="mb-3">
+
         <strong>
             Nombre d'avances :
             {{ avances|length }}
         </strong>
-    </div>
-    <table class="table table-bordered table-striped table-hover align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>N°</th>
-                <th>Personnel</th>
-                <th>Motif</th>
-                {% comment %} <th class="text-end">Montant</th> {% endcomment %}
-                <th>Type</th>
-                <th>Date</th>
-                <th width="220" class="text-center">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for avance in avances %}
-            <tr>
-                <td>{{ avance.id }}</td>
-                <td><strong>{{ avance.personnel.nom|upper }}</strong> {{ avance.personnel.prenom|title }}</td>
-                <td>{{ avance.motifAv|title }}</td>
-                {% comment %} <td class="text-end">
-                    {{ avance.montantAv|intcomma }} Ar
-                </td> {% endcomment %}
 
-                <td>{{ avance.get_typeAv_display }}</td>
-                <td>{{ avance.dateAv|date:"d/m/Y" }}</td>
-                <td class="text-center">
-                    <a href="{% url 'avances:avance_detail' avance.id %}"class="btn btn-info btn-sm">👁</a>
-                    <a href="{% url 'avances:avance_edit' avance.id %}"class="btn btn-warning btn-sm">✏</a>
-                    <a href="{% url 'avances:avance_delete' avance.id %}"class="btn btn-danger btn-sm">🗑</a>
-                </td>
-            </tr>
+    </div>
+
+
+
+    <!-- Tableau -->
+
+    <div class="table-responsive">
+
+        <table class="table table-bordered table-striped table-hover align-middle">
+
+
+            <thead class="table-dark text-center">
+
+                <tr>
+
+                    <th>N°</th>
+
+                    <th>Bénéficiaire</th>
+
+                    <th>Motif</th>
+
+                    <th class="text-end">
+                        Montant
+                    </th>
+
+                    <th>
+                        Type
+                    </th>
+
+                    <th>Date</th>
+                    <th>Enregistré par</th>
+
+                    <th width="220">
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+
+            <tbody>
+
+
+            {% for avance in avances %}
+
+                <tr>
+
+
+                    <td class="text-center">
+                        {{ avance.id }}
+                    </td>
+
+
+
+                    <!-- Personnel ou Client -->
+
+                    <td>
+
+
+                        {% if avance.personnel %}
+
+                            <strong>
+                                {{ avance.personnel.nom|upper }}
+                            </strong>
+
+                            {{ avance.personnel.prenom|title }}
+
+                            <br>
+
+                            <span class="badge bg-primary">
+                                Personnel
+                            </span>
+
+
+                        {% elif avance.client %}
+
+
+                            <strong>
+                                {{ avance.client.nom|upper }}
+                            </strong>
+
+                            {{ avance.client.prenom|title }}
+
+                            <br>
+
+                            <span class="badge bg-success">
+                                Client
+                            </span>
+
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+
+                    </td>
+
+
+
+                    <td>
+                        {{ avance.motifAv|title }}
+                    </td>
+
+
+
+                    <td class="text-end">
+
+                        {{ avance.montantAv|intcomma }}
+                        Ar
+
+                    </td>
+
+
+
+                    <td class="text-center">
+
+                        {{ avance.get_typeAv_display }}
+
+                    </td>
+
+
+
+                    <td class="text-center">
+
+                        {{ avance.dateAv|date:"d/m/Y" }}
+
+                    </td>
+
+                    <td>
+                        {% if avance.enregistre_par %}
+                            {{ avance.enregistre_par.username|title}}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td class="text-center">
+
+{% if avance.enregistre_par_id == request.session.user_id %}
+
+    <a href="{% url 'avances:avance_edit' avance.id %}"
+       class="btn btn-warning btn-sm">
+        ✏
+    </a>
+
+    <a href="{% url 'avances:avance_delete' avance.id %}"
+       class="btn btn-danger btn-sm">
+        🗑
+    </a>
+
+{% else %}
+
+    <button class="btn btn-secondary btn-sm" disabled>
+        🔒
+    </button>
+
+{% endif %}
+
+</td>
+
+
+
+                </tr>
+
+
             {% empty %}
-            <tr>
-                <td colspan="7" class="text-center text-muted">Aucune avance trouvée</td>
-            </tr>
+
+
+                <tr>
+
+                    <td colspan="7"
+                        class="text-center text-muted">
+
+                        Aucune avance trouvée
+
+                    </td>
+
+                </tr>
+
+
             {% endfor %}
-        </tbody>
-    </table>
+
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+
 </div>
+
 
 {% endblock %}

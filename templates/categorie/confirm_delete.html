@@ -1,39 +1,80 @@
 {% extends "base.html" %}
 
+
+
 {% block title %}
-Confirmation suppression
+Suppression catégorie
 {% endblock %}
+
+
 
 {% block content %}
 
-<h3 class="text-danger">Confirmation suppression</h3>
 
-<p>
-    Voulez-vous vraiment supprimer cette avance de :
-    <strong>{{ avance.motifAv|title }} </strong>
-    de
-    <strong>{{ avance.id_client.nom|upper }} {{ avance.id_client.prenom|title }} </strong>
-    du
-    <strong>
-        {{ avance.dateAv|date:"d/m/Y H:i" }}
-    </strong>
-    dont la somme est 
-    <strong>
-        {{ avance.montantAv}}
-    </strong>
-    ?
-</p>
+<div class="container mt-4">
 
-<form method="post">
-    {% csrf_token %}
 
-    <button type="submit" class="btn btn-danger">
-        Oui, supprimer
-    </button>
+    <div class="card shadow">
 
-    <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">
-        Annuler
-    </a>
-</form>
+
+        <div class="card-header bg-danger text-white">
+
+            Confirmation suppression
+
+        </div>
+
+
+
+        <div class="card-body">
+
+
+            <h5>
+                Voulez-vous supprimer cette catégorie ?
+            </h5>
+
+
+            <p class="text-danger fw-bold">
+
+                {{ categorie.nom }}
+
+            </p>
+
+
+
+            <form method="post">
+
+                {% csrf_token %}
+
+
+
+                <button type="submit"
+                        class="btn btn-danger">
+
+                    🗑 Oui supprimer
+
+                </button>
+
+
+
+                <a href="{% url 'categorie:categorie_liste' %}"
+                   class="btn btn-secondary">
+
+                    Annuler
+
+                </a>
+
+
+            </form>
+
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
 
 {% endblock %}

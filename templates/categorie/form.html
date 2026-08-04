@@ -1,94 +1,108 @@
 {% extends "base.html" %}
 
+
 {% block title %}
-Formulaire Avance
+Catégorie
 {% endblock %}
 
+
+
 {% block content %}
-<div class="card shadow-sm p-4">
 
-    <h3 class="mb-3 text-center text-uppercase">
-        {% if form.instance.id %}
-            <span class="text-info">Modifier une avance</span>
-        {% else %}
-            <span class="text-success">Ajouter une avance</span>
-        {% endif %}
-    </h3>
 
-    <form method="post">
-        {% csrf_token %}
+<div class="container mt-4">
 
-        {% if form.errors %}
-            <div class="alert alert-danger">
-                {{ form.errors }}
-            </div>
-        {% endif %}
 
-        <div class="row">
+    <div class="card shadow">
 
-            <!-- COLONNE PRINCIPALE -->
-            <div class="col-md-6">
 
-                <div class="mb-2">
-                    <label>Client</label>
-                    {{ form.id_client }}
-                </div>
+        <div class="card-header bg-primary text-white">
 
-                <div class="mb-2">
-                    <label>Motif</label>
-                    {{ form.motifAv }}
-                </div>
+            <h4 class="mb-0">
 
-                <div class="mb-2">
-                    <label>Montant</label>
-                    {{ form.montantAv }}
-                </div>
+                {% if form.instance.id %}
+                    Modifier catégorie
+                {% else %}
+                    Nouvelle catégorie
+                {% endif %}
 
-                <div class="mb-2">
-                    <label>Type d'avance</label>
-                    {{ form.typeAv }}
-                </div>
-
-            </div>
-
-            <!-- COLONNE RESUME -->
-            <div class="col-md-4 text-center">
-
-                <div class="card p-3 bg-light shadow-sm">
-                    <h5 class="text-center">Résumé</h5>
-                    <hr>
-
-                    <p>
-                        <strong>Client :</strong><br>
-                        {{ form.id_client.value }}
-                    </p>
-
-                    <p>
-                        <strong>Montant :</strong><br>
-                        {{ form.montantAv.value }}
-                    </p>
-
-                    <p>
-                        <strong>Type :</strong><br>
-                        {{ form.typeAv.value }}
-                    </p>
-                </div>
-
-            </div>
+            </h4>
 
         </div>
 
-        <hr>
 
-        <button type="submit" class="btn btn-success">
-            Enregistrer
-        </button>
 
-        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">
-            Retour
-        </a>
+        <div class="card-body">
 
-    </form>
+
+            <form method="post">
+
+                {% csrf_token %}
+
+
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Nom
+                    </label>
+
+                    {{ form.nom }}
+
+                </div>
+
+
+
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Description
+                    </label>
+
+
+                    {{ form.description }}
+
+                </div>
+
+
+
+
+
+                <div class="d-flex gap-2">
+
+
+                    <button type="submit"
+                            class="btn btn-success">
+
+                        💾 Enregistrer
+
+                    </button>
+
+
+
+                    <a href="{% url 'categorie:categorie_liste' %}"
+                       class="btn btn-secondary">
+
+                        Annuler
+
+                    </a>
+
+
+                </div>
+
+
+
+            </form>
+
+
+        </div>
+
+
+    </div>
+
 
 </div>
+
+
 {% endblock %}

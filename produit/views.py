@@ -2,6 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Produit
 from .forms import ProduitForm
 from django.utils import timezone
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.utils import timezone
+from django.db import transaction
+from .models import Produit, PaiementProduit
+from depot.models import Distribution
 
 
 def produit_list(request):
@@ -26,21 +32,94 @@ def produit_list(request):
         "vehicule": vehicule,
     })
 
+@transaction.atomic
 def valider_paiement(request):
 
     if request.method == "POST":
 
         ids = request.POST.getlist("produits")
 
-        produits = Produit.objects.filter(id__in=ids)
+        if not ids:
+            messages.warning(
+                request,
+                "Aucun produit sélectionné."
+            )
+            return redirect("produit:p_produit_liste")
 
-        for p in produits:
-            p.paye = True
-            p.date_paiement = timezone.now()
-            p.save()
+
+        produits = Produit.objects.filter(
+            id__in=ids,
+            paye=False
+        ).order_by("created_at")
+
+
+        # Anciennes distributions en premier
+        distributions = Distribution.objects.all().order_by(
+            "depot__date",
+            "id"
+        )
+
+
+        for produit in produits:
+
+            reste_a_payer = produit.montant_net
+
+
+            for distribution in distributions:
+
+
+                solde = distribution.solde
+
+
+                # Distribution vide
+                if solde <= 0:
+                    continue
+
+
+                paiement = min(
+                    solde,
+                    reste_a_payer
+                )
+
+
+                # Enregistrement de la liaison
+                PaiementProduit.objects.create(
+                    distribution=distribution,
+                    produit=produit,
+                    montant=paiement
+                )
+
+
+                reste_a_payer -= paiement
+
+
+                # Produit entièrement payé
+                if reste_a_payer <= 0:
+
+                    produit.paye = True
+                    produit.date_paiement = timezone.now()
+                    produit.save()
+
+                    break
+
+
+            # Si aucun dépôt ne suffit
+            if reste_a_payer > 0:
+
+                messages.warning(
+                    request,
+                    f"Solde insuffisant pour payer le produit {produit.id}. "
+                    f"Reste : {reste_a_payer} Ar"
+                )
+
+
+        messages.success(
+            request,
+            "Paiement effectué avec répartition automatique."
+        )
+
 
     return redirect("produit:p_produit_liste")
-
 
 def produit_add(request):
     if request.method == "POST":

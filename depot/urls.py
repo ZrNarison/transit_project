@@ -29,5 +29,6 @@ urlpatterns = [
         views.depot_delete,
         name='depot_delete'
     ),
+    path('print/', views.depot_print, name='depot_print'),
 
 ]

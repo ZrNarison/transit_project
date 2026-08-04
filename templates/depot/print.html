@@ -1,0 +1,373 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>
+        Impression des dépôts
+    </title>
+
+
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+
+
+    <style>
+
+        body {
+
+            background: white;
+
+            font-size: 13px;
+
+        }
+
+
+        .print-area {
+
+            width: 95%;
+
+            margin: auto;
+
+        }
+
+
+        h2 {
+
+            margin-bottom: 30px;
+
+        }
+
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            margin-top: 20px;
+
+        }
+
+
+        th, td {
+
+            border: 1px solid black !important;
+
+            padding: 10px !important;
+
+            vertical-align: middle;
+
+        }
+
+
+        .signature {
+
+            margin-top: 80px;
+
+            text-align: right;
+
+        }
+
+
+        .date-impression {
+
+            margin-bottom: 40px;
+
+        }
+
+
+
+        @media print {
+
+
+            .no-print {
+
+                display: none !important;
+
+            }
+
+
+            body {
+
+                font-size: 12px;
+
+            }
+
+
+            .print-area {
+
+                width: 100%;
+
+            }
+
+
+            @page {
+
+                size: A4 landscape;
+
+                margin: 15mm;
+
+            }
+
+
+        }
+
+
+    </style>
+
+
+</head>
+
+
+<body>
+
+
+<div class="print-area">
+
+
+    <div class="no-print text-end mt-3 mb-3">
+        <a href="{% url 'depot:depot_list' %}"
+       class="btn btn-secondary">
+
+        ↩ Retour
+
+    </a>
+        <button onclick="window.print()"
+                class="btn btn-success">
+
+            🖨 Imprimer
+
+        </button>
+
+    </div>
+
+
+
+    <h2 class="text-center">
+
+        LISTE DES DÉPÔTS
+
+    </h2>
+
+
+
+    {% if date_debut or date_fin %}
+
+    <div class="mb-4">
+
+        <strong>
+            Période :
+        </strong>
+
+        {{ date_debut|default:"-" }}
+
+        au
+
+        {{ date_fin|default:"-" }}
+
+    </div>
+
+    {% endif %}
+
+
+
+
+    <table>
+
+
+        <thead>
+
+            <tr>
+
+                <th>
+                    Déposant
+                </th>
+
+
+                <th>
+                    Montant global
+                </th>
+
+
+                <th>
+                    Distributions
+                </th>
+
+
+                <th>
+                    Reste
+                </th>
+
+
+                <th>
+                    Date
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+
+        <tbody>
+
+
+        {% for depot in depots %}
+
+
+        <tr>
+
+
+            <td>
+                <strong>
+                    {{ depot.deposant }}
+                </strong>
+            </td>
+
+
+
+            <td>
+
+                {{ depot.montantG|floatformat:0 }} Ar
+
+            </td>
+
+
+
+
+            <td>
+
+
+                {% for d in depot.distributions.all %}
+
+                    {{ d.distributeur }} :
+                    {{ d.montant|floatformat:0 }} Ar
+
+                    <br>
+
+
+                {% empty %}
+
+                    Aucune distribution
+
+
+                {% endfor %}
+
+
+            </td>
+
+
+
+
+            <td>
+
+                <strong>
+                    {{ depot.reste|floatformat:0 }} Ar
+                </strong>
+
+            </td>
+
+
+
+
+            <td>
+
+                {{ depot.date|date:"d/m/Y" }}
+
+            </td>
+
+
+        </tr>
+
+
+
+        {% empty %}
+
+
+        <tr>
+
+            <td colspan="5" class="text-center">
+
+                Aucun dépôt trouvé.
+
+            </td>
+
+        </tr>
+
+
+        {% endfor %}
+
+
+
+        </tbody>
+
+
+    </table>
+
+
+
+
+
+    <div class="mt-4 text-end">
+
+
+        <strong>
+            Total dépôt :
+        </strong>
+
+        {{ total_montant|floatformat:0 }} Ar
+
+
+        <br>
+
+
+        <strong>
+            Total distribué :
+        </strong>
+
+        {{ total_distribution|floatformat:0 }} Ar
+
+
+    </div>
+
+
+
+
+
+    <div class="signature">
+
+
+        <div class="date-impression">
+
+            Fait le :
+            {% now "d/m/Y à H:i" %}
+
+
+        </div>
+
+
+
+        Signature :
+
+
+        <br><br><br>
+
+
+        ______________________
+
+
+
+    </div>
+
+
+
+</div>
+
+
+</body>
+
+</html>

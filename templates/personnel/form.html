@@ -1,86 +1,72 @@
 {% extends "base.html" %}
 
-{% block title %}Formulaire Personnel{% endblock %}
 
 {% block content %}
 
-<div class="card shadow-sm p-4">
+<div class="container mt-4">
 
-    <h3 class="mb-3 text-center text-uppercase">
-        {% if form.instance.id %}
-            <span class="text-info">Modifier le personnel</span>
-        {% else %}
-            <span class="text-success">Ajouter un personnel</span>
-        {% endif %}
-    </h3>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
+<h3>
+{% if form.instance.pk %}
+Modifier personnel
+{% else %}
+Ajouter personnel
+{% endif %}
+</h3>
 
-        <div class="row">
 
-            <div class="col-md-6">
+<form method="POST"
+      enctype="multipart/form-data">
 
-                <div class="mb-2">
-                    <label>Nom</label>
-                    {{ form.nom }}
-                </div>
 
-                <div class="mb-2">
-                    <label>Prénom</label>
-                    {{ form.prenom }}
-                </div>
+{% csrf_token %}
 
-                <div class="mb-2">
-                    <label>Adresse</label>
-                    {{ form.adresse }}
-                </div>
 
-                <div class="mb-2">
-                    <label>Téléphone</label>
-                    {{ form.telephone }}
-                </div>
-                <div class="mb-2">
-                    <label>Fonction</label>
-                    {{ form.fonction }}
-                </div>
+{% for field in form %}
 
-                <div class="mb-2">
-                    <label>Catégorie</label>
-                    {{ form.categorie }}
-                </div>
+<div class="mb-3">
 
-            </div>
+<label class="form-label">
+{{ field.label }}
+</label>
 
-            <div class="col-md-4 text-center">
 
-                <div class="mb-3">
-                    <label>Photo</label><br>
-                    {{ form.photo }}
-                </div>
+{{ field }}
 
-                {% if form.instance.photo %}
-                    <img src="{{ form.instance.photo.url }}"
-                         class="img-thumbnail mt-2"
-                         width="200">
-                {% endif %}
 
-            </div>
+{% if field.errors %}
 
-        </div>
+<div class="text-danger">
 
-        <hr>
-
-        <button type="submit" class="btn btn-success">
-            Enregistrer
-        </button>
-
-        <a href="{% url 'personnel:personnel_list' %}" class="btn btn-secondary">
-            Retour
-        </a>
-
-    </form>
+{{ field.errors }}
 
 </div>
+
+{% endif %}
+
+
+</div>
+
+
+{% endfor %}
+
+
+
+<button class="btn btn-success">
+Enregistrer
+</button>
+
+
+<a href="{% url 'personnel:personnel_list' %}"
+   class="btn btn-secondary">
+Annuler
+</a>
+
+
+</form>
+
+
+</div>
+
 
 {% endblock %}

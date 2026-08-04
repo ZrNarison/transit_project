@@ -4,36 +4,85 @@
 Confirmation suppression
 {% endblock %}
 
+
 {% block content %}
 
-<h3 class="text-danger">Confirmation suppression</h3>
+
+<h3 class="text-danger">
+    Confirmation suppression
+</h3>
+
+
 
 <p>
-    Voulez-vous vraiment supprimer cette avance de :
-    <strong>{{ avance.motifAv|title }} </strong>
-    de
-    <strong>{{ avance.id_client.nom|upper }} {{ avance.id_client.prenom|title }} </strong>
-    du
+
+    Voulez-vous vraiment supprimer le compte utilisateur de :
+
     <strong>
-        {{ avance.dateAv|date:"d/m/Y H:i" }}
+        {{ user.personnel.nom|upper }}
+        {{ user.personnel.prenom|title }}
     </strong>
-    dont la somme est 
-    <strong>
-        {{ avance.montantAv}}
-    </strong>
+
     ?
+
+    <br><br>
+
+
+    Nom utilisateur :
+
+    <strong>
+        {{ user.username }}
+    </strong>
+
+
+    <br>
+
+
+    Email :
+
+    <strong>
+        {{ user.email }}
+    </strong>
+
+
+    <br>
+
+
+    Créé le :
+
+    <strong>
+        {{ user.date_creation|date:"d/m/Y H:i" }}
+    </strong>
+
+
 </p>
 
+
+
 <form method="post">
+
     {% csrf_token %}
 
-    <button type="submit" class="btn btn-danger">
+
+    <button type="submit"
+            class="btn btn-danger">
+
         Oui, supprimer
+
     </button>
 
-    <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">
+
+
+    <a href="{% url 'users:users_liste' %}"
+       class="btn btn-secondary">
+
         Annuler
+
     </a>
+
+
 </form>
+
+
 
 {% endblock %}
