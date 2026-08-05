@@ -11,61 +11,40 @@ Formulaire Avance
     <div class="card shadow-sm p-4">
 
         <h3 class="mb-4 text-center text-uppercase">
-
             {% if form.instance.id %}
-                <span class="text-info">
-                    Modifier une avance
-                </span>
+                <span class="text-info">Modifier une avance</span>
             {% else %}
-                <span class="text-success">
-                    Ajouter une avance
-                </span>
+                <span class="text-success">Ajouter une avance</span>
             {% endif %}
-
         </h3>
-
 
         <form method="post">
 
             {% csrf_token %}
 
-
             {% if form.errors %}
-
                 <div class="alert alert-danger">
 
                     {{ form.non_field_errors }}
 
                     {% for field in form %}
-
                         {% if field.errors %}
-
-                            <strong>
-                                {{ field.label }}
-                            </strong>
-
-                            {{ field.errors }}
-
+                            <div>
+                                <strong>{{ field.label }}</strong><br>
+                                {{ field.errors }}
+                            </div>
                         {% endif %}
-
                     {% endfor %}
 
                 </div>
-
             {% endif %}
-
-
 
             <div class="row">
 
+                <!-- Formulaire -->
+                <div class="col-md-8">
 
-                <!-- COLONNE FORMULAIRE -->
-
-                <div class="col-md-6">
-
-
-                    <div class="mb-3">
-
+                    <div class="mb-3" id="bloc-personnel">
                         <label class="form-label fw-bold">
                             Personnel
                         </label>
@@ -73,15 +52,11 @@ Formulaire Avance
                         {{ form.personnel }}
 
                         <small class="text-muted">
-                            Sélectionner si l'avance concerne un employé
+                            Choisir uniquement si l'avance concerne un employé.
                         </small>
-
                     </div>
 
-
-
-                    <div class="mb-3">
-
+                    <div class="mb-3" id="bloc-client">
                         <label class="form-label fw-bold">
                             Client
                         </label>
@@ -89,199 +64,121 @@ Formulaire Avance
                         {{ form.client }}
 
                         <small class="text-muted">
-                            Sélectionner si l'avance concerne un client
+                            Choisir uniquement si l'avance concerne un client.
                         </small>
-
                     </div>
 
-
-
                     <div class="mb-3">
-
                         <label class="form-label fw-bold">
                             Motif
                         </label>
 
                         {{ form.motifAv }}
-
                     </div>
 
-
-
                     <div class="mb-3">
-
                         <label class="form-label fw-bold">
                             Montant
                         </label>
 
                         {{ form.montantAv }}
-
                     </div>
 
-
-
                     <div class="mb-3">
-
                         <label class="form-label fw-bold">
                             Type d'avance
                         </label>
 
                         {{ form.typeAv }}
-
                     </div>
-
 
                 </div>
 
-
-
-
-                <!-- COLONNE RESUME -->
-
+                <!-- Résumé -->
                 <div class="col-md-4">
 
+                    <div class="card bg-light shadow-sm">
 
-                    <div class="card shadow-sm bg-light p-3">
+                        <div class="card-header text-center">
+                            <strong>Résumé</strong>
+                        </div>
 
+                        <div class="card-body">
 
-                        <h5 class="text-center text-primary">
-                            Résumé
-                        </h5>
+                            <p>
+                                <strong>Personnel :</strong><br>
+                                {{ form.personnel.value|default:"-" }}
+                            </p>
 
+                            <p>
+                                <strong>Client :</strong><br>
+                                {{ form.client.value|default:"-" }}
+                            </p>
 
-                        <hr>
+                            <p>
+                                <strong>Montant :</strong><br>
+                                {{ form.montantAv.value|default:"0" }} Ar
+                            </p>
 
+                            <p>
+                                <strong>Type :</strong><br>
+                                {{ form.typeAv.value|default:"-" }}
+                            </p>
 
-
-                        <p>
-
-                            <strong>
-                                Personnel :
-                            </strong>
-
-                            <br>
-
-                            {{ form.personnel.value|default:"-" }}
-
-                        </p>
-
-
-
-                        <p>
-
-                            <strong>
-                                Client :
-                            </strong>
-
-                            <br>
-
-                            {{ form.client.value|default:"-" }}
-
-                        </p>
-
-
-
-                        <p>
-
-                            <strong>
-                                Montant :
-                            </strong>
-
-                            <br>
-
-                            {{ form.montantAv.value|default:"0" }}
-
-                            Ar
-
-                        </p>
-
-
-
-                        <p>
-
-                            <strong>
-                                Type :
-                            </strong>
-
-                            <br>
-
-                            {{ form.typeAv.value }}
-
-                        </p>
-
+                        </div>
 
                     </div>
 
-
                 </div>
 
-
             </div>
-
-
-
 
             <hr>
 
-
-
             <div class="text-end">
 
-                <button type="submit"
-                        class="btn btn-success">
-
+                <button type="submit" class="btn btn-success">
                     💾 Enregistrer
-
                 </button>
-
-
 
                 <a href="{% url 'avances:avance_list' %}"
                    class="btn btn-secondary">
-
-                    ↩ Retour
-
+                    Retour
                 </a>
-
 
             </div>
 
-
-
         </form>
 
-
     </div>
-
 
 </div>
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", function () {
 
     const personnel = document.getElementById("id_personnel");
     const client = document.getElementById("id_client");
 
-    const blocPersonnel = personnel.closest(".mb-3");
-    const blocClient = client.closest(".mb-3");
+    const blocPersonnel = document.getElementById("bloc-personnel");
+    const blocClient = document.getElementById("bloc-client");
 
+    function verifierChoix() {
 
-    function verifierChoix(){
-
-        if(personnel.value){
+        if (personnel.value !== "") {
 
             blocClient.style.display = "none";
             client.value = "";
 
         }
-        else if(client.value){
+        else if (client.value !== "") {
 
             blocPersonnel.style.display = "none";
             personnel.value = "";
 
         }
-        else{
+        else {
 
             blocPersonnel.style.display = "block";
             blocClient.style.display = "block";
@@ -290,18 +187,8 @@ document.addEventListener("DOMContentLoaded", function(){
 
     }
 
-
-    personnel.addEventListener(
-        "change",
-        verifierChoix
-    );
-
-
-    client.addEventListener(
-        "change",
-        verifierChoix
-    );
-
+    personnel.addEventListener("change", verifierChoix);
+    client.addEventListener("change", verifierChoix);
 
     verifierChoix();
 
@@ -309,91 +196,4 @@ document.addEventListener("DOMContentLoaded", function(){
 
 </script>
 
-{% block content %}
-<div class="card shadow-sm p-4">
-
-    <h3 class="mb-3 text-center text-uppercase">
-        {% if form.instance.id %}
-            <span class="text-info">Modifier une avance</span>
-        {% else %}
-            <span class="text-success">Ajouter une avance</span>
-        {% endif %}
-    </h3>
-
-    <form method="post">
-        {% csrf_token %}
-
-        {% if form.errors %}
-            <div class="alert alert-danger">
-                {{ form.errors }}
-            </div>
-        {% endif %}
-
-        <div class="row">
-
-            <!-- COLONNE PRINCIPALE -->
-            <div class="col-md-6">
-
-                <div class="mb-2">
-                    <label>Personnel</label>
-                    {{ form.personnel }}
-                </div>
-
-                <div class="mb-2">
-                    <label>Motif</label>
-                    {{ form.motifAv }}
-                </div>
-
-                <div class="mb-2">
-                    <label>Montant</label>
-                    {{ form.montantAv }}
-                </div>
-
-                <div class="mb-2">
-                    <label>Type d'avance</label>
-                    {{ form.typeAv }}
-                </div>
-
-            </div>
-
-            <!-- COLONNE RESUME -->
-            <div class="col-md-4 text-center">
-
-                <div class="card p-3 bg-light shadow-sm">
-                    <h5 class="text-center">Résumé</h5>
-                    <hr>
-
-                    <p>
-                        <strong>Personnel :</strong><br>
-                        {{ form.personnel.value }}
-                    </p>
-
-                    <p>
-                        <strong>Montant :</strong><br>
-                        {{ form.montantAv.value }}
-                    </p>
-
-                    <p>
-                        <strong>Type :</strong><br>
-                        {{ form.typeAv.value }}
-                    </p>
-                </div>
-
-            </div>
-
-        </div>
-
-        <hr>
-
-        <button type="submit" class="btn btn-success">
-            Enregistrer
-        </button>
-
-        <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">
-            Retour
-        </a>
-
-    </form>
-
-</div>
 {% endblock %}
