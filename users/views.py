@@ -3,20 +3,16 @@ from django.shortcuts import (
     redirect,
     get_object_or_404
 )
-
 from django.contrib import messages
-
 from django.contrib.auth.hashers import (
     make_password,
     check_password
 )
-
 from django.core.paginator import Paginator
-
 from .models import AppUser
 from .forms import UserForm
-
 from audit.utils import enregistrer_action
+from logs.utils import enregistrer_log
 
 
 
@@ -63,6 +59,12 @@ def users_login(request):
                     if user.photo
                     else None
                 )
+                enregistrer_log(
+                    message=f"Connexion utilisateur : {user.username}",
+                    level="INFO",
+                    module="AUTH",
+                    ip_address=request.META.get("REMOTE_ADDR")
+                )
 
 
                 return redirect("/")
@@ -94,19 +96,32 @@ def users_login(request):
 
 
 
-
 # ==================================================
 # LOGOUT
 # ==================================================
 
 def users_logout(request):
 
+    username = request.session.get(
+        "username",
+        "Utilisateur"
+    )
+
+
+    enregistrer_log(
+        message=f"Déconnexion utilisateur : {username}",
+        level="INFO",
+        module="AUTH",
+        ip_address=request.META.get("REMOTE_ADDR")
+    )
+
+
     request.session.flush()
+
 
     return redirect(
         "users:login"
     )
-
 
 
 
