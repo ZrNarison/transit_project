@@ -26,8 +26,10 @@ Détail avance
         </div>
     </div>
     <div class="card-footer">
+        {% if avance.enregistre_par_id == request.session.user_id %}
         <a href="{% url 'avances:avance_edit' avance.id %}" class="btn btn-warning">Modifier</a>
         <a href="{% url 'avances:avance_delete' avance.id %}" class="btn btn-danger">Supprimer</a>
+        {% endif %}
         <a href="{% url 'avances:avance_list' %}" class="btn btn-secondary">Retour</a>
     </div>
 </div>

@@ -71,7 +71,7 @@ Liste Produits
                         <button type="submit"
                                 class="btn btn-primary w-100">
 
-                            🔍 Rechercher
+                            🔍
 
                         </button>
 
@@ -89,9 +89,7 @@ Liste Produits
                         {% if request.session.role == "User" %}
 
                         <a href="{% url 'produit:p_produit_add' %}"
-                           class="btn btn-success w-100">
-
-                            + Nouveau
+                           class="btn btn-success w-100">Nouveau
 
                         </a>
 

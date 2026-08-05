@@ -146,11 +146,11 @@ Enregistreur
 <th>
 Description
 </th>
-
+{% if avance.enregistre_par_id == request.session.user_id %}
 <th>
 Actions
 </th>
-
+{% endif %}
 
 </tr>
 
@@ -255,7 +255,7 @@ Aucune distribution
 </td>
 
 
-
+{% if avance.enregistre_par_id == request.session.user_id %}
 
 <td>
 
@@ -280,6 +280,7 @@ data-bs-target="#delete{{depense.id}}">
 
 
 </td>
+{% endif %}
 
 
 </tr>

@@ -1,270 +1,96 @@
 {% extends "base.html" %}
-
-
 {% block title %}
 Formulaire Personnel
 {% endblock %}
-
-
-
 {% block content %}
-
-
 <div class="card shadow-sm p-4">
-
-
     <h3 class="mb-4 text-center text-uppercase">
-
         {% if form.instance.pk %}
-
-            <span class="text-info">
-                Modifier le personnel
-            </span>
-
+            <span class="text-info">Modifier le personnel</span>
         {% else %}
-
-            <span class="text-success">
-                Ajouter un personnel
-            </span>
-
+            <span class="text-success">Ajouter un personnel</span>
         {% endif %}
-
     </h3>
-
-
-
-
-    <form method="POST"
-          enctype="multipart/form-data">
-
-
+    <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-
-
-
-
         <div class="row">
-
-
-
             <div class="col-md-8">
-
-
-
                 <div class="mb-3">
-
-                    <label class="form-label">
-                        Nom
-                    </label>
-
+                    <label class="form-label">Nom</label>
                     {{ form.nom }}
-
                     {% if form.nom.errors %}
                     <div class="text-danger small">
                         {{ form.nom.errors }}
                     </div>
                     {% endif %}
-
                 </div>
-
-
-
-
                 <div class="mb-3">
-
-                    <label class="form-label">
-                        Prénom
-                    </label>
-
+                    <label class="form-label">Prénom</label>
                     {{ form.prenom }}
-
                     {% if form.prenom.errors %}
                     <div class="text-danger small">
                         {{ form.prenom.errors }}
                     </div>
                     {% endif %}
-
                 </div>
-
-
-
-
                 <div class="mb-3">
-
-                    <label class="form-label">
-                        Adresse
-                    </label>
-
+                    <label class="form-label">Adresse</label>
                     {{ form.adresse }}
-
                     {% if form.adresse.errors %}
                     <div class="text-danger small">
                         {{ form.adresse.errors }}
                     </div>
                     {% endif %}
-
                 </div>
-
-
-
-
                 <div class="mb-3">
-
-                    <label class="form-label">
-                        Téléphone
-                    </label>
-
+                    <label class="form-label">Téléphone</label>
                     {{ form.telephone }}
-
                     {% if form.telephone.errors %}
                     <div class="text-danger small">
                         {{ form.telephone.errors }}
                     </div>
                     {% endif %}
-
                 </div>
-
-
-
-
                 <div class="mb-3">
-
-                    <label class="form-label">
-                        Fonction
-                    </label>
-
+                    <label class="form-label">Fonction</label>
                     {{ form.fonction }}
-
                     {% if form.fonction.errors %}
                     <div class="text-danger small">
                         {{ form.fonction.errors }}
                     </div>
                     {% endif %}
-
                 </div>
-
-
-
-
                 <div class="mb-3">
-
-                    <label class="form-label">
-                        Catégorie
-                    </label>
-
+                    <label class="form-label">Catégorie</label>
                     {{ form.categorie }}
-
                     {% if form.categorie.errors %}
-                    <div class="text-danger small">
-                        {{ form.categorie.errors }}
-                    </div>
+                        <div class="text-danger small">
+                            {{ form.categorie.errors }}
+                        </div>
                     {% endif %}
-
                 </div>
-
-
-
             </div>
-
-
-
-
-
-
-
             <div class="col-md-4 text-center">
-
-
-
                 <div class="mb-3">
-
-
-                    <label class="form-label">
-                        Photo
-                    </label>
-
-
+                    <label class="form-label">Photo</label>
                     <br>
-
-
                     {{ form.photo }}
-
-
-
                     {% if form.photo.errors %}
-
-                    <div class="text-danger small">
-
-                        {{ form.photo.errors }}
-
-                    </div>
-
+                        <div class="text-danger small">
+                            {{ form.photo.errors }}
+                        </div>
                     {% endif %}
-
-
                 </div>
-
-
-
-
-
                 {% if form.instance.photo %}
-
-                    <img src="{{ form.instance.photo.url }}"
-                         class="img-thumbnail mt-2"
-                         width="200"
-                         alt="Photo personnel">
-
+                    <img src="{{ form.instance.photo.url }}" class="img-thumbnail mt-2" width="200" alt="Photo personnel">
                 {% endif %}
-
-
-
-
             </div>
-
-
-
         </div>
-
-
-
-
-
         <hr>
-
-
-
-
-
-        <button type="submit"
-                class="btn btn-success">
-
-            <i class="fas fa-save"></i>
-
-            Enregistrer
-
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save"></i>Enregistrer
         </button>
-
-
-
-
-
-        <a href="{% url 'personnel:personnel_list' %}"
-           class="btn btn-secondary">
-
-            Retour
-
-        </a>
-
-
-
-
+        <a href="{% url 'personnel:personnel_list' %}" class="btn btn-secondary">Retour</a>
     </form>
-
-
-
 </div>
-
-
-
 {% endblock %}
