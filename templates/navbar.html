@@ -50,7 +50,7 @@
                         </li>
                         {% endif %}
                         <li>
-                            <a class="dropdown-item" href="#">Retour</a>
+                            <a class="dropdown-item" href="{% url 'retours:retour_list' %}">Retour</a>
                         </li>
                     </ul>
                 </li>
@@ -79,6 +79,19 @@
                         </li>
                     </ul>
                 </li>
+                {% if request.session.role != "User" %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Administration</a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'audit:audit_list' %}">📋 Audit</a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'logs:logs_list' %}">🖥️ Logs système</a>
+                        </li>
+                    </ul>
+                </li>
+                {% endif %}
             </ul>
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">

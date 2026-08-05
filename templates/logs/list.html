@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Logs système
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div class="container mt-4">
+
+
+<div class="card shadow">
+
+
+<div class="card-header bg-dark text-white">
+
+<h4>
+🖥️ Logs système
+</h4>
+
+</div>
+
+
+
+<div class="card-body">
+
+
+
+<form method="get" class="row mb-3">
+
+
+<div class="col-md-4">
+
+
+<select
+name="level"
+class="form-control"
+>
+
+
+<option value="">
+Tous niveaux
+</option>
+
+
+<option value="INFO"
+{% if level == "INFO" %}selected{% endif %}
+>
+INFO
+</option>
+
+
+<option value="WARNING"
+{% if level == "WARNING" %}selected{% endif %}
+>
+WARNING
+</option>
+
+
+<option value="ERROR"
+{% if level == "ERROR" %}selected{% endif %}
+>
+ERROR
+</option>
+
+
+<option value="CRITICAL"
+{% if level == "CRITICAL" %}selected{% endif %}
+>
+CRITICAL
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+<div class="col-md-2">
+
+<button class="btn btn-primary">
+Filtrer
+</button>
+
+</div>
+
+
+</form>
+
+
+
+
+
+<table class="table table-bordered">
+
+
+<thead class="table-dark">
+
+<tr>
+
+<th>Date</th>
+
+<th>Niveau</th>
+
+<th>Module</th>
+
+<th>Message</th>
+
+<th>IP</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for log in logs %}
+
+
+<tr>
+
+
+<td>
+{{ log.date_log|date:"d/m/Y H:i:s" }}
+</td>
+
+
+
+<td>
+
+{% if log.level == "ERROR" %}
+
+<span class="badge bg-danger">
+Erreur
+</span>
+
+
+{% elif log.level == "WARNING" %}
+
+<span class="badge bg-warning text-dark">
+Attention
+</span>
+
+
+{% else %}
+
+<span class="badge bg-info">
+Info
+</span>
+
+
+{% endif %}
+
+</td>
+
+
+
+<td>
+{{ log.module }}
+</td>
+
+
+
+<td>
+{{ log.message }}
+</td>
+
+
+
+<td>
+{{ log.ip_address|default:"-" }}
+</td>
+
+
+</tr>
+
+
+{% empty %}
+
+
+<tr>
+
+<td colspan="5" class="text-center">
+
+Aucun log trouvé.
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

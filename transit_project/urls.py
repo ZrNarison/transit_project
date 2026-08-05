@@ -18,6 +18,10 @@ urlpatterns = [
     path('salaire/', include(('salaire.urls', 'salaire'), namespace='salaire')),
     path('users/', include(('users.urls', 'users'), namespace='users')),
     path('categorie/', include(('categorie.urls', 'categorie'), namespace='categorie')),
+    path('retours/',include(('retours.urls', 'retours'), namespace='retours')),
+    path("audit/",include("audit.urls")),
+    path("logs/",include("logs.urls")),
+
 ]
 
 if settings.DEBUG:

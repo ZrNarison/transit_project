@@ -9,8 +9,13 @@ from django.contrib import messages
 from .models import Categorie
 from .forms import CategorieForm
 
+from audit.utils import enregistrer_action
 
 
+
+# =====================================
+# LISTE
+# =====================================
 def categorie_liste(request):
 
     categories = (
@@ -44,6 +49,9 @@ def categorie_liste(request):
 
 
 
+# =====================================
+# AJOUT
+# =====================================
 def categorie_add(request):
 
     form = CategorieForm(
@@ -53,7 +61,21 @@ def categorie_add(request):
 
     if request.method == "POST" and form.is_valid():
 
-        form.save()
+        categorie = form.save()
+
+
+        enregistrer_action(
+            request,
+            action="CREATE",
+            module="Categorie",
+            objet_id=categorie.id,
+            ancienne=None,
+            nouvelle={
+                "nom": categorie.nom,
+                "description": categorie.description
+            },
+            description="Création d'une catégorie"
+        )
 
 
         messages.success(
@@ -78,12 +100,21 @@ def categorie_add(request):
 
 
 
+# =====================================
+# MODIFICATION
+# =====================================
 def categorie_edit(request, id):
 
     categorie = get_object_or_404(
         Categorie,
         id=id
     )
+
+
+    ancienne = {
+        "nom": categorie.nom,
+        "description": categorie.description
+    }
 
 
     form = CategorieForm(
@@ -94,7 +125,24 @@ def categorie_edit(request, id):
 
     if request.method == "POST" and form.is_valid():
 
-        form.save()
+        categorie = form.save()
+
+
+        nouvelle = {
+            "nom": categorie.nom,
+            "description": categorie.description
+        }
+
+
+        enregistrer_action(
+            request,
+            action="UPDATE",
+            module="Categorie",
+            objet_id=categorie.id,
+            ancienne=ancienne,
+            nouvelle=nouvelle,
+            description="Modification d'une catégorie"
+        )
 
 
         messages.success(
@@ -119,6 +167,9 @@ def categorie_edit(request, id):
 
 
 
+# =====================================
+# SUPPRESSION
+# =====================================
 def categorie_delete(request, id):
 
     categorie = get_object_or_404(
@@ -129,7 +180,28 @@ def categorie_delete(request, id):
 
     if request.method == "POST":
 
+
+        ancienne = {
+            "nom": categorie.nom,
+            "description": categorie.description
+        }
+
+
+        objet_id = categorie.id
+
+
         categorie.delete()
+
+
+        enregistrer_action(
+            request,
+            action="DELETE",
+            module="Categorie",
+            objet_id=objet_id,
+            ancienne=ancienne,
+            nouvelle=None,
+            description="Suppression d'une catégorie"
+        )
 
 
         messages.success(

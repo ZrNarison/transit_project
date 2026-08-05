@@ -1,230 +1,78 @@
 {% extends 'base.html' %}
 {% load money_filters %}
 
-
 {% block title %}
 Liste des dépenses
 {% endblock %}
 
-
-
 {% block content %}
+<div class="container-fluid mt-4">
+    <div class="card shadow-sm p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="mb-1">Liste des dépenses</h3>
+                <p class="text-muted mb-0">Suivi des sorties financières</p>
+            </div>
+            <a href="{% url 'depense:depense_add' %}"class="btn btn-primary">+ Nouveau</a>
+        </div>
+        <form method="get"class="row g-3 mb-4">
+            <div class="col-md-5">
+                <label class="form-label">Titre</label>
+                <input type="text"name="titre"value="{{ titre }}"class="form-control"placeholder="Recherche titre">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Montant</label>
+                <input type="text"name="montant"value="{{ montant }}"class="form-control" placeholder="Montant">
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button class="btn btn-outline-primary">🔍</button>
+                <a href="{% url 'depense:depense_list' %}"class="btn btn-secondary">Reset</a>
+            </div>
+        </form>
+        {% if depenses %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Distribution</th>
+                        <th>Titre</th>
+                        <th>Montant</th>
+                        <th>Date</th>
+                        <th>Enregistreur</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for depense in depenses %}
+                    <tr>
+                        <td>{% if depense.distribution %}
+                            <strong>{{ depense.distribution.distributeur }}</strong><br>
+                            <small class="text-muted">Distribution du{{ depense.distribution.depot.date }}</small>
+                            {% else %}
+                            <span class="text-danger">Aucune distribution</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ depense.titre }}</strong></td><td class="text-danger fw-bold text-end">
 
-
-<div class="page-card">
-
-
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-
-<div>
-
-<h3 class="mb-1">
-Liste des dépenses
-</h3>
-
-
-<p class="text-muted mb-0">
-Suivi des sorties financières.
-</p>
-
-
-</div>
-
-
-
-<a href="{% url 'depense:depense_add' %}"
-class="btn btn-primary">
-
-+ Nouvelle dépense
-
-</a>
-
-
-</div>
-
-
-
-
-<form method="get" class="row g-2 mb-4">
-
-
-<div class="col-md-5">
-
-<label class="form-label small">
-Titre
-</label>
-
-<input type="text"
-name="titre"
-value="{{ titre }}"
-class="form-control"
-placeholder="Recherche titre">
-
-</div>
-
-
-
-
-<div class="col-md-4">
-
-<label class="form-label small">
-Montant
-</label>
-
-<input type="text"
-name="montant"
-value="{{ montant }}"
-class="form-control"
-placeholder="Montant">
-
-</div>
-
-
-
-
-<div class="col-md-3 d-flex align-items-end gap-2">
-
-
-<button class="btn btn-outline-primary">
-Rechercher
-</button>
-
-
-
-<a href="{% url 'depense:depense_list' %}"
-class="btn btn-secondary">
-
-Reset
-
-</a>
-
-
-</div>
-
-
-</form>
-
-
-
-
-
-{% if depenses %}
-
-
-<div class="table-responsive">
-
-
-<table class="table table-hover align-middle">
-
-
-<thead class="table-primary">
-
-
-<tr>
-
-<th>
-Distribution
-</th>
-
-<th>
-Titre
-</th>
-
-<th>
-Montant
-</th>
-
-<th>
-Date
-</th>
-
-<th>
-Enregistreur
-</th>
-
-<th>
-Description
-</th>
-{% if avance.enregistre_par_id == request.session.user_id %}
-<th>
-Actions
-</th>
-{% endif %}
-
-</tr>
-
-
-</thead>
-
-
-
-<tbody>
-
-
-{% for depense in depenses %}
-
-
-<tr>
-
-
-<td>
-
-{% if depense.distribution %}
-
-<strong>
-{{ depense.distribution.distributeur }}
-</strong>
-
-<br>
-
-<small class="text-muted">
-
-Distribution du
-{{ depense.distribution.depot.date }}
-
-</small>
-
-
-{% else %}
-
-<span class="text-danger">
-Aucune distribution
-</span>
-
-{% endif %}
-
-
-</td>
-
-
-
-
-<td>
-
-<strong>
-{{ depense.titre }}
-</strong>
-
-</td>
-
-
-
-
-<td class="text-danger fw-bold">
 
 {{ depense.montant|money }} Ar
 
+
 </td>
+
 
 
 
 
 <td>
 
-{{ depense.date }}
+
+{{ depense.date|date:"d/m/Y" }}
+
 
 </td>
+
 
 
 
@@ -234,7 +82,13 @@ Aucune distribution
 
 {% if depense.enregistre_par %}
 
-{{ depense.enregistre_par }}
+
+<span class="badge bg-primary">
+
+{{ depense.enregistre_par.username|title }}
+
+</span>
+
 
 {% else %}
 
@@ -248,20 +102,33 @@ Aucune distribution
 
 
 
+
 <td>
 
+
 {{ depense.description|default:"Aucune description" }}
+
 
 </td>
 
 
-{% if avance.enregistre_par_id == request.session.user_id %}
 
-<td>
+
+
+<td class="text-center">
+
+
+
+<!-- PROPRIETAIRE -->
+
+
+{% if depense.enregistre_par_id == request.session.user_id %}
+
 
 
 <a href="{% url 'depense:depense_edit' depense.id %}"
-class="btn btn-sm btn-outline-warning">
+class="btn btn-sm btn-warning"
+title="Modifier">
 
 ✏
 
@@ -269,27 +136,27 @@ class="btn btn-sm btn-outline-warning">
 
 
 
+
 <button type="button"
-class="btn btn-sm btn-outline-danger"
+class="btn btn-sm btn-danger"
 data-bs-toggle="modal"
-data-bs-target="#delete{{depense.id}}">
+data-bs-target="#delete{{ depense.id }}"
+title="Supprimer">
 
 🗑
 
 </button>
 
 
-</td>
-{% endif %}
 
 
-</tr>
 
-
+<!-- MODAL SUPPRESSION -->
 
 
 <div class="modal fade"
-id="delete{{depense.id}}">
+id="delete{{ depense.id }}"
+tabindex="-1">
 
 
 <div class="modal-dialog modal-dialog-centered">
@@ -298,15 +165,20 @@ id="delete{{depense.id}}">
 <div class="modal-content">
 
 
+
 <div class="modal-header">
 
-<h5>
-Suppression
+<h5 class="modal-title text-danger">
+
+Confirmation suppression
+
 </h5>
 
 
-<button class="btn-close"
+<button type="button"
+class="btn-close"
 data-bs-dismiss="modal">
+
 </button>
 
 
@@ -317,13 +189,19 @@ data-bs-dismiss="modal">
 
 <div class="modal-body">
 
-Voulez-vous supprimer :
+
+Voulez-vous supprimer la dépense :
+
 
 <strong>
+
 {{ depense.titre }}
+
 </strong>
 
+
 ?
+
 
 </div>
 
@@ -333,7 +211,8 @@ Voulez-vous supprimer :
 <div class="modal-footer">
 
 
-<button class="btn btn-secondary"
+<button type="button"
+class="btn btn-secondary"
 data-bs-dismiss="modal">
 
 Annuler
@@ -342,8 +221,10 @@ Annuler
 
 
 
+
 <form method="post"
 action="{% url 'depense:depense_delete' depense.id %}">
+
 
 {% csrf_token %}
 
@@ -361,18 +242,78 @@ Supprimer
 </div>
 
 
-</div>
 
 </div>
 
+
 </div>
 
+
+</div>
+
+
+
+
+
+{% else %}
+
+
+
+<button class="btn btn-secondary btn-sm"
+disabled
+title="Vous n'êtes pas l'enregistreur">
+
+🔒
+
+</button>
+
+
+
+{% endif %}
+
+
+
+</td>
+
+
+
+</tr>
 
 
 {% endfor %}
 
 
+
 </tbody>
+
+
+
+<tfoot class="table-secondary">
+
+
+<tr>
+
+
+<th colspan="6"
+class="text-end">
+
+Nombre de dépenses :
+
+</th>
+
+
+<th class="text-center">
+
+{{ depenses|length }}
+
+</th>
+
+
+</tr>
+
+
+</tfoot>
+
 
 
 </table>
@@ -380,80 +321,6 @@ Supprimer
 
 </div>
 
-
-
-{% if page_obj.has_other_pages %}
-
-
-<nav class="mt-4">
-
-
-<ul class="pagination justify-content-center">
-
-
-{% if page_obj.has_previous %}
-
-<li class="page-item">
-
-<a class="page-link"
-href="?page={{ page_obj.previous_page_number }}{% if titre %}&titre={{ titre }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">
-
-Précédent
-
-</a>
-
-</li>
-
-{% endif %}
-
-
-
-{% for num in page_obj.paginator.page_range %}
-
-
-<li class="page-item {% if page_obj.number == num %}active{% endif %}">
-
-
-<a class="page-link"
-href="?page={{ num }}{% if titre %}&titre={{ titre }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">
-
-{{ num }}
-
-</a>
-
-
-</li>
-
-
-{% endfor %}
-
-
-
-{% if page_obj.has_next %}
-
-
-<li class="page-item">
-
-<a class="page-link"
-href="?page={{ page_obj.next_page_number }}{% if titre %}&titre={{ titre }}{% endif %}{% if montant %}&montant={{ montant }}{% endif %}">
-
-Suivant
-
-</a>
-
-</li>
-
-
-{% endif %}
-
-
-</ul>
-
-
-</nav>
-
-
-{% endif %}
 
 
 
@@ -472,6 +339,10 @@ Aucune dépense enregistrée.
 
 
 </div>
+
+
+</div>
+
 
 
 {% endblock %}

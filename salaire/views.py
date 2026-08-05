@@ -13,6 +13,8 @@ from django.core.paginator import Paginator
 from .models import Salaire
 from .forms import SalaireForm
 
+from audit.utils import enregistrer_action
+
 
 
 # ==========================
@@ -123,7 +125,20 @@ def salaire_add(request):
         if form.is_valid():
 
 
-            form.save()
+            salaire = form.save()
+
+
+            enregistrer_action(
+                request,
+                "CREATE",
+                "Salaire",
+                salaire.id,
+                nouvelle={
+                    "personnel": str(salaire.personnel),
+                    "montant": str(salaire.montant)
+                },
+                description="Création d'un salaire"
+            )
 
 
             messages.success(
@@ -187,6 +202,10 @@ def salaire_edit(request, id):
     )
 
 
+    ancienne = str(salaire)
+
+
+
     if request.method == "POST":
 
 
@@ -202,7 +221,18 @@ def salaire_edit(request, id):
         if form.is_valid():
 
 
-            form.save()
+            salaire = form.save()
+
+
+            enregistrer_action(
+                request,
+                "UPDATE",
+                "Salaire",
+                salaire.id,
+                ancienne=ancienne,
+                nouvelle=str(salaire),
+                description="Modification d'un salaire"
+            )
 
 
             messages.success(
@@ -264,6 +294,16 @@ def salaire_delete(request, id):
 
 
     if request.method == "POST":
+
+
+        enregistrer_action(
+            request,
+            "DELETE",
+            "Salaire",
+            salaire.id,
+            ancienne=str(salaire),
+            description="Suppression d'un salaire"
+        )
 
 
         salaire.delete()

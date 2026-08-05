@@ -6,17 +6,12 @@ from django.shortcuts import (
     redirect,
     get_object_or_404
 )
-
 from django.forms import inlineformset_factory
 from django.db import transaction
 from django.db.models import Sum
-
 from .models import Depot, Distribution
 from .forms import DepotForm, DistributionForm
-
 from personnel.models import Personnel
-
-
 
 # =====================================================
 # FORMSET DISTRIBUTION
@@ -29,6 +24,7 @@ DistributionFormSet = inlineformset_factory(
     extra=2,
     can_delete=True
 )
+from audit.utils import enregistrer_action
 
 
 
@@ -287,8 +283,29 @@ def depot_add(request):
                     distribution.depot = depot
                     distribution.save()
 
+                enregistrer_action(
+                                    request,
+                                    "CREATE",
+                                    "Depot",
+                                    depot.id,
+                                    nouvelle={
+                                        "montant": str(depot.montantG),
+                                        "date": str(depot.date)
+                                    },
+                                    description="Création d'un dépôt"
+                                )
 
-
+                enregistrer_action(
+                                    request,
+                                    "CREATE",
+                                    "Depot",
+                                    depot.id,
+                                    nouvelle={
+                                        "montant": str(depot.montantG),
+                                        "date": str(depot.date)
+                                    },
+                                    description="Création d'un dépôt"
+                                )
                 messages.success(
                     request,
                     "Dépôt ajouté avec succès."
@@ -377,7 +394,17 @@ def depot_edit(request, id):
                 distribution.depot = depot
                 distribution.save()
 
-
+                enregistrer_action(
+                                    request,
+                                    "UPDATE",
+                                    "Depot",
+                                    depot.id,
+                                    nouvelle={
+                                        "montant": str(depot.montantG),
+                                        "date": str(depot.date)
+                                    },
+                                    description="Modification d'un dépôt"
+                                )
 
             messages.success(
                 request,
@@ -432,8 +459,19 @@ def depot_delete(request, id):
 
     if request.method == "POST":
 
-        depot.delete()
 
+        depot.delete()
+        enregistrer_action(
+    request,
+    "DELETE",
+    "Depot",
+    depot.id,
+    ancienne={
+        "montant": str(depot.montantG),
+        "date": str(depot.date)
+    },
+    description="Suppression d'un dépôt"
+)
 
         messages.success(
             request,

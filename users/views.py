@@ -16,6 +16,8 @@ from django.core.paginator import Paginator
 from .models import AppUser
 from .forms import UserForm
 
+from audit.utils import enregistrer_action
+
 
 
 # ==================================================
@@ -53,15 +55,8 @@ def users_login(request):
 
 
                 request.session["user_id"] = user.id
-
-                request.session["username"] = (
-                    user.username
-                )
-
-                request.session["role"] = (
-                    user.role
-                )
-
+                request.session["username"] = user.username
+                request.session["role"] = user.role
 
                 request.session["photo"] = (
                     user.photo.url
@@ -194,9 +189,7 @@ def users_list(request):
 
 def users_add(request):
 
-
     if request.method == "POST":
-
 
         form = UserForm(
             request.POST,
@@ -204,9 +197,7 @@ def users_add(request):
         )
 
 
-
         if form.is_valid():
-
 
             user = form.save(
                 commit=False
@@ -226,6 +217,20 @@ def users_add(request):
 
 
             user.save()
+
+
+            enregistrer_action(
+                request,
+                "CREATE",
+                "Utilisateur",
+                user.username,
+                nouvelle={
+                    "username": user.username,
+                    "email": user.email,
+                    "role": user.role
+                },
+                description="Création d'un utilisateur"
+            )
 
 
 
@@ -296,6 +301,13 @@ def users_edit(request, id):
     )
 
 
+    ancienne = {
+        "username": user.username,
+        "email": user.email,
+        "role": user.role
+    }
+
+
     if request.method == "POST":
 
 
@@ -330,21 +342,29 @@ def users_edit(request, id):
 
 
 
-            # Mise à jour session utilisateur connecté
+            enregistrer_action(
+                request,
+                "UPDATE",
+                "Utilisateur",
+                user.username,
+                ancienne=ancienne,
+                nouvelle={
+                    "username": user.username,
+                    "email": user.email,
+                    "role": user.role
+                },
+                description="Modification d'un utilisateur"
+            )
+
+
 
             if request.session.get(
                 "user_id"
             ) == user.id:
 
 
-                request.session["username"] = (
-                    user.username
-                )
-
-                request.session["role"] = (
-                    user.role
-                )
-
+                request.session["username"] = user.username
+                request.session["role"] = user.role
 
                 request.session["photo"] = (
                     user.photo.url
@@ -402,7 +422,25 @@ def users_delete(request, id):
     if request.method == "POST":
 
 
+        ancienne = {
+            "username": user.username,
+            "email": user.email,
+            "role": user.role
+        }
+
+
+        enregistrer_action(
+            request,
+            "DELETE",
+            "Utilisateur",
+            user.username,
+            ancienne=ancienne,
+            description="Suppression d'un utilisateur"
+        )
+
+
         user.delete()
+
 
 
         messages.success(
@@ -452,9 +490,28 @@ def change_photo(request, id):
         if photo:
 
 
+            ancienne = str(user.photo)
+
+
             user.photo = photo
 
             user.save()
+
+
+
+            enregistrer_action(
+                request,
+                "UPDATE",
+                "Utilisateur",
+                user.username,
+                ancienne={
+                    "photo": ancienne
+                },
+                nouvelle={
+                    "photo": str(user.photo)
+                },
+                description="Modification photo utilisateur"
+            )
 
 
 
@@ -463,10 +520,7 @@ def change_photo(request, id):
             ) == user.id:
 
 
-                request.session["photo"] = (
-                    user.photo.url
-                )
-
+                request.session["photo"] = user.photo.url
                 request.session.modified = True
 
 
@@ -508,8 +562,10 @@ def change_username(request, id):
     )
 
 
-
     if request.method == "POST":
+
+
+        ancien_username = user.username
 
 
         username = request.POST.get(
@@ -540,14 +596,28 @@ def change_username(request, id):
 
 
 
+            enregistrer_action(
+                request,
+                "UPDATE",
+                "Utilisateur",
+                user.username,
+                ancienne={
+                    "username": ancien_username
+                },
+                nouvelle={
+                    "username": username
+                },
+                description="Modification nom utilisateur"
+            )
+
+
+
             if request.session.get(
                 "user_id"
             ) == user.id:
 
+                request.session["username"] = username
 
-                request.session["username"] = (
-                    username
-                )
 
 
             messages.success(
@@ -621,6 +691,16 @@ def change_password(request, id):
 
 
             user.save()
+
+
+
+            enregistrer_action(
+                request,
+                "UPDATE",
+                "Utilisateur",
+                user.username,
+                description="Modification mot de passe utilisateur"
+            )
 
 
 

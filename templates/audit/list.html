@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% block title %}
+Historique Audit
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">📋 Historique des actions</h4>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Table</label>
+                    <input type="text" name="table" class="form-control" placeholder="Ex: Depot, Client..." value="{{ table }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Action</label>
+                    <select name="action" class="form-control" >
+                        <option value="">Toutes les actions</option>
+
+
+                        <option value="CREATE"
+                        {% if action == "CREATE" %}
+                            selected
+                        {% endif %}
+                        >
+                            Création
+                        </option>
+
+
+
+                        <option value="UPDATE"
+                        {% if action == "UPDATE" %}
+                            selected
+                        {% endif %}
+                        >
+                            Modification
+                        </option>
+
+
+
+                        <option value="DELETE"
+                        {% if action == "DELETE" %}
+                            selected
+                        {% endif %}
+                        >
+                            Suppression
+                        </option>
+
+
+
+                        <option value="LOGIN"
+                        {% if action == "LOGIN" %}
+                            selected
+                        {% endif %}
+                        >
+                            Connexion
+                        </option>
+
+
+
+                        <option value="LOGOUT"
+                        {% if action == "LOGOUT" %}
+                            selected
+                        {% endif %}
+                        >
+                            Déconnexion
+                        </option>
+
+
+                    </select>
+
+
+                </div>
+
+
+
+
+                <div class="col-md-2 d-flex align-items-end">
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary w-100"
+                    >
+                        🔍 Filtrer
+                    </button>
+
+
+                </div>
+
+
+
+
+                <div class="col-md-2 d-flex align-items-end">
+
+
+                    <a
+                        href="{% url 'audit:audit_list' %}"
+                        class="btn btn-secondary w-100"
+                    >
+                        Reset
+                    </a>
+
+
+                </div>
+
+
+            </form>
+
+
+
+
+
+            <!-- TABLEAU AUDIT -->
+
+
+            <div class="table-responsive">
+
+
+                <table class="table table-bordered table-hover">
+
+
+                    <thead class="table-dark">
+
+                        <tr>
+
+                            <th>
+                                Date
+                            </th>
+
+
+                            <th>
+                                Utilisateur
+                            </th>
+
+
+                            <th>
+                                Action
+                            </th>
+
+
+                            <th>
+                                Table
+                            </th>
+
+
+                            <th>
+                                Objet ID
+                            </th>
+
+
+                            <th>
+                                Description
+                            </th>
+
+
+                        </tr>
+
+
+                    </thead>
+
+
+
+                    <tbody>
+
+
+
+                    {% for log in audits %}
+
+
+
+                        <tr>
+
+
+                            <td>
+
+                                {{ log.date_action|date:"d/m/Y H:i:s" }}
+
+                            </td>
+
+
+
+                            <td>
+
+
+                                {% if log.utilisateur %}
+
+                                    {{ log.utilisateur.username }}
+
+                                {% else %}
+
+                                    Système
+
+                                {% endif %}
+
+
+                            </td>
+
+
+
+
+                            <td>
+
+
+                                {% if log.action == "CREATE" %}
+
+
+                                    <span class="badge bg-success">
+                                        Création
+                                    </span>
+
+
+
+                                {% elif log.action == "UPDATE" %}
+
+
+                                    <span class="badge bg-warning text-dark">
+                                        Modification
+                                    </span>
+
+
+
+                                {% elif log.action == "DELETE" %}
+
+
+                                    <span class="badge bg-danger">
+                                        Suppression
+                                    </span>
+
+
+
+                                {% elif log.action == "LOGIN" %}
+
+
+                                    <span class="badge bg-primary">
+                                        Connexion
+                                    </span>
+
+
+
+                                {% elif log.action == "LOGOUT" %}
+
+
+                                    <span class="badge bg-secondary">
+                                        Déconnexion
+                                    </span>
+
+
+
+                                {% else %}
+
+
+                                    <span class="badge bg-info">
+                                        {{ log.action }}
+                                    </span>
+
+
+
+                                {% endif %}
+
+
+                            </td>
+
+
+
+
+
+                            <td>
+
+                                {{ log.table }}
+
+                            </td>
+
+
+
+
+
+                            <td>
+
+                                {{ log.objet_id|default:"-" }}
+
+                            </td>
+
+
+
+
+
+                            <td>
+
+                                {{ log.description|default:"-" }}
+
+                            </td>
+
+
+
+                        </tr>
+
+
+
+                    {% empty %}
+
+
+
+                        <tr>
+
+                            <td colspan="6" class="text-center">
+
+                                Aucun historique trouvé.
+
+                            </td>
+
+
+                        </tr>
+
+
+
+                    {% endfor %}
+
+
+
+
+                    </tbody>
+
+
+
+                </table>
+
+
+            </div>
+
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

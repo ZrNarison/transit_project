@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Détail retour
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container mt-4">
+
+
+    <div class="card shadow">
+
+
+        <div class="card-header bg-primary text-white">
+
+            <h4 class="mb-0">
+                Détail du retour
+            </h4>
+
+        </div>
+
+
+
+        <div class="card-body">
+
+
+            <div class="row">
+
+
+                <div class="col-md-6">
+
+
+                    <p>
+                        <strong>ID :</strong>
+                        {{ retour.id }}
+                    </p>
+
+
+                    <p>
+                        <strong>Montant :</strong>
+
+                        <span class="text-success fw-bold">
+
+                            {{ retour.montant|intcomma }} Ar
+
+                        </span>
+
+                    </p>
+
+
+                </div>
+
+
+
+                <div class="col-md-6">
+
+
+                    <p>
+                        <strong>Date enregistrement :</strong>
+
+                        {{ retour.created_at|date:"d/m/Y H:i" }}
+
+                    </p>
+
+
+
+                    <p>
+                        <strong>Enregistré par :</strong>
+
+
+                        {% if retour.enregistrer_par %}
+
+                            <span class="badge bg-primary">
+
+                                {{ retour.enregistrer_par.username|title }}
+
+                            </span>
+
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+
+
+            <hr>
+
+
+
+            <div class="text-center mt-3">
+
+
+                <a href="{% url 'retours:retour_list' %}"
+                   class="btn btn-secondary">
+
+                    ⬅ Retour
+
+                </a>
+
+
+
+                {% if retour.enregistrer_par_id == request.session.user_id %}
+
+
+                    <a href="{% url 'retours:retour_edit' retour.id %}"
+                       class="btn btn-warning">
+
+                        ✏ Modifier
+
+                    </a>
+
+
+
+                    <a href="{% url 'retours:retour_delete' retour.id %}"
+                       class="btn btn-danger">
+
+                        🗑 Supprimer
+
+                    </a>
+
+
+                {% else %}
+
+
+                    <button class="btn btn-secondary"
+                            disabled>
+
+                        🔒 Modification non autorisée
+
+                    </button>
+
+
+                {% endif %}
+
+
+
+            </div>
+
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

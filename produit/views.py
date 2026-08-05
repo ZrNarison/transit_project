@@ -14,6 +14,8 @@ from .forms import ProduitForm
 
 from depot.models import Distribution
 
+from audit.utils import enregistrer_action
+
 
 
 # =========================
@@ -217,6 +219,20 @@ def valider_paiement(request):
 
                 produit.save()
 
+
+                enregistrer_action(
+                    request,
+                    "UPDATE",
+                    "Produit",
+                    produit.id,
+                    nouvelle={
+                        "paiement": str(produit.montant_net),
+                        "date_paiement": str(produit.date_paiement)
+                    },
+                    description="Validation paiement produit"
+                )
+
+
                 break
 
 
@@ -265,7 +281,21 @@ def produit_add(request):
 
     if request.method == "POST" and form.is_valid():
 
-        form.save()
+        produit = form.save()
+
+
+        enregistrer_action(
+            request,
+            "CREATE",
+            "Produit",
+            produit.id,
+            nouvelle={
+                "montant": str(produit.montant),
+                "client": str(produit.client),
+                "source": produit.source
+            },
+            description="Création d'un produit"
+        )
 
 
         messages.success(
@@ -306,6 +336,9 @@ def produit_edit(request, pk):
     )
 
 
+    ancienne = str(produit)
+
+
     form = ProduitForm(
         request.POST or None,
         request.FILES or None,
@@ -316,7 +349,18 @@ def produit_edit(request, pk):
 
     if request.method == "POST" and form.is_valid():
 
-        form.save()
+        produit = form.save()
+
+
+        enregistrer_action(
+            request,
+            "UPDATE",
+            "Produit",
+            produit.id,
+            ancienne=ancienne,
+            nouvelle=str(produit),
+            description="Modification d'un produit"
+        )
 
 
         messages.success(
@@ -359,6 +403,17 @@ def produit_delete(request, pk):
 
 
     if request.method == "POST":
+
+
+        enregistrer_action(
+            request,
+            "DELETE",
+            "Produit",
+            produit.id,
+            ancienne=str(produit),
+            description="Suppression d'un produit"
+        )
+
 
         produit.delete()
 

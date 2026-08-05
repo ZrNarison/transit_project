@@ -10,6 +10,8 @@ from django.contrib import messages
 from .models import Personnel
 from .forms import PersonnelForm
 
+from audit.utils import enregistrer_action
+
 
 
 # =========================
@@ -26,67 +28,36 @@ def personnel_list(request):
     )
 
 
-    # =========================
-    # FILTRES
-    # =========================
-
-    nom = request.GET.get(
-        "nom",
-        ""
-    ).strip()
-
-
-    prenom = request.GET.get(
-        "prenom",
-        ""
-    ).strip()
-
-
-    fonction = request.GET.get(
-        "fonction",
-        ""
-    ).strip()
-
-
-    categorie = request.GET.get(
-        "categorie",
-        ""
-    ).strip()
+    nom = request.GET.get("nom", "").strip()
+    prenom = request.GET.get("prenom", "").strip()
+    fonction = request.GET.get("fonction", "").strip()
+    categorie = request.GET.get("categorie", "").strip()
 
 
 
     if nom:
-
         queryset = queryset.filter(
             nom__icontains=nom
         )
 
 
     if prenom:
-
         queryset = queryset.filter(
             prenom__icontains=prenom
         )
 
 
     if fonction:
-
         queryset = queryset.filter(
             fonction__icontains=fonction
         )
 
 
     if categorie:
-
         queryset = queryset.filter(
             categorie__nom__icontains=categorie
         )
 
-
-
-    # =========================
-    # PAGINATION
-    # =========================
 
     paginator = Paginator(
         queryset,
@@ -102,7 +73,6 @@ def personnel_list(request):
     page_obj = paginator.get_page(
         page_number
     )
-
 
 
     return render(
@@ -135,10 +105,24 @@ def personnel_add(request):
 
     if request.method == "POST":
 
-
         if form.is_valid():
 
             personnel = form.save()
+
+
+            enregistrer_action(
+                request,
+                "CREATE",
+                "Personnel",
+                personnel.id,
+                nouvelle={
+                    "nom": personnel.nom,
+                    "prenom": personnel.prenom,
+                    "fonction": personnel.fonction,
+                    "categorie": str(personnel.categorie)
+                },
+                description="Ajout d'un personnel"
+            )
 
 
             messages.success(
@@ -199,6 +183,14 @@ def personnel_edit(request, id):
     )
 
 
+    ancienne = {
+        "nom": personnel.nom,
+        "prenom": personnel.prenom,
+        "fonction": personnel.fonction,
+        "categorie": str(personnel.categorie)
+    }
+
+
     form = PersonnelForm(
         request.POST or None,
         request.FILES or None,
@@ -208,10 +200,25 @@ def personnel_edit(request, id):
 
     if request.method == "POST":
 
-
         if form.is_valid():
 
-            form.save()
+            personnel = form.save()
+
+
+            enregistrer_action(
+                request,
+                "UPDATE",
+                "Personnel",
+                personnel.id,
+                ancienne=ancienne,
+                nouvelle={
+                    "nom": personnel.nom,
+                    "prenom": personnel.prenom,
+                    "fonction": personnel.fonction,
+                    "categorie": str(personnel.categorie)
+                },
+                description="Modification d'un personnel"
+            )
 
 
             messages.success(
@@ -248,7 +255,26 @@ def personnel_delete(request, id):
     )
 
 
+    ancienne = {
+        "nom": personnel.nom,
+        "prenom": personnel.prenom,
+        "fonction": personnel.fonction,
+        "categorie": str(personnel.categorie)
+    }
+
+
+
     if request.method == "POST":
+
+
+        enregistrer_action(
+            request,
+            "DELETE",
+            "Personnel",
+            personnel.id,
+            ancienne=ancienne,
+            description="Suppression d'un personnel"
+        )
 
 
         personnel.delete()

@@ -57,6 +57,9 @@ INSTALLED_APPS = [
     'depense',
     'depot',
     'salaire',
+    'audit',
+    'retours',
+    'logs',
 ]
 
 

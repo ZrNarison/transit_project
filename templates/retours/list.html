@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Liste des retours
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container mt-4">
+
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2>
+                Liste des retours
+            </h2>
+
+            <p class="text-muted">
+                Gestion des retours enregistrés.
+            </p>
+        </div>
+
+
+        <a href="{% url 'retours:retour_add' %}"
+           class="btn btn-success">
+
+            + Nouveau retour
+
+        </a>
+
+    </div>
+
+
+
+    <!-- FILTRE -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form method="get">
+
+                <div class="row g-3">
+
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Montant
+                        </label>
+
+                        <input type="text"
+                               name="montant"
+                               value="{{ montant }}"
+                               class="form-control"
+                               placeholder="Montant">
+
+                    </div>
+
+
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Enregistré par
+                        </label>
+
+                        <input type="text"
+                               name="user"
+                               value="{{ user }}"
+                               class="form-control"
+                               placeholder="Utilisateur">
+
+                    </div>
+
+
+
+                    <div class="col-md-4 d-flex align-items-end gap-2">
+
+
+                        <button type="submit"
+                                class="btn btn-primary">
+
+                            🔍
+
+                        </button>
+
+
+                        <a href="{% url 'retours:retour_list' %}"
+                           class="btn btn-secondary">
+
+                            Reset
+
+                        </a>
+
+
+                    </div>
+
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+
+
+    <!-- TABLEAU -->
+
+
+    <div class="table-responsive">
+
+
+        <table class="table table-bordered table-striped table-hover align-middle">
+
+
+            <thead class="table-dark text-center">
+
+
+                <tr>
+
+                    <th>N°</th>
+
+                    <th>Montant</th>
+
+                    <th>Date</th>
+
+                    <th>Enregistré par</th>
+
+                    <th>Actions</th>
+
+                </tr>
+
+
+            </thead>
+
+
+
+            <tbody>
+
+
+            {% for retour in retours %}
+
+
+                <tr>
+
+
+                    <td class="text-center">
+                        {{ forloop.counter }}
+                    </td>
+
+
+
+                    <td class="text-end fw-bold text-success">
+
+                        {{ retour.montant|intcomma }} Ar
+
+                    </td>
+
+
+
+                    <td class="text-center">
+
+                        {{ retour.created_at|date:"d/m/Y H:i" }}
+
+                    </td>
+
+
+
+                    <td>
+
+                        {% if retour.enregistrer_par %}
+
+                            <span class="badge bg-primary">
+
+                                {{ retour.enregistrer_par.username|title }}
+
+                            </span>
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+
+
+                    <td class="text-center">
+
+
+                        <!-- DETAIL POUR TOUS -->
+
+                        <a href="{% url 'retours:retour_detail' retour.id %}"
+                           class="btn btn-info btn-sm"
+                           title="Voir détail">
+
+                            👁
+
+                        </a>
+
+
+
+
+                        <!-- MODIFICATION UNIQUEMENT PAR L'ENREGISTREUR -->
+
+                        {% if retour.enregistrer_par_id == request.session.user_id %}
+
+
+                            <a href="{% url 'retours:retour_edit' retour.id %}"
+                               class="btn btn-warning btn-sm"
+                               title="Modifier">
+
+                                ✏
+
+                            </a>
+
+
+
+                            <a href="{% url 'retours:retour_delete' retour.id %}"
+                               class="btn btn-danger btn-sm"
+                               title="Supprimer">
+
+                                🗑
+
+                            </a>
+
+
+
+                        {% else %}
+
+
+                            <button class="btn btn-secondary btn-sm"
+                                    disabled
+                                    title="Vous ne pouvez pas modifier cet enregistrement">
+
+                                🔒
+
+                            </button>
+
+
+                        {% endif %}
+
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+            {% empty %}
+
+
+                <tr>
+
+                    <td colspan="5"
+                        class="text-center text-danger">
+
+                        Aucun retour enregistré.
+
+                    </td>
+
+                </tr>
+
+
+            {% endfor %}
+
+
+            </tbody>
+
+
+
+
+            <tfoot class="table-secondary">
+
+
+                <tr>
+
+
+                    <th colspan="4"
+                        class="text-end">
+
+                        Nombre total :
+
+                    </th>
+
+
+                    <th class="text-center">
+
+                        {{ retours|length }}
+
+                    </th>
+
+
+                </tr>
+
+
+            </tfoot>
+
+
+
+        </table>
+
+
+    </div>
+
+
+
+</div>
+
+
+{% endblock %}
