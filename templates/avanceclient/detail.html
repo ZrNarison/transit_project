@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Détail avance client
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h4 class="text-center mb-0">Détail de l'avance client</h4>
+        </div>
+
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>
+                        <strong>Client :</strong>
+                        <br>
+                        {{ avance.client.nom|upper }}
+                        {{ avance.client.prenom|title }}
+                    </p>
+
+                    <p>
+                        <strong>Montant initial :</strong>
+                        <br>
+                        {{ avance.montant|intcomma }} Ar
+                    </p>
+
+                    <p>
+                        <strong>Type :</strong>
+                        <br>
+                        {{ avance.get_type_avance_display }}
+                    </p>
+
+                    <p>
+                        <strong>Motif :</strong>
+                        <br>
+                        {{ avance.motif }}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-light">
+                        <div class="card-header text-center">
+                            <strong>Situation financière</strong>
+                        </div>
+                        <div class="card-body">
+                            <p>
+                                <strong>Utilisé pour paiement :</strong>
+                                <br>
+                                {{ avance.montant_utilise|intcomma }} Ar
+                            </p>
+
+                            <p>
+                                <strong>Retour client :</strong>
+                                <br>
+                                {{ avance.montant_retour|intcomma }} Ar
+                            </p>
+                            <hr>
+                            <p class="fs-5">
+                                <strong>Reste disponible :</strong>
+                                <br>
+
+                                {% if avance.reste > 0 %}
+                                    <span class="text-success fw-bold">
+                                        {{ avance.reste|intcomma }} Ar
+                                    </span>
+                                {% else %}
+                                    <span class="text-danger fw-bold">0 Ar</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <h5 class="mb-3">Historique d'utilisation</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Produit</th>
+                            <th>Montant utilisé</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for utilisation in avance.utilisations.all %}
+                        <tr>
+                            <td>Produit N°{{ utilisation.produit.id }}</td>
+                            <td class="text-end">{{ utilisation.montant|intcomma }} Ar</td>
+                            <td>{{ utilisation.created_at|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">Aucune utilisation pour le moment</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end mt-3">
+                <a href="{% url 'avanceclient:edit' avance.id %}" class="btn btn-warning">✏</a>
+                <a href="{% url 'avanceclient:list' %}" class="btn btn-secondary" >Retour</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

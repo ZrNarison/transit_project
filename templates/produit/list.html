@@ -13,490 +13,620 @@ Liste Produits
 <div class="container-fluid mt-4">
 
 
-    <h2 class="text-center mb-4">
-        Liste des produits livrés
-    </h2>
+<h2 class="text-center mb-4">
+Liste des produits livrés
+</h2>
 
 
 
-    <!-- ================= FILTRE ================= -->
+<!-- ================= FILTRE ================= -->
 
-    <div class="card shadow-sm mb-3">
 
-        <div class="card-body">
+<div class="card shadow-sm mb-3">
 
-            <form method="get">
+<div class="card-body">
 
-                <div class="row g-2">
 
+<form method="get">
 
-                    <div class="col-md-3">
 
-                        <input type="text"
-                               name="client"
-                               value="{{ client }}"
-                               class="form-control"
-                               placeholder="Client">
+<div class="row g-2">
 
-                    </div>
 
+<div class="col-md-3">
 
+<input type="text"
+name="client"
+value="{{ client }}"
+class="form-control"
+placeholder="Client">
 
-                    <div class="col-md-3">
+</div>
 
-                        <input type="text"
-                               name="source"
-                               value="{{ source }}"
-                               class="form-control"
-                               placeholder="Source">
 
-                    </div>
 
+<div class="col-md-3">
 
+<input type="text"
+name="source"
+value="{{ source }}"
+class="form-control"
+placeholder="Source">
 
-                    <div class="col-md-3">
+</div>
 
-                        <input type="text"
-                               name="vehicule"
-                               value="{{ vehicule }}"
-                               class="form-control"
-                               placeholder="Véhicule">
 
-                    </div>
 
+<div class="col-md-3">
 
+<input type="text"
+name="vehicule"
+value="{{ vehicule }}"
+class="form-control"
+placeholder="Véhicule">
 
-                    <div class="col-md-3 d-flex gap-2">
+</div>
 
-                        <button type="submit"
-                                class="btn btn-primary w-100">
 
-                            🔍
 
-                        </button>
+<div class="col-md-3 d-flex gap-2">
 
 
+<button class="btn btn-primary w-100">
 
-                        <a href="{% url 'produit:p_produit_liste' %}"
-                           class="btn btn-secondary w-100">
+🔍
 
-                            Reset
+</button>
 
-                        </a>
 
+<a href="{% url 'produit:p_produit_liste' %}"
+class="btn btn-secondary w-100">
 
+Reset
 
-                        {% if request.session.role == "User" %}
+</a>
 
-                        <a href="{% url 'produit:p_produit_add' %}"
-                           class="btn btn-success w-100">Nouveau
 
-                        </a>
 
-                        {% endif %}
+{% if request.session.role == "User" %}
 
+<a href="{% url 'produit:p_produit_add' %}"
+class="btn btn-success w-100">
 
-                    </div>
++
 
+</a>
 
-                </div>
 
+{% endif %}
 
-            </form>
 
 
-        </div>
+</div>
 
 
-    </div>
+</div>
 
 
+</form>
 
 
+</div>
 
-    <!-- ================= VALIDATION PAIEMENT ================= -->
+</div>
 
 
-    {% if request.session.role == "User" %}
 
-    <form method="post"
-          action="{% url 'produit:valider_paiement' %}">
 
-        {% csrf_token %}
 
 
+<!-- ================= VALIDATION ================= -->
 
-        <div class="text-end mb-3">
 
-            <button type="submit"
-                    class="btn btn-success"
-                    onclick="return confirm('Valider paiement sélectionné ?')">
+{% if request.session.role == "User" %}
 
-                💰 Valider paiement
 
-            </button>
 
+<form method="post"
+action="{% url 'produit:valider_paiement' %}">
 
-        </div>
 
+{% csrf_token %}
 
-    {% endif %}
 
 
+<div class="card shadow-sm mb-3">
 
 
+<div class="card-body">
 
 
-    <!-- ================= TABLE ================= -->
+<div class="row align-items-end">
 
 
-    <div class="table-responsive">
 
+<div class="col-md-3">
 
-        <table class="table table-bordered table-hover align-middle">
 
+<label>
+Remboursement avance
+</label>
 
-            <thead class="table-dark text-center">
 
-                <tr>
+<select name="remboursement"
+class="form-control"
+id="remboursement">
 
-                    <th width="40">
 
-                        {% if request.session.role == "User" %}
+<option value="AUCUN">
+Aucun
+</option>
 
-                        <input type="checkbox"
-                               id="checkAll">
 
-                        {% endif %}
+<option value="PARTIEL">
+Partiel
+</option>
 
-                    </th>
 
+<option value="TOTAL">
+Total
+</option>
 
-                    <th>Client</th>
 
-                    <th>N° Véhicule</th>
+</select>
 
-                    <th>Chauffeur</th>
 
-                    <th>Source</th>
+</div>
 
-                    <th>Montant/Kg</th>
 
-                    <th>Qté</th>
 
-                    <th>%</th>
 
-                    <th>Montant Net</th>
 
-                    <th>Etat</th>
+<div class="col-md-3"
+id="bloc-partiel"
+style="display:none;">
 
-                    <th>Date paiement</th>
 
+<label>
+Montant retour
+</label>
 
-                    {% if request.session.role == "User" %}
-                    <th>Actions</th>
-                    {% endif %}
 
+<input type="number"
+name="montant_retour"
+class="form-control"
+value="0">
 
-                </tr>
 
-            </thead>
+</div>
 
 
 
 
-            <tbody>
 
+<div class="col-md-3">
 
 
-            {% for produit in produits %}
+<button type="submit"
+class="btn btn-success w-100"
+onclick="return confirm('Confirmer validation paiement ?')">
 
 
+💰 Valider paiement
 
-                <tr>
 
+</button>
 
-                    <td class="text-center">
 
+</div>
 
-                        {% if request.session.role == "User" %}
 
-                            {% if not produit.paye %}
 
-                            <input type="checkbox"
-                                   name="produits"
-                                   value="{{ produit.id }}"
-                                   class="checkItem">
+</div>
 
-                            {% else %}
 
-                            ✔
+</div>
 
-                            {% endif %}
 
-                        {% endif %}
+</div>
 
 
-                    </td>
 
+{% endif %}
 
 
 
 
-                    <td>
 
-                        {{ produit.client.nom|upper }}
 
-                        {{ produit.client.prenom|title }}
 
-                    </td>
+<!-- ================= TABLE ================= -->
 
 
+<div class="table-responsive">
 
 
+<table class="table table-bordered table-hover align-middle">
 
-                    <td>
 
-                        {{ produit.vehicule.num_vehicule|upper }}
+<thead class="table-dark text-center">
 
-                    </td>
 
+<tr>
 
 
+<th>
 
 
-                    <td>
+{% if request.session.role == "User" %}
 
-                        {{ produit.vehicule.chauffeur|upper }}
+<input type="checkbox"
+id="checkAll">
 
-                    </td>
+{% endif %}
 
 
+</th>
 
 
 
-                    <td>
+<th>
+Client
+</th>
 
-                        {{ produit.source|upper }}
 
-                    </td>
+<th>
+Véhicule
+</th>
 
 
+<th>
+Chauffeur
+</th>
 
 
+<th>
+Source
+</th>
 
-                    <td class="text-end">
 
-                        {{ produit.montant|intcomma }}
+<th>
+Montant/Kg
+</th>
 
-                    </td>
 
+<th>
+Qté
+</th>
 
 
+<th>
+%
+</th>
 
 
-                    <td class="text-center">
+<th>
+Montant Net
+</th>
 
-                        {{ produit.quantite }}
 
-                    </td>
+<th>
+Etat
+</th>
 
 
+<th>
+Date paiement
+</th>
 
 
+{% if request.session.role == "User" %}
 
-                    <td class="text-center">
+<th>
+Actions
+</th>
 
-                        {{ produit.pourcentage }} %
+{% endif %}
 
-                    </td>
 
+</tr>
 
 
+</thead>
 
 
-                    <td class="text-end fw-bold text-success">
 
-                        {{ produit.montant_net|floatformat:0|intcomma }}
 
-                    </td>
 
 
+<tbody>
 
 
 
-                    <td class="text-center">
+{% for produit in produits %}
 
 
-                        {% if produit.paye %}
 
-                        <span class="badge bg-success">
+<tr>
 
-                            PAYÉ
 
-                        </span>
 
+<td class="text-center">
 
-                        {% else %}
 
+{% if request.session.role == "User" %}
 
-                        <span class="badge bg-warning text-dark">
 
-                            NON PAYÉ
+{% if not produit.paye %}
 
-                        </span>
 
+<input type="checkbox"
+name="produits"
+value="{{ produit.id }}"
+class="checkItem">
 
-                        {% endif %}
 
+{% else %}
 
-                    </td>
+✔
 
+{% endif %}
 
 
+{% endif %}
 
 
-                    <td class="text-center">
+</td>
 
 
-                        {% if produit.date_paiement %}
 
-                            {{ produit.date_paiement|date:"d/m/Y H:i" }}
 
-                        {% else %}
 
-                            -
+<td>
 
-                        {% endif %}
+{{ produit.client.nom|upper }}
 
+</td>
 
-                    </td>
 
 
 
 
+<td>
 
-                    {% if request.session.role == "User" %}
+{{ produit.vehicule.num_vehicule|upper }}
 
-                    <td class="text-center">
+</td>
 
 
-                        {% if produit.enregistre_par_id == request.session.user_id %}
 
 
+<td>
 
-                            {% if produit.paye %}
+{{ produit.vehicule.chauffeur|upper }}
 
+</td>
 
-                                <button class="btn btn-warning btn-sm"
-                                        disabled>
 
-                                    ✏
 
-                                </button>
 
+<td>
 
-                                <button class="btn btn-danger btn-sm"
-                                        disabled>
+{{ produit.source|upper }}
 
-                                    🗑
+</td>
 
-                                </button>
 
 
 
-                            {% else %}
+<td class="text-end">
 
+{{ produit.montant|intcomma }}
 
+</td>
 
-                                <a href="{% url 'produit:p_produit_edit' produit.id %}"
-                                   class="btn btn-warning btn-sm">
 
-                                    ✏
 
-                                </a>
 
+<td class="text-center">
 
+{{ produit.quantite|intcomma }}
 
-                                <a href="{% url 'produit:p_produit_delete' produit.id %}"
-                                   class="btn btn-danger btn-sm">
+</td>
 
-                                    🗑
 
-                                </a>
 
 
+<td class="text-center">
 
-                            {% endif %}
+{{ produit.pourcentage }} %
 
+</td>
 
 
-                        {% else %}
 
 
+<td class="text-end fw-bold text-success">
 
-                            <button class="btn btn-secondary btn-sm"
-                                    disabled>
+{{ produit.montant_net|floatformat:0|intcomma }}
 
-                                🔒
+</td>
 
-                            </button>
 
 
 
-                        {% endif %}
+<td class="text-center">
 
 
-                    </td>
+{% if produit.paye %}
 
-                    {% endif %}
+<span class="badge bg-success">
+PAYÉ
+</span>
 
 
+{% else %}
 
-                </tr>
+<span class="badge bg-warning text-dark">
+NON PAYÉ
+</span>
 
 
+{% endif %}
 
 
-            {% empty %}
 
+</td>
 
 
-                <tr>
 
-                    <td colspan="12"
-                        class="text-center text-danger">
 
-                        Aucun produit trouvé
 
-                    </td>
+<td class="text-center">
 
 
-                </tr>
+{% if produit.date_paiement %}
 
+{{ produit.date_paiement|date:"d/m/Y H:i" }}
 
+{% else %}
 
+-
 
-            {% endfor %}
+{% endif %}
 
 
+</td>
 
-            </tbody>
 
 
-        </table>
 
 
-    </div>
 
 
+{% if request.session.role == "User" %}
 
 
-    {% if request.session.role == "User" %}
 
-    </form>
+<td class="text-center">
 
-    {% endif %}
+
+
+{% if produit.paye %}
+
+
+<button class="btn btn-secondary btn-sm"
+disabled>
+
+🔒
+
+</button>
+
+
+
+{% else %}
+
+
+
+
+{% if produit.enregistre_par_id == request.session.user_id %}
+
+
+
+<a href="{% url 'produit:p_produit_edit' produit.id %}"
+class="btn btn-warning btn-sm">
+
+✏
+
+</a>
+
+
+
+
+<a href="{% url 'produit:p_produit_delete' produit.id %}"
+class="btn btn-danger btn-sm"
+onclick="return confirm('Supprimer ?')">
+
+🗑
+
+</a>
+
+
+
+{% else %}
+
+
+<button class="btn btn-secondary btn-sm"
+disabled>
+
+🔒
+
+</button>
+
+
+{% endif %}
+
+
+
+
+
+{% endif %}
+
+
+
+</td>
+
+
+
+{% endif %}
+
+
+
+
+
+</tr>
+
+
+
+{% empty %}
+
+
+<tr>
+
+<td colspan="12"
+class="text-center text-danger">
+
+Aucun produit trouvé
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+
+</table>
+
+
+</div>
+
+
+
+
+
+{% if request.session.role == "User" %}
+
+</form>
+
+{% endif %}
+
+
 
 
 
@@ -506,34 +636,68 @@ Liste Produits
 
 
 
+
 <script>
 
 
-const checkAll = document.getElementById("checkAll");
+let checkAll=document.getElementById("checkAll");
 
 
 if(checkAll){
 
 
-    checkAll.addEventListener(
-        "change",
-        function(){
+checkAll.addEventListener(
+"change",
+function(){
 
-            document
-            .querySelectorAll(".checkItem")
-            .forEach(
-                checkbox => {
 
-                    checkbox.checked = this.checked;
+document
+.querySelectorAll(".checkItem")
+.forEach(
+x=>x.checked=this.checked
+);
 
-                }
-            );
 
-        }
-    );
+});
 
 
 }
+
+
+
+
+let remboursement=document.getElementById(
+"remboursement"
+);
+
+
+let bloc=document.getElementById(
+"bloc-partiel"
+);
+
+
+
+if(remboursement){
+
+
+remboursement.addEventListener(
+"change",
+function(){
+
+
+bloc.style.display =
+this.value==="PARTIEL"
+?
+"block"
+:
+"none";
+
+
+});
+
+
+}
+
 
 
 </script>

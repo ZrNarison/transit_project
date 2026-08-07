@@ -26,7 +26,6 @@ def avance_add(request):
 
         form = AvanceForm(request.POST)
 
-
         if form.is_valid():
 
             avance = form.save(commit=False)
@@ -61,11 +60,12 @@ def avance_add(request):
                 "Avance",
                 avance.id,
                 nouvelle={
+                    "personnel": str(avance.personnel),
                     "montant": str(avance.montantAv),
                     "motif": avance.motifAv,
                     "type": avance.typeAv
                 },
-                description="Création d'une avance"
+                description="Création d'une avance personnel"
             )
 
 
@@ -107,7 +107,7 @@ def avance_list(request):
 
     avances = Avance.objects.select_related(
         "personnel",
-        "client",
+        "distribution",
         "enregistre_par"
     ).all()
 
@@ -137,14 +137,6 @@ def avance_list(request):
 
             Q(personnel__prenom__icontains=recherche)
 
-            |
-
-            Q(client__nom__icontains=recherche)
-
-            |
-
-            Q(client__prenom__icontains=recherche)
-
         )
 
 
@@ -152,7 +144,7 @@ def avance_list(request):
     if date:
 
         avances = avances.filter(
-            dateAv=date
+            dateAv__date=date
         )
 
 
@@ -175,7 +167,7 @@ def avance_list(request):
 # DETAIL
 # ==========================================
 
-def avance_detail(request,id):
+def avance_detail(request, id):
 
     avance = get_object_or_404(
         Avance,
@@ -188,7 +180,7 @@ def avance_detail(request,id):
         "VIEW",
         "Avance",
         id,
-        description="Consultation détail avance"
+        description="Consultation détail avance personnel"
     )
 
 
@@ -209,7 +201,7 @@ def avance_detail(request,id):
 # MODIFICATION
 # ==========================================
 
-def avance_edit(request,id):
+def avance_edit(request, id):
 
     avance = get_object_or_404(
         Avance,
@@ -238,6 +230,8 @@ def avance_edit(request,id):
 
     ancienne = {
 
+        "personnel": str(avance.personnel),
+
         "montant": str(avance.montantAv),
 
         "motif": avance.motifAv,
@@ -257,7 +251,6 @@ def avance_edit(request,id):
         )
 
 
-
         if form.is_valid():
 
 
@@ -266,6 +259,8 @@ def avance_edit(request,id):
 
 
             nouvelle = {
+
+                "personnel": str(avance_modifiee.personnel),
 
                 "montant": str(avance_modifiee.montantAv),
 
@@ -284,7 +279,7 @@ def avance_edit(request,id):
                 id,
                 ancienne=ancienne,
                 nouvelle=nouvelle,
-                description="Modification d'une avance"
+                description="Modification d'une avance personnel"
             )
 
 
@@ -326,7 +321,7 @@ def avance_edit(request,id):
 # SUPPRESSION
 # ==========================================
 
-def avance_delete(request,id):
+def avance_delete(request, id):
 
 
     avance = get_object_or_404(
@@ -356,6 +351,8 @@ def avance_delete(request,id):
 
     ancienne = {
 
+        "personnel": str(avance.personnel),
+
         "montant": str(avance.montantAv),
 
         "motif": avance.motifAv,
@@ -375,7 +372,7 @@ def avance_delete(request,id):
             "Avance",
             id,
             ancienne=ancienne,
-            description="Suppression d'une avance"
+            description="Suppression d'une avance personnel"
         )
 
 

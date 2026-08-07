@@ -18,7 +18,7 @@ class DepenseForm(forms.ModelForm):
 
             "titre": forms.TextInput(
                 attrs={
-                    "class": "form-control"
+                    "class": "form-select"
                 }
             ),
 

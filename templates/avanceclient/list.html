@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Liste des avances clients
+{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2 class="text-center mb-4">Liste des avances clients</h2>
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get">
+                <div class="row align-items-end">
+                    <div class="col-md-5 mb-2">
+                        <label class="form-label fw-bold">Client</label>
+                        <input type="text" name="client" value="{{ client }}" class="form-control" placeholder="Nom ou prénom du client" >
+                    </div>
+                    <div class="col-md-7 mb-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" >🔍</button>
+                        <a href="{% url 'avanceclient:list' %}" class="btn btn-secondary" >Reset</a>
+                        <a href="{% url 'avanceclient:add' %}" class="btn btn-success" >+ Nouveau</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="mb-3">
+        <strong>Nombre d'avances :{{ avances|length }}</strong>
+    </div>
+    <!-- Tableau -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover align-middle">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>N°</th>
+                    <th>Client</th>
+                    <th>Montant</th>
+                    <th>Reste</th>
+                    <th width="200">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for avance in avances %}
+                <tr>
+                    <td class="text-center">{{ avance.id }}</td>
+                    <td><strong>{{ avance.client.nom|upper }}</strong>{{ avance.client.prenom|title }}</td>
+                    <td class="text-end fw-bold">{{ avance.montant|intcomma }} Ar</td>
+                    <td class="text-end fw-bold">
+                        {% if avance.reste > 0 %}
+                            <span class="text-success">
+                                {{ avance.reste|intcomma }} Ar
+                            </span>
+                        {% else %}
+                            <span class="text-danger">
+                                0 Ar
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'avanceclient:detail' avance.id %}" class="btn btn-info btn-sm" title="Voir">👁</a>
+                        <a href="{% url 'avanceclient:edit' avance.id %}"class="btn btn-warning btn-sm" title="Modifier" >✏</a>
+                        <a href="{% url 'avanceclient:delete' avance.id %}" class="btn btn-danger btn-sm" title="Supprimer" >🗑</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">Aucune avance client trouvée</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+
+    {% if page_obj %}
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ query_params }}" >Précédent</a>
+            </li>
+            {% endif %}
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }}</span>
+            </li>
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ query_params }}">Suivant</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

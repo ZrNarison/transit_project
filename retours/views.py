@@ -6,12 +6,10 @@ from django.shortcuts import (
 
 from django.contrib import messages
 from django.db.models import Q
-
 from .models import Retour
 from .forms import RetourForm
-
 from audit.utils import enregistrer_action
-
+from django.db.models import Sum
 
 
 # ==========================================
@@ -21,24 +19,47 @@ def retour_list(request):
 
     queryset = Retour.objects.all()
 
+
     montant = request.GET.get("montant", "").strip()
 
+
     if montant:
+
         queryset = queryset.filter(
             montant__icontains=montant
         )
 
+
+    # ===============================
+    # TOTAL DES RETOURS
+    # ===============================
+
+    total_retours = queryset.aggregate(
+        total=Sum("montant")
+    )["total"] or 0
+
+
+
     context = {
+
         "retours": queryset,
+
         "montant": montant,
+
+        "total_retours": total_retours,
+
     }
 
-    return render(
-        request,
-        "retours/list.html",
-        context
-    )
 
+    return render(
+
+        request,
+
+        "retours/list.html",
+
+        context
+
+    )
 
 
 # ==========================================

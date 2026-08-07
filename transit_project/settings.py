@@ -45,7 +45,9 @@ INSTALLED_APPS = [
 
     # Applications Transit ERP
     'clients',
+    'entretien',
     'avances',
+    "avanceclient",
     'personnel',
     'transentrant',
     'produit',
@@ -60,6 +62,7 @@ INSTALLED_APPS = [
     'audit',
     'retours',
     'logs',
+    "rapports",
 ]
 
 

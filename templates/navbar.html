@@ -1,5 +1,5 @@
 {% if request.session.user_id %}
-<div class="text-white">ROLE SESSION = {{ request.session.role }}</div>
+{% comment %} <div class="text-white">ROLE SESSION = {{ request.session.role }}</div> {% endcomment %}
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
     <div class="container-fluid px-4">
         <a class="navbar-brand fw-bold" href="/">🚚 Transit ERP</a>
@@ -11,6 +11,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'produit:p_produit_liste' %}">📦 Produit</a>
                 </li>
+                
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">👥 Personnes</a>
                     <ul class="dropdown-menu">
@@ -36,8 +37,14 @@
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">💰 Finance</a>
                     <ul class="dropdown-menu">
                         <li>
-                            <a class="dropdown-item" href="{% url 'avances:avance_list' %}">Avances</a>
+                            <a class="dropdown-item" href="{% url 'avances:avance_list' %}">AvancesPersonnel</a>
                         </li>
+                        <li>
+            <a class="dropdown-item" 
+               href="{% url 'avanceclient:list' %}">
+                Avances Clients
+            </a>
+        </li>
                         <li>
                             <a class="dropdown-item"href="{% url 'depense:depense_list' %}">Dépenses</a>
                         </li>
@@ -77,21 +84,29 @@
                         <li>
                             <a class="dropdown-item" href="#">Sortant</a>
                         </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'entretien:list' %}">
+                                🔧 Entretien
+                            </a>
+                        </li>
                     </ul>
                 </li>
-                {% if request.session.role != "User" %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Administration</a>
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Rapport</a>
                     <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'rapports:rapport_list' %}">Activité</a>
+                        </li>
+                    {% if request.session.role != "User" %}
                         <li>
                             <a class="dropdown-item" href="{% url 'audit:audit_list' %}">📋 Audit</a>
                         </li>
                         <li>
                             <a class="dropdown-item" href="{% url 'logs:logs_list' %}">🖥️ Logs système</a>
                         </li>
+                    {% endif %}
                     </ul>
                 </li>
-                {% endif %}
             </ul>
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">

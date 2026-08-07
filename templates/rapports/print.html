@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+
+{% block title %}
+Impression Rapport général
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+        .print-container {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+
+        /* TABLEAU ECRAN */
+        .table-print {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .table-print th,
+        .table-print td {
+
+            border: 1px solid #000;
+            padding: 4px;
+
+            text-align: right;
+            vertical-align: middle;
+
+        }
+
+
+        .table-print th {
+
+            text-align: center;
+            background: #eee;
+
+        }
+
+
+        /* IMPRESSION A4 PORTRAIT */
+        @media print {
+
+
+            html,
+            body {
+
+                width: 210mm;
+                height: 297mm;
+
+                margin:0 !important;
+                padding:0 !important;
+
+            }
+
+
+            .container,
+            .container-fluid,
+            .print-container {
+
+                width:100% !important;
+                max-width:none !important;
+
+                margin:0 !important;
+                padding:0 !important;
+
+            }
+
+
+
+            .table-print {
+
+                width:100% !important;
+
+                border-collapse:collapse;
+
+                table-layout:fixed;
+
+                font-size:8px;
+
+            }
+
+
+
+            .table-print th,
+            .table-print td {
+
+                border:1px solid #000 !important;
+
+                padding:3px !important;
+
+                word-wrap:break-word;
+
+            }
+
+
+
+            .table-print th:first-child,
+            .table-print td:first-child {
+
+                width:8%;
+
+                text-align:center;
+
+            }
+
+
+
+            .no-print {
+
+                display:none !important;
+
+            }
+
+
+
+            @page {
+
+                size:A4 portrait;
+
+                margin:5mm;
+
+            }
+
+
+        }
+        .header-print {
+            text-align:center;
+            margin-bottom:15px;
+        }
+
+        .signature {
+
+            margin-top:40px;
+
+            width:100%;
+
+            display:flex;
+
+            justify-content:flex-end;
+
+        }
+
+
+        .signature div {
+
+            width:45%;
+
+            text-align:center;
+
+        }
+
+
+        @media print {
+
+            .signature {
+
+                margin-top:30px;
+
+                justify-content:flex-end;
+
+            }
+
+
+            .signature div {
+
+                width:40%;
+
+                font-size:9px;
+
+            }
+
+        }
+
+</style>
+
+<div class="print-container">
+    <div class="header-print">
+        <h3>Rapport général des opérations</h3>
+        <p>Période :
+            {% if date_debut %}
+                {{ date_debut|date:"d/m/Y" }}
+            {% else %}
+                Début
+            {% endif %}
+            &nbsp; au &nbsp;
+            {% if date_fin %}
+                {{ date_fin|date:"d/m/Y" }}
+            {% else %}
+                Aujourd'hui
+            {% endif %}
+        </p>
+    </div>
+
+    <table class="table-print">
+        <thead>
+            <tr>
+                <th rowspan="2">Date</th>
+                <th rowspan="2">Entretien Camion</th>
+                <th rowspan="2">Achat Mica</th>
+                <th rowspan="2">Transport</th>
+                <th colspan="3">Avances</th>
+                <th rowspan="2">Sakafo</th>
+                <th rowspan="2">Docker</th>
+                <th rowspan="2">Divers</th>
+                <th rowspan="2">Triage</th>
+                <th rowspan="2">Total</th>
+                <th rowspan="2">Retours</th>
+            </tr>
+            <tr>
+                <th>Client</th>
+                <th>Chauffeur</th>
+                <th>Personnel</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ligne in rapport %}
+            <tr>
+                <td>{{ ligne.date|date:"d/m/Y" }}</td>
+                <td>{{ ligne.entretien|intcomma }}</td>
+                <td>{{ ligne.achat_mica|intcomma }}</td>
+                <td>{{ ligne.transport|intcomma }}</td>
+                <td>{{ ligne.avance_client|intcomma }}</td>
+                <td>{{ ligne.avance_chauffeur|intcomma }}</td>
+                <td>{{ ligne.avance_personnel|intcomma }}</td>
+                <td>{{ ligne.sakafo|intcomma }}</td>
+                <td>{{ ligne.docker|intcomma }}</td>
+                <td>{{ ligne.divers|intcomma }}</td>
+                <td>{{ ligne.triage|intcomma }}</td>
+                <td>
+                    <strong>{{ ligne.total_depenses|intcomma }}</strong>
+                </td>
+                <td>{{ ligne.retour|intcomma }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="13" class="text-center">Aucune donnée</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>TOTAL GENERAL</th>
+                <th>{{ totaux.entretien|intcomma }}</th>
+                <th>{{ totaux.achat_mica|intcomma }}</th>
+                <th>{{ totaux.transport|intcomma }}</th>
+                <th>{{ totaux.avance_client|intcomma }}</th>
+                <th>{{ totaux.avance_chauffeur|intcomma }}</th>
+                <th>{{ totaux.avance_personnel|intcomma }}</th>
+                <th>{{ totaux.sakafo|intcomma }}</th>
+                <th>{{ totaux.docker|intcomma }}</th>
+                <th>{{ totaux.divers|intcomma }}</th>
+                <th>{{ totaux.triage|intcomma }}</th>
+                <th>{{ totaux.total_depenses|intcomma }}</th>
+                <th>{{ totaux.retour|intcomma }}</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="signature" placer à droite>
+        <div>
+            Fait à ................................... le {% now "d/m/Y" %}
+            <br>
+            <br>
+            Signature responsable
+        </div>
+    </div>
+</div>
+
+<script>
+    window.onload=function(){
+        setTimeout(function(){
+            window.print();
+        },500);
+    };
+
+
+    window.onafterprint=function(){
+        setTimeout(function(){
+            window.close();
+        },500);
+    };
+
+</script>
+{% endblock %}

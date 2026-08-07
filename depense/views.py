@@ -234,15 +234,10 @@ def depense_add(request):
             # =========================
 
             enregistrer_action(
-
                 request,
-
                 action="CREATE",
-
-                module="Dépense",
-
+                table="Depense",
                 objet_id=depense.id,
-
                 nouvelle={
                     "titre": depense.titre,
                     "montant": str(depense.montant),
@@ -355,21 +350,21 @@ def depense_edit(request, id):
 
 
             enregistrer_action(
-
                 request,
 
-                action="UPDATE",
+                action="CREATE",
 
-                module="Dépense",
+                table="Depense",
 
                 objet_id=depense.id,
 
-                ancienne=ancienne,
+                nouvelle={
+                    "titre": depense.titre,
+                    "montant": str(depense.montant),
+                    "description": depense.description
+                },
 
-                nouvelle=nouvelle,
-
-                description="Modification d'une dépense"
-
+                description="Création d'une dépense"
             )
 
 
@@ -460,31 +455,25 @@ def depense_delete(request, id):
 
         }
 
-
-
-        enregistrer_action(
-
-            request,
-
-            action="DELETE",
-
-            module="Dépense",
-
-            objet_id=depense.id,
-
-            ancienne=ancienne,
-
-            nouvelle=None,
-
-            description="Suppression d'une dépense"
-
-        )
-
-
-
         depense.delete()
 
-
+        enregistrer_action(
+        
+                    request,
+        
+                    action="DELETE",
+        
+                    module="Dépense",
+        
+                    objet_id=depense.id,
+        
+                    ancienne=ancienne,
+        
+                    nouvelle=None,
+        
+                    description="Suppression d'une dépense"
+        
+                )
 
         messages.success(
 

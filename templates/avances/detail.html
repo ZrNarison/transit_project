@@ -12,7 +12,34 @@ Détail avance
     <div class="card-body">
         <div class="row">
             <div class="col-md-8">
-                <p><strong>Personnel :</strong>{{ avance.personnel.nom|upper }} {{ avance.personnel.prenom|title }}</p>
+                <p>
+                <strong>Bénéficiaire :</strong>
+                {% if avance.personnel %}
+                    {{ avance.personnel.nom|upper }}
+                    {{ avance.personnel.prenom|title }}
+                    <span class="badge bg-primary">
+                        Personnel
+                    </span>
+                {% elif avance.client %}
+                    {{ avance.client.nom|upper }}
+                    {{ avance.client.prenom|title }}
+                    <span class="badge bg-success">
+                        Client
+                    </span>
+                {% elif avance.vehicule %}
+                    {{ avance.vehicule.chauffeur|upper }}
+                    <span class="badge bg-warning text-dark">
+                        Chauffeur
+                    </span>
+                    <br>
+                    Matricule :
+                    <strong>
+                        {{ avance.vehicule.num_vehicule|upper }}
+                    </strong>
+                {% else %}
+                    -
+                {% endif %}
+                </p>
                 <p><strong>Motif :</strong>{{ avance.motifAv|title }}</p>
                 <p><strong>Montant :</strong>{{ avance.montantAv|intcomma }} Ar</p>
                 <p><strong>Type :</strong>{{ avance.get_typeAv_display }}</p>

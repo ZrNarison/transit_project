@@ -1,4 +1,5 @@
 from .models import Audit
+from users.models import AppUser
 
 
 def enregistrer_action(
@@ -11,6 +12,24 @@ def enregistrer_action(
     description=""
 ):
 
+    """
+    Enregistre une action utilisateur dans la table Audit.
+
+    Paramètres :
+        request : requête Django
+        action : CREATE / UPDATE / DELETE / LOGIN / LOGOUT
+        table : nom du module ou modèle concerné
+        objet_id : id de l'objet concerné
+        ancienne : ancienne valeur (dict)
+        nouvelle : nouvelle valeur (dict)
+        description : commentaire
+    """
+
+
+    # ==========================
+    # Récupération utilisateur
+    # ==========================
+
     utilisateur = None
 
 
@@ -20,8 +39,6 @@ def enregistrer_action(
 
 
     if user_id:
-
-        from users.models import AppUser
 
         try:
 
@@ -34,6 +51,10 @@ def enregistrer_action(
             utilisateur = None
 
 
+
+    # ==========================
+    # Création Audit
+    # ==========================
 
     Audit.objects.create(
 

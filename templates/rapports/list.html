@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}
+Rapport général
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+    .table-rapport {
+
+        width:100%;
+        table-layout:auto;
+        font-size:12px;
+
+    }
+
+
+    .table-rapport th,
+    .table-rapport td {
+
+        padding:6px;
+        text-align:right;
+        vertical-align:middle;
+        min-width:90px;
+
+    }
+
+
+    .table-rapport th {
+
+        text-align:center;
+
+    }
+
+
+
+    .table-rapport th:first-child,
+    .table-rapport td:first-child {
+
+        width:8%;
+        text-align:center;
+
+    }
+
+
+
+    @media print {
+
+
+    .no-print {
+
+        display:none !important;
+
+    }
+
+
+
+    body {
+
+        margin:0 !important;
+        padding:0 !important;
+        font-size:9px;
+
+    }
+
+
+
+    .container-fluid {
+
+        width:100% !important;
+        margin:0 !important;
+        padding:0 !important;
+
+    }
+
+
+
+    h2 {
+
+        font-size:14px;
+        text-align:center;
+
+    }
+
+
+
+    .table-rapport {
+
+        width:100% !important;
+        border-collapse:collapse;
+        font-size:8px;
+
+    }
+
+
+
+    .table-rapport th,
+    .table-rapport td {
+
+        border:1px solid #000 !important;
+        padding:3px !important;
+
+    }
+
+
+
+    @page {
+
+        size:A4 landscape;
+        margin:5mm;
+
+    }
+
+
+    }
+</style>
+<div class="container-fluid mt-4">
+    <h2 class="text-center mb-4">Rapport général des opérations</h2>
+    <div class="card shadow-sm mb-3 no-print">
+        <div class="card-body">
+            <form method="get">
+                <div class="row align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Date début</label>
+                        <input type="date" name="date_debut" value="{{ date_debut }}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Date fin</label>
+                        <input type="date" name="date_fin" value="{{ date_fin }}" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-primary">🔍</button>
+                        <a href="{% url 'rapports:rapport_list' %}"   class="btn btn-secondary">Reset</a>
+                        <button type="button" onclick="imprimerRapport()" class="btn btn-success">Impression</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <table class="table table-bordered table-striped table-hover table-rapport">
+        <thead class="table-dark">
+            <tr>
+                <th rowspan="2">Date</th>
+                <th rowspan="2">Entretien Camion</th>
+                <th rowspan="2">Achat Mica</th>
+                <th rowspan="2">Transport</th>
+                <th colspan="3">Avances</th>
+                <th rowspan="2">Sakafo</th>
+                <th rowspan="2">Docker</th>
+                <th rowspan="2">Divers</th>
+                <th rowspan="2">Triage</th>
+                <th rowspan="2">Total</th>
+                <th rowspan="2">Retours</th>
+                <th rowspan="2" class="no-print">Action</th>
+            </tr>
+            <tr>
+                <th>Client</th>
+                <th>Chauffeur</th>
+                <th>Personnel</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ligne in rapport %}
+            <tr>
+                <td>{{ ligne.date|date:"d/m/Y" }}</td>
+                <td>{{ ligne.entretien|intcomma }} Ar</td>
+                <td>{{ ligne.achat_mica|intcomma }} Ar</td>
+                <td>{{ ligne.transport|intcomma }} Ar</td>
+                <td>{{ ligne.avance_client|intcomma }} Ar</td>
+                <td>{{ ligne.avance_chauffeur|intcomma }} Ar</td>
+                <td>{{ ligne.avance_personnel|intcomma }} Ar</td>
+                <td>{{ ligne.sakafo|intcomma }} Ar</td>
+                <td>{{ ligne.docker|intcomma }} Ar</td>
+                <td>{{ ligne.divers|intcomma }} Ar</td>
+                <td>{{ ligne.triage|intcomma }} Ar</td>
+                <td class="fw-bold">{{ ligne.total_depenses|intcomma }} Ar</td>
+                <td>{{ ligne.retour|intcomma }} Ar</td>
+                <td class="no-print"><a href="{% url 'rapports:rapport_detail' ligne.date|date:'Y-m-d' %}"   class="btn btn-info btn-sm">👁</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="14"    class="text-center">Aucune donnée</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot class="table-secondary">
+            <tr>
+                <th>TOTAL GENERAL</th>
+                <th>{{ totaux.entretien|intcomma }} Ar</th>
+                <th>{{ totaux.achat_mica|intcomma }} Ar</th>
+                <th>{{ totaux.transport|intcomma }} Ar</th>
+                <th>{{ totaux.avance_client|intcomma }} Ar</th>
+                <th>{{ totaux.avance_chauffeur|intcomma }} Ar</th>
+                <th>{{ totaux.avance_personnel|intcomma }} Ar</th>
+                <th>{{ totaux.sakafo|intcomma }} Ar</th>
+                <th>{{ totaux.docker|intcomma }} Ar</th>
+                <th>{{ totaux.divers|intcomma }} Ar</th>
+                <th>{{ totaux.triage|intcomma }} Ar</th>
+                <th>{{ totaux.total_depenses|intcomma }} Ar</th>
+                <th>{{ totaux.retour|intcomma }} Ar</th>
+                <th class="no-print"></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+
+
+<script>
+
+    function imprimerRapport(){
+        let url =    "{% url 'rapports:rapport_print' %}?date_debut={{ date_debut }}&date_fin={{ date_fin }}";
+
+        window.open(
+            url,
+            "_blank",
+            "width=1100,height=700"
+        );
+
+    }
+
+</script>
+{% endblock %}

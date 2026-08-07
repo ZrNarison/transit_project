@@ -5,10 +5,17 @@ from depot.models import Distribution
 
 class Depense(models.Model):
 
-    titre = models.CharField(
-        max_length=150
-    )
+    TITRE_CHOICES = [
+        ("Sakafo", "Sakafo"),
+        ("Docker", "Docker"),
+        ("Divers", "Divers"),
+        ("Triage", "Triage"),
+    ]
 
+    titre = models.CharField(
+        max_length=50,
+        choices=TITRE_CHOICES
+    )
 
     distribution = models.ForeignKey(
         Distribution,
@@ -18,28 +25,23 @@ class Depense(models.Model):
         blank=True
     )
 
-
     montant = models.DecimalField(
         max_digits=12,
         decimal_places=0
     )
-
 
     description = models.TextField(
         blank=True,
         null=True
     )
 
-
     date = models.DateField(
         auto_now_add=True
     )
 
-
     created_at = models.DateTimeField(
         auto_now_add=True
     )
-
 
     enregistre_par = models.ForeignKey(
         AppUser,
@@ -49,12 +51,10 @@ class Depense(models.Model):
         related_name="depenses_enregistrees"
     )
 
-
     class Meta:
         ordering = ['-date', '-created_at']
         verbose_name = "Dépense"
         verbose_name_plural = "Dépenses"
-
 
     def __str__(self):
         return f"{self.titre} - {self.montant} Ar"

@@ -1,7 +1,6 @@
 from django.db import models
 
 from personnel.models import Personnel
-from clients.models import Client
 from users.models import AppUser
 
 
@@ -17,16 +16,6 @@ class Avance(models.Model):
     # Bénéficiaire personnel
     personnel = models.ForeignKey(
         Personnel,
-        on_delete=models.CASCADE,
-        related_name="avances",
-        null=True,
-        blank=True
-    )
-
-
-    # Bénéficiaire client
-    client = models.ForeignKey(
-        Client,
         on_delete=models.CASCADE,
         related_name="avances",
         null=True,
@@ -79,16 +68,10 @@ class Avance(models.Model):
     def __str__(self):
 
         if self.personnel:
+
             return (
                 f"{self.personnel.nom} "
                 f"{self.personnel.prenom} - "
-                f"{self.montantAv} Ar"
-            )
-
-        if self.client:
-            return (
-                f"{self.client.nom} "
-                f"{self.client.prenom} - "
                 f"{self.montantAv} Ar"
             )
 

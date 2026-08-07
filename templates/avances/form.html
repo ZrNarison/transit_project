@@ -18,9 +18,11 @@ Formulaire Avance
             {% endif %}
         </h3>
 
+
         <form method="post">
 
             {% csrf_token %}
+
 
             {% if form.errors %}
                 <div class="alert alert-danger">
@@ -39,12 +41,17 @@ Formulaire Avance
                 </div>
             {% endif %}
 
+
+
             <div class="row">
 
-                <!-- Formulaire -->
+
                 <div class="col-md-8">
 
+
+                    <!-- Personnel -->
                     <div class="mb-3" id="bloc-personnel">
+
                         <label class="form-label fw-bold">
                             Personnel
                         </label>
@@ -52,88 +59,124 @@ Formulaire Avance
                         {{ form.personnel }}
 
                         <small class="text-muted">
-                            Choisir uniquement si l'avance concerne un employé.
+                            Avance pour un employé.
                         </small>
-                    </div>
 
-                    <div class="mb-3" id="bloc-client">
-                        <label class="form-label fw-bold">
-                            Client
-                        </label>
-
-                        {{ form.client }}
-
-                        <small class="text-muted">
-                            Choisir uniquement si l'avance concerne un client.
-                        </small>
                     </div>
 
                     <div class="mb-3">
+
                         <label class="form-label fw-bold">
                             Motif
                         </label>
 
                         {{ form.motifAv }}
+
                     </div>
 
+
+
                     <div class="mb-3">
+
                         <label class="form-label fw-bold">
                             Montant
                         </label>
 
                         {{ form.montantAv }}
+
                     </div>
 
+
+
                     <div class="mb-3">
+
                         <label class="form-label fw-bold">
                             Type d'avance
                         </label>
 
                         {{ form.typeAv }}
+
                     </div>
+
+
 
                 </div>
 
+
+
+
+
                 <!-- Résumé -->
+
                 <div class="col-md-4">
+
 
                     <div class="card bg-light shadow-sm">
 
+
                         <div class="card-header text-center">
-                            <strong>Résumé</strong>
+
+                            <strong>
+                                Résumé
+                            </strong>
+
                         </div>
 
+
+
                         <div class="card-body">
+
 
                             <p>
                                 <strong>Personnel :</strong><br>
                                 {{ form.personnel.value|default:"-" }}
                             </p>
 
+
+
                             <p>
                                 <strong>Client :</strong><br>
                                 {{ form.client.value|default:"-" }}
                             </p>
+
+
+
+                            <p>
+                                <strong>Véhicule :</strong><br>
+                                {{ form.vehicule.value|default:"-" }}
+                            </p>
+
+
 
                             <p>
                                 <strong>Montant :</strong><br>
                                 {{ form.montantAv.value|default:"0" }} Ar
                             </p>
 
+
+
                             <p>
                                 <strong>Type :</strong><br>
                                 {{ form.typeAv.value|default:"-" }}
                             </p>
 
+
                         </div>
+
 
                     </div>
 
+
                 </div>
+
 
             </div>
 
+
+
             <hr>
+
+
 
             <div class="text-end">
 
@@ -141,59 +184,117 @@ Formulaire Avance
                     💾 Enregistrer
                 </button>
 
+
                 <a href="{% url 'avances:avance_list' %}"
                    class="btn btn-secondary">
                     Retour
                 </a>
 
+
             </div>
+
 
         </form>
 
+
     </div>
 
+
 </div>
+
+
+
+
 
 <script>
 
 document.addEventListener("DOMContentLoaded", function () {
 
+
     const personnel = document.getElementById("id_personnel");
     const client = document.getElementById("id_client");
+    const vehicule = document.getElementById("id_vehicule");
+
 
     const blocPersonnel = document.getElementById("bloc-personnel");
     const blocClient = document.getElementById("bloc-client");
+    const blocVehicule = document.getElementById("bloc-vehicule");
 
-    function verifierChoix() {
 
-        if (personnel.value !== "") {
+
+    function verifierChoix(){
+
+
+        if(personnel.value !== ""){
+
+            client.value = "";
+            vehicule.value = "";
 
             blocClient.style.display = "none";
-            client.value = "";
+            blocVehicule.style.display = "none";
 
         }
-        else if (client.value !== "") {
+
+
+        else if(client.value !== ""){
+
+
+            personnel.value = "";
+            vehicule.value = "";
+
 
             blocPersonnel.style.display = "none";
-            personnel.value = "";
+            blocVehicule.style.display = "none";
+
 
         }
+
+
+        else if(vehicule.value !== ""){
+
+
+            personnel.value = "";
+            client.value = "";
+
+
+            blocPersonnel.style.display = "none";
+            blocClient.style.display = "none";
+
+
+        }
+
+
         else {
+
 
             blocPersonnel.style.display = "block";
             blocClient.style.display = "block";
+            blocVehicule.style.display = "block";
+
 
         }
 
+
     }
 
+
+
     personnel.addEventListener("change", verifierChoix);
+
     client.addEventListener("change", verifierChoix);
+
+    vehicule.addEventListener("change", verifierChoix);
+
+
 
     verifierChoix();
 
+
 });
 
+
 </script>
+
+
 
 {% endblock %}

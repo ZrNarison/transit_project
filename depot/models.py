@@ -2,9 +2,8 @@ from decimal import Decimal
 
 from django.db import models
 from django.db.models import Sum
-
 from personnel.models import Personnel
-
+from transentrant.models import Transentrant
 
 class Depot(models.Model):
 
@@ -148,6 +147,13 @@ class Distribution(models.Model):
         related_name="distributions_recues"
     )
 
+    vehicule = models.ForeignKey(
+        Transentrant,
+        on_delete=models.SET_NULL,
+        related_name="distributions",
+        null=True,
+        blank=True
+    )
 
     montant = models.DecimalField(
         max_digits=15,

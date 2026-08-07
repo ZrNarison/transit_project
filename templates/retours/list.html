@@ -27,7 +27,7 @@ Liste des retours
         <a href="{% url 'retours:retour_add' %}"
            class="btn btn-success">
 
-            + Nouveau retour
+            + Nouveau
 
         </a>
 
@@ -284,29 +284,23 @@ Liste des retours
 
             <tfoot class="table-secondary">
 
+<tr>
 
-                <tr>
+    <th colspan="3" class="text-end">
+        Total montant :
+    </th>
 
+    <th class="text-end text-success">
+        {{ total_retours|intcomma }} Ar
+    </th>
 
-                    <th colspan="4"
-                        class="text-end">
+    <th class="text-center">
+        {{ retours|length }} retour(s)
+    </th>
 
-                        Nombre total :
+</tr>
 
-                    </th>
-
-
-                    <th class="text-center">
-
-                        {{ retours|length }}
-
-                    </th>
-
-
-                </tr>
-
-
-            </tfoot>
+</tfoot>
 
 
 

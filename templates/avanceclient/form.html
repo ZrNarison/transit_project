@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ action }} une avance client
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0 text-center">
+                {% if form.instance.id %}
+                    Modifier une avance client
+                {% else %}
+                    Ajouter une avance client
+                {% endif %}
+            </h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                    {% for field in form %}
+                        {% if field.errors %}
+                        <div>
+                            <strong>{{ field.label }}</strong>
+                            <br>
+                            {{ field.errors }}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Client</label>
+                            {{ form.client }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Montant</label>
+                            {{ form.montant }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Type d'avance</label>
+                            {{ form.type_avance }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Motif</label>
+                            {{ form.motif }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-header text-center">
+                                <strong>Résumé</strong>
+                            </div>
+
+                            <div class="card-body">
+                                <p>
+                                    <strong>Client :</strong>
+                                    <br>
+                                    {{ form.client.value|default:"-" }}
+                                </p>
+
+                                <p>
+                                    <strong>Montant :</strong>
+                                    <br>
+                                    {{ form.montant.value|default:"0" }} Ar
+                                </p>
+
+                                <p>
+                                    <strong>Type :</strong>
+                                    <br>
+                                    {{ form.type_avance.value|default:"-" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success">Enregistrer</button>
+                    <a href="{% url 'avanceclient:list' %}" class="btn btn-secondary">Retour</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

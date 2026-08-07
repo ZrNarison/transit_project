@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Suppression entretien
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div class="container mt-5">
+
+
+<div class="card shadow">
+
+
+<div class="card-header bg-danger text-white">
+
+<h4>
+⚠️ Confirmation suppression
+</h4>
+
+</div>
+
+
+
+<div class="card-body">
+
+
+<p>
+
+Voulez-vous vraiment supprimer :
+
+<strong>
+{{ entretien.piece_acheter }}
+</strong>
+
+du véhicule
+
+<strong>
+{{ entretien.num_vehicule }}
+</strong>
+
+?
+
+</p>
+
+
+
+<form method="post">
+
+{% csrf_token %}
+
+
+<button class="btn btn-danger">
+
+🗑️ Oui, supprimer
+
+</button>
+
+
+<a href="{% url 'entretien:list' %}"
+class="btn btn-secondary">
+
+Annuler
+
+</a>
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

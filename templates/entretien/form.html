@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+
+{% block title %}
+{{ action }} un entretien
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div class="page-card">
+
+    <h3 class="mb-3">
+        {{ action }}
+    </h3>
+
+
+    <p class="text-muted">
+        Enregistrez les opérations d'entretien des véhicules.
+    </p>
+
+
+
+    <form method="post" class="mt-4">
+
+        {% csrf_token %}
+
+
+
+        <div class="row g-3">
+
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Numéro véhicule
+                </label>
+
+                {{ form.num_vehicule }}
+
+                {% if form.num_vehicule.errors %}
+                <div class="text-danger small">
+                    {{ form.num_vehicule.errors }}
+                </div>
+                {% endif %}
+
+            </div>
+
+
+
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Pièce achetée
+                </label>
+
+                {{ form.piece_acheter }}
+
+                {% if form.piece_acheter.errors %}
+                <div class="text-danger small">
+                    {{ form.piece_acheter.errors }}
+                </div>
+                {% endif %}
+
+            </div>
+
+
+
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Nombre
+                </label>
+
+                {{ form.nombre }}
+
+                {% if form.nombre.errors %}
+                <div class="text-danger small">
+                    {{ form.nombre.errors }}
+                </div>
+                {% endif %}
+
+            </div>
+
+
+
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Prix pièce
+                </label>
+
+                {{ form.prix_du_piece }}
+
+                {% if form.prix_du_piece.errors %}
+                <div class="text-danger small">
+                    {{ form.prix_du_piece.errors }}
+                </div>
+                {% endif %}
+
+            </div>
+
+
+
+
+            <div class="col-12">
+
+                <label class="form-label">
+                    Observation
+                </label>
+
+                {{ form.observation }}
+
+                {% if form.observation.errors %}
+                <div class="text-danger small">
+                    {{ form.observation.errors }}
+                </div>
+                {% endif %}
+
+            </div>
+
+
+
+        </div>
+
+
+
+
+        <button type="submit"
+                class="btn btn-primary mt-4">
+
+            <i class="fas fa-save"></i>
+            Enregistrer
+
+        </button>
+
+
+
+        <a href="{% url 'entretien:list' %}"
+           class="btn btn-secondary mt-4">
+
+            Annuler
+
+        </a>
+
+
+    </form>
+
+
+</div>
+
+
+{% endblock %}
