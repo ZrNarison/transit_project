@@ -42,6 +42,34 @@ urlpatterns = [
         name="projet_delete",
     ),
 
+    # ============================================================
+    # CHEF D'ÉQUIPE
+    # ============================================================
+
+    path(
+        "<int:projet_id>/chefs-equipe/",
+        views.chef_equipe_list,
+        name="chef_equipe_list",
+    ),
+
+    path(
+        "<int:projet_id>/chefs-equipe/ajouter/",
+        views.chef_equipe_create,
+        name="chef_equipe_create",
+    ),
+
+    path(
+        "<int:projet_id>/chefs-equipe/<int:pk>/modifier/",
+        views.chef_equipe_update,
+        name="chef_equipe_update",
+    ),
+
+    path(
+        "<int:projet_id>/chefs-equipe/<int:pk>/supprimer/",
+        views.chef_equipe_delete,
+        name="chef_equipe_delete",
+    ),
+
     # VÉHICULES DU PROJET
 
     path(

@@ -2122,9 +2122,265 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
                 )
 
         return cleaned_data
+# ============================================================
+# FORMULAIRE CHEF D'ÉQUIPE
+# ============================================================
 
+class ChefEquipeProjetForm(forms.ModelForm):
 
+    class Meta:
+        model = PersonnelExecutionProjet
 
+        fields = [
+            "nom",
+            "type_contrat",
+            "salaire",
+            "date_debut",
+            "date_fin",
+            "photo",
+        ]
+
+        widgets = {
+            "nom": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom complet du chef d'équipe",
+                }
+            ),
+
+            "type_contrat": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+
+            "salaire": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Montant du contrat",
+                }
+            ),
+
+            "date_debut": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+
+            "date_fin": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+
+            "photo": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control",
+                }
+            ),
+        }
+
+        labels = {
+            "nom": "Nom du chef d'équipe",
+            "type_contrat": "Type de contrat",
+            "salaire": "Montant / rémunération",
+            "date_debut": "Date de début",
+            "date_fin": "Date de fin",
+            "photo": "Photo",
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+
+        self.projet = projet
+
+        super().__init__(*args, **kwargs)
+
+        # --------------------------------------------------------
+        # Le Chef d'équipe est obligatoirement forfaitaire
+        # --------------------------------------------------------
+        self.fields["type_contrat"].choices = [
+            ("FORFAITAIRE", "Forfaitaire"),
+        ]
+
+        self.fields["type_contrat"].initial = "FORFAITAIRE"
+
+    def clean_nom(self):
+
+        nom = self.cleaned_data.get("nom")
+
+        if not nom or not nom.strip():
+            raise forms.ValidationError(
+                "Le nom du chef d'équipe est obligatoire."
+            )
+
+        return nom.strip()
+
+def clean(self):
+    cleaned_data = super().clean()
+
+    projet = self.projet
+
+    nom = cleaned_data.get("nom")
+    type_contrat = cleaned_data.get("type_contrat")
+    salaire = cleaned_data.get("salaire")
+    date_debut = cleaned_data.get("date_debut")
+    date_fin = cleaned_data.get("date_fin")
+
+    # ============================================================
+    # NORMALISATION DES DATES
+    # ============================================================
+    # Django peut retourner un datetime ou un date selon le champ,
+    # le widget ou les données reçues.
+    # On convertit tout en date avant toute comparaison.
+    # ============================================================
+
+    def normaliser_date(valeur):
+        if valeur is None:
+            return None
+
+        if isinstance(valeur, datetime.datetime):
+            return valeur.date()
+
+        if isinstance(valeur, datetime.date):
+            return valeur
+
+        return valeur
+
+    date_debut = normaliser_date(date_debut)
+    date_fin = normaliser_date(date_fin)
+
+    # Mettre les valeurs normalisées dans cleaned_data
+    cleaned_data["date_debut"] = date_debut
+    cleaned_data["date_fin"] = date_fin
+
+    # ============================================================
+    # PROJET OBLIGATOIRE
+    # ============================================================
+
+    if not projet:
+        raise forms.ValidationError(
+            "Le projet est obligatoire."
+        )
+
+    # ============================================================
+    # NOM
+    # ============================================================
+
+    if not nom or not str(nom).strip():
+        self.add_error(
+            "nom",
+            "Le nom du chef d'équipe est obligatoire."
+        )
+
+    # ============================================================
+    # TYPE DE CONTRAT
+    # ============================================================
+
+    if not type_contrat:
+        self.add_error(
+            "type_contrat",
+            "Le type de contrat est obligatoire."
+        )
+
+    # Un chef d'équipe externe est payé au forfait
+    if type_contrat and type_contrat != "FORFAITAIRE":
+        self.add_error(
+            "type_contrat",
+            "Un chef d'équipe externe doit avoir un contrat forfaitaire."
+        )
+
+    # ============================================================
+    # RÉMUNÉRATION
+    # ============================================================
+
+    if salaire is None:
+        self.add_error(
+            "salaire",
+            "La rémunération est obligatoire."
+        )
+    else:
+        try:
+            if salaire < 0:
+                self.add_error(
+                    "salaire",
+                    "La rémunération ne peut pas être négative."
+                )
+        except (TypeError, ValueError):
+            self.add_error(
+                "salaire",
+                "La rémunération saisie est invalide."
+            )
+
+    # ============================================================
+    # DATES
+    # ============================================================
+
+    if not date_debut:
+        self.add_error(
+            "date_debut",
+            "La date de début est obligatoire."
+        )
+
+    if not date_fin:
+        self.add_error(
+            "date_fin",
+            "La date de fin est obligatoire."
+        )
+
+    # ============================================================
+    # COMPARAISON DES DATES
+    # ============================================================
+
+    if date_debut and date_fin:
+
+        if date_fin < date_debut:
+            self.add_error(
+                "date_fin",
+                "La date de fin doit être supérieure ou égale "
+                "à la date de début."
+            )
+
+    # ============================================================
+    # RESPECT DE LA PÉRIODE DU PROJET
+    # ============================================================
+
+    projet_date_debut = normaliser_date(
+        projet.date_debut
+    )
+
+    projet_date_fin = normaliser_date(
+        projet.date_fin
+    )
+
+    if date_debut and projet_date_debut:
+
+        if date_debut < projet_date_debut:
+            self.add_error(
+                "date_debut",
+                "La date de début du chef d'équipe ne peut pas "
+                "être antérieure à la date de début du projet."
+            )
+
+    if date_fin and projet_date_fin:
+
+        if date_fin > projet_date_fin:
+            self.add_error(
+                "date_fin",
+                "La date de fin du chef d'équipe ne peut pas "
+                "dépasser la date de fin du projet."
+            )
+
+    # ============================================================
+    # RETOUR
+    # ============================================================
+
+    return cleaned_data
+
+    
 # ============================================================
 # EQUIPAGE PROJET
 # ============================================================
