@@ -792,7 +792,7 @@ def projet_detail(request, projet_id):
     points = (
         projet.points
         .all()
-        .select_related("nom")
+        .order_by("nom")
     )
 
     # ========================================================
@@ -1512,8 +1512,7 @@ def point_list(request,projet_id,):
     points = (
         PointProjet.objects
         .filter(projet=projet)
-        .select_related("nom")
-        .order_by("code")
+        .order_by("nom")
     )
 
     return render(
@@ -1655,6 +1654,16 @@ def point_delete(request,projet_id,point_id,):
                 "projet:point_list",
                 projet_id=projet_id,
             )
+
+        return redirect(
+            "projet:point_list",
+            projet_id=projet_id,
+        )
+
+    return redirect(
+        "projet:point_list",
+        projet_id=projet_id,
+    )
 
 # ============================================================
 

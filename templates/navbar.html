@@ -71,10 +71,10 @@
                         </ul>
                     </li>
                 {% endif %}
+
                 <!-- ================================================= -->
                 <!-- FINANCE -->
                 <!-- ================================================= -->
-
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">💰 Finance</a>
                     <ul class="dropdown-menu shadow">
@@ -87,12 +87,11 @@
                         <!-- AVANCES CLIENT MICA -->
                         {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                             <li><a class="dropdown-item" href="{% url 'avanceclient:list' %}">💵 Avances Client</a></li>
-
                         {% endif %}
 
 
                         <!-- FINANCE MAGASIN -->
-                        {% if request.session.role == "Magasin" or request.session.role == "ChefMagasin"  or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
+                        {% if request.session.role == "MAGASIN" or request.session.role == "CHEF_MAGASIN"  or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
                             <li><a class="dropdown-item" href="{% url 'materiaux:paiements_dockers_list' %}">👷 Dockers</a></li>
                             <li><a class="dropdown-item" href="{% url 'materiaux:depenses_list' %}">💸 Dépenses</a></li>
                             <li><a class="dropdown-item" href="{% url 'materiaux:activites_transport_list' %}">🚛 Transport</a></li>
@@ -136,9 +135,8 @@
                 <!-- ================================================= -->
                 <!-- MATÉRIELS -->
                 <!-- ================================================= -->
-
                 <li class="nav-item dropdown">
-                    {% if request.session.role == "Magasin" or request.session.role == "ChefMagasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHEF_MAGASIN" or fonction_projet == "MAGASINIER" %}
+                    {% if request.session.role == "MAGASIN" or request.session.role == "CHEF_MAGASIN" or request.session.role == "Admin" or request.session.role == "Superviseur"  or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHEF_MAGASIN" or fonction_projet == "MAGASINIER" %}
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">🔧 Matériels</a>
                     <ul class="dropdown-menu shadow">
 
@@ -174,7 +172,7 @@
                             <li><a class="dropdown-item" href="{% url 'materiaux:reparations_list' %}">🔧 Entretien / Réparation</a></li>
                         {% endif %}
 
-                        {% if fonction_projet == "CHAUFFEUR" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER"  or fonction_projet == "ChefMagasin" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
+                        {% if fonction_projet == "CHAUFFEUR" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER"  or fonction_projet == "CHEF_MAGASIN" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                             <li><a class="dropdown-item" href="{% url 'projet:projet_list' %}">🚛 Transport</a></li>
                         {% endif %}
                     </ul>
@@ -212,7 +210,6 @@
             <!-- ===================================================== -->
             <!-- UTILISATEUR CONNECTÉ -->
             <!-- ===================================================== -->
-
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
