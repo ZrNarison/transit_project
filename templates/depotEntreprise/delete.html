@@ -1,0 +1,16 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dépôt</title>
+</head>
+<body>
+    <h1>Supprimer un dépôt</h1>
+    <p>Êtes-vous sûr de vouloir supprimer ce dépôt ?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Supprimer</button>
+        <a href="{% url 'depotEntreprise:depot_list' %}">Annuler</a>
+    </form>
+</body>
+</html>

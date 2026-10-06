@@ -1,0 +1,688 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ titre_page }} - {{ projet.titre }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+<!-- ========================================================= -->
+<!-- EN-TÊTE -->
+<!-- ========================================================= -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2 class="mb-1">
+            <i class="fas fa-truck text-primary"></i>
+            {{ titre_page }}
+        </h2>
+
+        <div class="text-muted">
+            Projet :
+            <strong>{{ projet.titre|title }}</strong>
+        </div>
+    </div>
+
+    <div class="mt-3 mt-md-0">
+
+        <a href="{% url 'projet:vehicule_projet_list' projet.id %}"
+           class="btn btn-outline-secondary">
+
+            <i class="fas fa-arrow-left"></i>
+            Retour aux véhicules
+
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- INFORMATIONS PROJET -->
+<!-- ========================================================= -->
+<div class="card shadow-sm mb-4">
+
+    <div class="card-header bg-dark text-white">
+
+        <i class="fas fa-hard-hat"></i>
+
+        Projet concerné
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <div class="col-md-3 mb-3">
+
+                <div class="small text-muted">
+                    Projet
+                </div>
+
+                <div class="fw-bold">
+                    {{ projet.titre|title }}
+                </div>
+
+            </div>
+
+
+            <div class="col-md-3 mb-3">
+
+                <div class="small text-muted">
+                    Localisation
+                </div>
+
+                <div class="fw-bold">
+                    {{ projet.localisation|default:"-" |upper}}
+                </div>
+
+            </div>
+
+
+            <div class="col-md-3 mb-3">
+
+                <div class="small text-muted">
+                    Début du projet
+                </div>
+
+                <div class="fw-bold">
+
+                    {{ projet.date_debut|date:"d/m/Y" }}
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-3 mb-3">
+
+                <div class="small text-muted">
+                    Fin du projet
+                </div>
+
+                <div class="fw-bold">
+
+                    {{ projet.date_fin|date:"d/m/Y" }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- MESSAGES -->
+<!-- ========================================================= -->
+{% if messages %}
+
+    {% for message in messages %}
+
+        <div class="alert
+            {% if message.tags == 'success' %}
+                alert-success
+            {% elif message.tags == 'error' %}
+                alert-danger
+            {% elif message.tags == 'warning' %}
+                alert-warning
+            {% else %}
+                alert-info
+            {% endif %}
+            alert-dismissible fade show shadow-sm"
+            role="alert">
+
+            {% if message.tags == "success" %}
+
+                <i class="fas fa-check-circle"></i>
+
+            {% elif message.tags == "error" %}
+
+                <i class="fas fa-exclamation-circle"></i>
+
+            {% elif message.tags == "warning" %}
+
+                <i class="fas fa-exclamation-triangle"></i>
+
+            {% else %}
+
+                <i class="fas fa-info-circle"></i>
+
+            {% endif %}
+
+            {{ message }}
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Fermer">
+            </button>
+
+        </div>
+
+    {% endfor %}
+
+{% endif %}
+
+
+<!-- ========================================================= -->
+<!-- ERREURS GENERALES -->
+<!-- ========================================================= -->
+{% if form.non_field_errors %}
+
+    <div class="alert alert-danger shadow-sm">
+
+        <div class="fw-bold mb-2">
+
+            <i class="fas fa-exclamation-triangle"></i>
+
+            Erreur
+
+        </div>
+
+        {% for error in form.non_field_errors %}
+
+            <div>
+                {{ error }}
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+{% endif %}
+
+
+<!-- ========================================================= -->
+<!-- FORMULAIRE -->
+<!-- ========================================================= -->
+<div class="card shadow-sm">
+
+    <div class="card-header bg-primary text-white">
+
+        <i class="fas fa-truck-loading"></i>
+
+        Informations de l'affectation
+
+    </div>
+
+
+    <div class="card-body">
+
+        <form method="post"
+              novalidate>
+
+            {% csrf_token %}
+
+
+            <!-- ================================================= -->
+            <!-- VEHICULE / CHAUFFEUR -->
+            <!-- ================================================= -->
+            <div class="row">
+
+                <!-- VEHICULE -->
+                <div class="col-md-6 mb-3">
+
+                    <label for="{{ form.vehicule.id_for_label }}"
+                           class="form-label fw-semibold">
+
+                        <i class="fas fa-truck text-primary"></i>
+
+                        Véhicule
+
+                        <span class="text-danger">*</span>
+
+                    </label>
+
+                    {{ form.vehicule }}
+
+                    {% if form.vehicule.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {% for error in form.vehicule.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-text">
+
+                        Sélectionnez un véhicule disponible
+                        dans le parc automobile.
+
+                    </div>
+
+                </div>
+
+
+                <!-- CHAUFFEUR -->
+                <div class="col-md-6 mb-3">
+
+                    <label for="{{ form.chauffeur.id_for_label }}"
+                           class="form-label fw-semibold">
+
+                        <i class="fas fa-user text-primary"></i>
+
+                        Chauffeur
+
+                    </label>
+
+                    {{ form.chauffeur }}
+
+                    {% if form.chauffeur.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {% for error in form.chauffeur.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-text">
+
+                        Seuls les chauffeurs affectés
+                        à ce projet sont proposés.
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- PERIODE -->
+            <!-- ================================================= -->
+            <div class="row">
+
+                <!-- DATE DEBUT -->
+                <div class="col-md-6 mb-3">
+
+                    <label for="{{ form.date_debut.id_for_label }}"
+                           class="form-label fw-semibold">
+
+                        <i class="far fa-calendar-alt text-primary"></i>
+
+                        Début de l'affectation
+
+                        <span class="text-danger">*</span>
+
+                    </label>
+
+                    {{ form.date_debut }}
+
+                    {% if form.date_debut.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {% for error in form.date_debut.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-text">
+
+                        Date comprise dans la période du projet.
+
+                    </div>
+
+                </div>
+
+
+                <!-- DATE FIN -->
+                <div class="col-md-6 mb-3">
+
+                    <label for="{{ form.date_fin.id_for_label }}"
+                           class="form-label fw-semibold">
+
+                        <i class="far fa-calendar-check text-primary"></i>
+
+                        Fin de l'affectation
+
+                        <span class="text-danger">*</span>
+
+                    </label>
+
+                    {{ form.date_fin }}
+
+                    {% if form.date_fin.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {% for error in form.date_fin.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-text">
+
+                        Ne peut pas dépasser la fin du projet.
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- KILOMETRAGE -->
+            <!-- ================================================= -->
+            <div class="card border mb-4">
+
+                <div class="card-header">
+
+                    <i class="fas fa-tachometer-alt"></i>
+
+                    Kilométrage et consommation
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row">
+
+                        <!-- KM INITIAL -->
+                        <div class="col-md-4 mb-3">
+
+                            <label for="{{ form.kilometrage_initial.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                Kilométrage initial
+
+                            </label>
+
+                            {{ form.kilometrage_initial }}
+
+                            {% if form.kilometrage_initial.errors %}
+
+                                <div class="text-danger small mt-1">
+
+                                    {% for error in form.kilometrage_initial.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- KM FINAL -->
+                        <div class="col-md-4 mb-3">
+
+                            <label for="{{ form.kilometrage_final.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                Kilométrage final
+
+                            </label>
+
+                            {{ form.kilometrage_final }}
+
+                            {% if form.kilometrage_final.errors %}
+
+                                <div class="text-danger small mt-1">
+
+                                    {% for error in form.kilometrage_final.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- CONSOMMATION -->
+                        <div class="col-md-4 mb-3">
+
+                            <label for="{{ form.consommation_km_litre.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                Consommation
+
+                            </label>
+
+                            {{ form.consommation_km_litre }}
+
+                            {% if form.consommation_km_litre.errors %}
+
+                                <div class="text-danger small mt-1">
+
+                                    {% for error in form.consommation_km_litre.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
+
+                            <div class="form-text">
+
+                                Exemple : 8 km/L
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- STATUT -->
+            <!-- ================================================= -->
+            <div class="card border mb-4">
+
+                <div class="card-header">
+
+                    <i class="fas fa-toggle-on"></i>
+
+                    Statut
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="form-check">
+
+                        {{ form.actif }}
+
+                        <label class="form-check-label fw-semibold"
+                               for="{{ form.actif.id_for_label }}">
+
+                            Affectation active
+
+                        </label>
+
+                    </div>
+
+                    {% if form.actif.errors %}
+
+                        <div class="text-danger small mt-1">
+
+                            {% for error in form.actif.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                    <div class="form-text">
+
+                        Une affectation inactive reste conservée
+                        dans l'historique du projet.
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- OBSERVATION -->
+            <!-- ================================================= -->
+            <div class="mb-4">
+
+                <label for="{{ form.observation.id_for_label }}"
+                       class="form-label fw-semibold">
+
+                    <i class="fas fa-comment-alt text-primary"></i>
+
+                    Observation
+
+                </label>
+
+                {{ form.observation }}
+
+                {% if form.observation.errors %}
+
+                    <div class="text-danger small mt-1">
+
+                        {% for error in form.observation.errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- RAPPEL -->
+            <!-- ================================================= -->
+            <div class="alert alert-info">
+
+                <i class="fas fa-info-circle"></i>
+
+                <strong>Rappel :</strong>
+
+                l'affectation du véhicule est limitée à la période
+                du projet. Les données historiques restent conservées
+                pour les rapports de l'entreprise.
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- BOUTONS -->
+            <!-- ================================================= -->
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+
+                <a href="{% url 'projet:vehicule_projet_list' projet.id %}"
+                   class="btn btn-outline-secondary">
+
+                    <i class="fas fa-times"></i>
+
+                    Annuler
+
+                </a>
+
+
+                <button type="submit"
+                        class="btn btn-primary">
+
+                    {% if affectation %}
+
+                        <i class="fas fa-save"></i>
+
+                        Enregistrer les modifications
+
+                    {% else %}
+
+                        <i class="fas fa-plus"></i>
+
+                        Affecter le véhicule
+
+                    {% endif %}
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- AIDE -->
+<!-- ========================================================= -->
+<div class="card shadow-sm mt-4">
+
+    <div class="card-body">
+
+        <h6 class="fw-bold">
+
+            <i class="fas fa-lightbulb text-warning"></i>
+
+            Informations
+
+        </h6>
+
+        <ul class="mb-0 text-muted">
+
+            <li>
+                Le véhicule doit être actif dans le parc automobile.
+            </li>
+
+            <li>
+                Un véhicule déjà affecté à ce projet n'est pas
+                proposé pour une nouvelle affectation.
+            </li>
+
+            <li>
+                Le chauffeur doit être membre de l'équipe du projet
+                avec la fonction <strong>Chauffeur</strong>.
+            </li>
+
+            <li>
+                Le kilométrage final doit être supérieur ou égal
+                au kilométrage initial.
+            </li>
+
+            <li>
+                Le carburant estimé est calculé automatiquement
+                à partir du kilométrage et de la consommation
+                en km/L.
+            </li>
+
+        </ul>
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

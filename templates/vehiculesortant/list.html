@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0 fw-bold">🚚 Liste des Véhicules Sortants</h2>
+    {% if request.session.role != "Admin" %}
+    <a href="{% url 'vehiculesortant:vehicule_sortant_add' %}" class="btn btn-primary">+ Nouveau</a>
+    {% endif %}
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-4">
+    <div class="col-md-3">
+        <label class="form-label small">Chauffeur</label>
+        <input type="text" name="chauffeur" value="{{ chauffeur }}" class="form-control" placeholder="Chauffeur">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small">N° Véhicule</label>
+        <input type="text" name="num_vehicule" value="{{ num_vehicule }}" class="form-control" placeholder="N° Véhicule">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small">Téléphone</label>
+        <input type="text" name="telephone" value="{{ telephone }}" class="form-control" placeholder="Téléphone">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">🔎</button>
+        <a href="{% url 'vehiculesortant:vehicule_sortant_list' %}" class="btn btn-secondary">↺</a>
+    </div>
+</form>
+
+<div class="row">
+    {% for item in vehicules %}
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm h-100">
+            {% if item.photo %}
+            <img src="{{ item.photo.url }}" class="card-img-top" style="height:120px;object-fit:cover;">
+            {% else %}
+            <img src="{% static 'images/default.png' %}" class="card-img-top" style="height:120px;object-fit:cover;">
+            {% endif %}
+            <div class="card-body">
+                <span class="badge bg-primary">{{ item.chauffeur|upper }}</span>
+                <p class="mb-1 mt-2">🚛 Véhicule : <strong>{{ item.num_vehicule }}</strong></p>
+                <p class="mb-1">📞 {{ item.telephone }}</p>
+                <p class="mb-1">🛞 Remorque : <strong>{{ item.remorque|default:'-' }}</strong></p>
+                <p class="mb-1">🎫 Ticket : <strong>{{ item.ticket|default:'-' }}</strong></p>
+                <p class="mb-1">🎫 Montant : <strong>{{ item.montant|default:'-' }}</strong></p>
+                <p class="mb-1">Ticket : <strong>{{ item.ticket|default:'-' }}</strong></p>
+                <p class="small text-muted mb-1">Créé par : {{ item.created_by.username|default:"Ancien" }}</p>
+                <p class="small text-muted">Date : {{ item.created_at|date:"d/m/Y H:i" }}</p>
+            </div>
+            <div class="d-flex justify-content-between p-2">
+                <a href="{% url 'vehiculesortant:vehicule_sortant_detail' item.id %}" class="btn btn-info btn-sm">👁</a>
+                {% if item.created_by_id == user_id %}
+                <a href="{% url 'vehiculesortant:vehicule_sortant_edit' item.id %}" class="btn btn-warning btn-sm">✏</a>
+                <a href="{% url 'vehiculesortant:vehicule_sortant_delete' item.id %}" class="btn btn-danger btn-sm">🗑</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <p class="text-center text-muted">Aucun véhicule sortant trouvé</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

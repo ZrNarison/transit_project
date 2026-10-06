@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+            <h5 class="mb-0">
+                🔧 {{ title }}
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <form method="post" enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="row">
+
+                    {% for field in form %}
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+
+                            {{ field }}
+
+                            {% if field.help_text %}
+                                <div class="form-text">
+                                    {{ field.help_text }}
+                                </div>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>ℹ️ Calcul automatique</strong><br>
+                    Le montant de la pièce est calculé automatiquement :
+                    <strong>quantité × prix unitaire</strong>.<br>
+                    Le montant total comprend également la
+                    <strong>main-d'œuvre</strong>.
+                </div>
+
+                <div class="d-flex justify-content-between">
+
+                    <a
+                        href="{% url 'materiaux:reparations_list' %}"
+                        class="btn btn-secondary">
+                        ↩️ Annuler
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+                        💾 Enregistrer
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-fluid py-4">
+<!-- ===================================================== -->
+<!-- EN-TÊTE -->
+<!-- ===================================================== -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">💰 Liste des recettes</h2>
+        <p class="text-muted mb-0">Gestion et suivi des recettes enregistrées</p>
+    </div>
+    {% if request.session.role == "UserEntreprise" %}
+    <a href="{% url 'recette:recette_add' %}" class="btn btn-primary">➕ Nouvelle recette</a>
+    {% endif %}
+</div>
+<!-- =====================================================MESSAGES===================================================== -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+             role="alert">
+            {{ message }}
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+        </div>
+    {% endfor %}
+{% endif %}
+<!-- =====================================================FILTRES===================================================== -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <strong>🔎 Recherche / Filtre</strong>
+    </div>
+    <div class="card-body">
+        <form method="get">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Montant</label>
+                    <input type="text" name="montant" class="form-control" value="{{ montant }}" placeholder="Montant">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type de virement</label>
+                    <input type="text" name="type_virement" class="form-control" value="{{ type_virement }}"placeholder="Type de virement">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date</label>
+                    <input type="date" name="date" class="form-control" value="{{ date }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Source</label>
+                    <input type="text" name="source" class="form-control" value="{{ source }}" placeholder="Source">
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit"class="btn btn-primary">🔎 Rechercher</button>
+                <a href="{% url 'recette:recette_list' %}"class="btn btn-secondary">↻ Réinitialiser</a>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- =====================================================TOTAL===================================================== -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-success">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Total des recettes</h6>
+                <h3 class="text-success mb-0">{{ total_recettes|floatformat:0 }} Ar</h3>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- =====================================================TABLEAU===================================================== -->
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <strong>📋 Recettes</strong>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Montant</th>
+                        <th>Type de virement</th>
+                        <th>Source</th>
+                        <th>Enregistreur</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for recette in recettes %}
+                        <tr>
+                            <td>{{ recette.id }}</td>
+                            <td>{{ recette.date|date:"d/m/Y" }}</td>
+                            <td class="fw-bold">{{ recette.montant|floatformat:0 }} Ar</td>
+                            <td>{{ recette.type_virement }}</td>
+                            <td>{{ recette.source }}</td>
+                            <td>{{ recette.enregistreur }}</td>
+                            <!-- =================================ACTIONS===================================================== -->
+                            <td class="text-center text-nowrap">
+                                {% if recette.enregistreur_id == request.session.user_id %}
+                                    <a href="{% url 'recette:recette_edit' recette.id %}"class="btn btn-sm btn-warning" title="Modifier">✏️</a>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#delete{{ recette.id }}" title="Supprimer">🗑️</button>
+                                    <div class="modal fade" id="delete{{ recette.id }}" tabindex="-1" aria-labelledby="deleteLabel{{ recette.id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title text-danger" id="deleteLabel{{ recette.id }}">⚠️ Confirmation de suppression</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p class="mb-2">Voulez-vous vraiment supprimer cette recette ?</p>
+                                                    <div class="alert alert-warning mb-0">
+                                                        <p class="mb-1"><strong>Date :</strong>{{ recette.date|date:"d/m/Y" }}</p>
+                                                        <p class="mb-1"><strong>Montant :</strong>{{ recette.montant|floatformat:0 }} Ar</p>
+                                                        <p class="mb-1"><strong>Type de virement :</strong>{{ recette.type_virement }}</p>
+                                                        <p class="mb-0"><strong>Source :</strong>{{ recette.source }}</p>
+                                                    </div>
+                                                    <p class="text-danger small mt-3 mb-0">⚠️ Cette opération est irréversible</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <!-- CONFIRMER SUPPRESSION -->
+                                                    <form method="post" action="{% url 'recette:recette_delete' recette.id %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger">🗑️ Supprimer</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <!-- UTILISATEUR NON AUTORISÉ -->
+                                    <button type="button" class="btn btn-secondary btn-sm" disabled title="Vous n'êtes pas l'enregistreur">🔒</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7"class="text-center py-5">
+                                <div class="text-muted">
+                                    <div style="font-size: 40px;">📭</div>
+                                    <h5>Aucune recette trouvée</h5>
+                                    <p class="mb-0">Aucune recette ne correspond aux critères de recherche</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- =================================================PAGINATION================================================= -->
+    {% if page_obj.has_other_pages %}
+        <div class="card-footer">
+            <nav aria-label="Pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if query_params %}&{{ query_params }}{% endif %}">« Première</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">‹ Précédente</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ page_obj.number }}
+                            sur {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ uery_params }}{% endif %}">Suivante</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query_params %}&{{ query_params }}{% endif %}">Dernière »</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

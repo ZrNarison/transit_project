@@ -1,0 +1,675 @@
+{% extends "base.html" %}
+
+{% load humanize %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <!-- =====================================================
+         TITRE
+         ===================================================== -->
+
+    <h3 class="text-center text-uppercase mb-4">
+        Entrées de matériel
+    </h3>
+
+
+    <!-- =====================================================
+         FILTRES
+         ===================================================== -->
+
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-body">
+
+            <form method="get">
+
+                <div class="row align-items-end">
+
+                    <!-- MATÉRIEL -->
+                    <div class="col-md-4 mb-2">
+
+                        <label class="form-label">
+                            Nom du matériel
+                        </label>
+
+                        <input
+                            type="text"
+                            name="materiel"
+                            value="{{ materiel }}"
+                            class="form-control"
+                            placeholder="Nom du matériel"
+                        >
+
+                    </div>
+
+
+                    <!-- DEMANDEUR -->
+                    <div class="col-md-3 mb-2">
+
+                        <label class="form-label">
+                            Demandeur
+                        </label>
+
+                        <input
+                            type="text"
+                            name="demandeur"
+                            value="{{ demandeur }}"
+                            class="form-control"
+                            placeholder="Demandeur"
+                        >
+
+                    </div>
+
+
+                    <!-- DATE -->
+                    <div class="col-md-3 mb-2">
+
+                        <label class="form-label">
+                            Date entrée
+                        </label>
+
+                        <input
+                            type="date"
+                            name="date"
+                            value="{{ date }}"
+                            class="form-control"
+                        >
+
+                    </div>
+
+
+                    <!-- BOUTONS -->
+                    <div class="col-md-2 mb-2 d-flex gap-2">
+
+                        <!-- RECHERCHER -->
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                            title="Rechercher"
+                        >
+                            🔍
+                        </button>
+
+
+                        <!-- RESET -->
+                        <a
+                            href="{% url 'materielEntre:materielEntre_list' %}"
+                            class="btn btn-secondary"
+                            title="Réinitialiser"
+                        >
+                            Reset
+                        </a>
+
+
+                        <!-- NOUVELLE ENTRÉE -->
+                        {% if request.session.role == "UserEntreprise" or request.session.role == "Superviseur" %}
+
+                            <a
+                                href="{% url 'materielEntre:materielEntre_add' %}"
+                                class="btn btn-success"
+                                title="Nouvelle entrée"
+                            >
+                                +
+                            </a>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         NOMBRE D'ENTRÉES
+         ===================================================== -->
+
+    <div class="mb-3">
+
+        <strong>
+            Nombre d'entrées :
+            {{ entrees|length }}
+        </strong>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLEAU
+         ===================================================== -->
+
+    <div class="table-responsive">
+
+        <table
+            class="table table-bordered table-striped table-hover align-middle"
+        >
+
+            <thead class="table-dark text-center">
+
+                <tr>
+
+                    <th>N°</th>
+                    <th>Matériel</th>
+                    <th>Type</th>
+                    <th>Catégorie</th>
+                    <th>Sortie liée</th>
+                    <th>Quantité</th>
+                    <th>Responsable entrée</th>
+                    <th>Observation</th>
+                    <th>Date entrée</th>
+                    <th width="180">Actions</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            {% for e in entrees %}
+
+                <tr>
+
+                    <!-- =================================================
+                         ID
+                         ================================================= -->
+
+                    <td class="text-center">
+                        {{ e.id }}
+                    </td>
+
+
+                    <!-- =================================================
+                         MATÉRIEL
+                         ================================================= -->
+
+                    <td>
+
+                        {% if e.id_MaterielSort and e.id_MaterielSort.id_Materiel %}
+
+                            <strong>
+                                {{ e.id_MaterielSort.id_Materiel.nom|upper }}
+                            </strong>
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         TYPE
+                         ================================================= -->
+
+                    <td>
+
+                        {% if e.id_MaterielSort and e.id_MaterielSort.id_Materiel %}
+
+                            {{ e.id_MaterielSort.id_Materiel.typeMat|title }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         CATÉGORIE
+                         ================================================= -->
+
+                    <td>
+
+                        {% if e.id_MaterielSort and e.id_MaterielSort.id_Materiel %}
+
+                            {{ e.id_MaterielSort.id_Materiel.catMat|title }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         SORTIE LIÉE
+                         ================================================= -->
+
+                    <td>
+
+                        {% if e.id_MaterielSort %}
+
+                            <strong>
+                                {{ e.id_MaterielSort.demandeur|title }}
+                            </strong>
+
+                            <br>
+
+                            <small class="text-muted">
+
+                                Sortie :
+                                {{ e.id_MaterielSort.Nb_MatSort|floatformat:0|intcomma }}
+
+                                <br>
+
+                                Date sortie :
+                                {{ e.id_MaterielSort.dateSortie|date:"d/m/Y" }}
+
+                            </small>
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         QUANTITÉ ENTRÉE
+                         ================================================= -->
+
+                    <td class="text-center">
+
+                        <span class="badge bg-success fs-6">
+
+                            {{ e.Nb_Entre|floatformat:0|intcomma }}
+
+                        </span>
+
+                    </td>
+
+
+                    <!-- =================================================
+                         RESPONSABLE
+                         ================================================= -->
+
+                    <td>
+
+                        {{ e.responsable_entree|default:"-" }}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         OBSERVATION
+                         ================================================= -->
+
+                    <td>
+
+                        {% if e.observation %}
+
+                            {{ e.observation|truncatechars:50 }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         DATE ENTRÉE
+                         ================================================= -->
+
+                    <td class="text-center">
+
+                        {% if e.dateEntre %}
+
+                            {{ e.dateEntre|date:"d/m/Y" }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         ACTIONS
+                         ================================================= -->
+
+                    <td class="text-center text-nowrap">
+
+
+                        <!-- =================================================
+                             VOIR
+                             ================================================= -->
+
+                        <a
+                            href="{% url 'materielEntre:materielEntre_detail' e.id %}"
+                            class="btn btn-info btn-sm"
+                            title="Voir"
+                        >
+                            👁
+                        </a>
+
+
+                        <!-- =================================================
+                             MODIFICATION / SUPPRESSION
+                             ================================================= -->
+
+                        {% if request.session.role == "UserEntreprise" or request.session.role == "Superviseur" %}
+
+
+                            <!-- =================================================
+                                 MODIFIER
+                                 ================================================= -->
+
+                            <a
+                                href="{% url 'materielEntre:materielEntre_edit' e.id %}"
+                                class="btn btn-warning btn-sm"
+                                title="Modifier"
+                            >
+                                ✏️
+                            </a>
+
+
+                            <!-- =================================================
+                                 SUPPRIMER
+                                 ================================================= -->
+
+                            <button
+                                type="button"
+                                class="btn btn-danger btn-sm"
+                                data-bs-toggle="modal"
+                                data-bs-target="#delete{{ e.id }}"
+                                title="Supprimer"
+                            >
+                                🗑️
+                            </button>
+
+
+                            <!-- =================================================
+                                 MODAL CONFIRMATION
+                                 ================================================= -->
+
+                            <div
+                                class="modal fade"
+                                id="delete{{ e.id }}"
+                                tabindex="-1"
+                                aria-labelledby="deleteLabel{{ e.id }}"
+                                aria-hidden="true"
+                            >
+
+                                <div class="modal-dialog modal-dialog-centered">
+
+                                    <div class="modal-content">
+
+
+                                        <!-- HEADER -->
+
+                                        <div class="modal-header">
+
+                                            <h5
+                                                class="modal-title text-danger"
+                                                id="deleteLabel{{ e.id }}"
+                                            >
+                                                ⚠️ Confirmation de suppression
+                                            </h5>
+
+                                            <button
+                                                type="button"
+                                                class="btn-close"
+                                                data-bs-dismiss="modal"
+                                                aria-label="Fermer"
+                                            ></button>
+
+                                        </div>
+
+
+                                        <!-- BODY -->
+
+                                        <div class="modal-body">
+
+                                            <p class="mb-3">
+
+                                                Voulez-vous vraiment supprimer
+                                                cette entrée de matériel ?
+
+                                            </p>
+
+
+                                            <div class="alert alert-warning mb-0">
+
+
+                                                <!-- MATÉRIEL -->
+
+                                                <p class="mb-1">
+
+                                                    <strong>
+                                                        Matériel :
+                                                    </strong>
+
+                                                    {% if e.id_MaterielSort and e.id_MaterielSort.id_Materiel %}
+
+                                                        {{ e.id_MaterielSort.id_Materiel.nom|upper }}
+
+                                                        |
+
+                                                        {{ e.id_MaterielSort.id_Materiel.typeMat|title }}
+
+                                                        |
+
+                                                        {{ e.id_MaterielSort.id_Materiel.catMat|title }}
+
+                                                    {% else %}
+
+                                                        -
+
+                                                    {% endif %}
+
+                                                </p>
+
+
+                                                <!-- DEMANDEUR -->
+
+                                                <p class="mb-1">
+
+                                                    <strong>
+                                                        Demandeur :
+                                                    </strong>
+
+                                                    {% if e.id_MaterielSort %}
+
+                                                        {{ e.id_MaterielSort.demandeur|title }}
+
+                                                    {% else %}
+
+                                                        -
+
+                                                    {% endif %}
+
+                                                </p>
+
+
+                                                <!-- DATE SORTIE -->
+
+                                                <p class="mb-1">
+
+                                                    <strong>
+                                                        Date sortie :
+                                                    </strong>
+
+                                                    {% if e.id_MaterielSort.dateSortie %}
+
+                                                        {{ e.id_MaterielSort.dateSortie|date:"d/m/Y" }}
+
+                                                    {% else %}
+
+                                                        -
+
+                                                    {% endif %}
+
+                                                </p>
+
+
+                                                <!-- QUANTITÉ -->
+
+                                                <p class="mb-1">
+
+                                                    <strong>
+                                                        Quantité entrée :
+                                                    </strong>
+
+                                                    {{ e.Nb_Entre|floatformat:0|intcomma }}
+
+                                                </p>
+
+
+                                                <!-- RESPONSABLE -->
+
+                                                <p class="mb-1">
+
+                                                    <strong>
+                                                        Responsable :
+                                                    </strong>
+
+                                                    {{ e.responsable_entree|default:"-" }}
+
+                                                </p>
+
+
+                                                <!-- DATE ENTRÉE -->
+
+                                                <p class="mb-0">
+
+                                                    <strong>
+                                                        Date entrée :
+                                                    </strong>
+
+                                                    {% if e.dateEntre %}
+
+                                                        {{ e.dateEntre|date:"d/m/Y" }}
+
+                                                    {% else %}
+
+                                                        -
+
+                                                    {% endif %}
+
+                                                </p>
+
+                                            </div>
+
+
+                                            <p class="text-danger small mt-3 mb-0">
+
+                                                ⚠️ Cette opération est irréversible.
+
+                                            </p>
+
+                                        </div>
+
+
+                                        <!-- FOOTER -->
+
+                                        <div class="modal-footer">
+
+
+                                            <!-- ANNULER -->
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-secondary"
+                                                data-bs-dismiss="modal"
+                                            >
+                                                Annuler
+                                            </button>
+
+
+                                            <!-- CONFIRMER -->
+
+                                            <form
+                                                method="post"
+                                                action="{% url 'materielEntre:materielEntre_delete' e.id %}"
+                                            >
+
+                                                {% csrf_token %}
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-danger"
+                                                >
+                                                    🗑️ Supprimer
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                        {% else %}
+
+
+                            <!-- =================================================
+                                 UTILISATEUR NON AUTORISÉ
+                                 ================================================= -->
+
+                            <button
+                                type="button"
+                                class="btn btn-secondary btn-sm"
+                                disabled
+                                title="Vous n'avez pas l'autorisation de modifier ou supprimer cette entrée"
+                            >
+                                🔒
+                            </button>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+
+            {% empty %}
+
+                <tr>
+
+                    <td
+                        colspan="10"
+                        class="text-center text-muted py-4"
+                    >
+
+                        Aucune entrée de matériel trouvée.
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,787 @@
+{% extends "base.html" %}
+
+{% load humanize %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <!-- =====================================================
+         TITRE
+         ===================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h3 class="fw-bold mb-1">
+                <i class="fas fa-money-bill-wave"></i>
+                Gestion des salaires
+            </h3>
+
+            <small class="text-muted">
+                Liste des salaires et avances déduites
+            </small>
+
+        </div>
+
+
+        <a
+            href="{% url 'salaire:salaire_add' %}"
+            class="btn btn-success"
+        >
+            <i class="fas fa-plus"></i>
+            Nouveau salaire
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         MESSAGES
+         ===================================================== -->
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div
+                class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                role="alert"
+            >
+
+                {{ message }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Fermer"
+                ></button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         FILTRES
+         ===================================================== -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <form method="get">
+
+                <div class="row g-3 align-items-end">
+
+
+                    <!-- PERSONNEL -->
+
+                    <div class="col-md-5">
+
+                        <label class="form-label fw-bold">
+                            Personnel
+                        </label>
+
+                        <input
+                            type="text"
+                            name="personnel"
+                            value="{{ personnel }}"
+                            class="form-control"
+                            placeholder="Nom ou prénom..."
+                        >
+
+                    </div>
+
+
+                    <!-- MONTANT -->
+
+                    <div class="col-md-4">
+
+                        <label class="form-label fw-bold">
+                            Montant du salaire
+                        </label>
+
+                        <input
+                            type="text"
+                            name="montant"
+                            value="{{ montant }}"
+                            class="form-control"
+                            placeholder="Montant..."
+                        >
+
+                    </div>
+
+
+                    <!-- BOUTONS -->
+
+                    <div class="col-md-3">
+
+                        <div class="d-flex gap-2">
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary flex-fill"
+                            >
+                                <i class="fas fa-search"></i>
+                                Rechercher
+                            </button>
+
+                            <a href="{% url 'salaire:salaire_list' %}" class="btn btn-secondary" title="Réinitialiser">
+                                <i class="fas fa-sync-alt"></i>
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLEAU
+         ===================================================== -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table
+                    class="table table-hover table-bordered align-middle mb-0"
+                >
+
+                    <thead class="table-dark">
+
+                        <tr>
+
+                            <th class="text-center">
+                                #
+                            </th>
+
+                            <th>
+                                Personnel
+                            </th>
+
+                            <th class="text-end">
+                                Salaire
+                            </th>
+
+                            <th class="text-end">
+                                Reste
+                            </th>
+
+                            <th class="text-center">
+                                Mois de
+                            </th>
+                            <th class="text-center">
+                                Date de paiement
+                            </th>
+
+                            <th class="text-center">
+                                Enregistreur
+                            </th>
+
+                            <th class="text-center">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for salaire in salaires %}
+
+                            <tr>
+
+
+                                <!-- =================================================
+                                     NUMERO
+                                     ================================================= -->
+
+                                <td class="text-center">
+
+                                    {{ forloop.counter0|add:page_obj.start_index }}
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     PERSONNEL
+                                     ================================================= -->
+
+                                <td style="min-width: 180px;">
+
+                                    {% if salaire.personnel %}
+
+                                        <strong class="text-uppercase">
+
+                                            {{ salaire.personnel.nom |upper}}
+
+                                        </strong>
+
+                                        {% if salaire.personnel.prenom %}
+
+                                            <br>
+
+                                            <small class="text-muted">
+
+                                                {{ salaire.personnel.prenom }}
+
+                                            </small>
+
+                                        {% endif %}
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Sans personnel
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     SALAIRE
+                                     ================================================= -->
+
+                                <td class="text-end">
+
+                                    <strong>
+
+                                        {{ salaire.montant|floatformat:0|intcomma }}
+
+                                        Ar
+
+                                    </strong>
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     RESTE
+                                     ================================================= -->
+
+                                <td class="text-end">
+
+                                    {% if salaire.reste < 0 %}
+
+                                        <span class="text-danger fw-bold">
+
+                                            {{ salaire.reste|floatformat:0|intcomma }}
+
+                                            Ar
+
+                                        </span>
+
+                                    {% elif salaire.reste == 0 %}
+
+                                        <span class="text-success fw-bold">
+
+                                            {{ salaire.reste|floatformat:0|intcomma }}
+
+                                            Ar
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="text-primary fw-bold">
+
+                                            {{ salaire.reste|floatformat:0|intcomma }}
+
+                                            Ar
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     DATE
+                                     ================================================= -->
+
+                                <td class="text-center">
+{{ salaire.date|date:"d/m/Y" }}
+                                    
+
+                                </td>
+
+                                <td class="text-center">
+
+                                    {{ salaire.date_paiement|date:"d/m/Y" }}
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     ENREGISTREUR
+                                     ================================================= -->
+
+                                <td class="text-center">
+
+                                    {% if salaire.enregistreur %}
+
+                                        <span class="badge bg-primary">
+
+                                            {{ salaire.enregistreur.username }}
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            -
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     ACTIONS
+                                     ================================================= -->
+
+                                <td class="text-center">
+
+                                    {% if salaire.enregistreur_id == request.session.user_id %}
+
+
+                                        <!-- MODIFIER -->
+
+                                        <a
+                                            href="{% url 'salaire:salaire_edit' salaire.id %}"
+                                            class="btn btn-sm btn-warning"
+                                            title="Modifier"
+                                        >
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+
+                                        <!-- SUPPRIMER -->
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-danger"
+                                            title="Supprimer"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteSalaire{{ salaire.id }}"
+                                        >
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+
+
+                                        <!-- =================================================
+                                             MODALE SUPPRESSION
+                                             ================================================= -->
+
+                                        <div
+                                            class="modal fade"
+                                            id="deleteSalaire{{ salaire.id }}"
+                                            tabindex="-1"
+                                            aria-labelledby="deleteSalaireLabel{{ salaire.id }}"
+                                            aria-hidden="true"
+                                        >
+
+                                            <div class="modal-dialog modal-dialog-centered">
+
+                                                <div class="modal-content">
+
+
+                                                    <!-- HEADER -->
+
+                                                    <div class="modal-header">
+
+                                                        <h5
+                                                            class="modal-title text-danger"
+                                                            id="deleteSalaireLabel{{ salaire.id }}"
+                                                        >
+
+                                                            <i class="fas fa-trash"></i>
+
+                                                            Confirmation suppression
+
+                                                        </h5>
+
+                                                        <button
+                                                            type="button"
+                                                            class="btn-close"
+                                                            data-bs-dismiss="modal"
+                                                            aria-label="Fermer"
+                                                        ></button>
+
+                                                    </div>
+
+
+                                                    <!-- BODY -->
+
+                                                    <div class="modal-body text-center">
+
+                                                        <div class="text-danger mb-3">
+
+                                                            <i
+                                                                class="fas fa-money-bill-wave"
+                                                                style="font-size: 50px;"
+                                                            ></i>
+
+                                                        </div>
+
+
+                                                        <p>
+                                                            Voulez-vous vraiment
+                                                            supprimer ce salaire ?
+                                                        </p>
+
+
+                                                        <!-- INFORMATIONS -->
+
+                                                        <div class="alert alert-warning">
+
+                                                            {% if salaire.personnel %}
+
+                                                                <strong class="text-uppercase">
+
+                                                                    {{ salaire.personnel.nom }}
+
+                                                                    {% if salaire.personnel.prenom %}
+
+                                                                        {{ salaire.personnel.prenom }}
+
+                                                                    {% endif %}
+
+                                                                </strong>
+
+                                                            {% else %}
+
+                                                                <strong>
+                                                                    Sans personnel
+                                                                </strong>
+
+                                                            {% endif %}
+
+
+                                                            <br>
+
+
+                                                            <span class="fw-bold">
+
+                                                                Montant :
+
+                                                                {{ salaire.montant|floatformat:0|intcomma }}
+
+                                                                Ar
+
+                                                            </span>
+
+
+                                                            <br>
+
+
+                                                            <small class="text-muted">
+
+                                                                Date :
+
+                                                                {{ salaire.date|date:"d/m/Y" }}
+
+                                                            </small>
+
+                                                        </div>
+
+
+                                                        <!-- AVERTISSEMENT -->
+
+                                                        <div class="alert alert-danger mb-0">
+
+                                                            <i class="fas fa-exclamation-triangle"></i>
+
+                                                            <strong>
+                                                                Attention !
+                                                            </strong>
+
+                                                            Cette action est irréversible.
+
+                                                        </div>
+
+                                                    </div>
+
+
+                                                    <!-- FOOTER -->
+
+                                                    <div class="modal-footer">
+
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-secondary"
+                                                            data-bs-dismiss="modal"
+                                                        >
+                                                            <i class="fas fa-times"></i>
+                                                            Annuler
+                                                        </button>
+
+
+                                                        <!-- FORMULAIRE POST -->
+
+                                                        <form
+                                                            method="post"
+                                                            action="{% url 'salaire:salaire_delete' salaire.id %}"
+                                                            class="d-inline"
+                                                        >
+
+                                                            {% csrf_token %}
+
+                                                            <button
+                                                                type="submit"
+                                                                class="btn btn-danger"
+                                                            >
+
+                                                                <i class="fas fa-trash"></i>
+
+                                                                Supprimer
+
+                                                            </button>
+
+                                                        </form>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+
+                                    {% else %}
+
+                                        <span
+                                            class="text-muted"
+                                            title="Seul l'enregistreur peut modifier ou supprimer"
+                                        >
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+
+                        {% empty %}
+
+                            <tr>
+
+                                <td
+                                    colspan="7"
+                                    class="text-center py-5"
+                                >
+
+                                    <div class="text-muted">
+
+                                        <div class="fs-1">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </div>
+
+                                        <h5>
+                                            Aucun salaire trouvé
+                                        </h5>
+
+                                        <p class="mb-0">
+                                            Aucun salaire ne correspond
+                                            aux critères de recherche.
+                                        </p>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         PAGINATION
+         ===================================================== -->
+
+    {% if page_obj.paginator.num_pages > 1 %}
+
+        <nav class="mt-4">
+
+            <ul class="pagination justify-content-center">
+
+
+                <!-- PREMIERE PAGE -->
+
+                {% if page_obj.has_previous %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page=1{% if query_params %}&{{ query_params }}{% endif %}"
+                        >
+                            « Première
+                        </a>
+
+                    </li>
+
+                {% endif %}
+
+
+                <!-- PAGE PRECEDENTE -->
+
+                {% if page_obj.has_previous %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}"
+                        >
+                            ‹
+                        </a>
+
+                    </li>
+
+                {% endif %}
+
+
+                <!-- PAGES -->
+
+                {% for num in page_obj.paginator.page_range %}
+
+                    {% if num == page_obj.number %}
+
+                        <li class="page-item active">
+
+                            <span class="page-link">
+                                {{ num }}
+                            </span>
+
+                        </li>
+
+                    {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+
+                        <li class="page-item">
+
+                            <a
+                                class="page-link"
+                                href="?page={{ num }}{% if query_params %}&{{ query_params }}{% endif %}"
+                            >
+                                {{ num }}
+                            </a>
+
+                        </li>
+
+                    {% endif %}
+
+                {% endfor %}
+
+
+                <!-- PAGE SUIVANTE -->
+
+                {% if page_obj.has_next %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}"
+                        >
+                            ›
+                        </a>
+
+                    </li>
+
+                {% endif %}
+
+
+                <!-- DERNIERE PAGE -->
+
+                {% if page_obj.has_next %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page={{ page_obj.paginator.num_pages }}{% if query_params %}&{{ query_params }}{% endif %}"
+                        >
+                            Dernière »
+                        </a>
+
+                    </li>
+
+                {% endif %}
+
+            </ul>
+
+        </nav>
+
+    {% endif %}
+
+
+    <!-- =====================================================
+         INFORMATIONS PAGINATION
+         ===================================================== -->
+
+    {% if page_obj.paginator.count %}
+
+        <div class="text-center text-muted small mt-2">
+
+            Affichage de
+
+            <strong>
+                {{ page_obj.start_index }}
+            </strong>
+
+            à
+
+            <strong>
+                {{ page_obj.end_index }}
+            </strong>
+
+            sur
+
+            <strong>
+                {{ page_obj.paginator.count }}
+            </strong>
+
+            salaire(s)
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h3>
+            Liste des dépôts
+        </h3>
+
+        <a href="{% url 'depot:depot_add' %}"
+           class="btn btn-primary">
+            + Nouveau dépôt
+        </a>
+
+    </div>
+
+
+    <!-- ================= FILTRE ================= -->
+
+    <form method="get"
+          class="row g-3 mb-4">
+
+
+        <div class="col-md-3">
+
+            <label class="form-label">
+                Personnel
+            </label>
+
+            <select name="personnel"
+                    class="form-select">
+
+                <option value="">
+                    Tous
+                </option>
+
+
+                {% for p in personnels %}
+
+                <option value="{{ p.id }}"
+                    {% if personnel == p.id|stringformat:"s" %}
+                        selected
+                    {% endif %}>
+
+                    {{ p }}
+
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+
+        <div class="col-md-3">
+
+            <label class="form-label">
+                Date début
+            </label>
+
+            <input type="date"
+                   name="date_debut"
+                   value="{{ date_debut }}"
+                   class="form-control">
+
+        </div>
+
+
+
+        <div class="col-md-3">
+
+            <label class="form-label">
+                Date fin
+            </label>
+
+            <input type="date"
+                   name="date_fin"
+                   value="{{ date_fin }}"
+                   class="form-control">
+
+        </div>
+
+
+
+        <div class="col-md-3 d-flex align-items-end gap-2">
+
+
+            <button class="btn btn-primary">
+                Filtrer
+            </button>
+
+
+            <a href="{% url 'depot:depot_list' %}"
+               class="btn btn-secondary">
+
+                Reset
+
+            </a>
+
+
+            <a href="{% url 'depot:depot_print' %}?personnel={{ personnel }}&date_debut={{ date_debut }}&date_fin={{ date_fin }}"
+               class="btn btn-success">
+
+                Imprimer
+
+            </a>
+
+
+        </div>
+
+
+    </form>
+
+
+
+
+    <!-- ================= TOTAL ================= -->
+
+
+    <div class="alert alert-info">
+
+
+        <strong>
+            Total dépôt :
+        </strong>
+
+
+        <span class="fw-bold">
+            {{ total_montant|floatformat:0|intcomma }} Ar
+        </span>
+
+
+
+        <span class="float-end">
+
+
+            <strong>
+                Total distribué :
+            </strong>
+
+
+            <span class="fw-bold">
+                {{ total_personnel|floatformat:0|intcomma }} Ar
+            </span>
+
+
+        </span>
+
+
+    </div>
+
+
+
+
+
+    <!-- ================= TABLE ================= -->
+
+
+    <div class="table-responsive">
+
+
+        <table class="table table-bordered table-hover align-middle">
+
+
+            <thead class="table-dark text-center">
+
+                <tr>
+
+                    <th>
+                        Déposant
+                    </th>
+
+
+                    <th>
+                        Montant global
+                    </th>
+
+
+                    <th>
+                        Distribution
+                    </th>
+
+
+                    <th>
+                        Reste
+                    </th>
+
+
+                    <th>
+                        Date
+                    </th>
+
+
+                    <th>
+                        Actions
+                    </th>
+
+
+                </tr>
+
+
+            </thead>
+
+
+
+            <tbody>
+
+            {% for depot in depots %}
+
+
+                <tr>
+
+
+                    <td>
+                        <strong>
+                            {{ depot.deposant }}
+                        </strong>
+                    </td>
+
+
+
+                    <td class="text-success fw-bold text-end">
+
+                        {{ depot.montantG|floatformat:0|intcomma }} Ar
+
+                    </td>
+
+
+
+                    <td>
+
+
+                        {% for d in depot.distributions.all %}
+
+
+                            <div>
+
+                                <strong>
+                                    {{ d.distributeur }}
+                                </strong>
+
+                                :
+
+                                {{ d.montant|floatformat:0|intcomma }} Ar
+
+                            </div>
+
+
+                        {% empty %}
+
+
+                            <span class="text-muted">
+                                Aucune distribution
+                            </span>
+
+
+                        {% endfor %}
+
+
+                    </td>
+
+
+
+                    <td class="text-danger fw-bold text-end">
+
+
+                        {{ depot.reste|floatformat:0|intcomma }} Ar
+
+
+                    </td>
+
+
+
+                    <td class="text-center">
+
+
+                        {{ depot.date|date:"d/m/Y" }}
+
+
+                    </td>
+
+
+
+                    <td class="text-center">
+
+
+                        <a href="{% url 'depot:depot_edit' depot.id %}"
+                           class="btn btn-warning btn-sm">
+
+                            ✏
+
+                        </a>
+
+
+
+                        <form method="post"
+                              action="{% url 'depot:depot_delete' depot.id %}"
+                              class="d-inline">
+
+                            {% csrf_token %}
+
+
+                            <button type="submit"
+                                    class="btn btn-danger btn-sm"
+                                    onclick="return confirm('Supprimer ce dépôt ?');">
+
+                                🗑
+
+                            </button>
+
+
+                        </form>
+
+
+                    </td>
+
+
+                </tr>
+
+
+
+            {% empty %}
+
+
+                <tr>
+
+                    <td colspan="6"
+                        class="text-center text-danger">
+
+                        Aucun dépôt trouvé.
+
+                    </td>
+
+                </tr>
+
+
+            {% endfor %}
+
+
+
+            </tbody>
+
+
+        </table>
+
+
+    </div>
+
+
+
+</div>
+
+
+{% endblock %}

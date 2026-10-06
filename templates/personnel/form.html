@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card shadow-sm p-4">
+
+    <!-- ============================= -->
+    <!-- TITRE -->
+    <!-- ============================= -->
+
+    <h3 class="mb-4 text-center text-uppercase">
+
+        {% if form.instance.pk %}
+
+            <span class="text-info">
+                Modifier le personnel
+            </span>
+
+        {% else %}
+
+            <span class="text-success">
+                Ajouter un personnel
+            </span>
+
+        {% endif %}
+
+    </h3>
+
+
+    <!-- ============================= -->
+    <!-- FORMULAIRE -->
+    <!-- ============================= -->
+
+    <form method="POST" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="row">
+
+            <!-- ============================= -->
+            <!-- INFORMATIONS -->
+            <!-- ============================= -->
+
+            <div class="col-md-8">
+
+                <!-- NOM -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Nom
+                    </label>
+
+                    {{ form.nom }}
+
+                    {% if form.nom.errors %}
+                        <div class="text-danger small">
+                            {{ form.nom.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- PRENOM -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Prénom
+                    </label>
+
+                    {{ form.prenom }}
+
+                    {% if form.prenom.errors %}
+                        <div class="text-danger small">
+                            {{ form.prenom.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ADRESSE -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Adresse
+                    </label>
+
+                    {{ form.adresse }}
+
+                    {% if form.adresse.errors %}
+                        <div class="text-danger small">
+                            {{ form.adresse.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- TELEPHONE -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Téléphone
+                    </label>
+
+                    {{ form.telephone }}
+
+                    {% if form.telephone.errors %}
+                        <div class="text-danger small">
+                            {{ form.telephone.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- FONCTION -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Fonction
+                    </label>
+
+                    {{ form.fonction }}
+
+                    {% if form.fonction.errors %}
+                        <div class="text-danger small">
+                            {{ form.fonction.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- TYPE DE TRAVAIL -->
+                <!-- ============================= -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Type de travail
+                    </label>
+
+                    {{ form.typeTravail }}
+
+                    {% if form.typeTravail.errors %}
+                        <div class="text-danger small">
+                            {{ form.typeTravail.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- TYPE DE CONTRAT -->
+                <!-- ============================= -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Type de contrat
+                    </label>
+
+                    {{ form.typeContrat }}
+
+                    {% if form.typeContrat.errors %}
+                        <div class="text-danger small">
+                            {{ form.typeContrat.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- SALAIRE -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Salaire
+                    </label>
+
+                    {{ form.psalaire }}
+
+                    {% if form.psalaire.errors %}
+                        <div class="text-danger small">
+                            {{ form.psalaire.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- DEBUT CONTRAT -->
+                <!-- ============================= -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Début du contrat
+                    </label>
+
+                    {{ form.debutContrat }}
+
+                    {% if form.debutContrat.errors %}
+                        <div class="text-danger small">
+                            {{ form.debutContrat.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- FIN CONTRAT -->
+                <!-- ============================= -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Fin du contrat
+                    </label>
+
+                    {{ form.finContrat }}
+
+                    <div class="form-text">
+                        Laisser vide pour un contrat sans date de fin.
+                    </div>
+
+                    {% if form.finContrat.errors %}
+                        <div class="text-danger small">
+                            {{ form.finContrat.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- LIEU DE TRAVAIL -->
+                <!-- ============================= -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Lieu de travail
+                    </label>
+
+                    {{ form.lieuTravail }}
+
+                    {% if form.lieuTravail.errors %}
+                        <div class="text-danger small">
+                            {{ form.lieuTravail.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- CATEGORIE -->
+                <!-- ============================= -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Catégorie
+                    </label>
+
+                    {{ form.categorie }}
+
+                    {% if form.categorie.errors %}
+                        <div class="text-danger small">
+                            {{ form.categorie.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- ============================= -->
+            <!-- PHOTO -->
+            <!-- ============================= -->
+
+            <div class="col-md-4 text-center">
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Photo
+                    </label>
+
+                    <br>
+
+                    {{ form.photo }}
+
+                    {% if form.photo.errors %}
+                        <div class="text-danger small">
+                            {{ form.photo.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- PHOTO EXISTANTE -->
+                <!-- ============================= -->
+
+                {% if form.instance.photo %}
+
+                    <div class="mt-3">
+
+                        <p class="fw-bold mb-2">
+                            Photo actuelle
+                        </p>
+
+                        <img
+                            src="{{ form.instance.photo.url }}"
+                            class="img-thumbnail"
+                            width="220"
+                            alt="Photo du personnel"
+                        >
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <hr>
+
+
+        <!-- ============================= -->
+        <!-- ERREURS GENERALES DU FORMULAIRE -->
+        <!-- ============================= -->
+
+        {% if form.non_field_errors %}
+
+            <div class="alert alert-danger">
+
+                {% for error in form.non_field_errors %}
+
+                    <div>
+                        {{ error }}
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- ============================= -->
+        <!-- BOUTONS -->
+        <!-- ============================= -->
+
+        <div class="d-flex gap-2">
+
+            <button
+                type="submit"
+                class="btn btn-success"
+            >
+
+                <i class="fas fa-save"></i>
+
+                {% if form.instance.pk %}
+
+                    Enregistrer les modifications
+
+                {% else %}
+
+                    Enregistrer
+
+                {% endif %}
+
+            </button>
+
+
+            <a
+                href="javascript:history.back();"
+                class="btn btn-secondary"
+            >
+
+                <i class="fas fa-arrow-left"></i>
+
+                Retour
+
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

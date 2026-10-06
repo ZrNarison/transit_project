@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if mode == "modification" %}
+        Modifier l'affectation
+    {% else %}
+        Ajouter personnel
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-8">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-primary text-white">
+
+                    <h4 class="mb-0">
+
+                        {% if mode == "modification" %}
+
+                            <i class="fas fa-user-edit"></i>
+                            Modifier l'affectation
+
+                        {% else %}
+
+                            <i class="fas fa-user-plus"></i>
+                            Ajouter personnel
+
+                        {% endif %}
+
+                    </h4>
+
+                </div>
+
+
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Projet :</strong>
+                        {{ projet.titre |title}} à 
+                        <strong class="text-bold">
+                            {{ projet.localisation|upper }}
+                        </strong>
+                        <br>
+
+                        <strong>Période :</strong>
+                        {{ projet.date_debut|date:"d/m/Y" }}
+                        →
+                        {{ projet.date_fin|date:"d/m/Y" }}
+
+                    </div>
+
+
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                {{ form.personnel.label }}
+                            </label>
+                            {{ form.personnel }}
+                            {% for error in form.personnel.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+
+                            <div class="form-text">
+                                Seuls les personnels de type<strong>Construction</strong>disponibles pour ce projet sont proposés.
+                            </div>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                {{ form.fonction.label }}
+                            </label>
+                            {{ form.fonction }}
+
+                            {% for error in form.fonction.errors %}
+                            <div class="text-danger small">
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+
+                        </div>
+
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.date_debut.label }}
+                                </label>
+
+                                {{ form.date_debut }}
+
+                                {% for error in form.date_debut.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.date_fin.label }}
+                                </label>
+
+                                {{ form.date_fin }}
+
+                                {% for error in form.date_fin.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-check form-switch mb-3">
+
+                            {{ form.actif }}
+
+                            <label class="form-check-label fw-bold">
+                                {{ form.actif.label }}
+                            </label>
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label fw-bold">
+                                {{ form.observation.label }}
+                            </label>
+
+                            {{ form.observation }}
+
+                            {% for error in form.observation.errors %}
+                            <div class="text-danger small">
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+
+                        </div>
+
+
+                        <div class="alert alert-warning">
+
+                            <i class="fas fa-clock"></i>
+
+                            L'accès du personnel sera automatiquement
+                            considéré comme expiré après la date de fin
+                            de son affectation.
+
+                            <br><br>
+
+                            <strong>
+                                Les anciens rapports et données ne seront
+                                pas supprimés.
+                            </strong>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between">
+
+                            <a href="{% url 'projet:equipe_list' projet.id %}"
+                               class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Annuler
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+
+                                {% if mode == "modification" %}
+
+                                    <i class="fas fa-save"></i>
+                                    Enregistrer
+
+                                {% else %}
+
+                                    <i class="fas fa-user-plus"></i>
+                                    Ajouter
+
+                                {% endif %}
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

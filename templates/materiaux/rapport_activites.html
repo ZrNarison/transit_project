@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Rapport global{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+<h2>📊 Rapport global des activités</h2>
+
+</div>
+
+<div class="card shadow-sm">
+
+<div class="table-responsive">
+
+<table class="table table-hover align-middle">
+
+<thead class="table-dark">
+
+<tr>
+<th>Véhicule</th>
+<th>Transport</th>
+<th>Gasoil</th>
+<th>Réparations</th>
+<th>Dockers</th>
+<th>Autres dépenses</th>
+<th>Coût total</th>
+<th>Résultat</th>
+<th>Détail</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for item in rapport %}
+
+<tr>
+
+<td>
+<strong>
+{{ item.vehicule.immatriculation }}
+</strong>
+</td>
+
+<td>
+{{ item.transport|floatformat:2 }}
+</td>
+
+<td>
+{{ item.gasoil|floatformat:2 }}
+</td>
+
+<td>
+{{ item.reparations|floatformat:2 }}
+</td>
+
+<td>
+{{ item.dockers|floatformat:2 }}
+</td>
+
+<td>
+{{ item.depenses|floatformat:2 }}
+</td>
+
+<td>
+<strong>
+{{ item.cout|floatformat:2 }}
+</strong>
+</td>
+
+<td>
+
+<strong class="{% if item.resultat < 0 %}text-danger{% else %}text-success{% endif %}">
+{{ item.resultat|floatformat:2 }}
+</strong>
+
+</td>
+
+<td>
+
+<a
+href="{% url 'materiaux:rapport_vehicule' item.vehicule.pk %}"
+class="btn btn-sm btn-info">
+📊 Détail
+</a>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="9" class="text-center text-muted">
+Aucune donnée.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+{% endblock %}

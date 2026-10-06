@@ -1,0 +1,750 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <!-- ===================================================== -->
+    <!-- EN-TÊTE -->
+    <!-- ===================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Tableau de bord</h2>
+            <p class="text-muted mb-0">Gestion des matériaux, stocks, transports et dépenses</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}                            
+            <a href="{% url 'materiaux:materiaux_add' %}" class="btn btn-success"><i class="fas fa-plus me-1"></i>Nouveau matériau</a>
+            {% elif fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" %}
+            <a href="{% url 'materiaux:entree_add' %}" class="btn btn-primary"><i class="fas fa-arrow-down me-1"></i>Nouvelle entrée</a>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- MESSAGES -->
+    <!-- ===================================================== -->
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- ===================================================== -->
+    <!-- RÉSUMÉ MATÉRIAUX -->
+    <!-- ===================================================== -->
+    <div class="row g-3 mb-4">
+
+        <!-- MATÉRIAUX -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">Matériaux</small>
+                            <h3 class="fw-bold mb-0">{{ total_materiaux }}</h3>
+                        </div>
+                        <div class="text-primary"><i class="fas fa-boxes fa-2x"></i></div>
+                    </div>
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                    <a href="{% url 'materiaux:materiaux_list' %}" class="text-decoration-none">Voir les matériaux<i class="fas fa-arrow-right ms-1"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ENTRÉES -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">Entrées entrepôt</small>
+                            <h3 class="fw-bold mb-0">{{ total_entrees|floatformat:2 }}</h3>
+                        </div>
+                        <div class="text-success"><i class="fas fa-arrow-circle-down fa-2x"></i></div>
+                    </div>
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
+                    <a href="{% url 'materiaux:entrees_list' %}" class="text-decoration-none"> Voir les entrées <i class="fas fa-arrow-right ms-1"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- DIVISIONS -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">Divisions vers magasin</small>
+                            <h3 class="fw-bold mb-0">{{ total_divisions|floatformat:2 }}</h3>
+                        </div>
+                        <div class="text-warning"><i class="fas fa-exchange-alt fa-2x"></i></div>
+                    </div>
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                    <a href="{% url 'materiaux:divisions_list' %}"class="text-decoration-none">Voir les divisions<i class="fas fa-arrow-right ms-1"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- SORTIES -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">Sorties magasin</small>
+                            <h3 class="fw-bold mb-0">{{ total_sorties|floatformat:2 }}</h3>
+                        </div>
+                        <div class="text-danger"><i class="fas fa-arrow-circle-up fa-2x"></i></div>
+                    </div>
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                    <a href="{% url 'materiaux:sorties_list' %}" class="text-decoration-none">Voir les sorties<i class="fas fa-arrow-right ms-1"></i></a>
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- STOCKS -->
+    <!-- ===================================================== -->
+    <div class="row g-3 mb-4">
+
+        <!-- STOCK ENTREPÔT -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="fw-bold"><i class="fas fa-warehouse text-primary me-2"></i>Stock entrepôt</h5>
+                            <p class="text-muted mb-0">Disponible après les divisions.</p>
+                        </div>
+                        <span class="badge bg-primary fs-6 align-self-start">{{ stock_entrepot|floatformat:2 }}</span>
+                    </div>
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                    <a href="{% url 'materiaux:stock_entrepot' %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-eye me-1"></i>Consulter</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- STOCK MAGASIN -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="fw-bold"><i class="fas fa-store text-success me-2"></i>Stock magasin</h5>
+                            <p class="text-muted mb-0">Disponible après les sorties.</p>
+                        </div>
+                        <span class="badge bg-success fs-6 align-self-start">{{ stock_magasin|floatformat:2 }}</span>
+                    </div>
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                    <a href="{% url 'materiaux:stock_magasin' %}" class="btn btn-outline-success btn-sm"><i class="fas fa-eye me-1"></i>Consulter</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- STOCK TOTAL -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="fw-bold"><i class="fas fa-cubes text-dark me-2"></i>Stock total</h5>
+                            <p class="text-muted mb-0">Entrepôt + magasin.</p>
+                        </div>
+                        <span class="badge bg-dark fs-6 align-self-start">{{ stock_total|floatformat:2 }}</span>
+                    </div>
+                    <hr>
+                    <span class="text-muted">Situation globale des matériaux</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- TRANSPORT / VÉHICULES / DOCKERS -->
+    <!-- ===================================================== -->
+    <div class="row g-3 mb-4">
+
+        <!-- ACTIVITÉS TRANSPORT -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <small class="text-muted">Activités transport</small>
+                    <h3 class="fw-bold">{{ total_activites_transport }}</h3>
+                    <div class="small text-muted mb-3">
+                        <span class="me-2">Matériaux :<strong>{{ activites_materiaux }}</strong></span>
+                        <span class="me-2">Matériels :<strong>{{ activites_materiels }}</strong></span>
+                        <span>Personnel :<strong>{{ activites_personnel }}</strong></span>
+                    </div>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                    <a href="{% url 'materiaux:activites_transport_list' %}"class="btn btn-sm btn-outline-primary"><i class="fas fa-truck me-1"></i>Activités</a>
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- VÉHICULES -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Véhicules
+                    </small>
+
+                    <h3 class="fw-bold">
+                        {{ total_vehicules }}
+                    </h3>
+
+                    <div class="small mb-3">
+
+                        <span class="text-success me-2">
+                            <i class="fas fa-check-circle"></i>
+                            {{ vehicules_actifs }} actifs
+                        </span>
+
+                        <span class="text-danger">
+                            <i class="fas fa-times-circle"></i>
+                            {{ vehicules_inactifs }} inactifs
+                        </span>
+
+                    </div>
+
+                    <a
+                        href="{% url 'materiaux:vehicules_list' %}"
+                        class="btn btn-sm btn-outline-secondary">
+
+                        <i class="fas fa-truck-moving me-1"></i>
+                        Véhicules
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- PAIEMENTS DOCKERS -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Paiements dockers
+                    </small>
+
+                    <h4 class="fw-bold">
+                        {{ total_paiements_dockers|floatformat:2 }}
+                    </h4>
+
+                    <small class="text-muted">
+                        {{ nombre_paiements_dockers }} paiements
+                    </small>
+
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER"  %}
+                    <a href="{% url 'materiaux:paiements_dockers_list' %}" class="btn btn-sm btn-outline-dark"><i class="fas fa-money-bill-wave me-1"></i>Paiements</a>
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- COÛT EXPLOITATION -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Coût d'exploitation
+                    </small>
+
+                    <h4 class="fw-bold text-danger">
+                        {{ cout_exploitation|floatformat:2 }}
+                    </h4>
+
+                    <small class="text-muted">
+                        Gasoil + dockers + dépenses + réparations
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- DÉPENSES -->
+    <!-- ===================================================== -->
+
+    <div class="row g-3 mb-4">
+
+        <!-- GASOIL -->
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm border-warning h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small class="text-muted">
+                                Gasoil
+                            </small>
+
+                            <h4 class="fw-bold">
+                                {{ total_gasoil|floatformat:2 }}
+                            </h4>
+
+                            <small class="text-muted">
+                                {{ total_litres_gasoil|floatformat:2 }} L
+                            </small>
+
+                        </div>
+
+                        <i class="fas fa-gas-pump fa-2x text-warning"></i>
+
+                    </div>
+
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                    <a href="{% url 'materiaux:depenses_gasoil_list' %}" class="btn btn-sm btn-outline-warning">Voir le gasoil</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- RÉPARATIONS -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-danger h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <small class="text-muted">Réparations / entretien</small>
+                            <h4 class="fw-bold">{{ total_reparations|floatformat:2 }}</h4>
+                            <small class="text-muted">{{ nombre_reparations }} opérations</small>
+                        </div>
+                        <i class="fas fa-tools fa-2x text-danger"></i>
+                    </div>
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHAUFFEUR" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                    <a href="{% url 'materiaux:reparations_list' %}" class="btn btn-sm btn-outline-danger">Voir les réparations</a>
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- DÉPENSES GÉNÉRALES -->
+
+        <div class="col-md-4">
+
+            <div class="card shadow-sm border-secondary h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <small class="text-muted">
+                                Dépenses générales
+                            </small>
+
+                            <h4 class="fw-bold">
+                                {{ total_depenses_generales|floatformat:2 }}
+                            </h4>
+
+                            <small class="text-muted">
+                                {{ nombre_depenses }} dépenses
+                            </small>
+
+                        </div>
+
+                        <i class="fas fa-file-invoice-dollar fa-2x text-secondary"></i>
+
+                    </div>
+
+                    <hr>
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER"  or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                    <a href="{% url 'materiaux:depenses_list' %}" class="btn btn-sm btn-outline-secondary">Voir les dépenses</a>
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- RÉPARTITION DES COÛTS -->
+    <!-- ===================================================== -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-dark text-white">
+
+            <h5 class="mb-0">
+
+                <i class="fas fa-chart-line me-2"></i>
+
+                Situation financière
+
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row text-center">
+
+                <!-- GASOIL -->
+
+                <div class="col-md-3 border-end">
+
+                    <small class="text-muted">
+                        Gasoil
+                    </small>
+
+                    <h4 class="fw-bold text-warning">
+
+                        {{ total_gasoil|floatformat:2 }}
+
+                    </h4>
+
+                </div>
+
+
+                <!-- DOCKERS -->
+
+                <div class="col-md-3 border-end">
+
+                    <small class="text-muted">
+                        Dockers
+                    </small>
+
+                    <h4 class="fw-bold text-dark">
+
+                        {{ total_paiements_dockers|floatformat:2 }}
+
+                    </h4>
+
+                </div>
+
+
+                <!-- RÉPARATIONS -->
+
+                <div class="col-md-3 border-end">
+
+                    <small class="text-muted">
+                        Réparations
+                    </small>
+
+                    <h4 class="fw-bold text-danger">
+
+                        {{ total_reparations|floatformat:2 }}
+
+                    </h4>
+
+                </div>
+
+
+                <!-- DÉPENSES -->
+
+                <div class="col-md-3">
+
+                    <small class="text-muted">
+                        Dépenses générales
+                    </small>
+
+                    <h4 class="fw-bold text-secondary">
+
+                        {{ total_depenses_generales|floatformat:2 }}
+
+                    </h4>
+
+                </div>
+
+            </div>
+
+            <hr>
+
+            <div class="text-center">
+
+                <small class="text-muted">
+                    Total des coûts enregistrés
+                </small>
+
+                <h2 class="fw-bold text-danger">
+
+                    {{ total_general|floatformat:2 }}
+
+                </h2>
+
+                <small class="text-muted">
+                    Aucun montant de recette transport n'est actuellement
+                    enregistré dans le modèle ActiviteTransport.
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- STOCKS PAR MATÉRIAU -->
+    <!-- ===================================================== -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <div>
+
+                <h5 class="mb-0">
+
+                    <i class="fas fa-boxes me-2"></i>
+
+                    Stocks par matériau
+
+                </h5>
+
+                <small class="text-muted">
+
+                    Situation détaillée de chaque matériau
+
+                </small>
+
+            </div>
+            {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+            <a href="{% url 'materiaux:materiaux_list' %}" class="btn btn-sm btn-primary"><i class="fas fa-cog me-1"></i>Gérer les matériaux</a>
+            {% endif %}
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table table-hover table-striped align-middle mb-0">
+
+                <thead class="table-dark">
+
+                    <tr>
+
+                        <th>#</th>
+
+                        <th>Matériau</th>
+
+                        <th class="text-end">
+                            Entrées
+                        </th>
+
+                        <th class="text-end">
+                            Divisions
+                        </th>
+
+                        <th class="text-end">
+                            Sorties
+                        </th>
+
+                        <th class="text-end">
+                            Entrepôt
+                        </th>
+
+                        <th class="text-end">
+                            Magasin
+                        </th>
+
+                        <th class="text-end">
+                            Total
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for item in materiaux_stats %}
+
+                    <tr>
+
+                        <td>
+                            {{ forloop.counter }}
+                        </td>
+
+                        <td>
+
+                            <i class="fas fa-box text-primary me-2"></i>
+
+                            <strong>
+                                {{ item.materiau.libelle }}
+                            </strong>
+
+                            <small class="text-muted">
+                                ({{ item.materiau.unite }})
+                            </small>
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ item.entrees|floatformat:2 }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ item.divisions|floatformat:2 }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            {{ item.sorties|floatformat:2 }}
+
+                        </td>
+
+                        <td class="text-end">
+
+                            <span class="badge bg-primary">
+
+                                {{ item.stock_entrepot|floatformat:2 }}
+
+                            </span>
+
+                        </td>
+
+                        <td class="text-end">
+
+                            <span class="badge bg-success">
+
+                                {{ item.stock_magasin|floatformat:2 }}
+
+                            </span>
+
+                        </td>
+
+                        <td class="text-end">
+
+                            <strong>
+
+                                {{ item.stock_total|floatformat:2 }}
+
+                            </strong>
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5"><i class="fas fa-box-open fa-2x mb-2"></i><br>
+                            Aucun matériau enregistré.
+                            <br>
+                            {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER"  %}
+                            <a href="{% url 'materiaux:materiaux_add' %}" class="btn btn-sm btn-success mt-2"><i class="fas fa-plus me-1"></i>Ajouter un matériau</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- ACCÈS RAPIDES -->
+    <!-- ===================================================== -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-th-large me-2"></i>Accès rapides</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+
+                <div class="col-xl-3 col-md-6">
+                    {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
+                    <a href="{% url 'materiaux:materiaux_add' %}" class="btn btn-success w-100"><i class="fas fa-box me-1"></i>Ajouter matériau</a>
+                    {% endif %}
+                </div>
+
+
+                <div class="col-xl-3 col-md-6">
+                    {% if fonction_projet == "ChefMagasin" %}
+                    <a href="{% url 'materiaux:entree_add' %}" class="btn btn-primary w-100"><i class="fas fa-arrow-down me-1"></i>Ajouter entrée</a>
+                    {% endif %}
+                </div>
+
+
+                <div class="col-xl-3 col-md-6">
+                    {% if  fonction_projet == "ChefMagasin" or fonction_projet == "Magasin"  %}
+                    <a href="{% url 'materiaux:division_add' %}" class="btn btn-warning w-100"><i class="fas fa-exchange-alt me-1"></i>Diviser vers magasin</a>
+                    {% endif %}
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+                    {% if  fonction_projet == "Magasin"  %}
+                    <a href="{% url 'materiaux:sortie_add' %}" class="btn btn-danger w-100"><i class="fas fa-arrow-up me-1"></i>Sortie magasin</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

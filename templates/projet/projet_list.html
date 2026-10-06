@@ -1,0 +1,534 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+    <!-- ===================================================== -->
+    <!-- EN-TÊTE -->
+    <!-- ===================================================== -->
+
+    {% if user.role == "Admin" or user.role == "Superviseur" %} 
+    <div class="d-flex flex-wrap gap-2 mb-3"> 
+        <!-- NOUVEAU PROJET --> 
+         <a href="{% url 'projet:projet_create' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus me-1"></i> 
+            Nouveau projet 
+        </a> <!-- ÉQUIPE DES PROJETS --> 
+        <a href="{% url 'projet:equipe_projet_selection' %}" class="btn btn-outline-primary"> 
+            <i class="fa-solid fa-users me-1"></i> 
+            Équipe des projets 
+        </a> 
+    </div> 
+    {% endif %}
+
+
+    <!-- ===================================================== -->
+    <!-- MESSAGES -->
+    <!-- ===================================================== -->
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+
+                {% if message.tags == "success" %}
+                    <i class="fa-solid fa-circle-check me-2"></i>
+                {% elif message.tags == "error" %}
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+                {% else %}
+                    <i class="fa-solid fa-circle-info me-2"></i>
+                {% endif %}
+
+                {{ message }}
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert">
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    <!-- ===================================================== -->
+    <!-- TABLEAU -->
+    <!-- ===================================================== -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-primary text-white py-3">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-list me-2"></i>
+                    Liste des projets
+                </h5>
+
+                <span class="badge bg-light text-primary">
+                    {{ projets|length }} projet{{ projets|length|pluralize }}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body p-0">
+
+            {% if projets %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover table-striped align-middle mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th>#</th>
+
+                                <th>
+                                    <i class="fa-solid fa-diagram-project me-1"></i>
+                                    Projet
+                                </th>
+
+                                <th>
+                                    <i class="fa-solid fa-location-dot me-1"></i>
+                                    Localisation
+                                </th>
+
+                                <th>
+                                    <i class="fa-solid fa-calendar me-1"></i>
+                                    Période
+                                </th>
+
+                                <th>
+                                    <i class="fa-solid fa-list-check me-1"></i>
+                                    Statut
+                                </th>
+                                {% if user.role == "Admin" or user.role == "Superviseur" %}
+                                <th class="text-end">
+                                    Budget
+                                </th>
+                                {% endif %}
+                                <th>
+                                    Enregistré par
+                                </th>
+
+                                <th class="text-center">
+                                    Actions
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for projet in projets %}
+
+                                <tr>
+
+                                    <!-- ===================================== -->
+                                    <!-- ID -->
+                                    <!-- ===================================== -->
+
+                                    <td class="fw-semibold text-muted">
+                                        {{ projet.id }}
+                                    </td>
+
+
+                                    <!-- ===================================== -->
+                                    <!-- PROJET -->
+                                    <!-- ===================================== -->
+
+                                    <td>
+
+                                        <a href="{% url 'projet:projet_detail' projet.id %}"
+                                        class="text-decoration-none fw-bold">
+
+                                            {{ projet.titre|title }}
+
+                                        </a>
+
+                                        {% if projet.est_actif %}
+
+                                            <span class="badge bg-success ms-1">
+                                                Actif
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- ===================================== -->
+                                    <!-- LOCALISATION -->
+                                    <!-- ===================================== -->
+
+                                    <td>
+
+                                        <i class="fa-solid fa-location-dot text-danger me-1"></i>
+
+                                        {{ projet.localisation|upper }}
+
+                                    </td>
+
+
+                                    <!-- ===================================== -->
+                                    <!-- PÉRIODE -->
+                                    <!-- ===================================== -->
+
+                                    <td>
+
+                                        <div class="small">
+
+                                            <div>
+                                                <i class="fa-solid fa-play text-success me-1"></i>
+                                                {{ projet.date_debut|date:"d/m/Y" }}
+                                            </div>
+
+                                            <div>
+                                                <i class="fa-solid fa-flag-checkered text-danger me-1"></i>
+                                                {{ projet.date_fin|date:"d/m/Y" }}
+                                            </div>
+
+                                        </div>
+
+                                        {% if projet.periode_terminee %}
+
+                                            <span class="badge bg-secondary mt-1">
+                                                Période terminée
+                                            </span>
+
+                                        {% elif projet.jours_restants == 0 %}
+
+                                            <span class="badge bg-danger mt-1">
+                                                Dernier jour
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge bg-info mt-1">
+                                                {{ projet.jours_restants }}
+                                                jour{{ projet.jours_restants|pluralize }}
+                                                restant{{ projet.jours_restants|pluralize }}
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- ===================================== -->
+                                    <!-- STATUT -->
+                                    <!-- ===================================== -->
+
+                                    <td>
+
+                                        {% if projet.statut == "PLANIFIE" %}
+
+                                            <span class="badge bg-secondary">
+                                                <i class="fa-solid fa-calendar-days me-1"></i>
+                                                Planifié
+                                            </span>
+
+                                        {% elif projet.statut == "EN_COURS" %}
+
+                                            <span class="badge bg-success">
+                                                <i class="fa-solid fa-spinner me-1"></i>
+                                                En cours
+                                            </span>
+
+                                        {% elif projet.statut == "TERMINE" %}
+
+                                            <span class="badge bg-primary">
+                                                <i class="fa-solid fa-circle-check me-1"></i>
+                                                Terminé
+                                            </span>
+
+                                        {% elif projet.statut == "SUSPENDU" %}
+
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fa-solid fa-pause me-1"></i>
+                                                Suspendu
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <!-- ===================================== -->
+                                    <!-- BUDGET -->
+                                    <!-- ===================================== -->
+                                    {% if user.role == "Admin" or user.role == "Superviseur" %}
+                                    <td class="text-end text-nowrap">
+
+                                        <strong>
+                                            {{ projet.budget_previsionnel|floatformat:2 }}
+                                        </strong>
+
+                                        <small class="text-muted">
+                                            Ar
+                                        </small>
+
+                                    </td>
+                                    {% endif %}
+
+                                    <!-- ===================================== -->
+                                    <!-- ENREGISTREUR -->
+                                    <!-- ===================================== -->
+
+                                    <td>
+
+                                        <div class="d-flex align-items-center">
+
+                                            <div class="bg-primary text-white rounded-circle
+                                                        d-flex align-items-center justify-content-center me-2"
+                                                style="width:36px;height:36px;">
+
+                                                {% if projet.enregistre_par.photo %}
+
+                                                    <img src="{{ projet.enregistre_par.photo.url }}"
+                                                        alt="Photo"
+                                                        class="rounded-circle"
+                                                        style="width:36px;height:36px;object-fit:cover;">
+
+                                                {% else %}
+
+                                                    <i class="fa-solid fa-user"></i>
+
+                                                {% endif %}
+
+                                            </div>
+
+                                            <div>
+
+                                                <div class="fw-semibold">
+                                                    {{ projet.enregistre_par.username }}
+                                                </div>
+
+                                                <small class="text-muted">
+                                                    {{ projet.created_at|date:"d/m/Y H:i" }}
+                                                </small>
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- ===================================== -->
+                                    <!-- ACTIONS -->
+                                    <!-- ===================================== -->
+
+                                    <td class="text-center text-nowrap">
+
+                                        <!-- DÉTAIL -->
+                                        <a href="{% url 'projet:projet_detail' projet.id %}"
+                                        class="btn btn-sm btn-outline-primary"
+                                        title="Voir le projet">
+
+                                            <i class="fa-solid fa-eye"></i>
+
+                                        </a>
+
+
+                                        <!-- ================================= -->
+                                        <!-- MODIFIER / SUPPRIMER -->
+                                        <!-- UNIQUEMENT L'ENREGISTREUR -->
+                                        <!-- ================================= -->
+
+                                        {% if projet.enregistre_par_id == user.id %}
+
+                                            <a href="{% url 'projet:projet_update' projet.id %}"
+                                            class="btn btn-sm btn-outline-warning"
+                                            title="Modifier">
+
+                                                <i class="fa-solid fa-pen"></i>
+
+                                            </a>
+
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Supprimer"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteModal{{ projet.id }}">
+
+                                            <i class="fa-solid fa-trash"></i>
+
+                                        </button>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+
+                            <!-- ================================================= -->
+                            <!-- MODAL SUPPRESSION -->
+                            <!-- ================================================= -->
+
+                            {% if projet.enregistre_par_id == user.id %}
+
+                                <div class="modal fade"
+                                     id="deleteModal{{ projet.id }}"
+                                     tabindex="-1"
+                                     aria-hidden="true">
+
+                                    <div class="modal-dialog modal-dialog-centered">
+
+                                        <div class="modal-content">
+
+                                            <div class="modal-header bg-danger text-white">
+
+                                                <h5 class="modal-title">
+
+                                                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+
+                                                    Confirmer la suppression
+
+                                                </h5>
+
+                                                <button type="button"
+                                                        class="btn-close btn-close-white"
+                                                        data-bs-dismiss="modal">
+                                                </button>
+
+                                            </div>
+
+
+                                            <div class="modal-body">
+
+                                                <p class="mb-3">
+                                                    Voulez-vous vraiment supprimer ce projet ?
+                                                </p>
+
+                                                <div class="alert alert-warning">
+
+                                                    <strong>
+                                                        {{ projet.titre }}
+                                                    </strong>
+
+                                                    <br>
+
+                                                    <small>
+                                                        {{ projet.localisation }}
+                                                    </small>
+
+                                                </div>
+
+                                                <p class="text-danger small mb-0">
+
+                                                    <i class="fa-solid fa-circle-exclamation me-1"></i>
+
+                                                    Cette opération est irréversible.
+                                                    La suppression peut être refusée si
+                                                    des données sont encore liées au projet.
+
+                                                </p>
+
+                                            </div>
+
+
+                                            <div class="modal-footer">
+
+                                                <button type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">
+
+                                                    <i class="fa-solid fa-xmark me-1"></i>
+                                                    Annuler
+
+                                                </button>
+
+
+                                                <form method="post"
+                                                      action="{% url 'projet:projet_delete' projet.id %}"
+                                                      class="d-inline">
+
+                                                    {% csrf_token %}
+
+                                                    <button type="submit"
+                                                            class="btn btn-danger">
+
+                                                        <i class="fa-solid fa-trash me-1"></i>
+                                                        Oui, supprimer
+
+                                                    </button>
+
+                                                </form>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <!-- ================================================= -->
+            <!-- AUCUN PROJET -->
+            <!-- ================================================= -->
+
+            <div class="text-center py-5">
+
+                <div class="mb-3">
+
+                    <i class="fa-solid fa-folder-open text-muted"
+                       style="font-size:4rem;">
+                    </i>
+
+                </div>
+
+                <h5 class="text-muted">
+                    Aucun projet trouvé
+                </h5>
+
+                <p class="text-muted mb-4">
+                    Aucun projet n'est actuellement disponible.
+                </p>
+
+                {% if user.role == "Admin" or user.role == "Superviseur" %}
+
+                    <a href="{% url 'projet:projet_create' %}"
+                       class="btn btn-primary">
+
+                        <i class="fa-solid fa-plus me-1"></i>
+                        Créer le premier projet
+
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+</div>
+
+{% endblock %}

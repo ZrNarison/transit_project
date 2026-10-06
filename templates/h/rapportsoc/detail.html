@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+
+{% block title %}
+Détail rapport du {{ date|date:"d/m/Y" }}
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div class="container-fluid mt-4">
+
+
+<style>
+
+    .table-detail {
+
+        font-size:13px;
+
+    }
+
+
+    .table-detail th {
+
+        text-align:center;
+
+    }
+
+
+    .table-detail td {
+
+        vertical-align:middle;
+
+    }
+
+
+    @media print {
+
+
+    .no-print {
+
+        display:none !important;
+
+    }
+
+
+    body {
+
+        font-size:10px;
+
+    }
+
+
+    .table-detail {
+
+        font-size:9px;
+
+    }
+
+
+    @page {
+
+        size:A4 portrait;
+        margin:10mm;
+
+    }
+
+
+    }
+</style>
+<h3 class="text-center mb-4">Détail des opérations du {{ date|date:"d/m/Y" }}</h3>
+<div class="mb-3 no-print">
+    <a href="{% url 'rapports:rapport_list' %}"   class="btn btn-secondary"> Retour </a>
+    <button onclick="window.print()"        class="btn btn-success"> Imprimer</button>
+</div>
+
+<!-- ==========================
+     DEPENSES
+========================== -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">💰 Dépenses</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped table-detail">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Titre</th>
+                    <th>Description</th>
+                    <th>Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in depenses %}
+                <tr>
+                    <td>{{ d.date|date:"d/m/Y" }}</td>
+                    <td>{{ d.titre }}</td>
+                    <td>{{ d.description }}</td>
+                    <td class="text-end">{{ d.montant|intcomma }} Ar</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4"class="text-center">Aucune dépense</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==========================
+     ACHAT MICA
+========================== -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-warning">
+        <h5 class="mb-0">Achat Mica</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped table-detail">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Produit</th>
+                    <th>Client</th>
+                    <th>Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in paiements %}
+                <tr>
+                    <td>{{ p.date|date:"d/m/Y H:i" }}</td>
+                    <td>{{ p.produit }}</td>
+                    <td>{{ p.produit.client }}</td>
+                    <td class="text-end">{{ p.montant|intcomma }} Ar</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4"class="text-center">Aucun paiement</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- ==========================
+     AVANCES
+========================== -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Avances</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped table-detail">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Bénéficiaire</th>
+                    <th>Type</th>
+                    <th>Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in avances %}
+                <tr>
+                    <td>{{ a.dateAv|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if a.client %}
+                            Client : {{ a.client }}
+                        {% elif a.vehicule %}
+                            Chauffeur : {{ a.vehicule }}
+                        {% elif a.personnel %}
+                            Personnel : {{ a.personnel }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if a.client %}
+                            Avance client
+                        {% elif a.vehicule %}
+                            Avance chauffeur
+                        {% elif a.personnel %}
+                            Avance personnel
+                        {% endif %}
+                    </td>
+                    <td class="text-end">{{ a.montantAv|intcomma }} Ar</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4"class="text-center">Aucune avance</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ==========================
+     RETOURS
+========================== -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Retours</h5>
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped table-detail">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Montant</th>
+                    <th>Observation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in retours %}
+                <tr>
+                    <td>{{ r.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="text-end">{{ r.montant|intcomma }} Ar</td>
+                    <td>{{ r.description }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3"class="text-center">Aucun retour</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Rapports d'avancement - {{ projet.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold">
+                <i class="fas fa-chart-line text-info"></i>
+                Rapports d'avancement
+            </h2>
+
+            <p class="text-muted mb-0">
+                {{ projet.titre }}
+            </p>
+
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a href="{% url 'projet:projet_detail' projet.id %}"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Projet
+            </a>
+
+            <a href="{% url 'projet:rapport_projet_create' projet.id %}"
+               class="btn btn-info text-white">
+                <i class="fas fa-plus"></i>
+                Nouveau rapport
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-info text-white fw-bold">
+            <i class="fas fa-chart-line"></i>
+            Suivi de l'avancement
+        </div>
+
+        <div class="card-body p-0">
+
+            {% if rapports %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th>Date</th>
+                            <th>Titre</th>
+                            <th>Avancement</th>
+                            <th>Travaux réalisés</th>
+                            <th>Auteur</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    {% for rapport in rapports %}
+
+                        <tr>
+
+                            <td>
+                                {{ rapport.date_rapport|date:"d/m/Y" }}
+                            </td>
+
+                            <td class="fw-bold">
+                                {{ rapport.titre }}
+                            </td>
+
+                            <td style="min-width:180px">
+
+                                <div class="d-flex justify-content-between">
+
+                                    <strong>
+                                        {{ rapport.avancement }} %
+                                    </strong>
+
+                                </div>
+
+                                <div class="progress"
+                                     style="height:8px">
+
+                                    <div class="progress-bar bg-info"
+                                         style="width:{{ rapport.avancement }}%">
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                            <td>
+                                {{ rapport.travaux_realises|default:"-"|truncatechars:100 }}
+                            </td>
+
+                            <td>
+                                {{ rapport.auteur }}
+                            </td>
+
+                            <td class="text-end">
+
+                                <a href="{% url 'projet:rapport_projet_update' projet.id rapport.id %}"
+                                   class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="text-center py-5">
+
+                <i class="fas fa-chart-line fa-4x text-muted"></i>
+
+                <h5 class="mt-3">
+                    Aucun rapport d'avancement
+                </h5>
+
+                <a href="{% url 'projet:rapport_projet_create' projet.id %}"
+                   class="btn btn-info text-white">
+                    <i class="fas fa-plus"></i>
+                    Créer un rapport
+                </a>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,465 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title|default:"Véhicule" }}{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ===================================================== -->
+    <!-- EN-TÊTE -->
+    <!-- ===================================================== -->
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+
+                {% if vehicule %}
+                    <i class="fas fa-edit text-primary me-2"></i>
+                    Modifier le véhicule
+                {% else %}
+                    <i class="fas fa-truck text-primary me-2"></i>
+                    Ajouter un véhicule
+                {% endif %}
+
+            </h2>
+
+            <p class="text-muted mb-0">
+                Gestion des informations du véhicule.
+            </p>
+
+        </div>
+
+
+        <a href="{% url 'materiaux:vehicules_list' %}"
+           class="btn btn-outline-secondary">
+
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour aux véhicules
+
+        </a>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- ERREURS NON LIÉES À UN CHAMP -->
+    <!-- ===================================================== -->
+
+    {% if form.non_field_errors %}
+
+        <div class="alert alert-danger">
+
+            <div class="fw-bold mb-1">
+
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                Erreur
+
+            </div>
+
+            {% for error in form.non_field_errors %}
+
+                <div>
+                    {{ error }}
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+
+    <div class="row justify-content-center">
+
+        <div class="col-12 col-xl-9">
+
+            <div class="card border-0 shadow-sm">
+
+                <!-- ================================================= -->
+                <!-- HEADER -->
+                <!-- ================================================= -->
+
+                <div class="card-header bg-primary text-white py-3">
+
+                    <h5 class="mb-0">
+
+                        <i class="fas fa-truck me-2"></i>
+
+                        {% if vehicule %}
+                            Informations du véhicule
+                        {% else %}
+                            Nouveau véhicule
+                        {% endif %}
+
+                    </h5>
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- FORMULAIRE -->
+                <!-- ================================================= -->
+
+                <div class="card-body p-4">
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+
+                        <div class="row g-4">
+
+
+                            <!-- ========================================= -->
+                            <!-- IMMATRICULATION -->
+                            <!-- ========================================= -->
+
+                            <div class="col-12 col-md-6">
+
+                                <label for="{{ form.immatriculation.id_for_label }}"
+                                       class="form-label fw-semibold">
+
+                                    <i class="fas fa-id-card text-primary me-1"></i>
+
+                                    Immatriculation
+
+                                </label>
+
+
+                                {{ form.immatriculation }}
+
+
+                                {% if form.immatriculation.errors %}
+
+                                    <div class="text-danger small mt-1">
+
+                                        {% for error in form.immatriculation.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- ========================================= -->
+                            <!-- MARQUE -->
+                            <!-- ========================================= -->
+
+                            <div class="col-12 col-md-6">
+
+                                <label for="{{ form.marque.id_for_label }}"
+                                       class="form-label fw-semibold">
+
+                                    <i class="fas fa-industry text-primary me-1"></i>
+
+                                    Marque
+
+                                </label>
+
+
+                                {{ form.marque }}
+
+
+                                {% if form.marque.errors %}
+
+                                    <div class="text-danger small mt-1">
+
+                                        {% for error in form.marque.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- ========================================= -->
+                            <!-- MODÈLE -->
+                            <!-- ========================================= -->
+
+                            <div class="col-12 col-md-6">
+
+                                <label for="{{ form.modele.id_for_label }}"
+                                       class="form-label fw-semibold">
+
+                                    <i class="fas fa-car text-primary me-1"></i>
+
+                                    Modèle
+
+                                </label>
+
+
+                                {{ form.modele }}
+
+
+                                {% if form.modele.errors %}
+
+                                    <div class="text-danger small mt-1">
+
+                                        {% for error in form.modele.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- ========================================= -->
+                            <!-- KILOMÉTRAGE -->
+                            <!-- ========================================= -->
+
+                            <div class="col-12 col-md-6">
+
+                                <label for="{{ form.kilometrage.id_for_label }}"
+                                       class="form-label fw-semibold">
+
+                                    <i class="fas fa-tachometer-alt text-primary me-1"></i>
+
+                                    Kilométrage
+
+                                </label>
+
+
+                                <div class="input-group">
+
+                                    {{ form.kilometrage }}
+
+                                    <span class="input-group-text">
+                                        km
+                                    </span>
+
+                                </div>
+
+
+                                {% if form.kilometrage.errors %}
+
+                                    <div class="text-danger small mt-1">
+
+                                        {% for error in form.kilometrage.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- ========================================= -->
+                            <!-- ACTIF -->
+                            <!-- ========================================= -->
+
+                            <div class="col-12">
+
+                                <div class="card bg-light border">
+
+                                    <div class="card-body">
+
+                                        <div class="form-check form-switch">
+
+                                            {{ form.actif }}
+
+                                            <label class="form-check-label fw-semibold"
+                                                   for="{{ form.actif.id_for_label }}">
+
+                                                <i class="fas fa-power-off text-success me-1"></i>
+
+                                                Véhicule actif
+
+                                            </label>
+
+                                        </div>
+
+                                        <div class="form-text">
+
+                                            Un véhicule inactif reste conservé dans
+                                            l'historique mais peut être exclu des
+                                            nouvelles opérations selon les formulaires.
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                {% if form.actif.errors %}
+
+                                    <div class="text-danger small mt-1">
+
+                                        {% for error in form.actif.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- BOUTONS -->
+                        <!-- ================================================= -->
+
+                        <hr class="my-4">
+
+
+                        <div class="d-flex flex-wrap justify-content-end gap-2">
+
+                            <a href="{% url 'materiaux:vehicules_list' %}"
+                               class="btn btn-secondary">
+
+                                <i class="fas fa-times me-1"></i>
+                                Annuler
+
+                            </a>
+
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+
+                                {% if vehicule %}
+
+                                    <i class="fas fa-save me-1"></i>
+                                    Enregistrer les modifications
+
+                                {% else %}
+
+                                    <i class="fas fa-plus me-1"></i>
+                                    Ajouter le véhicule
+
+                                {% endif %}
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- INFORMATIONS SI MODIFICATION -->
+            <!-- ================================================= -->
+
+            {% if vehicule %}
+
+                <div class="card border-0 shadow-sm mt-4">
+
+                    <div class="card-header bg-white">
+
+                        <h6 class="mb-0 fw-bold">
+
+                            <i class="fas fa-chart-line text-primary me-2"></i>
+
+                            Situation actuelle
+
+                        </h6>
+
+                    </div>
+
+
+                    <div class="card-body">
+
+                        <div class="row g-3">
+
+                            <div class="col-6 col-md-3">
+
+                                <div class="border rounded p-3 h-100">
+
+                                    <small class="text-muted d-block">
+                                        Gasoil
+                                    </small>
+
+                                    <strong class="text-success">
+                                        {{ vehicule.total_gasoil|floatformat:2 }}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-6 col-md-3">
+
+                                <div class="border rounded p-3 h-100">
+
+                                    <small class="text-muted d-block">
+                                        Litres
+                                    </small>
+
+                                    <strong>
+                                        {{ vehicule.total_litres_gasoil|floatformat:3 }} L
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-6 col-md-3">
+
+                                <div class="border rounded p-3 h-100">
+
+                                    <small class="text-muted d-block">
+                                        Réparations
+                                    </small>
+
+                                    <strong class="text-warning">
+                                        {{ vehicule.total_reparations|floatformat:2 }}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-6 col-md-3">
+
+                                <div class="border rounded p-3 h-100">
+
+                                    <small class="text-muted d-block">
+                                        Coût total
+                                    </small>
+
+                                    <strong class="text-danger">
+                                        {{ vehicule.cout_total|floatformat:2 }}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

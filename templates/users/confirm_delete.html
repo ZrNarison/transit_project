@@ -1,0 +1,76 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <div class="card shadow-sm">
+
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">
+                Confirmation de suppression
+            </h4>
+        </div>
+
+        <div class="card-body text-center">
+
+            <h3 class="text-danger mb-4">
+                Confirmation suppression
+            </h3>
+
+            <p>
+                Voulez-vous vraiment supprimer le compte utilisateur de :
+            </p>
+
+            <p>
+                <strong>
+                    {{ user.personnel.nom|upper }}
+                    {{ user.personnel.prenom|title }}
+                </strong>
+            </p>
+
+            <hr>
+
+            <p>
+                Nom utilisateur :
+                <strong>{{ user.username }}</strong>
+            </p>
+
+            <p>
+                Email :
+                <strong>{{ user.email }}</strong>
+            </p>
+
+            <p>
+                Créé le :
+                <strong>
+                    {{ user.date_creation|date:"d/m/Y H:i" }}
+                </strong>
+            </p>
+
+            <div class="mt-4">
+
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+
+                    <button type="submit"
+                            class="btn btn-danger">
+                        Oui, supprimer
+                    </button>
+                </form>
+
+                <a href="{% url 'users:users_list' %}"
+                   class="btn btn-secondary">
+                    Annuler
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Sélection du projet{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+<!-- ============================================================
+     EN-TÊTE
+============================================================ -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2 class="fw-bold mb-1">
+            <i class="fas fa-chart-line me-2"></i>
+            Rapports des projets
+        </h2>
+
+        <p class="text-muted mb-0">
+            Sélectionnez un projet pour consulter son rapport global.
+        </p>
+    </div>
+
+    <div class="mt-3 mt-md-0">
+        <a href="{% url 'projet:projet_list' %}"
+           class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour aux projets
+        </a>
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     MESSAGE
+============================================================ -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+             role="alert">
+
+            <i class="fas fa-info-circle me-2"></i>
+            {{ message }}
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Fermer">
+            </button>
+
+        </div>
+    {% endfor %}
+{% endif %}
+
+
+<!-- ============================================================
+     LISTE DES PROJETS
+============================================================ -->
+<div class="card shadow-sm border-0">
+
+    <div class="card-header bg-dark text-white">
+        <div class="d-flex justify-content-between align-items-center">
+
+            <span class="fw-bold">
+                <i class="fas fa-folder-open me-2"></i>
+                Projets disponibles
+            </span>
+
+            {% if projets %}
+                <span class="badge bg-light text-dark">
+                    {{ projets|length }} projet{{ projets|length|pluralize }}
+                </span>
+            {% endif %}
+
+        </div>
+    </div>
+
+
+    <div class="card-body">
+
+        {% if projets %}
+
+            <div class="row g-4">
+
+                {% for projet in projets %}
+
+                    <div class="col-12 col-md-6 col-xl-4">
+
+                        <div class="card h-100 border shadow-sm">
+
+                            <div class="card-body">
+
+                                <!-- TITRE -->
+                                <h5 class="card-title fw-bold mb-3">
+
+                                    <i class="fas fa-building text-primary me-2"></i>
+
+                                    {{ projet.titre|title }}
+
+                                </h5>
+
+
+                                <!-- LOCALISATION -->
+                                {% if projet.localisation %}
+                                    <div class="mb-2">
+
+                                        <i class="fas fa-map-marker-alt text-danger me-2"></i>
+
+                                        <strong>Localisation :</strong>
+
+                                        {{ projet.localisation|upper }}
+
+                                    </div>
+                                {% endif %}
+
+
+                                <!-- DATE DÉBUT -->
+                                {% if projet.datedebut %}
+                                    <div class="mb-2">
+
+                                        <i class="fas fa-calendar-alt text-success me-2"></i>
+
+                                        <strong>Début :</strong>
+
+                                        {{ projet.datedebut|date:"d/m/Y" }}
+
+                                    </div>
+                                {% endif %}
+
+
+                                <!-- DATE FIN -->
+                                {% if projet.datefin %}
+                                    <div class="mb-2">
+
+                                        <i class="fas fa-calendar-check text-warning me-2"></i>
+
+                                        <strong>Fin :</strong>
+
+                                        {{ projet.datefin|date:"d/m/Y" }}
+
+                                    </div>
+                                {% endif %}
+
+
+                                <!-- STATUT -->
+                                {% if projet.statut %}
+
+                                    <div class="mb-3">
+
+                                        <i class="fas fa-info-circle text-info me-2"></i>
+
+                                        <strong>Statut :</strong>
+
+                                        {% if projet.statut == "TERMINE" %}
+                                            <span class="badge bg-success">
+                                                Terminé
+                                            </span>
+
+                                        {% elif projet.statut == "EN_COURS" %}
+                                            <span class="badge bg-primary">
+                                                En cours
+                                            </span>
+
+                                        {% elif projet.statut == "PLANIFIE" %}
+                                            <span class="badge bg-secondary">
+                                                Planifié
+                                            </span>
+
+                                        {% elif projet.statut == "SUSPENDU" %}
+                                            <span class="badge bg-warning text-dark">
+                                                Suspendu
+                                            </span>
+
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                {{ projet.statut }}
+                                            </span>
+                                        {% endif %}
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <!-- OBSERVATION -->
+                                {% if projet.observation %}
+
+                                    <div class="small text-muted mb-3">
+
+                                        <i class="fas fa-comment-alt me-1"></i>
+
+                                        {{ projet.observation|truncatechars:120 }}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+
+                            <!-- ACTIONS -->
+                            <div class="card-footer bg-white border-0 pb-3">
+
+                                <div class="d-grid gap-2">
+
+                                    <a href="{% url 'projet:rapport_global' projet.id %}"
+                                       class="btn btn-primary">
+
+                                        <i class="fas fa-chart-bar me-1"></i>
+
+                                        Voir le rapport global
+
+                                    </a>
+
+
+                                    <a href="{% url 'projet:projet_detail' projet.id %}"
+                                       class="btn btn-outline-secondary">
+
+                                        <i class="fas fa-eye me-1"></i>
+
+                                        Détails du projet
+
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <!-- ====================================================
+                 AUCUN PROJET
+            ==================================================== -->
+
+            <div class="text-center py-5">
+
+                <div class="mb-3">
+                    <i class="fas fa-folder-open fa-4x text-muted"></i>
+                </div>
+
+                <h5 class="fw-bold">
+                    Aucun projet disponible
+                </h5>
+
+                <p class="text-muted">
+                    Aucun projet n'est actuellement disponible
+                    pour consulter les rapports.
+                </p>
+
+                <a href="{% url 'projet:projet_create' %}"
+                   class="btn btn-success">
+
+                    <i class="fas fa-plus me-1"></i>
+
+                    Créer un projet
+
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

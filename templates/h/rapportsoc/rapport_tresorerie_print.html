@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+    {% load humanize %}
+
+    <style>
+
+        /* =====================================================
+           PAGE
+           ===================================================== */
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: white;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .print-container {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+
+        /* =====================================================
+           EN-TÊTE
+           ===================================================== */
+
+        .print-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .print-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .print-header p {
+            margin: 3px 0;
+            font-size: 11px;
+        }
+
+
+        /* =====================================================
+           TABLEAU
+           ===================================================== */
+
+        .rapport-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 10px;
+        }
+
+        .rapport-table th,
+        .rapport-table td {
+            border: 1px solid #000;
+            padding: 4px;
+            vertical-align: middle;
+            word-wrap: break-word;
+        }
+
+        .rapport-table thead th {
+            background: #ddd;
+            color: #000;
+            text-align: center;
+            font-weight: bold;
+        }
+
+
+        /* =====================================================
+           LARGEUR DES COLONNES
+           ===================================================== */
+
+        .date-column {
+            width: 9%;
+        }
+
+        .piece-column {
+            width: 14%;
+        }
+
+        .description-column {
+            width: 14%;
+        }
+
+        .titre-column {
+            width: 18%;
+        }
+
+        .montant-column {
+            width: 11.25%;
+        }
+
+
+        /* =====================================================
+           CONTENU
+           ===================================================== */
+
+        .operation-item {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .operation-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .amount {
+            text-align: right;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+
+        /* =====================================================
+           REPORT
+           ===================================================== */
+
+        .report-row {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+
+        /* =====================================================
+           TOTAUX
+           ===================================================== */
+
+        .total-row {
+            background: #e9ecef;
+            font-weight: bold;
+        }
+
+        .final-balance-row {
+            background: #dee2e6;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+
+        /* =====================================================
+           PIED DE PAGE
+           ===================================================== */
+
+        .print-footer {
+            margin-top: 20px;
+            font-size: 11px;
+        }
+
+        .signature {
+            width: 250px;
+            margin-left: auto;
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .signature-line {
+            margin-top: 40px;
+            border-top: 1px solid #000;
+        }
+
+
+        /* =====================================================
+           IMPRESSION A4 PAYSAGE
+           ===================================================== */
+
+        @media print {
+
+            @page {
+                size: A4 landscape;
+                margin: 8mm;
+            }
+
+            html,
+            body {
+                width: 297mm;
+                min-height: 210mm;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+
+            .print-container {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .rapport-table {
+                width: 100% !important;
+                font-size: 9px;
+            }
+
+            .rapport-table th,
+            .rapport-table td {
+                padding: 3px !important;
+            }
+
+            .rapport-table thead th {
+                background: #ddd !important;
+                color: #000 !important;
+
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .report-row,
+            .total-row,
+            .final-balance-row {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="print-container">
+
+
+    <!-- =====================================================
+         EN-TÊTE
+         ===================================================== -->
+
+    <div class="print-header">
+
+        <h2>
+            RAPPORT DE TRÉSORERIE SOCIÉTÉ DE CONSTRUCTION
+        </h2>
+
+        {% if date_debut or date_fin %}
+
+            <p>
+
+                Période :
+
+                <strong>
+
+                    {% if date_debut %}
+
+                        {{ date_debut_affichage }}
+
+                    {% else %}
+
+                        Début
+
+                    {% endif %}
+
+                    -
+
+                    {% if date_fin %}
+
+                        {{ date_fin_affichage }}
+
+                    {% else %}
+
+                        Aujourd'hui
+
+                    {% endif %}
+
+                </strong>
+
+            </p>
+
+        {% endif %}
+
+        <p>
+
+            Imprimé le :
+
+            <strong>
+                {% now "d/m/Y H:i" %}
+            </strong>
+
+        </p>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLEAU
+         ===================================================== -->
+
+    <table class="rapport-table">
+
+        <thead>
+
+            <tr>
+
+                <th class="date-column">
+                    DATE
+                </th>
+
+                <th class="piece-column">
+                    N° DE PIÈCE
+                </th>
+
+                <th class="description-column">
+                    DESCRIPTION
+                </th>
+
+                <th class="titre-column">
+                    TITRE
+                </th>
+
+                <th class="montant-column">
+                    DÉPÔTS (Ar)
+                </th>
+
+                <th class="montant-column">
+                    RECETTES (Ar)
+                </th>
+
+                <th class="montant-column">
+                    DÉPENSES (Ar)
+                </th>
+
+                <th class="montant-column">
+                    SOLDE (Ar)
+                </th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody>
+
+
+            <!-- =================================================
+                 REPORT
+                 ================================================= -->
+
+            {% if date_debut %}
+
+                <tr class="report-row">
+
+                    <td colspan="7">
+
+                        <strong>
+                            REPORT AU {{ date_debut_affichage }}
+                        </strong>
+
+                    </td>
+
+                    <td class="amount">
+
+                        {{ solde_report|intcomma }}
+
+                    </td>
+
+                </tr>
+
+            {% endif %}
+
+
+            <!-- =================================================
+                 OPÉRATIONS
+                 ================================================= -->
+
+            {% for operation in operations %}
+
+                <tr>
+
+
+                    <!-- DATE -->
+
+                    <td class="center">
+
+                        <strong>
+                            {{ operation.date|date:"d/m/Y" }}
+                        </strong>
+
+                    </td>
+
+
+                    <!-- PIÈCES -->
+
+                    <td class="center">
+
+                        {% for piece in operation.pieces %}
+
+                            <span class="operation-item">
+                                {{ piece }}
+                            </span>
+
+                        {% endfor %}
+
+                    </td>
+
+
+                    <!-- DESCRIPTION -->
+
+                    <td>
+
+                        {% for description in operation.descriptions %}
+
+                            <span class="operation-item">
+                                {{ description }}
+                            </span>
+
+                        {% empty %}
+
+                            —
+
+                        {% endfor %}
+
+                    </td>
+
+
+                    <!-- TITRE -->
+
+                    <td>
+
+                        {% for titre in operation.titres %}
+
+                            <span class="operation-item">
+                                {{ titre|title }}
+                            </span>
+
+                        {% empty %}
+
+                            —
+
+                        {% endfor %}
+
+                    </td>
+
+
+                    <!-- DÉPÔTS -->
+
+                    <td class="amount">
+
+                        {% if operation.depot %}
+
+                            {{ operation.depot|intcomma }}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- RECETTES -->
+
+                    <td class="amount">
+
+                        {% if operation.recette %}
+
+                            {{ operation.recette|intcomma }}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- DÉPENSES -->
+
+                    <td class="amount">
+
+                        {% if operation.depense %}
+
+                            {{ operation.depense|intcomma }}
+
+                        {% else %}
+
+                            —
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- SOLDE -->
+
+                    <td class="amount">
+
+                        {{ operation.solde|intcomma }}
+
+                    </td>
+
+                </tr>
+
+
+            {% empty %}
+
+                <tr>
+
+                    <td
+                        colspan="8"
+                        class="center"
+                    >
+
+                        Aucune opération trouvée
+                        pour la période sélectionnée.
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+
+        <!-- =====================================================
+             TOTAUX
+             ===================================================== -->
+
+        <tfoot>
+
+            <tr class="total-row">
+
+                <th
+                    colspan="4"
+                    style="text-align:right;"
+                >
+                    TOTAL
+                </th>
+
+                <th class="amount">
+                    {{ total_depots|intcomma }}
+                </th>
+
+                <th class="amount">
+                    {{ total_recettes|intcomma }}
+                </th>
+
+                <th class="amount">
+                    {{ total_depenses|intcomma }}
+                </th>
+
+                <th class="amount">
+                    {{ solde_final|intcomma }}
+                </th>
+
+            </tr>
+
+
+            <!-- =================================================
+                 SOLDE FINAL
+                 ================================================= -->
+
+            <tr class="final-balance-row">
+
+                <th
+                    colspan="7"
+                    style="text-align:right;"
+                >
+
+                    SOLDE FINAL
+                    (en Ariary)
+
+                </th>
+
+                <th class="amount">
+
+                    {{ solde_final|intcomma }}
+
+                </th>
+
+            </tr>
+
+        </tfoot>
+
+    </table>
+
+
+    <!-- =====================================================
+         INFORMATIONS
+         ===================================================== -->
+
+    <div class="print-footer">
+
+        <div>
+
+            {{ nombre_jours }}
+            jour(s)
+
+            regroupant
+
+            {{ nombre_operations }}
+            opération(s).
+
+        </div>
+
+
+        <!-- =================================================
+             SIGNATURE
+             ================================================= -->
+
+        <div class="signature">
+            <div>Fait à ................, le {% now "d/m/Y" %}</div>
+
+            <div>Responsable</div>
+
+            <div class="signature-line"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     IMPRESSION AUTOMATIQUE
+     ========================================================= -->
+
+<script>
+
+window.onload = function () {
+
+    setTimeout(function () {
+
+        window.print();
+
+    }, 500);
+
+};
+
+
+window.onafterprint = function () {
+
+    setTimeout(function () {
+
+        window.close();
+
+    }, 500);
+
+};
+
+</script>
+
+
+</body>
+
+</html>

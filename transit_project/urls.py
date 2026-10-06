@@ -1,0 +1,37 @@
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('', include('clients.urls')),
+    path("projets/",include("projet.urls"),),
+    path('avances/', include('avances.urls')),
+    path('entretien/', include('entretien.urls')),
+    path('personnel/', include('personnel.urls')),
+    path('transentrant/', include('transentrant.urls')),
+    path('produit/', include('produit.urls')),
+    path('admin/', admin.site.urls),
+    path('materiels/', include('materiels.urls')),
+    path('materielsort/', include('materielsort.urls')),
+    path('materielEntre/', include('materielEntre.urls')),
+    path('vehicule/sortant/', include(('vehiculesortant.urls', 'vehiculesortant'), namespace='vehiculesortant')),
+    path('depense/', include(('depense.urls', 'depense'), namespace='depense')),
+    path('depotEntreprise/', include(('depotEntreprise.urls', 'depotEntreprise'), namespace='depotEntreprise')),
+    path('depot/', include(('depot.urls', 'depot'), namespace='depot')),
+    path('depensesoc/', include(('depensesoc.urls', 'depensesoc'), namespace='depensesoc')),
+    path('recette/', include(('recette.urls', 'recette'),namespace='recette')),
+    path('salaire/', include(('salaire.urls', 'salaire'), namespace='salaire')),
+    path('users/', include(('users.urls', 'users'), namespace='users')),
+    path('categorie/', include(('categorie.urls', 'categorie'), namespace='categorie')),
+    path('retours/',include(('retours.urls', 'retours'), namespace='retours')),
+    path("audit/",include("audit.urls")),
+    path("logs/",include("logs.urls")),
+    path("rapports/",include("rapports.urls")),
+    path("avanceclient/",include("avanceclient.urls")),
+    path( "rapportsoc/", include( ("rapportsoc.urls", "rapportsoc"), namespace="rapportsoc" ) ),
+    path("materiaux/",include("materiaux.urls")),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

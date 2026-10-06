@@ -1,0 +1,13 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dépôt</title>
+</head>
+<body>
+    <h1>Détails du dépôt</h1>
+    <p><strong>Montant:</strong> {{ depot.montant }}</p>
+    <p><strong>Date:</strong> {{ depot.date }}</p>
+    <a href="{% url 'depotEntreprise:depot_list' %}">Retour à la liste</a>
+</body>
+</html>

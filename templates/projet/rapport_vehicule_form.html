@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Rapport véhicule{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-9">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-dark text-white">
+
+                    <h4 class="mb-0">
+
+                        <i class="fas fa-truck"></i>
+                        Rapport d'état du véhicule
+
+                    </h4>
+
+                </div>
+
+
+                <form method="post"
+                      enctype="multipart/form-data">
+
+                    {% csrf_token %}
+
+                    <div class="card-body">
+
+                        <div class="alert alert-info">
+
+                            <strong>Projet :</strong>
+                            {{ projet.titre }}
+
+                        </div>
+
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.vehicule.label }}
+                                </label>
+
+                                {{ form.vehicule }}
+
+                                {% for error in form.vehicule.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.date_rapport.label }}
+                                </label>
+
+                                {{ form.date_rapport }}
+
+                                {% for error in form.date_rapport.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.kilometrage.label }}
+                                </label>
+
+                                <div class="input-group">
+
+                                    {{ form.kilometrage }}
+
+                                    <span class="input-group-text">
+                                        km
+                                    </span>
+
+                                </div>
+
+                                {% for error in form.kilometrage.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.etat.label }}
+                                </label>
+
+                                {{ form.etat }}
+
+                                {% for error in form.etat.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.description.label }}
+                                </label>
+
+                                {{ form.description }}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.photo.label }}
+                                </label>
+
+                                {{ form.photo }}
+
+                                <div class="form-text">
+                                    Ajouter éventuellement une photo
+                                    de l'état du véhicule.
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.observation.label }}
+                                </label>
+
+                                {{ form.observation }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="card-footer bg-light d-flex justify-content-between">
+
+                        <a href="{% url 'projet:rapport_vehicule_list' projet.id %}"
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Annuler
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-dark">
+
+                            <i class="fas fa-save"></i>
+                            Enregistrer le rapport
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

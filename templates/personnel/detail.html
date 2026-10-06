@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Détail personnel</h3>
+    <div class="card">
+        <div class="card-body">
+            {% if personnel.photo %}
+            <img src="{{ personnel.photo.url }}" width="150"  class="mb-3 rounded float-end">
+            {% endif %}
+            <p>
+                <strong>Nom :</strong>
+                {{ personnel.nom |upper}}
+            </p>
+            <p>
+                <strong>Prénom :</strong>
+                {{ personnel.prenom }}
+            </p>
+            <p>
+                <strong>Fonction :</strong>
+                {{ personnel.fonction }}
+            </p>
+            <p>
+                <strong>Catégorie :</strong>
+                {% if personnel.categorie %}
+                {{ personnel.categorie.nom }}
+                {% else %}
+                -
+                {% endif %}
+            </p>
+            <p>
+                <strong>Téléphone :</strong>
+                {{ personnel.telephone }}
+            </p>
+            <p>
+                <strong>Salaire :</strong>
+                {{ personnel.psalaire }}
+            </p>
+            <p>
+                <strong>Date contrat :</strong>
+                {{ personnel.debutContrat|date:"d/m/Y" }}
+            </p>
+            <p>
+                <strong>Adresse :</strong>
+                {{ personnel.adresse|title }}
+            </p>
+            <a href="javascript:history.back();" class="btn btn-secondary">Retour</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

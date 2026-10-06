@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow-sm p-4">
+
+        <!-- =====================================================
+             TITRE
+             ===================================================== -->
+
+        <h3 class="text-center mb-4 text-uppercase">
+
+            {% if form.instance.id %}
+                <span class="text-info">
+                    Modifier une entrée matériel
+                </span>
+            {% else %}
+                <span class="text-success">
+                    Ajouter une entrée matériel
+                </span>
+            {% endif %}
+
+        </h3>
+
+
+        <!-- =====================================================
+             ERREURS GENERALES DU FORMULAIRE
+             ===================================================== -->
+
+        {% if form.errors %}
+
+            <div class="alert alert-danger">
+
+                <strong>
+                    ❌ Impossible d'enregistrer.
+                </strong>
+
+                <div class="mt-2">
+
+                    {% for field in form %}
+
+                        {% for error in field.errors %}
+
+                            <div class="mb-1">
+                                <strong>
+                                    {{ field.label }} :
+                                </strong>
+
+                                {{ error }}
+                            </div>
+
+                        {% endfor %}
+
+                    {% endfor %}
+
+
+                    {% for error in form.non_field_errors %}
+
+                        <div class="mb-1">
+                            {{ error }}
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- =====================================================
+             FORMULAIRE
+             ===================================================== -->
+
+        <form method="post">
+
+            {% csrf_token %}
+
+
+            <div class="row">
+
+
+                <!-- =================================================
+                     COLONNE GAUCHE
+                     ================================================= -->
+
+                <div class="col-md-6">
+
+
+                    <!-- =============================================
+                         SORTIE LIEE
+                         ============================================= -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="{{ form.id_MaterielSort.id_for_label }}"
+                            class="form-label fw-bold"
+                        >
+                            Sortie liée
+                        </label>
+
+                        {{ form.id_MaterielSort }}
+
+                        {% if form.id_MaterielSort.errors %}
+
+                            <div class="text-danger mt-1">
+
+                                {{ form.id_MaterielSort.errors }}
+
+                            </div>
+
+                        {% endif %}
+
+                        <small class="text-muted">
+                            Sélectionnez la sortie de matériel concernée
+                            par cette entrée.
+                        </small>
+
+                    </div>
+
+
+                    <!-- =============================================
+                         QUANTITE
+                         ============================================= -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="{{ form.Nb_Entre.id_for_label }}"
+                            class="form-label fw-bold"
+                        >
+                            Quantité entrée
+                        </label>
+
+                        {{ form.Nb_Entre }}
+
+                        {% if form.Nb_Entre.errors %}
+
+                            <div class="text-danger mt-1">
+
+                                {{ form.Nb_Entre.errors }}
+
+                            </div>
+
+                        {% endif %}
+
+                        <small class="text-muted">
+                            La quantité doit être supérieure à 0.
+                        </small>
+
+                    </div>
+
+
+                    <!-- =============================================
+                         RESPONSABLE
+                         ============================================= -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="{{ form.responsable_entree.id_for_label }}"
+                            class="form-label fw-bold"
+                        >
+                            Responsable de l'entrée
+                        </label>
+
+                        {{ form.responsable_entree }}
+
+                        {% if form.responsable_entree.errors %}
+
+                            <div class="text-danger mt-1">
+
+                                {{ form.responsable_entree.errors }}
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- =============================================
+                         OBSERVATION
+                         ============================================= -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="{{ form.observation.id_for_label }}"
+                            class="form-label fw-bold"
+                        >
+                            Observation
+                            <small class="text-muted">
+                                (optionnel)
+                            </small>
+                        </label>
+
+                        {{ form.observation }}
+
+                        {% if form.observation.errors %}
+
+                            <div class="text-danger mt-1">
+
+                                {{ form.observation.errors }}
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     COLONNE DROITE
+                     ================================================= -->
+
+                <div class="col-md-6">
+
+
+                    <!-- =============================================
+                         DATE ENTREE
+                         ============================================= -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="{{ form.dateEntre.id_for_label }}"
+                            class="form-label fw-bold"
+                        >
+                            Date d'entrée
+                        </label>
+
+                        {{ form.dateEntre }}
+
+                        {% if form.dateEntre.errors %}
+
+                            <div class="text-danger mt-1">
+
+                                {{ form.dateEntre.errors }}
+
+                            </div>
+
+                        {% endif %}
+
+                        <small class="text-muted">
+
+                            La date doit être égale ou postérieure
+                            à la date de la sortie liée.
+
+                        </small>
+
+                    </div>
+
+
+                    <!-- =============================================
+                         INFORMATION
+                         ============================================= -->
+
+                    <div class="alert alert-info">
+
+                        <strong>
+                            ℹ Règle de date
+                        </strong>
+
+                        <p class="mb-0 mt-2">
+
+                            La date d'entrée ne peut pas être
+                            antérieure à la date de sortie.
+
+                        </p>
+
+                        <hr>
+
+                        <p class="mb-0">
+
+                            Exemple :
+
+                            <br>
+
+                            <strong>
+                                Sortie :
+                            </strong>
+                            05/09/2026
+
+                            <br>
+
+                            <strong>
+                                Entrée :
+                            </strong>
+                            05/09/2026
+                            → ✅ Autorisée
+
+                            <br>
+
+                            <strong>
+                                Entrée :
+                            </strong>
+                            06/09/2026
+                            → ✅ Autorisée
+
+                            <br>
+
+                            <strong>
+                                Entrée :
+                            </strong>
+                            04/09/2026
+                            → ❌ Refusée
+
+                        </p>
+
+                    </div>
+
+
+                    <!-- =============================================
+                         INFORMATION STOCK
+                         ============================================= -->
+
+                    <div class="alert alert-success">
+
+                        <strong>
+                            📦 Stock
+                        </strong>
+
+                        <p class="mb-0 mt-2">
+
+                            La quantité enregistrée sera ajoutée
+                            au stock restant du matériel.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <hr class="my-4">
+
+
+            <!-- =====================================================
+                 BOUTONS
+                 ===================================================== -->
+
+            <div class="d-flex justify-content-between">
+
+                <a
+                    href="{% url 'materielEntre:materielEntre_list' %}"
+                    class="btn btn-secondary"
+                >
+                    ← Retour
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-success"
+                >
+                    💾
+                    {% if form.instance.id %}
+                        Enregistrer les modifications
+                    {% else %}
+                        Enregistrer
+                    {% endif %}
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

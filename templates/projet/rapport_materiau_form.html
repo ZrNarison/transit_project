@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Rapport matériau{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-boxes-stacked"></i>Nouveau rapport matériau</h4>
+                </div>
+
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Projet :</strong>
+                            {{ projet.titre }}
+                        </div>
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.materiau.label }}
+                                </label>
+
+                                {{ form.materiau }}
+
+                                {% for error in form.materiau.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.quantite.label }}
+                                </label>
+
+                                {{ form.quantite }}
+
+                                {% for error in form.quantite.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.point.label }}
+                                </label>
+
+                                {{ form.point }}
+
+                                {% for error in form.point.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.point_ravitaillement.label }}
+                                </label>
+
+                                {{ form.point_ravitaillement }}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.date_ravitaillement.label }}
+                                </label>
+
+                                {{ form.date_ravitaillement }}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.observation.label }}
+                                </label>
+
+                                {{ form.observation }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="card-footer bg-light d-flex justify-content-between">
+
+                        <a href="{% url 'projet:rapport_materiau_list' projet.id %}"
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Annuler
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-success">
+                            <i class="fas fa-save"></i>
+                            Enregistrer
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

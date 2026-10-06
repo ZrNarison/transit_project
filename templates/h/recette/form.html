@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+
+<div class="card shadow-sm">
+
+    <div class="card-header bg-primary text-white">
+
+        <h4 class="mb-0">
+
+            {% if form.instance.id %}
+                Modifier une recette
+            {% else %}
+                Nouvelle recette
+            {% endif %}
+
+        </h4>
+
+    </div>
+
+    <div class="card-body">
+
+        <form method="post">
+
+            {% csrf_token %}
+
+            <!-- ============================= -->
+            <!-- ERREURS -->
+            <!-- ============================= -->
+
+            {% if form.errors %}
+
+                <div class="alert alert-danger">
+
+                    <strong>
+                        Veuillez corriger les erreurs suivantes :
+                    </strong>
+
+                    <ul class="mb-0 mt-2">
+
+                        {% for field in form %}
+
+                            {% for error in field.errors %}
+
+                                <li>
+                                    <strong>
+                                        {{ field.label }}
+                                    </strong>
+                                    :
+                                    {{ error }}
+                                </li>
+
+                            {% endfor %}
+
+                        {% endfor %}
+
+                        {% for error in form.non_field_errors %}
+
+                            <li>{{ error }}</li>
+
+                        {% endfor %}
+
+                    </ul>
+
+                </div>
+
+            {% endif %}
+
+
+            <div class="row">
+
+                <!-- ============================= -->
+                <!-- FORMULAIRE -->
+                <!-- ============================= -->
+
+                <div class="col-md-8">
+
+                    <!-- MONTANT -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            {{ form.montant.label }}
+                        </label>
+
+                        {{ form.montant }}
+
+                    </div>
+
+
+                    <!-- TYPE DE VIREMENT -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            {{ form.type_virement.label }}
+                        </label>
+
+                        {{ form.type_virement }}
+
+                    </div>
+
+
+                    <!-- DATE -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            {{ form.date.label }}
+                        </label>
+
+                        {{ form.date }}
+
+                    </div>
+
+
+                    <!-- SOURCE -->
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            {{ form.source.label }}
+                        </label>
+
+                        {{ form.source }}
+
+                    </div>
+
+                </div>
+
+
+                <!-- ============================= -->
+                <!-- RESUME -->
+                <!-- ============================= -->
+
+                <div class="col-md-4">
+
+                    <div class="card bg-light">
+
+                        <div class="card-header">
+                            <strong>Résumé</strong>
+                        </div>
+
+                        <div class="card-body">
+
+                            <p>
+                                <strong>Montant :</strong>
+                                <br>
+
+                                {{ form.montant.value|default:"0" }} Ar
+                            </p>
+
+
+                            <p>
+                                <strong>Type de virement :</strong>
+                                <br>
+
+                                {% if form.instance.id %}
+                                    {{ form.instance.get_type_virement_display }}
+                                {% else %}
+                                    {{ form.type_virement.value|default:"-" }}
+                                {% endif %}
+                            </p>
+
+
+                            <p>
+                                <strong>Date :</strong>
+                                <br>
+
+                                {% if form.instance.id %}
+                                    {{ form.instance.date|date:"d/m/Y" }}
+                                {% else %}
+                                    {{ form.date.value|default:"-" }}
+                                {% endif %}
+                            </p>
+
+
+                            <p>
+                                <strong>Source :</strong>
+                                <br>
+
+                                {{ form.source.value|default:"-" }}
+                            </p>
+
+
+                            {% if form.instance.id and form.instance.enregistreur %}
+
+                                <p>
+                                    <strong>Enregistreur :</strong>
+                                    <br>
+
+                                    {{ form.instance.enregistreur }}
+                                </p>
+
+                            {% endif %}
+
+
+                            {% if form.instance.id %}
+
+                                <p>
+                                    <strong>Enregistrée le :</strong>
+                                    <br>
+
+                                    {{ form.instance.date_enregistrement|date:"d/m/Y H:i" }}
+                                </p>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <hr>
+
+
+            <!-- ============================= -->
+            <!-- BOUTONS -->
+            <!-- ============================= -->
+
+            <div class="d-flex justify-content-end gap-2">
+
+                <button
+                    type="submit"
+                    class="btn btn-success">
+
+                    💾 Enregistrer
+
+                </button>
+
+
+                <a
+                    href="{% url 'recette:recette_list' %}"
+                    class="btn btn-secondary">
+
+                    ↩ Retour
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+</div>
+
+{% endblock %}

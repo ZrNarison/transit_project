@@ -1,0 +1,935 @@
+{% extends "base.html" %}
+
+{% block title %}
+Rapports du projet - {{ projet.titre }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- =========================================================
+         EN-TÊTE DU PROJET
+    ========================================================== -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Rapports du projet
+                    </h4>
+
+                    <div class="small">
+                        {{ projet.titre }}
+                    </div>
+                </div>
+
+                <div>
+                    {% if projet.statut == "PLANIFIE" %}
+                        <span class="badge bg-secondary">
+                            Planifié
+                        </span>
+                    {% elif projet.statut == "EN_COURS" %}
+                        <span class="badge bg-success">
+                            En cours
+                        </span>
+                    {% elif projet.statut == "TERMINE" %}
+                        <span class="badge bg-primary">
+                            Terminé
+                        </span>
+                    {% elif projet.statut == "SUSPENDU" %}
+                        <span class="badge bg-warning text-dark">
+                            Suspendu
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">
+                            <i class="fas fa-building me-1"></i>
+                            Projet
+                        </div>
+                        <div class="fw-bold">
+                            {{ projet.titre|title }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            Localisation
+                        </div>
+                        <div class="fw-bold">
+                            {{ projet.localisation|upper }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            Début
+                        </div>
+                        <div class="fw-bold">
+                            {{ projet.date_debut|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">
+                            <i class="fas fa-calendar-check me-1"></i>
+                            Fin
+                        </div>
+                        <div class="fw-bold">
+                            {{ projet.date_fin|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row g-3 mt-1">
+
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            Budget prévisionnel
+                        </div>
+
+                        <div class="fw-bold text-success">
+                            {{ projet.budget_previsionnel|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">
+                            <i class="fas fa-clock me-1"></i>
+                            Jours restants
+                        </div>
+
+                        <div class="fw-bold">
+                            {{ projet.jours_restants }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Observation
+                        </div>
+
+                        <div>
+                            {% if projet.observation %}
+                                {{ projet.observation }}
+                            {% else %}
+                                <span class="text-muted">
+                                    Aucune observation
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- =========================================================
+         STATISTIQUES
+    ========================================================== -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-muted small">
+                                Rapports projet
+                            </div>
+
+                            <h3 class="mb-0">
+                                {{ rapports_projet|length }}
+                            </h3>
+                        </div>
+
+                        <i class="fas fa-file-alt fa-2x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-muted small">
+                                Travaux
+                            </div>
+
+                            <h3 class="mb-0">
+                                {{ rapports_travaux|length }}
+                            </h3>
+                        </div>
+
+                        <i class="fas fa-hard-hat fa-2x text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-muted small">
+                                Matériaux
+                            </div>
+
+                            <h3 class="mb-0">
+                                {{ rapports_materiaux|length }}
+                            </h3>
+                        </div>
+
+                        <i class="fas fa-boxes fa-2x text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-muted small">
+                                Véhicules
+                            </div>
+
+                            <h3 class="mb-0">
+                                {{ rapports_vehicules|length }}
+                            </h3>
+                        </div>
+
+                        <i class="fas fa-truck fa-2x text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         RAPPORTS DU PROJET / INGÉNIEUR
+    ========================================================== -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-primary text-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Rapports d'avancement
+                </h5>
+
+                <a href="{% url 'projet:rapport_projet_create' projet.id %}"
+                   class="btn btn-light btn-sm">
+
+                    <i class="fas fa-plus me-1"></i>
+                    Nouveau rapport
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            {% if rapports_projet %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover table-striped mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+                                <th>Date</th>
+                                <th>Titre</th>
+                                <th>Auteur</th>
+                                <th>Avancement</th>
+                                <th>Travaux réalisés</th>
+                                <th>Plan d'action</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for rapport in rapports_projet %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ rapport.date_rapport|date:"d/m/Y" }}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            {{ rapport.titre }}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        {{ rapport.auteur }}
+                                    </td>
+
+                                    <td style="min-width:150px;">
+
+                                        <div class="progress"
+                                             role="progressbar"
+                                             aria-valuenow="{{ rapport.avancement }}"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+
+                                            <div class="progress-bar"
+                                                 style="width: {{ rapport.avancement }}%;">
+
+                                                {{ rapport.avancement }} %
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+                                    <td>
+                                        {% if rapport.travaux_realises %}
+                                            {{ rapport.travaux_realises|truncatechars:100 }}
+                                        {% else %}
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {% if rapport.actions_planifiees %}
+                                            {{ rapport.actions_planifiees|truncatechars:100 }}
+                                        {% else %}
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="text-center text-muted py-4">
+
+                    <i class="fas fa-file-alt fa-2x mb-2"></i>
+
+                    <p class="mb-0">
+                        Aucun rapport d'avancement enregistré.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         RAPPORTS DE TRAVAUX
+    ========================================================== -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-warning">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <h5 class="mb-0">
+
+                    <i class="fas fa-hard-hat me-2"></i>
+                    Rapports de travaux
+
+                </h5>
+
+                <a href="{% url 'projet:rapport_travail_create' projet.id %}"
+                   class="btn btn-dark btn-sm">
+
+                    <i class="fas fa-plus me-1"></i>
+                    Nouveau travail
+
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            {% if rapports_travaux %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover table-striped mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+                                <th>Date début</th>
+                                <th>Titres</th>
+                                <th>Point</th>
+                                <th>Localisation</th>
+                                <th>Date fin</th>
+                                <th>Auteur</th>
+                                <th>Description</th>
+                                <th>Photo</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for rapport in rapports_travaux %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ rapport.date_debut|date:"d/m/Y" }}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            {{ rapport.titre }}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        {% if rapport.point %}
+                                            <span class="badge bg-info text-dark">
+                                                {{ rapport.point.code }}
+                                            </span>
+                                            {{ rapport.point.nom }}
+                                        {% else %}
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {{ rapport.localisation|default:"—" }}
+                                    </td>
+
+                                    <td>
+                                        {% if rapport.date_fin %}
+                                            {{ rapport.date_fin|date:"d/m/Y" }}
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">
+                                                En cours
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        {{ rapport.auteur }}
+                                    </td>
+
+                                    <td>
+                                        {% if rapport.description %}
+                                            {{ rapport.description|truncatechars:100 }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+
+                                        {% if rapport.photo %}
+
+                                            <a href="{{ rapport.photo.url }}"
+                                               target="_blank">
+
+                                                <img src="{{ rapport.photo.url }}"
+                                                     alt="Photo"
+                                                     style="width:60px;height:60px;object-fit:cover;"
+                                                     class="rounded border">
+
+                                            </a>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="text-center text-muted py-4">
+
+                    <i class="fas fa-hard-hat fa-2x mb-2"></i>
+
+                    <p class="mb-0">
+                        Aucun rapport de travail enregistré.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         RAPPORTS MATÉRIAUX
+    ========================================================== -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-success text-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <h5 class="mb-0">
+
+                    <i class="fas fa-boxes me-2"></i>
+                    Rapports matériaux
+
+                </h5>
+
+                <a href="{% url 'projet:rapport_materiau_create' projet.id %}"
+                   class="btn btn-light btn-sm">
+
+                    <i class="fas fa-plus me-1"></i>
+                    Nouveau matériau
+
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            {% if rapports_materiaux %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover table-striped mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+                                <th>Date</th>
+                                <th>Matériau</th>
+                                <th>Quantité</th>
+                                <th>Point</th>
+                                <th>Ravitaillement</th>
+                                <th>Auteur</th>
+                                <th>Observation</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for rapport in rapports_materiaux %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ rapport.date_ravitaillement|date:"d/m/Y" }}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            {{ rapport.materiau }}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-success">
+                                            {{ rapport.quantite }}
+                                        </span>
+                                    </td>
+
+                                    <td>
+
+                                        {% if rapport.point %}
+
+                                            <span class="badge bg-info text-dark">
+                                                {{ rapport.point.code }}
+                                            </span>
+
+                                            {{ rapport.point.nom }}
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td>
+                                        {{ rapport.point_ravitaillement }}
+                                    </td>
+
+                                    <td>
+                                        {{ rapport.auteur }}
+                                    </td>
+
+                                    <td>
+                                        {{ rapport.observation|default:"—" }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="text-center text-muted py-4">
+
+                    <i class="fas fa-box-open fa-2x mb-2"></i>
+
+                    <p class="mb-0">
+                        Aucun rapport de matériau enregistré.
+                    </p>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         RAPPORTS VÉHICULES
+    ========================================================== -->
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-danger text-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <h5 class="mb-0">
+
+                    <i class="fas fa-truck me-2"></i>
+                    Véhicules du projet
+
+                </h5>
+
+                <a href="{% url 'projet:rapport_vehicule_create' projet.id %}"
+                   class="btn btn-light btn-sm">
+
+                    <i class="fas fa-plus me-1"></i>
+                    Nouveau rapport véhicule
+
+                </a>
+
+            </div>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            {% if rapports_vehicules %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover table-striped mb-0">
+
+                        <thead class="table-dark">
+
+                            <tr>
+
+                                <th>Date</th>
+
+                                <th>Véhicule</th>
+
+                                <th>Chauffeur</th>
+
+                                <th>Kilométrage</th>
+
+                                <th>État</th>
+
+                                <th>Description</th>
+
+                                <th>Photo</th>
+
+                                <th>Observation</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for rapport in rapports_vehicules %}
+
+                                <tr>
+
+                                    <!-- DATE -->
+                                    <td>
+                                        {{ rapport.date_rapport|date:"d/m/Y" }}
+                                    </td>
+
+                                    <!-- VEHICULE -->
+                                    <td>
+
+                                        <div class="fw-bold">
+
+                                            <i class="fas fa-truck text-danger me-1"></i>
+
+                                            {{ rapport.vehicule }}
+
+                                        </div>
+
+                                    </td>
+
+                                    <!-- CHAUFFEUR -->
+                                    <td>
+
+                                        <i class="fas fa-user me-1"></i>
+
+                                        {{ rapport.chauffeur }}
+
+                                    </td>
+
+                                    <!-- KILOMETRAGE -->
+                                    <td>
+
+                                        <span class="badge bg-primary">
+
+                                            {{ rapport.kilometrage|floatformat:2 }} km
+
+                                        </span>
+
+                                    </td>
+
+                                    <!-- ETAT -->
+                                    <td>
+
+                                        {% if rapport.etat %}
+
+                                            <span class="badge bg-success">
+
+                                                {{ rapport.etat }}
+
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <!-- DESCRIPTION -->
+                                    <td>
+
+                                        {% if rapport.description %}
+
+                                            {{ rapport.description|truncatechars:100 }}
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <!-- PHOTO -->
+                                    <td>
+
+                                        {% if rapport.photo %}
+
+                                            <a href="{{ rapport.photo.url }}"
+                                               target="_blank">
+
+                                                <img src="{{ rapport.photo.url }}"
+                                                     alt="Photo véhicule"
+                                                     class="rounded border"
+                                                     style="
+                                                        width:70px;
+                                                        height:70px;
+                                                        object-fit:cover;
+                                                     ">
+
+                                            </a>
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <!-- OBSERVATION -->
+                                    <td>
+
+                                        {% if rapport.observation %}
+
+                                            {{ rapport.observation|truncatechars:100 }}
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="text-center py-5 text-muted">
+
+                    <i class="fas fa-truck fa-3x mb-3"></i>
+
+                    <h5>
+                        Aucun rapport véhicule
+                    </h5>
+
+                    <p class="mb-3">
+                        Aucun véhicule n'a encore été enregistré dans les rapports
+                        de ce projet.
+                    </p>
+
+                    <a href="{% url 'projet:rapport_vehicule_create' projet.id %}"
+                       class="btn btn-danger">
+
+                        <i class="fas fa-plus me-1"></i>
+
+                        Ajouter un rapport véhicule
+
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         NAVIGATION
+    ========================================================== -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+
+        <a href="{% url 'projet:projet_detail' projet.id %}"
+           class="btn btn-secondary">
+
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour au projet
+
+        </a>
+
+        <a href="{% url 'projet:equipe_list' projet.id %}"
+           class="btn btn-outline-primary">
+
+            <i class="fas fa-users me-1"></i>
+            Équipe
+
+        </a>
+
+        <a href="{% url 'projet:point_list' projet.id %}"
+           class="btn btn-outline-info">
+
+            <i class="fas fa-map-marker-alt me-1"></i>
+            Points de chantier
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

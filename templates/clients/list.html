@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow-sm p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+                <h3 class="mb-1">Liste des clients</h3>
+                <p class="text-muted mb-0">Gestion des clients</p>
+            </div>
+
+            <a href="{% url 'clients:client_add' %}"
+            class="btn btn-primary">
+                + Nouveau client
+            </a>
+
+        </div>
+
+
+        <!-- ============================================================
+            RECHERCHE
+        ============================================================ -->
+        <form method="get" class="row g-3 mb-4">
+
+            <div class="col-md-3">
+                <label class="form-label">Nom</label>
+
+                <input type="text"
+                    name="nom"
+                    value="{{ nom }}"
+                    class="form-control"
+                    placeholder="Nom">
+            </div>
+
+
+            <div class="col-md-3">
+                <label class="form-label">Prénom</label>
+
+                <input type="text"
+                    name="prenom"
+                    value="{{ prenom }}"
+                    class="form-control"
+                    placeholder="Prénom">
+            </div>
+
+
+            <div class="col-md-3">
+                <label class="form-label">Contact</label>
+
+                <input type="text"
+                    name="contact"
+                    value="{{ contact }}"
+                    class="form-control"
+                    placeholder="Contact">
+            </div>
+
+
+            <div class="col-md-3 d-flex align-items-end gap-2">
+
+                <button type="submit"
+                        class="btn btn-outline-primary w-100">
+                    🔍 Rechercher
+                </button>
+
+                <a href="{% url 'clients:client_list' %}"
+                class="btn btn-secondary w-100">
+                    Reset
+                </a>
+
+            </div>
+
+        </form>
+
+
+        <!-- ============================================================
+            LISTE DES CLIENTS
+        ============================================================ -->
+        <div class="row">
+
+            {% for client in clients %}
+
+            <div class="col-md-2 mb-3">
+
+                <div class="card shadow-sm h-100">
+
+                    <!-- PHOTO -->
+                    {% if client.photo %}
+
+                        <img src="{{ client.photo.url }}"
+                            class="card-img-top"
+                            alt="{{ client.nom }}"
+                            style="height:100px;
+                                    width:100%;
+                                    object-fit:cover;">
+
+                    {% else %}
+
+                        <img src="{% static 'images/default.png' %}"
+                            class="card-img-top"
+                            alt="Photo par défaut"
+                            style="height:100px;
+                                    width:100%;
+                                    object-fit:cover;">
+
+                    {% endif %}
+
+
+                    <!-- INFORMATIONS -->
+                    <div class="card-body">
+
+                        <span class="badge bg-primary">
+                            {{ client.nom|upper }}
+                            {{ client.prenom|title }}
+                        </span>
+
+                        <p class="mt-2 mb-0">
+                            📞 {{ client.contact }}
+                        </p>
+
+                    </div>
+
+
+                    <!-- ====================================================
+                        ACTIONS
+                    ==================================================== -->
+                    <div class="d-flex justify-content-between p-2">
+
+                        <!-- DÉTAIL -->
+                        <a href="{% url 'clients:client_detail' client.id %}"
+                        class="btn btn-info btn-sm"
+                        title="Voir le client">
+                            👁
+                        </a>
+
+
+                        {% if client.enregistre_par_id|stringformat:"s" == request.session.user_id|stringformat:"s" %}
+
+                            <!-- MODIFIER -->
+                            <a href="{% url 'clients:client_edit' client.id %}"
+                            class="btn btn-warning btn-sm"
+                            title="Modifier">
+                                ✏
+                            </a>
+
+
+                            <!-- =================================================
+                                BOUTON SUPPRESSION
+                            ================================================= -->
+                            <button type="button"
+                                    class="btn btn-danger btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteClient{{ client.id }}"
+                                    title="Supprimer">
+                                🗑
+                            </button>
+
+
+                            <!-- =================================================
+                                MODAL CONFIRMATION
+                            ================================================= -->
+                            <div class="modal fade"
+                                id="deleteClient{{ client.id }}"
+                                tabindex="-1"
+                                aria-hidden="true">
+
+                                <div class="modal-dialog modal-dialog-centered">
+
+                                    <div class="modal-content">
+
+                                        <!-- HEADER -->
+                                        <div class="modal-header">
+
+                                            <h5 class="modal-title text-danger">
+                                                Confirmation suppression
+                                            </h5>
+
+                                            <button type="button"
+                                                    class="btn-close"
+                                                    data-bs-dismiss="modal">
+                                            </button>
+
+                                        </div>
+
+
+                                        <!-- BODY -->
+                                        <div class="modal-body">
+
+                                            <p class="mb-2">
+                                                Voulez-vous vraiment supprimer
+                                                ce client ?
+                                            </p>
+
+                                            <div class="alert alert-warning mb-0">
+
+                                                <strong>
+                                                    {{ client.nom|upper }}
+                                                    {{ client.prenom|title }}
+                                                </strong>
+
+                                                <br>
+
+                                                📞 {{ client.contact }}
+
+                                            </div>
+
+                                            <p class="text-danger small mt-3 mb-0">
+                                                ⚠️ Cette action peut entraîner
+                                                la suppression des données
+                                                associées à ce client selon
+                                                la configuration de votre modèle.
+                                            </p>
+
+                                        </div>
+
+
+                                        <!-- FOOTER -->
+                                        <div class="modal-footer">
+
+                                            <button type="button"
+                                                    class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">
+                                                Annuler
+                                            </button>
+
+
+                                            <!-- SUPPRESSION POST -->
+                                            <form method="post"
+                                                action="{% url 'clients:client_delete' client.id %}">
+
+                                                {% csrf_token %}
+
+                                                <button type="submit"
+                                                        class="btn btn-danger">
+                                                    🗑 Supprimer
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        {% else %}
+
+                            <!-- CLIENT NON ENREGISTRÉ PAR L'UTILISATEUR -->
+                            <button class="btn btn-secondary btn-sm"
+                                    disabled
+                                    title="Vous n'êtes pas l'enregistreur">
+                                🔒
+                            </button>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% empty %}
+
+                <div class="col-12">
+
+                    <div class="alert alert-info text-center">
+                        Aucun client trouvé.
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- ============================================================
+            PAGINATION
+        ============================================================ -->
+        {% if page_obj.has_other_pages %}
+
+        <nav class="mt-4">
+
+            <ul class="pagination justify-content-center">
+
+                {% if page_obj.has_previous %}
+
+                    <li class="page-item">
+
+                        <a class="page-link"
+                        href="?page={{ page_obj.previous_page_number }}{% if nom %}&nom={{ nom }}{% endif %}{% if prenom %}&prenom={{ prenom }}{% endif %}{% if contact %}&contact={{ contact }}{% endif %}">
+                            ← Précédent
+                        </a>
+
+                    </li>
+
+                {% endif %}
+
+
+                {% for num in page_obj.paginator.page_range %}
+
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+
+                        <a class="page-link"
+                        href="?page={{ num }}{% if nom %}&nom={{ nom }}{% endif %}{% if prenom %}&prenom={{ prenom }}{% endif %}{% if contact %}&contact={{ contact }}{% endif %}">
+                            {{ num }}
+                        </a>
+
+                    </li>
+
+                {% endfor %}
+
+
+                {% if page_obj.has_next %}
+
+                    <li class="page-item">
+
+                        <a class="page-link"
+                        href="?page={{ page_obj.next_page_number }}{% if nom %}&nom={{ nom }}{% endif %}{% if prenom %}&prenom={{ prenom }}{% endif %}{% if contact %}&contact={{ contact }}{% endif %}">
+                            Suivant →
+                        </a>
+
+                    </li>
+
+                {% endif %}
+
+            </ul>
+
+        </nav>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

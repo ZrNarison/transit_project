@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h2>🚚 Déplacements véhicules</h2>
+{% if fonction_projet == "CHAUFFEUR" %}
+<a    href="{% url 'materiaux:activite_transport_add' %}"    class="btn btn-primary">    + Nouveau déplacement</a>
+{% endif %}
+
+
+</div>
+
+<!-- ==========================================================
+     TABLEAU
+=========================================================== -->
+
+<div class="card shadow-sm">
+<div class="card-header">
+    <strong>Registre des déplacements véhicules    </strong>
+</div>
+<div class="table-responsive">
+    <table class="table table-hover table-bordered align-middle mb-0">
+        <thead class="table-dark">
+            <tr>
+                <th>Date</th>
+                <th>N° Auto</th>
+                <th>Chauffeur</th>
+                <th>Mission</th>
+                <th>Départ</th>
+                <th>Destination</th>
+                <th>Personnel / Matériels / Matériaux</th>
+                <th>Nombre</th>
+                <th>Date enregistrement</th>
+                <th>Enregistreur</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for activite in activites %}
+            <tr>
+                <td class="text-nowrap">{{ activite.date_activite|date:"d/m/Y" }}</td>
+                <td>{{ activite.vehicule.immatriculation|default:"-" }}</td>
+                <td>{{ activite.conducteur|default:"-" }}</td>
+                <td>{{ activite.mission|default:"-" }}</td>
+                <td>{{ activite.lieu_depart|default:"-" }}</td>
+                <td>{{ activite.destination|default:"-" }}</td>
+                <td>{{ activite.get_type_transport_display }}</td>
+                <td class="text-end">{{ activite.quantite|floatformat:2 }}</td>
+                <td class="text-nowrap">{{ activite.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>{% if activite.enregistreur %}{{ activite.enregistreur.username }}{% else %}-{% endif %}</td>
+                <td class="text-nowrap">
+
+                    {% if activite.enregistreur_id == request.session.user_id %}
+                        <a href="{% url 'materiaux:activite_transport_edit' activite.pk %}" class="btn btn-sm btn-warning" title="Modifier">✏️</a>
+                        <form method="post" action="{% url 'materiaux:activite_transport_delete' activite.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" title="Supprimer" onclick="return confirm('Supprimer ce déplacement ?');">🗑️</button>
+                        </form>
+                    {% else %}
+                        <span class="text-muted" title="Seul l'enregistreur peut modifier ou supprimer ce déplacement">🔒</span>
+                    {% endif %}
+
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="11" class="text-center text-muted py-5">
+                    <div class="mb-2" style="font-size: 2rem;">🚚</div>
+                    <div>Aucun déplacement enregistré.</div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-3 text-center text-uppercase">
+
+        {% if form.instance.id %}
+
+            <span class="text-info">
+                Modifier matériel
+            </span>
+
+        {% else %}
+
+            <span class="text-success">
+                Ajouter matériel
+            </span>
+
+        {% endif %}
+
+    </h3>
+
+    <form method="post" enctype="multipart/form-data">
+
+        {% csrf_token %}
+
+        <div class="row">
+
+            <!-- =====================================================
+                 COLONNE GAUCHE
+                 ===================================================== -->
+
+            <div class="col-md-6">
+
+                <!-- NOM -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Nom du matériel
+                    </label>
+
+                    {{ form.nom }}
+
+                    {% if form.nom.errors %}
+                        <div class="text-danger small">
+                            {{ form.nom.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- TYPE -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Type matériel
+                    </label>
+
+                    {{ form.typeMat }}
+
+                    {% if form.typeMat.errors %}
+                        <div class="text-danger small">
+                            {{ form.typeMat.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- =================================================
+                     CATEGORIE ADMIN / SUPERADMIN / SUPERVISEUR
+                     ================================================= -->
+
+                {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Catégorie matériel
+                        </label>
+
+                        {{ form.catMat }}
+
+                        {% if form.catMat.errors %}
+                            <div class="text-danger small">
+                                {{ form.catMat.errors }}
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- STOCK INITIAL -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Stock initial
+                    </label>
+
+                    {{ form.stock_initial }}
+
+                    {% if form.stock_initial.errors %}
+                        <div class="text-danger small">
+                            {{ form.stock_initial.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+
+                <!-- PHOTO -->
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Photo
+                    </label>
+
+                    {{ form.photo }}
+
+                    {% if form.photo.errors %}
+                        <div class="text-danger small">
+                            {{ form.photo.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 COLONNE DROITE
+                 ===================================================== -->
+
+            <div class="col-md-4 text-center">
+
+                <!-- =================================================
+                     USER ENTREPRISE
+                     ================================================= -->
+
+                {% if role == "UserEntreprise" %}
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-bold">
+                            Catégorie automatique
+                        </label>
+
+                        <div class="alert alert-primary">
+
+                            <div class="fs-4">
+                                🏗️
+                            </div>
+
+                            <strong>
+                                Chantier
+                            </strong>
+
+                            <br>
+
+                            <small>
+                                Catégorie automatiquement attribuée
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                <!-- =================================================
+                     USER MICA
+                     ================================================= -->
+
+                {% elif role == "UserMica" %}
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-bold">
+                            Catégorie automatique
+                        </label>
+
+                        <div class="alert alert-success">
+
+                            <div class="fs-4">
+                                🪨
+                            </div>
+
+                            <strong>
+                                Mica
+                            </strong>
+
+                            <br>
+
+                            <small>
+                                Catégorie automatiquement attribuée
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- =================================================
+                     DATE
+                     ================================================= -->
+
+                {% if form.instance.dateDepot %}
+
+                    <div class="alert alert-info mt-2">
+
+                        {{ form.instance.dateDepot|date:"d/m/Y H:i" }}
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <hr>
+
+
+        <!-- =========================================================
+             BOUTONS
+             ========================================================= -->
+
+        <button
+            type="submit"
+            class="btn btn-success"
+        >
+            💾 Enregistrer
+        </button>
+
+
+        <a
+            href="javascript:history.back();"
+            class="btn btn-secondary"
+        >
+            ← Retour
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

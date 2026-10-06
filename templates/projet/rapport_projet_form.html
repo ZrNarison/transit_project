@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if mode == "modification" %}
+        Modifier le rapport
+    {% else %}
+        Nouveau rapport
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-9">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-info text-white">
+
+                    <h4 class="mb-0">
+
+                        {% if mode == "modification" %}
+                            <i class="fas fa-edit"></i>
+                            Modifier le rapport d'avancement
+                        {% else %}
+                            <i class="fas fa-chart-line"></i>
+                            Nouveau rapport d'avancement
+                        {% endif %}
+
+                    </h4>
+
+                </div>
+
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+                    <div class="card-body">
+
+                        <div class="alert alert-info">
+                            <strong>Projet :</strong>
+                            {{ projet.titre }}
+                        </div>
+
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-4">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.date_rapport.label }}
+                                </label>
+
+                                {{ form.date_rapport }}
+
+                                {% for error in form.date_rapport.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-8">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.titre.label }}
+                                </label>
+
+                                {{ form.titre }}
+
+                                {% for error in form.titre.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.avancement.label }}
+                                </label>
+
+                                {{ form.avancement }}
+
+                                {% for error in form.avancement.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                                <div class="form-text">
+                                    Valeur comprise entre 0 et 100 %.
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.travaux_realises.label }}
+                                </label>
+
+                                {{ form.travaux_realises }}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.difficultes.label }}
+                                </label>
+
+                                {{ form.difficultes }}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.actions_planifiees.label }}
+                                </label>
+
+                                {{ form.actions_planifiees }}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.observation.label }}
+                                </label>
+
+                                {{ form.observation }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="card-footer bg-light d-flex justify-content-between">
+
+                        <a href="{% url 'projet:rapport_projet_list' projet.id %}"
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Annuler
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-info text-white">
+                            <i class="fas fa-save"></i>
+                            Enregistrer
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

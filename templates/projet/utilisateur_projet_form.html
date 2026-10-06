@@ -1,0 +1,525 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Créer un accès utilisateur
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ========================================================= -->
+    <!-- EN-TÊTE -->
+    <!-- ========================================================= -->
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-user-plus text-primary me-2"></i>
+                Créer un accès utilisateur
+            </h2>
+
+            <p class="text-muted mb-0">
+                Créer les identifiants de connexion pour un membre de l'équipe.
+            </p>
+        </div>
+
+        <div>
+            <a
+                href="{% url 'projet:equipe_list' projet.id %}"
+                class="btn btn-outline-secondary"
+            >
+                <i class="fas fa-arrow-left me-1"></i>
+                Retour à l'équipe
+            </a>
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- INFORMATIONS DU PROJET -->
+    <!-- ========================================================= -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-primary text-white fw-bold">
+            <i class="fas fa-project-diagram me-2"></i>
+            Projet
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <label class="form-label text-muted mb-1">
+                        Projet
+                    </label>
+
+                    <div class="fw-bold fs-5">
+                        {{ projet.titre|title }}
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label text-muted mb-1">
+                        Localisation
+                    </label>
+
+                    <div>
+                        <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                        {{ projet.localisation|upper }}
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label text-muted mb-1">
+                        Période
+                    </label>
+
+                    <div>
+                        <i class="fas fa-calendar-alt text-primary me-1"></i>
+
+                        {{ projet.date_debut|date:"d/m/Y" }}
+
+                        <span class="text-muted mx-1">
+                            au
+                        </span>
+
+                        {{ projet.date_fin|date:"d/m/Y" }}
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label text-muted mb-1">
+                        Statut
+                    </label>
+
+                    <div>
+                        <span class="badge bg-primary">
+                            {{ projet.get_statut_display }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- INFORMATIONS DU PERSONNEL -->
+    <!-- ========================================================= -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-dark text-white fw-bold">
+            <i class="fas fa-user me-2"></i>
+            Personnel concerné
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <label class="form-label text-muted mb-1">
+                        Personnel
+                    </label>
+
+                    <div class="fw-bold fs-5">
+                        {{ personnel }}
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label text-muted mb-1">
+                        Fonction sur le projet
+                    </label>
+
+                    <div>
+
+                        <span class="badge bg-primary fs-6">
+
+                            {{ affectation.get_fonction_display }}
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label text-muted mb-1">
+                        Début de l'affectation
+                    </label>
+
+                    <div>
+                        {{ affectation.date_debut|date:"d/m/Y" }}
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="form-label text-muted mb-1">
+                        Fin de l'affectation
+                    </label>
+
+                    <div>
+                        {{ affectation.date_fin|date:"d/m/Y" }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- FORMULAIRE DE CONNEXION -->
+    <!-- ========================================================= -->
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-7 col-xl-6">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-success text-white fw-bold">
+
+                    <i class="fas fa-key me-2"></i>
+                    Identifiants de connexion
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="alert alert-info">
+
+                        <div class="d-flex">
+
+                            <div class="me-3">
+                                <i class="fas fa-info-circle fa-lg"></i>
+                            </div>
+
+                            <div>
+
+                                <strong>Accès au projet</strong>
+
+                                <div class="small mt-1">
+
+                                    Cet utilisateur pourra se connecter avec
+                                    les identifiants créés ici.
+
+                                    Son accès aux projets sera déterminé par
+                                    ses affectations dans l'équipe.
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <form method="post" novalidate>
+
+                        {% csrf_token %}
+
+
+                        <!-- ================================================= -->
+                        <!-- NOM UTILISATEUR -->
+                        <!-- ================================================= -->
+
+                        <div class="mb-4">
+
+                            <label
+                                for="username"
+                                class="form-label fw-bold"
+                            >
+                                <i class="fas fa-user me-1"></i>
+                                Nom d'utilisateur
+                            </label>
+
+                            <input
+                                type="text"
+                                name="username"
+                                id="username"
+                                class="form-control form-control-lg"
+                                value="{{ request.POST.username|default:'' }}"
+                                placeholder="Exemple : jean.noel"
+                                autocomplete="username"
+                                required
+                                autofocus
+                            >
+
+                            <div class="form-text">
+                                Ce nom sera utilisé pour la connexion.
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- MOT DE PASSE -->
+                        <!-- ================================================= -->
+
+                        <div class="mb-4">
+
+                            <label
+                                for="password"
+                                class="form-label fw-bold"
+                            >
+                                <i class="fas fa-lock me-1"></i>
+                                Mot de passe
+                            </label>
+
+                            <div class="input-group">
+
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="password"
+                                    class="form-control form-control-lg"
+                                    placeholder="Mot de passe"
+                                    autocomplete="new-password"
+                                    required
+                                >
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    id="togglePassword"
+                                    title="Afficher / masquer le mot de passe"
+                                >
+                                    <i class="fas fa-eye"></i>
+                                </button>
+
+                            </div>
+
+                            <div class="form-text">
+                                Choisissez un mot de passe suffisamment sécurisé.
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- CONFIRMATION -->
+                        <!-- ================================================= -->
+
+                        <div class="mb-4">
+
+                            <label
+                                for="password_confirmation"
+                                class="form-label fw-bold"
+                            >
+                                <i class="fas fa-lock me-1"></i>
+                                Confirmer le mot de passe
+                            </label>
+
+                            <div class="input-group">
+
+                                <input
+                                    type="password"
+                                    name="password_confirmation"
+                                    id="password_confirmation"
+                                    class="form-control form-control-lg"
+                                    placeholder="Confirmer le mot de passe"
+                                    autocomplete="new-password"
+                                    required
+                                >
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    id="togglePasswordConfirmation"
+                                    title="Afficher / masquer le mot de passe"
+                                >
+                                    <i class="fas fa-eye"></i>
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- RÉSUMÉ -->
+                        <!-- ================================================= -->
+
+                        <div class="border rounded p-3 bg-light mb-4">
+
+                            <div class="fw-bold mb-2">
+                                <i class="fas fa-id-card me-1"></i>
+                                Résumé du compte
+                            </div>
+
+                            <div class="row g-2 small">
+
+                                <div class="col-sm-5 text-muted">
+                                    Utilisateur :
+                                </div>
+
+                                <div class="col-sm-7 fw-bold">
+                                    {{ personnel }}
+                                </div>
+
+
+                                <div class="col-sm-5 text-muted">
+                                    Projet :
+                                </div>
+
+                                <div class="col-sm-7 fw-bold">
+                                    {{ projet.titre }}
+                                </div>
+
+
+                                <div class="col-sm-5 text-muted">
+                                    Fonction :
+                                </div>
+
+                                <div class="col-sm-7">
+                                    {{ affectation.get_fonction_display }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- BOUTONS -->
+                        <!-- ================================================= -->
+
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+
+                            <a
+                                href="{% url 'projet:equipe_list' projet.id %}"
+                                class="btn btn-outline-secondary"
+                            >
+                                <i class="fas fa-times me-1"></i>
+                                Annuler
+                            </a>
+
+                            <button
+                                type="submit"
+                                class="btn btn-success"
+                            >
+                                <i class="fas fa-user-plus me-1"></i>
+                                Créer le compte
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================= -->
+<!-- JAVASCRIPT : AFFICHER / MASQUER LES MOTS DE PASSE -->
+<!-- ============================================================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const password = document.getElementById("password");
+    const passwordConfirmation =
+        document.getElementById("password_confirmation");
+
+    const togglePassword =
+        document.getElementById("togglePassword");
+
+    const togglePasswordConfirmation =
+        document.getElementById("togglePasswordConfirmation");
+
+
+    if (togglePassword && password) {
+
+        togglePassword.addEventListener("click", function () {
+
+            if (password.type === "password") {
+
+                password.type = "text";
+
+                this.innerHTML =
+                    '<i class="fas fa-eye-slash"></i>';
+
+            } else {
+
+                password.type = "password";
+
+                this.innerHTML =
+                    '<i class="fas fa-eye"></i>';
+            }
+
+        });
+
+    }
+
+
+    if (
+        togglePasswordConfirmation &&
+        passwordConfirmation
+    ) {
+
+        togglePasswordConfirmation.addEventListener(
+            "click",
+            function () {
+
+                if (
+                    passwordConfirmation.type === "password"
+                ) {
+
+                    passwordConfirmation.type = "text";
+
+                    this.innerHTML =
+                        '<i class="fas fa-eye-slash"></i>';
+
+                } else {
+
+                    passwordConfirmation.type = "password";
+
+                    this.innerHTML =
+                        '<i class="fas fa-eye"></i>';
+                }
+
+            }
+        );
+
+    }
+
+});
+
+</script>
+
+{% endblock %}

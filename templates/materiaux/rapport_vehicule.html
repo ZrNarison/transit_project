@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block title %}
+Rapport {{ vehicule.immatriculation }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<div>
+<h2>
+📊 Rapport véhicule
+</h2>
+
+<h5 class="text-muted">
+{{ vehicule.immatriculation }}
+{% if vehicule.marque %}
+- {{ vehicule.marque }}
+{% endif %}
+{% if vehicule.modele %}
+{{ vehicule.modele }}
+{% endif %}
+</h5>
+</div>
+
+<a
+href="{% url 'materiaux:vehicules_list' %}"
+class="btn btn-secondary">
+← Retour
+</a>
+
+</div>
+
+<!-- ================= FINANCE ================= -->
+
+<div class="row g-3 mb-4">
+
+<div class="col-md-2">
+
+<div class="card shadow-sm">
+<div class="card-body">
+
+<small>Transport</small>
+
+<h5>
+{{ transport|floatformat:2 }}
+</h5>
+
+</div>
+</div>
+
+</div>
+
+<div class="col-md-2">
+
+<div class="card shadow-sm">
+<div class="card-body">
+
+<small>Gasoil</small>
+
+<h5>
+{{ total_gasoil|floatformat:2 }}
+</h5>
+
+</div>
+</div>
+
+</div>
+
+<div class="col-md-2">
+
+<div class="card shadow-sm">
+<div class="card-body">
+
+<small>Réparations</small>
+
+<h5>
+{{ total_reparations|floatformat:2 }}
+</h5>
+
+</div>
+</div>
+
+</div>
+
+<div class="col-md-2">
+
+<div class="card shadow-sm">
+<div class="card-body">
+
+<small>Dockers</small>
+
+<h5>
+{{ total_dockers|floatformat:2 }}
+</h5>
+
+</div>
+</div>
+
+</div>
+
+<div class="col-md-2">
+
+<div class="card shadow-sm">
+<div class="card-body">
+
+<small>Autres</small>
+
+<h5>
+{{ total_depenses|floatformat:2 }}
+</h5>
+
+</div>
+</div>
+
+</div>
+
+<div class="col-md-2">
+
+<div class="card shadow-sm">
+
+<div class="card-body">
+
+<small>Résultat</small>
+
+<h5 class="{% if resultat < 0 %}text-danger{% else %}text-success{% endif %}">
+{{ resultat|floatformat:2 }}
+</h5>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ================= ACTIVITES ================= -->
+
+<div class="card shadow-sm mb-4">
+
+<div class="card-header">
+<strong>🚚 Activités de transport</strong>
+</div>
+
+<div class="table-responsive">
+
+<table class="table table-sm">
+
+<thead class="table-dark">
+
+<tr>
+<th>Date</th>
+<th>Matériau</th>
+<th>Quantité</th>
+<th>Destination</th>
+<th>Montant</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for activite in activites %}
+
+<tr>
+
+<td>
+{{ activite.date_activite|date:"d/m/Y" }}
+</td>
+
+<td>
+{{ activite.materiau.libelle|default:"-" }}
+</td>
+
+<td>
+{{ activite.quantite }}
+{{ activite.unite }}
+</td>
+
+<td>
+{{ activite.destination }}
+</td>
+
+<td>
+{{ activite.montant_transport|floatformat:2 }}
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="5" class="text-center">
+Aucune activité.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- ================= GASOIL ================= -->
+
+<div class="card shadow-sm mb-4">
+
+<div class="card-header">
+<strong>⛽ Gasoil</strong>
+</div>
+
+<div class="table-responsive">
+
+<table class="table table-sm">
+
+<thead class="table-dark">
+
+<tr>
+<th>Date</th>
+<th>Litres</th>
+<th>Prix/L</th>
+<th>Total</th>
+<th>Station</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for gasoil in gasoils %}
+
+<tr>
+
+<td>
+{{ gasoil.date_gasoil|date:"d/m/Y" }}
+</td>
+
+<td>
+{{ gasoil.quantite_litre }}
+</td>
+
+<td>
+{{ gasoil.prix_litre|floatformat:2 }}
+</td>
+
+<td>
+{{ gasoil.total|floatformat:2 }}
+</td>
+
+<td>
+{{ gasoil.station|default:"-" }}
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="5" class="text-center">
+Aucune dépense gasoil.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- ================= REPARATIONS ================= -->
+
+<div class="card shadow-sm mb-4">
+
+<div class="card-header">
+<strong>🔧 Réparations / entretien</strong>
+</div>
+
+<div class="table-responsive">
+
+<table class="table table-sm">
+
+<thead class="table-dark">
+
+<tr>
+<th>Date</th>
+<th>Type</th>
+<th>Désignation</th>
+<th>Garage</th>
+<th>Total</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for reparation in reparations %}
+
+<tr>
+
+<td>
+{{ reparation.date_reparation|date:"d/m/Y" }}
+</td>
+
+<td>
+{{ reparation.get_type_reparation_display }}
+</td>
+
+<td>
+{{ reparation.designation }}
+</td>
+
+<td>
+{{ reparation.garage|default:"-" }}
+</td>
+
+<td>
+{{ reparation.total|floatformat:2 }}
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="5" class="text-center">
+Aucune réparation.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- ================= DEPENSES ================= -->
+
+<div class="card shadow-sm">
+
+<div class="card-header">
+<strong>💰 Autres dépenses</strong>
+</div>
+
+<div class="table-responsive">
+
+<table class="table table-sm">
+
+<thead class="table-dark">
+
+<tr>
+<th>Date</th>
+<th>Catégorie</th>
+<th>Désignation</th>
+<th>Montant</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for depense in depenses %}
+
+<tr>
+
+<td>
+{{ depense.date_depense|date:"d/m/Y" }}
+</td>
+
+<td>
+{{ depense.categorie.nom }}
+</td>
+
+<td>
+{{ depense.designation }}
+</td>
+
+<td>
+{{ depense.montant|floatformat:2 }}
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="4" class="text-center">
+Aucune dépense.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

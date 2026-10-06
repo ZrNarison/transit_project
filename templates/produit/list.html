@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Liste Produits{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2 class="text-center mb-4">Liste des produits livrés</h2>
+
+<!-- ================= FILTRE ================= -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <input type="text" name="client" value="{{ client }}" class="form-control" placeholder="Client">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="source" value="{{ source }}" class="form-control" placeholder="Source">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="vehicule" value="{{ vehicule }}" class="form-control" placeholder="Véhicule">
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button class="btn btn-primary w-100">🔍</button>
+                    <a href="{% url 'produit:p_produit_liste' %}" class="btn btn-secondary w-100">Reset</a>
+                    {% if request.session.role == "UserMica" %}
+                    <a href="{% url 'produit:p_produit_add' %}" class="btn btn-success w-100">+</a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ================= VALIDATION ================= -->
+{% if request.session.role == "User" %}
+<form method="post" action="{% url 'produit:valider_paiement' %}">
+    {% csrf_token %}
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row align-items-end">
+                <div class="col-md-3">
+                    <label>Remboursement avance</label>
+                    <select name="remboursement" class="form-control" id="remboursement">
+                        <option value="AUCUN">Aucun</option>
+                        <option value="PARTIEL">Partiel</option>
+                        <option value="TOTAL">Total</option>
+                    </select>
+                </div>
+                <div class="col-md-3" id="bloc-partiel" style="display:none;">
+                    <label>Montant retour</label>
+                    <input type="number" name="montant_retour" class="form-control" value="0">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Confirmer validation paiement ?')">💰 Valider paiement</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <!-- ================= TABLE ================= -->
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>
+                        {% if request.session.role == "User" %}
+                        <input type="checkbox" id="checkAll">
+                        {% endif %}
+                    </th>
+                    <th>Client</th>
+                    <th>Véhicule</th>
+                    <th>Chauffeur</th>
+                    <th>Source</th>
+                    <th>Montant/Kg</th>
+                    <th>Qté</th>
+                    <th>%</th>
+                    <th>Montant Net</th>
+                    <th>Etat</th>
+                    <th>Date paiement</th>
+                    {% if request.session.role == "User" %}
+                    <th>Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>{% for produit in produits %}
+                <tr>
+                    <td class="text-center">
+                        {% if request.session.role == "User" %}
+                            {% if not produit.paye %}
+                            <input type="checkbox" name="produits" value="{{ produit.id }}" class="checkItem">
+                            {% else %}
+                            ✔
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>{{ produit.client.nom|upper }}</td>
+                    <td>{{ produit.vehicule.num_vehicule|upper }}</td>
+                    <td>{{ produit.vehicule.chauffeur|upper }}</td>
+                    <td>{{ produit.source|upper }}</td>
+                    <td class="text-end">{{ produit.montant|intcomma }}</td>
+                    <td class="text-center">{{ produit.quantite|intcomma }}</td>
+                    <td class="text-center">{{ produit.pourcentage }} %</td>
+                    <td class="text-end fw-bold text-success">{{ produit.montant_net|floatformat:0|intcomma }}</td>
+                    <td class="text-center">
+                        {% if produit.paye %}
+                        <span class="badge bg-success">PAYÉ</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">NON PAYÉ</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if produit.date_paiement %}
+                        {{ produit.date_paiement|date:"d/m/Y H:i" }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    {% if request.session.role == "User" %}
+                    <td class="text-center">
+                        {% if produit.paye %}
+                            <button class="btn btn-secondary btn-sm" disabled>🔒</button>
+                        {% else %}
+                            {% if produit.enregistre_par_id == request.session.user_id %}
+                                <a href="{% url 'produit:p_produit_edit' produit.id %}" class="btn btn-warning btn-sm">✏</a>
+                                <a href="{% url 'produit:p_produit_delete' produit.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Supprimer ?')">🗑</a>
+                            {% else %}
+                                <button class="btn btn-secondary btn-sm" disabled>🔒</button>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="12" class="text-center text-danger">Aucun produit trouvé</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if request.session.role == "User" %}
+</form>
+{% endif %}
+</div>
+
+
+
+<script>
+    let checkAll=document.getElementById("checkAll");
+    if(checkAll){
+        checkAll.addEventListener(
+            "change",
+            function(){
+                document.querySelectorAll(".checkItem").forEach(x=>x.checked=this.checked);
+            }
+            );
+        }
+        let remboursement=document.getElementById(
+            "remboursement"
+            );
+            let bloc=document.getElementById(
+                "bloc-partiel"
+                );
+                if(remboursement){
+                    remboursement.addEventListener(
+                        "change",
+                        function(){
+                            bloc.style.display = this.value==="PARTIEL"?"block":"none";
+                        }
+                        );
+                    }
+</script>
+{% endblock %}

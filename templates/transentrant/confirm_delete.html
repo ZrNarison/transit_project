@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+<h3>Confirmation suppression</h3>
+{% block content %}
+
+<p>Voulez-vous vraiment supprimer : <strong>{{ client.Chauf_Ent|upper }}</strong> conducteur du vehicule {{ client.NumVeh_Ent }} ?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Oui supprimer</button>
+    <a href="{% url 'transentrant:t_transentrant_liste' %}" class="btn btn-secondary">Annuler</a>
+</form>
+{% endblock %}

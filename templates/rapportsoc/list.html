@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+
+<style>
+
+    /* =========================================================
+       RAPPORT
+       ========================================================= */
+
+    .rapport-container {
+        width: 100%;
+    }
+
+    .rapport-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .rapport-table th,
+    .rapport-table td {
+        border: 1px solid #000;
+        padding: 7px;
+        vertical-align: middle;
+    }
+
+    .rapport-table thead th {
+        background: #212529;
+        color: white;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .rapport-table .description-column {
+        min-width: 130px;
+    }
+
+    .rapport-table .titre-column {
+        min-width: 180px;
+    }
+
+    .rapport-table .depot-cell {
+        font-weight: bold;
+    }
+
+    .rapport-table .recette-cell {
+        font-weight: bold;
+    }
+
+    .rapport-table .depense-cell {
+        font-weight: bold;
+    }
+
+    .rapport-table .solde-cell {
+        font-weight: bold;
+    }
+
+    .report-row {
+        background: #f8f9fa;
+        font-weight: bold;
+    }
+
+    .total-row {
+        background: #e9ecef;
+        font-weight: bold;
+    }
+
+    .final-balance-row {
+        background: #dee2e6;
+        font-size: 15px;
+        font-weight: bold;
+    }
+
+    .operation-item {
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .operation-item:last-child {
+        margin-bottom: 0;
+    }
+
+
+    /* =========================================================
+       CARTES DE RÉSUMÉ
+       ========================================================= */
+
+    .summary-card {
+        border-radius: 8px;
+        padding: 15px;
+        height: 100%;
+    }
+
+    .summary-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .summary-value {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+
+    /* =========================================================
+       IMPRESSION
+       ========================================================= */
+
+    .print-header {
+        display: none;
+    }
+
+    @media print {
+
+        @page {
+            size: A4 landscape;
+            margin: 10mm;
+        }
+
+        body {
+            background: white !important;
+            font-size: 11px;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        .print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .print-header h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .print-header p {
+            margin: 3px 0;
+            font-size: 11px;
+        }
+
+        .rapport-table {
+            width: 100%;
+            font-size: 10px;
+        }
+
+        .rapport-table th,
+        .rapport-table td {
+            padding: 5px;
+        }
+
+        .rapport-table thead th {
+            background: #ddd !important;
+            color: black !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .report-row,
+        .total-row,
+        .final-balance-row {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .summary-section {
+            display: none !important;
+        }
+
+        .rapport-container {
+            width: 100%;
+        }
+    }
+
+</style>
+
+
+<div class="container-fluid mt-4 rapport-container">
+
+
+    <!-- =====================================================
+         EN-TÊTE
+         ===================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+
+        <div>
+
+            <h2 class="mb-1">
+                📊 Rapport de trésorerie société
+            </h2>
+
+            <p class="text-muted mb-0">
+                Suivi des dépôts, recettes et dépenses
+            </p>
+
+        </div>
+
+
+        <div>
+            <a href="{% url 'rapportsoc:rapport_tresorerie' %}" class="btn btn-secondary">🔄 Reset</a>
+            <button type="button" onclick="imprimerRapport()" class="btn btn-success">🖨️ Impression</button>
+        </div>
+    </div>
+    <!-- =====================================================
+         EN-TÊTE IMPRESSION
+         ===================================================== -->
+
+    <div class="print-header">
+        <h2>RAPPORT DE TRÉSORERIE SOCIÉTÉ DE CONSTRUCTION</h2>
+        {% if date_debut or date_fin %}
+            <p>
+                Période :
+                <strong>
+                    {% if date_debut %}
+                        {{ date_debut_affichage }}
+                    {% else %}
+                        Début
+                    {% endif %}
+                    -
+                    {% if date_fin %}
+                        {{ date_fin_affichage }}
+                    {% else %}
+                        Aujourd'hui
+                    {% endif %}
+                </strong>
+            </p>
+        {% endif %}
+        <p>
+            Imprimé le :
+            <strong>{% now "d/m/Y H:i" %}</strong>
+        </p>
+    </div>
+    <!-- =====================================================
+         FILTRES
+         ===================================================== -->
+
+    <div class="card shadow-sm mb-4 no-print">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="date_debut" class="form-label fw-bold" >Date début</label>
+                    <input type="date" name="date_debut" id="date_debut" value="{{ date_debut }}"class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label for="date_fin" class="form-label fw-bold">Date fin</label>
+                    <input type="date" name="date_fin" id="date_fin" value="{{ date_fin }}"class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">🔎 Filtrer</button>
+                    <a href="{% url 'rapportsoc:rapport_tresorerie' %}" class="btn btn-secondary">🔄 Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- =====================================================
+         RÉSUMÉ
+         ===================================================== -->
+    <div class="row g-3 mb-4 summary-section no-print">
+        <!-- REPORT -->
+        <div class="col-md-3">
+            <div class="card shadow-sm summary-card">
+                <div class="summary-label">REPORT</div>
+                <div class="summary-value">{{ solde_report|intcomma }} Ar</div>
+            </div>
+        </div>
+        <!-- DÉPÔTS -->
+        <div class="col-md-3">
+            <div class="card shadow-sm summary-card">
+                <div class="summary-label">DÉPÔTS</div>
+                <div class="summary-value">{{ total_depots|intcomma }} Ar</div>
+            </div>
+        </div>
+        <!-- RECETTES -->
+        <div class="col-md-3">
+            <div class="card shadow-sm summary-card">
+                <div class="summary-label">RECETTES</div>
+                <div class="summary-value">{{ total_recettes|intcomma }} Ar</div>
+            </div>
+        </div>
+        <!-- DÉPENSES -->
+        <div class="col-md-3">
+            <div class="card shadow-sm summary-card">
+                <div class="summary-label">DÉPENSES</div>
+                <div class="summary-value">{{ total_depenses|intcomma }} Ar</div>
+            </div>
+        </div>
+    </div>
+    <!-- =====================================================
+         SOLDE FINAL
+         ===================================================== -->
+    <div class="alert alert-dark mb-4 no-print">
+        <div class="d-flex justify-content-between align-items-center">
+            <strong>SOLDE FINAL</strong>
+            <strong class="fs-5">{{ solde_final|intcomma }} Ar</strong>
+        </div>
+    </div>
+    <!-- =====================================================
+         TABLEAU
+         ===================================================== -->
+    <div class="table-responsive">
+        <table class="table table-bordered rapport-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">DATE</th>
+                    <th style="width: 15%;">N° DE PIÈCE</th>
+                    <th style="width: 13%;">DESCRIPTION</th>
+                    <th style="width: 18%;">TITRE</th>
+                    <th style="width: 12%;">DÉPÔTS (Ar)</th>
+                    <th style="width: 12%;">RECETTES (Ar)</th>
+                    <th style="width: 12%;">DÉPENSES (Ar)</th>
+                    <th style="width: 13%;">SOLDE (Ar)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- =================================================REPORT================================================= -->
+                {% if date_debut %}
+                <tr class="report-row">
+                    <td colspan="7">
+                        <strong>REPORT AU {{ date_debut_affichage }}</strong>
+                    </td>
+                    <td class="text-end">
+                        <strong>{{ solde_report|intcomma }}</strong>
+                    </td>
+                </tr>
+                {% endif %}
+                <!-- =================================================OPÉRATIONS REGROUPÉES PAR DATE================================================= -->
+                {% for operation in operations %}
+                <tr>
+                    <!-- DATE -->
+                    <td class="text-center">
+                        <strong>{{ operation.date|date:"d/m/Y" }}</strong>
+                    </td>
+                    <!-- PIÈCES -->
+                    <td class="text-center">
+                        {% for piece in operation.pieces %}
+                            <span class="operation-item">
+                                {{ piece }}
+                            </span>
+                        {% endfor %}
+                    </td>
+                    <!-- DESCRIPTION -->
+                    <td class="description-column">
+                        {% for description in operation.descriptions %}
+                            <span class="operation-item">{{ description }}</span>
+                        {% empty %}
+                            —
+                        {% endfor %}
+                    </td>
+                    <!-- TITRE -->
+                    <td class="titre-column">
+                        {% for titre in operation.titres %}
+                            <span class="operation-item">{{ titre|title }}</span>
+                        {% empty %}
+                            —
+                        {% endfor %}
+                    </td>
+                    <!-- DÉPÔTS -->
+                    <td class="text-end depot-cell">
+                        {% if operation.depot %}
+                            {{ operation.depot|intcomma }} 
+                        {% else %}
+                            <div class="text-center">—</div>
+                        {% endif %}
+                    </td>
+                    <!-- RECETTES -->
+                    <td class="text-end recette-cell">
+                        {% if operation.recette %}
+                            {{ operation.recette|intcomma }}
+                        {% else %}
+                            <div class="text-center">—</div>
+                        {% endif %}
+                    </td>
+                    <!-- DÉPENSES -->
+                    <td class="text-end depense-cell">
+                        {% if operation.depense %}
+                            {{ operation.depense|intcomma }}
+                        {% else %}
+                            <div class="text-center">—</div>
+                        {% endif %}
+                    </td>
+                    <!-- SOLDE -->
+                    <td class="text-end solde-cell">
+                        <strong>{{ operation.solde|intcomma }}</strong>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">Aucune opération trouvée pour la période sélectionnée.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <!-- =====================================================TOTAUX===================================================== -->
+            <tfoot>
+                <tr class="total-row">
+                    <th colspan="4" class="text-end">TOTAL</th>
+                    <!-- TOTAL DÉPÔTS -->
+                    <th class="text-end">{{ total_depots|intcomma }}</th>
+                    <!-- TOTAL RECETTES -->
+                    <th class="text-end">{{ total_recettes|intcomma }}</th>
+                    <!-- TOTAL DÉPENSES -->
+                    <th class="text-end">{{ total_depenses|intcomma }}</th>
+                    <!-- SOLDE -->
+                    <th class="text-end">{{ solde_final|intcomma }}</th>
+                </tr>
+                <!-- =================================================SOLDE FINAL================================================= -->
+                <tr class="final-balance-row">
+                    <th colspan="7" class="text-end">SOLDE FINAL (en Ariary)</th>
+                    <th class="text-end">{{ solde_final|intcomma }}</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <!-- =====================================================INFORMATIONS====================================== -->
+    <div class="text-muted mt-3 no-print">
+        <small>
+            {{ nombre_jours }} jour(s)
+            regroupant
+            {{ nombre_operations }} opération(s).
+            {% if date_debut or date_fin %}
+                Période sélectionnée.
+            {% endif %}
+        </small>
+    </div>
+</div>
+<!-- =========================================================IMPRESSION========================================================= -->
+<script>
+
+function imprimerRapport() {
+
+    const dateDebut =
+        document.getElementById("date_debut").value;
+
+    const dateFin =
+        document.getElementById("date_fin").value;
+
+    let url =
+        "{% url 'rapportsoc:rapport_tresorerie_print' %}";
+
+    const params =
+        new URLSearchParams();
+
+    if (dateDebut) {
+
+        params.append(
+            "date_debut",
+            dateDebut
+        );
+    }
+
+    if (dateFin) {
+
+        params.append(
+            "date_fin",
+            dateFin
+        );
+    }
+
+    const queryString =
+        params.toString();
+
+    if (queryString) {
+
+        url += "?" + queryString;
+    }
+
+    window.open(
+        url,
+        "_blank",
+        "width=1200,height=800"
+    );
+}
+
+</script>
+
+{% endblock %}

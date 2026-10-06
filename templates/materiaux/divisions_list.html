@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="d-flex justify-content-between mb-3">
+
+        <h3 class="fw-bold">
+            Division des matériaux
+        </h3>
+
+        <a
+            href="{% url 'materiaux:division_add' %}"
+            class="btn btn-primary">
+
+            <i class="fas fa-plus me-1"></i>
+            Nouvelle division
+
+        </a>
+
+    </div>
+
+
+    <div class="card shadow-sm">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover mb-0">
+
+                <thead class="table-dark">
+
+                    <tr>
+                        <th>Matériau</th>
+                        <th>Magasin / Chantier</th>
+                        <th>Quantité</th>
+                        <th>Sorties</th>
+                        <th>Stock restant</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for objet in objets %}
+
+                    <tr>
+
+                        <td>
+                            {{ objet.entree.materiau.libelle }}
+                        </td>
+
+                        <td>
+                            {{ objet.destination }}
+                        </td>
+
+                        <td>
+                            {{ objet.quantite|floatformat:2 }}
+                            {{ objet.entree.materiau.unite }}
+                        </td>
+
+                        <td>
+                            {{ objet.quantite_sortie|floatformat:2 }}
+                        </td>
+
+                        <td>
+
+                            {% if objet.stock_restant > 0 %}
+
+                                <span class="badge bg-success">
+
+                                    {{ objet.stock_restant|floatformat:2 }}
+                                    {{ objet.entree.materiau.unite }}
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary">
+                                    Épuisé
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ objet.date_division|date:"d/m/Y" }}
+                        </td>
+
+                        <td>
+
+                            {% if not objet.sorties.exists %}
+
+                            <form
+                                method="post"
+                                action="{% url 'materiaux:divisions_delete' objet.id %}"
+                                class="d-inline">
+
+                                {% csrf_token %}
+
+                                <button
+                                    class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Supprimer cette division ?');">
+
+                                    <i class="fas fa-trash"></i>
+
+                                </button>
+
+                            </form>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td
+                            colspan="7"
+                            class="text-center text-muted py-4">
+
+                            Aucune division enregistrée.
+
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

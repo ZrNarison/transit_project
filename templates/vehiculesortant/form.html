@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm p-4">
+    <h3 class="mb-3 text-center text-uppercase">
+        {% if form.instance.id %}
+            <span class="text-info">Modifier véhicule sortant</span>
+        {% else %}
+            <span class="text-success">Ajouter véhicule sortant</span>
+        {% endif %}
+    </h3>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-2"><label>Chauffeur</label>{{ form.chauffeur }}</div>
+                <div class="mb-2"><label>CIN</label>{{ form.cin }}</div>
+                <div class="mb-2"><label>Numéro Véhicule</label>{{ form.num_vehicule }}</div>
+                <div class="mb-2"><label>Numéro Permis</label>{{ form.permis }}</div>
+                <div class="mb-2"><label>Téléphone</label>{{ form.telephone }}</div>
+                <div class="mb-2"><label>Adresse</label>{{ form.adresse }}</div>
+                <div class="mb-2"><label>Remorque</label>{{ form.remorque }}</div>
+                <div class="mb-2"><label>Montant Transporter</label>{{ form.montant }}</div>
+                <div class="mb-2"><label>Ticket</label>{{ form.ticket }}</div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="mb-3"><label>Photo</label><br>{{ form.photo }}</div>
+                {% if form.instance.photo %}
+                    <img src="{{ form.instance.photo.url }}" class="img-thumbnail mt-2" width="200">
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        <button type="submit" class="btn btn-success">Enregistrer</button>
+        <a href="{% url 'vehiculesortant:vehicule_sortant_list' %}" class="btn btn-secondary">Retour</a>
+    </form>
+</div>
+{% endblock %}

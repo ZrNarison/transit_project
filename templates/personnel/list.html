@@ -1,0 +1,989 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+
+<style>
+/* =========================================================
+   TABLEAU PERSONNEL
+   ========================================================= */
+
+.table-personnel {
+    width: 100% !important;
+    table-layout: auto;
+    font-size: 14px;
+}
+
+.table-personnel th,
+.table-personnel td {
+    padding: 8px 7px !important;
+    white-space: nowrap;
+}
+
+/* Nom / prénom */
+.table-personnel td:nth-child(3) {
+    min-width: 140px;
+}
+
+/* Fonction */
+.table-personnel td:nth-child(5) {
+    min-width: 120px;
+}
+
+/* Lieu */
+.table-personnel td:nth-child(6) {
+    min-width: 120px;
+}
+
+/* Travail */
+.table-personnel td:nth-child(7) {
+    min-width: 130px;
+}
+
+/* Contrat */
+.table-personnel td:nth-child(8) {
+    min-width: 110px;
+}
+
+/* Salaire */
+.table-personnel td:nth-child(9) {
+    min-width: 140px;
+}
+
+/* Catégorie */
+.table-personnel td:nth-child(12) {
+    min-width: 120px;
+}
+
+/* Actions */
+.table-personnel td:last-child {
+    min-width: 110px;
+}
+
+/* Photo */
+.table-personnel img {
+    width: 50px !important;
+    height: 50px !important;
+    object-fit: cover;
+}
+
+/* =========================================================
+   ÉCRAN LARGE
+   ========================================================= */
+
+@media (min-width: 1200px) {
+
+    .container-fluid {
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+    }
+
+    .table-personnel {
+        font-size: 14px;
+    }
+
+    .table-personnel th,
+    .table-personnel td {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+}
+
+/* =========================================================
+   MODALE SUPPRESSION
+   ========================================================= */
+
+.modal-delete-icon {
+    font-size: 50px;
+}
+
+.modal-delete-name {
+    font-size: 18px;
+    font-weight: 600;
+}
+</style>
+
+
+<div class="container-fluid px-1">
+
+    <!-- =====================================================
+         RECUPERATION DU ROLE
+         ===================================================== -->
+
+    {% with role=request.session.role %}
+
+
+    <!-- =====================================================
+         TITRE
+         ===================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h3 class="text-uppercase mb-0">
+                <i class="fas fa-users"></i>
+                Liste du personnel
+            </h3>
+
+            <p class="text-muted mb-0">
+                Gestion et suivi du personnel
+            </p>
+        </div>
+
+        {% if role == "Admin" or role == "SuperAdmin" %}
+
+            <a
+                href="{% url 'personnel:personnel_add' %}"
+                class="btn btn-success"
+            >
+                <i class="fas fa-user-plus"></i>
+                Ajouter un personnel
+            </a>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         RECHERCHE
+         ===================================================== -->
+
+    <div class="card shadow-sm mb-4">
+    <div class="card-body">
+
+        <form method="GET">
+
+            <div class="row g-2">
+
+                <!-- RECHERCHE GENERALE -->
+                <div class="col-md-5">
+
+                    <input
+                        type="text"
+                        name="q"
+                        class="form-control"
+                        placeholder="Rechercher nom, prénom, téléphone, fonction..."
+                        value="{{ q|default:'' }}"
+                    >
+
+                </div>
+
+
+                <!-- TYPE DE TRAVAIL -->
+                {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                    <div class="col-md-3">
+
+                        <select
+                            name="typeTravail"
+                            class="form-control"
+                        >
+
+                            <option value="">
+                                Tous les types de travail
+                            </option>
+
+                            <option
+                                value="Mica"
+                                {% if typeTravail == "Mica" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Mica
+                            </option>
+
+                            <option
+                                value="Construction"
+                                {% if typeTravail == "Construction" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Construction
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- TYPE DE CONTRAT -->
+                    <div class="col-md-2">
+
+                        <select
+                            name="typeContrat"
+                            class="form-control"
+                        >
+
+                            <option value="">
+                                Tous les contrats
+                            </option>
+
+                            <option
+                                value="CDI"
+                                {% if typeContrat == "CDI" %}
+                                    selected
+                                {% endif %}
+                            >
+                                CDI
+                            </option>
+
+                            <option
+                                value="CDD"
+                                {% if typeContrat == "CDD" %}
+                                    selected
+                                {% endif %}
+                            >
+                                CDD
+                            </option>
+
+                            <option
+                                value="Journalier"
+                                {% if typeContrat == "Journalier" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Journalier
+                            </option>
+
+                            <option
+                                value="Stage"
+                                {% if typeContrat == "Stage" %}
+                                    selected
+                                {% endif %}
+                            >
+                                Stage
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- BOUTON -->
+                <div class="col-md-2">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary w-100"
+                    >
+                        <i class="fas fa-search"></i>
+                        Rechercher
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
+    <!-- =====================================================
+         TABLEAU
+         ===================================================== -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table
+                    class="table table-hover table-bordered align-middle mb-0 table-personnel"
+                >
+
+                    <!-- =================================================
+                         EN-TETE
+                         ================================================= -->
+
+                    <thead class="table-primary text-center">
+
+                        <tr>
+
+                            <th>#</th>
+
+                            <th>
+                                Photo
+                            </th>
+
+                            <th>
+                                Nom / Prénom
+                            </th>
+
+                            <th>
+                                Téléphone
+                            </th>
+
+                            <th>
+                                Fonction
+                            </th>
+
+                            <th>
+                                Lieu
+                            </th>
+
+
+                            <!-- TYPE DE TRAVAIL -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                                <th>
+                                    Travail
+                                </th>
+
+                            {% else %}
+
+                                <th>
+                                    Entreprise
+                                </th>
+
+                            {% endif %}
+
+
+                            <!-- CONTRAT -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                                <th>
+                                    Contrat
+                                </th>
+
+                            {% endif %}
+
+
+                            <!-- SALAIRE -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" %}
+
+                                <th>
+                                    Salaire
+                                </th>
+
+                            {% endif %}
+
+
+                            <!-- DEBUT -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                                <th>
+                                    Début
+                                </th>
+
+                            {% endif %}
+
+
+                            <!-- FIN -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                                <th>
+                                    Fin
+                                </th>
+
+                            {% endif %}
+
+
+                            <!-- CATEGORIE -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" %}
+
+                                <th>
+                                    Catégorie
+                                </th>
+
+                            {% endif %}
+
+
+                            <!-- ACTIONS -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" or role == "UserEntreprise" %}
+
+                                <th>
+                                    Actions
+                                </th>
+
+                            {% endif %}
+
+                        </tr>
+
+                    </thead>
+
+
+                    <!-- =================================================
+                         CORPS
+                         ================================================= -->
+
+                    <tbody>
+
+                        {% for personnel in personnels %}
+
+                        <tr>
+
+                            <!-- =================================================
+                                 NUMERO
+                                 ================================================= -->
+
+                            <td class="text-center">
+                                {{ forloop.counter }}
+                            </td>
+
+
+                            <!-- =================================================
+                                 PHOTO
+                                 ================================================= -->
+
+                            <td class="text-center">
+
+                                {% if personnel.photo %}
+
+                                    <img
+                                        src="{{ personnel.photo.url }}"
+                                        alt="Photo de {{ personnel.nom }}"
+                                        class="rounded-circle"
+                                        width="55"
+                                        height="55"
+                                        style="object-fit: cover;"
+                                    >
+
+                                {% else %}
+
+                                    <div
+                                        class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto"
+                                        style="width:55px;height:55px;"
+                                    >
+                                        <i class="fas fa-user"></i>
+                                    </div>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =================================================
+                                 NOM / PRENOM
+                                 ================================================= -->
+
+                            <td>
+
+                                <strong>
+                                    {{ personnel.nom }}
+                                </strong>
+
+                                {% if personnel.prenom %}
+
+                                    <br>
+
+                                    <span class="text-muted">
+                                        {{ personnel.prenom }}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =================================================
+                                 TELEPHONE
+                                 ================================================= -->
+
+                            <td>
+                                {{ personnel.telephone }}
+                            </td>
+
+
+                            <!-- =================================================
+                                 FONCTION
+                                 ================================================= -->
+
+                            <td>
+                                {{ personnel.fonction }}
+                            </td>
+
+
+                            <!-- =================================================
+                                 LIEU
+                                 ================================================= -->
+
+                            <td>
+
+                                {% if personnel.lieuTravail %}
+
+                                    {{ personnel.lieuTravail }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =================================================
+                                 ENTREPRISE / TYPE DE TRAVAIL
+                                 ================================================= -->
+
+                            <td class="text-center">
+
+                                <!-- ADMIN / SUPERADMIN / SUPERVISEUR -->
+
+                                {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                                    {% if personnel.typeTravail == "Mica" %}
+
+                                        <span class="badge bg-warning text-dark">
+                                            Mica
+                                        </span>
+
+                                    {% elif personnel.typeTravail == "Construction" %}
+
+                                        <span class="badge bg-info">
+                                            Construction
+                                        </span>
+
+                                    {% else %}
+
+                                        {{ personnel.typeTravail }}
+
+                                    {% endif %}
+
+
+                                <!-- USER MICA -->
+
+                                {% elif role == "UserMica" %}
+
+                                    <span class="badge bg-warning text-dark">
+                                        Mica
+                                    </span>
+
+
+                                <!-- USER ENTREPRISE -->
+
+                                {% elif role == "UserEntreprise" %}
+
+                                    <span class="badge bg-info">
+                                        Construction
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- =================================================
+                                 CONTRAT
+                                 ================================================= -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                                <td class="text-center">
+
+                                    {% if personnel.typeContrat == "CDI" %}
+
+                                        <span class="badge bg-success">
+                                            CDI
+                                        </span>
+
+                                    {% elif personnel.typeContrat == "CDD" %}
+
+                                        <span class="badge bg-primary">
+                                            CDD
+                                        </span>
+
+                                    {% elif personnel.typeContrat == "Journalier" %}
+
+                                        <span class="badge bg-warning text-dark">
+                                            Journalier
+                                        </span>
+
+                                    {% elif personnel.typeContrat == "Stage" %}
+
+                                        <span class="badge bg-info">
+                                            Stage
+                                        </span>
+
+                                    {% else %}
+
+                                        {{ personnel.typeContrat }}
+
+                                    {% endif %}
+
+                                </td>
+
+                            {% endif %}
+
+
+                            <!-- =================================================
+                                 SALAIRE
+                                 ================================================= -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" %}
+
+                                <td class="text-end">
+
+                                    {{ personnel.psalaire|floatformat:2|intcomma }}
+                                    Ar
+
+                                </td>
+
+                            {% endif %}
+
+
+                            <!-- =================================================
+                                 DEBUT CONTRAT
+                                 ================================================= -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                                <td class="text-center">
+
+                                    {% if personnel.debutContrat %}
+
+                                        {{ personnel.debutContrat|date:"d/m/Y" }}
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
+                                </td>
+
+                            {% endif %}
+
+
+                            <!-- =================================================
+                                 FIN CONTRAT
+                                 ================================================= -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" %}
+
+                                <td class="text-center">
+
+                                    {% if personnel.finContrat %}
+
+                                        {{ personnel.finContrat|date:"d/m/Y" }}
+
+                                    {% else %}
+
+                                        <span class="text-success">
+                                            Indéterminée
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            {% endif %}
+
+
+                            <!-- =================================================
+                                 CATEGORIE
+                                 ================================================= -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" %}
+
+                                <td>
+
+                                    {% if personnel.categorie %}
+
+                                        {{ personnel.categorie.nom }}
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
+                                </td>
+
+                            {% endif %}
+
+
+                            <!-- =================================================
+                                 ACTIONS
+                                 ================================================= -->
+
+                            {% if role == "Admin" or role == "SuperAdmin" or role == "Superviseur" or role == "UserEntreprise"  %}
+
+                                <td class="text-center">
+
+                                    <div class="btn-group">
+
+
+                                        <!-- =====================================
+                                             VOIR
+                                             ===================================== -->
+
+                                        <a
+                                            href="{% url 'personnel:personnel_detail' personnel.id %}"
+                                            class="btn btn-sm btn-info"
+                                            title="Voir"
+                                        >
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+
+
+                                        <!-- =====================================
+                                             MODIFIER
+                                             ===================================== -->
+
+                                        {% if role == "Admin" or role == "SuperAdmin" or role == "UserEntreprise"  %}
+
+                                            <a
+                                                href="{% url 'personnel:personnel_edit' personnel.id %}"
+                                                class="btn btn-sm btn-warning"
+                                                title="Modifier"
+                                            >
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+
+
+                                            <!-- =================================
+                                                 SUPPRIMER
+                                                 ================================= -->
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-danger"
+                                                title="Supprimer"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deletePersonnel{{ personnel.id }}"
+                                            >
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+
+
+                                            <!-- =================================
+                                                 MODALE SUPPRESSION
+                                                 ================================= -->
+
+                                            <div
+                                                class="modal fade"
+                                                id="deletePersonnel{{ personnel.id }}"
+                                                tabindex="-1"
+                                                aria-labelledby="deletePersonnelLabel{{ personnel.id }}"
+                                                aria-hidden="true"
+                                            >
+
+                                                <div class="modal-dialog modal-dialog-centered">
+
+                                                    <div class="modal-content">
+
+
+                                                        <!-- HEADER -->
+
+                                                        <div class="modal-header">
+
+                                                            <h5
+                                                                class="modal-title text-danger"
+                                                                id="deletePersonnelLabel{{ personnel.id }}"
+                                                            >
+                                                                <i class="fas fa-trash"></i>
+                                                                Confirmation suppression
+                                                            </h5>
+
+                                                            <button
+                                                                type="button"
+                                                                class="btn-close"
+                                                                data-bs-dismiss="modal"
+                                                                aria-label="Fermer"
+                                                            ></button>
+
+                                                        </div>
+
+
+                                                        <!-- BODY -->
+
+                                                        <div class="modal-body text-center">
+
+                                                            <div class="modal-delete-icon text-danger mb-3">
+                                                                <i class="fas fa-user-times"></i>
+                                                            </div>
+
+                                                            <p class="mb-2">
+                                                                Voulez-vous vraiment supprimer ce personnel ?
+                                                            </p>
+
+
+                                                            <!-- NOM -->
+
+                                                            <div class="alert alert-warning">
+
+                                                                <div class="modal-delete-name">
+
+                                                                    {{ personnel.nom }}
+
+                                                                    {% if personnel.prenom %}
+                                                                        {{ personnel.prenom }}
+                                                                    {% endif %}
+
+                                                                </div>
+
+
+                                                                {% if personnel.fonction %}
+
+                                                                    <small class="text-muted">
+
+                                                                        <i class="fas fa-briefcase"></i>
+
+                                                                        {{ personnel.fonction }}
+
+                                                                    </small>
+
+                                                                {% endif %}
+
+
+                                                                {% if personnel.telephone %}
+
+                                                                    <br>
+
+                                                                    <small class="text-muted">
+
+                                                                        <i class="fas fa-phone"></i>
+
+                                                                        {{ personnel.telephone }}
+
+                                                                    </small>
+
+                                                                {% endif %}
+
+                                                            </div>
+
+
+                                                            <div class="alert alert-danger mb-0">
+
+                                                                <i class="fas fa-exclamation-triangle"></i>
+
+                                                                <strong>
+                                                                    Attention !
+                                                                </strong>
+
+                                                                Cette action est irréversible.
+
+                                                            </div>
+
+                                                        </div>
+
+
+                                                        <!-- FOOTER -->
+
+                                                        <div class="modal-footer">
+
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-secondary"
+                                                                data-bs-dismiss="modal"
+                                                            >
+                                                                <i class="fas fa-times"></i>
+                                                                Annuler
+                                                            </button>
+
+
+                                                            <!-- FORMULAIRE POST -->
+
+                                                            <form
+                                                                method="post"
+                                                                action="{% url 'personnel:personnel_delete' personnel.id %}"
+                                                                class="d-inline"
+                                                            >
+
+                                                                {% csrf_token %}
+
+                                                                <button
+                                                                    type="submit"
+                                                                    class="btn btn-danger"
+                                                                >
+                                                                    <i class="fas fa-trash"></i>
+                                                                    Supprimer
+                                                                </button>
+
+                                                            </form>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </td>
+
+                            {% endif %}
+
+                        </tr>
+
+
+                        <!-- =================================================
+                             AUCUN RESULTAT
+                             ================================================= -->
+
+                        {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="13"
+                                class="text-center text-muted py-5"
+                            >
+
+                                <i class="fas fa-users fa-2x mb-3"></i>
+
+                                <br>
+
+                                Aucun personnel trouvé.
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TOTAL
+         ===================================================== -->
+
+    <div class="mt-3 text-muted">
+
+        <i class="fas fa-users"></i>
+
+        Total :
+
+        <strong>
+            {{ personnels|length }}
+        </strong>
+
+        personnel(s)
+
+    </div>
+
+
+    {% endwith %}
+
+</div>
+
+{% endblock %}

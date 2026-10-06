@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card shadow-sm p-4">
+
+    <h3 class="mb-4 text-center text-uppercase">
+
+        {% if form.instance.id %}
+            <span class="text-info">
+                Modifier sortie matériel
+            </span>
+        {% else %}
+            <span class="text-success">
+                Ajouter sortie matériel
+            </span>
+        {% endif %}
+
+    </h3>
+
+
+    <!-- ===================================================== -->
+    <!-- ERREURS GÉNÉRALES -->
+    <!-- ===================================================== -->
+
+    {% if form.errors %}
+
+        <div class="alert alert-danger">
+
+            <h5 class="fw-bold">
+                ❌ Impossible d'enregistrer
+            </h5>
+
+            <p class="mb-2">
+                Veuillez corriger les erreurs suivantes :
+            </p>
+
+            {{ form.non_field_errors }}
+
+            {% for field in form %}
+
+                {% if field.errors %}
+
+                    <div class="mb-2">
+
+                        <strong>
+                            {{ field.label }} :
+                        </strong>
+
+                        {{ field.errors }}
+
+                    </div>
+
+                {% endif %}
+
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- ===================================================== -->
+    <!-- MESSAGE DJANGO -->
+    <!-- ===================================================== -->
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+
+                {{ message }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    <!-- ===================================================== -->
+    <!-- FORMULAIRE -->
+    <!-- ===================================================== -->
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <div class="row">
+
+            <!-- ================================================= -->
+            <!-- COLONNE GAUCHE -->
+            <!-- ================================================= -->
+
+            <div class="col-md-6">
+
+                <!-- MATÉRIEL -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Matériel
+                    </label>
+
+                    {{ form.id_Materiel }}
+
+                    {% if form.id_Materiel.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.id_Materiel.errors }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- DEMANDEUR -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Demandeur
+                    </label>
+
+                    {{ form.demandeur }}
+
+                    {% if form.demandeur.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.demandeur.errors }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- RESPONSABLE -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Responsable de sortie
+                    </label>
+
+                    {{ form.responsable_sortie }}
+
+                    {% if form.responsable_sortie.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.responsable_sortie.errors }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- QUANTITÉ -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Quantité sortie
+                    </label>
+
+                    {{ form.Nb_MatSort }}
+
+                    {% if form.Nb_MatSort.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.Nb_MatSort.errors }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- OBSERVATION -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Observation
+                    </label>
+
+                    {{ form.observation }}
+
+                    {% if form.observation.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.observation.errors }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- COLONNE DROITE -->
+            <!-- ================================================= -->
+
+            <div class="col-md-6">
+
+                <!-- DATE -->
+
+                <div class="mb-3">
+
+                    <label class="form-label fw-bold">
+                        Date de sortie
+                    </label>
+
+                    {{ form.dateSortie }}
+
+                    {% if form.dateSortie.errors %}
+
+                        <div class="text-danger small mt-1">
+                            {{ form.dateSortie.errors }}
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- INFORMATION -->
+
+                <div class="alert alert-info">
+
+                    <strong>Information</strong>
+
+                    <p class="mb-0 mt-2">
+
+                        La quantité sera automatiquement contrôlée
+                        par rapport au stock disponible du groupe :
+
+                    </p>
+
+                    <p class="mb-0 mt-2">
+
+                        <strong>
+                            NOM + TYPE + CATÉGORIE
+                        </strong>
+
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <hr class="my-4">
+
+
+        <!-- ===================================================== -->
+        <!-- BOUTONS -->
+        <!-- ===================================================== -->
+
+        <button
+            type="submit"
+            class="btn btn-success"
+        >
+
+            <i class="bi bi-check-circle"></i>
+
+            Enregistrer
+
+        </button>
+
+
+        <a
+            href="{% url 'materielsort:materielsort_list' %}"
+            class="btn btn-secondary"
+        >
+
+            <i class="bi bi-arrow-left"></i>
+
+            Retour
+
+        </a>
+
+    </form>
+
+</div>
+
+{% endblock %}

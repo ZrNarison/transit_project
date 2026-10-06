@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="card shadow">
+
+        <!-- ===================================================== -->
+        <!-- EN-TÊTE -->
+        <!-- ===================================================== -->
+
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">
+                Détail du matériel
+            </h4>
+        </div>
+
+
+        <div class="card-body">
+
+            <!-- ================================================= -->
+            <!-- INFORMATIONS ET STOCK -->
+            <!-- ================================================= -->
+
+            <div class="row">
+
+                <!-- ===================== -->
+                <!-- INFORMATIONS -->
+                <!-- ===================== -->
+
+                <div class="col-md-6">
+
+                    <p>
+                        <strong>Nom :</strong>
+                        {{ nom|upper }}
+                    </p>
+
+                    <p>
+                        <strong>Type :</strong>
+                        {{ typeMat|title }}
+                    </p>
+
+                    <p>
+                        <strong>Catégorie :</strong>
+                        {{ catMat|upper }}
+                    </p>
+
+                </div>
+
+
+                <!-- ===================== -->
+                <!-- STOCK -->
+                <!-- ===================== -->
+
+                <div class="col-md-6">
+
+                    <!-- STOCK INITIAL -->
+
+                    <p>
+                        <strong>Stock initial :</strong>
+
+                        {{ stock_initial }}
+
+                        {% if stock_initial > 0 %}
+
+                            {% if request.session.role == "UserEntreprise" or request.session.role == "Superviseur" %}
+
+                                <form method="post"
+                                      action="{% url 'materiels:supprimer_stock_initial' nom typeMat catMat %}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Voulez-vous vraiment supprimer le stock initial de ce matériel ?');">
+
+                                    {% csrf_token %}
+
+                                    <button type="submit"
+                                            class="btn btn-danger btn-sm ms-2">
+
+                                        🗑 Supprimer le stock initial
+
+                                    </button>
+
+                                </form>
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    </p>
+
+
+                    <!-- SORTIES -->
+
+                    <p class="text-danger">
+
+                        <strong>
+                            Sorties :
+                        </strong>
+
+                        {{ stock_sortie }}
+
+                    </p>
+
+
+                    <!-- ENTRÉES -->
+
+                    <p class="text-success">
+
+                        <strong>
+                            Entrées :
+                        </strong>
+
+                        {{ stock_entree }}
+
+                    </p>
+
+
+                    <!-- STOCK RESTANT -->
+
+                    <p>
+
+                        <strong>
+                            Stock restant :
+                        </strong>
+
+
+                        {% if stock_restant > 0 %}
+
+                            <span class="badge bg-success">
+                                {{ stock_restant }}
+                            </span>
+
+
+                        {% elif stock_restant == 0 %}
+
+                            <span class="badge bg-warning text-dark">
+                                {{ stock_restant }}
+                            </span>
+
+
+                        {% else %}
+
+                            <span class="badge bg-danger">
+                                {{ stock_restant }}
+                            </span>
+
+                        {% endif %}
+
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <hr>
+
+
+            <!-- ================================================= -->
+            <!-- HISTORIQUE DES SORTIES -->
+            <!-- ================================================= -->
+
+            <h5 class="text-danger mb-3">
+
+                Historique des sorties
+
+            </h5>
+
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-striped table-hover">
+
+                    <thead class="table-danger">
+
+                        <tr>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Demandeur
+                            </th>
+
+                            <th>
+                                Responsable
+                            </th>
+
+                            <th>
+                                Quantité
+                            </th>
+
+                            <th>
+                                Observation
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for s in sorties %}
+
+                        <tr>
+
+                            <td>
+                                {{ s.dateSortie|date:"d/m/Y H:i" }}
+                            </td>
+
+                            <td>
+                                {{ s.demandeur|title }}
+                            </td>
+
+                            <td>
+                                {{ s.responsable_sortie|title }}
+                            </td>
+
+                            <td class="text-end text-danger fw-bold">
+
+                                {{ s.Nb_MatSort }}
+
+                            </td>
+
+                            <td>
+                                {{ s.observation|title }}
+                            </td>
+
+                        </tr>
+
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td colspan="5"
+                                class="text-center text-muted">
+
+                                Aucune sortie.
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <hr>
+
+
+            <!-- ================================================= -->
+            <!-- HISTORIQUE DES ENTRÉES -->
+            <!-- ================================================= -->
+
+            <h5 class="text-success mb-3">
+
+                Historique des entrées (Remises)
+
+            </h5>
+
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-striped table-hover">
+
+                    <thead class="table-success">
+
+                        <tr>
+
+                            <th>
+                                Date
+                            </th>
+
+                            <th>
+                                Responsable
+                            </th>
+
+                            <th>
+                                Quantité
+                            </th>
+
+                            <th>
+                                Observation
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for e in entrees %}
+
+                        <tr>
+
+                            <td>
+                                {{ e.dateEntre|date:"d/m/Y H:i" }}
+                            </td>
+
+                            <td>
+                                {{ e.responsable_entree }}
+                            </td>
+
+                            <td class="text-end text-success fw-bold">
+
+                                {{ e.Nb_Entre }}
+
+                            </td>
+
+                            <td>
+                                {{ e.observation }}
+                            </td>
+
+                        </tr>
+
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td colspan="4"
+                                class="text-center text-muted">
+
+                                Aucune entrée.
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <hr>
+
+
+            <!-- ================================================= -->
+            <!-- BOUTON RETOUR -->
+            <!-- ================================================= -->
+
+            <div class="d-flex justify-content-between">
+
+                <a href="javascript:history.back();"
+                   class="btn btn-secondary">
+
+                    ← Retour
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm p-4">
+    <h3 class="mb-4 text-center">Informations du véhicule sortant</h3>
+    <div class="row">
+        <div class="col-md-8">
+            <p><strong>Chauffeur :</strong> {{ vehicule.chauffeur|upper }}</p>
+            <p><strong>CIN :</strong> {{ vehicule.cin }}</p>
+            <p><strong>N° Véhicule :</strong> {{ vehicule.num_vehicule|upper }}</p>
+            <p><strong>Permis :</strong> {{ vehicule.permis }}</p>
+            <p><strong>Téléphone :</strong> {{ vehicule.telephone }}</p>
+            <p><strong>Adresse :</strong> {{ vehicule.adresse }}</p>
+            <p><strong>Remorque :</strong> {{ vehicule.remorque }}</p>
+            <p><strong>Ticket :</strong> {{ vehicule.ticket }}</p>
+        </div>
+        <div class="col-md-4 text-center">
+            {% if vehicule.photo %}
+                <img src="{{ vehicule.photo.url }}" class="img-thumbnail" width="250">
+            {% endif %}
+        </div>
+    </div>
+    <a href="{% url 'vehiculesortant:vehicule_sortant_edit' vehicule.id %}" class="btn btn-warning">✏ Modifier</a>
+    <a href="{% url 'vehiculesortant:vehicule_sortant_delete' vehicule.id %}" class="btn btn-danger">🗑 Supprimer</a>
+    <a href="{% url 'vehiculesortant:vehicule_sortant_list' %}" class="btn btn-secondary">Retour</a>
+</div>
+{% endblock %}

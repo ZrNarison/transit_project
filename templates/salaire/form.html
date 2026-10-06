@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% load humanize %}
+
+{% block content %}
+
+<div class="page-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <h3 class="mb-0">
+            {{ action }} un salaire
+        </h3>
+
+    </div>
+
+    <p class="text-muted">
+        Enregistrez le salaire réellement payé.
+        Les avances antérieures seront automatiquement prises
+        en compte dans le calcul du reste et du trop-perçu.
+    </p>
+
+
+    <form method="post" class="mt-4">
+
+        {% csrf_token %}
+
+
+        {% if form.non_field_errors %}
+
+        <div class="alert alert-danger">
+
+            {{ form.non_field_errors }}
+
+        </div>
+
+        {% endif %}
+
+
+        <div class="row g-3">
+
+
+            <!-- ================================================= -->
+            <!-- PERSONNEL -->
+            <!-- ================================================= -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    Personnel
+                </label>
+
+                {{ form.personnel }}
+
+                {% if form.personnel.errors %}
+
+                <div class="text-danger small mt-1">
+
+                    {{ form.personnel.errors }}
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- NOMBRE DE JOURS -->
+            <!-- ================================================= -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Nombre de jours travaillés
+
+                </label>
+
+                {{ form.nombre_jours }}
+
+                {% if form.nombre_jours.errors %}
+
+                <div class="text-danger small mt-1">
+
+                    {{ form.nombre_jours.errors }}
+
+                </div>
+
+                {% endif %}
+
+                <small class="text-muted">
+
+                    Obligatoire uniquement pour un personnel
+                    journalier.
+
+                </small>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- SALAIRE CONTRACTUEL -->
+            <!-- ================================================= -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Salaire contractuel
+
+                </label>
+
+                {{ form.salaire_contractuel_affichage }}
+
+                <small class="text-muted">
+
+                    CDI / CDD / Stage : salaire contractuel.
+                    <br>
+                    Journalier : salaire journalier × nombre de jours.
+
+                </small>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- MONTANT PAYÉ -->
+            <!-- ================================================= -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Salaire réellement payé
+
+                </label>
+
+                {{ form.montant }}
+
+                {% if form.montant.errors %}
+
+                <div class="text-danger small mt-1">
+
+                    {{ form.montant.errors }}
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- DATE -->
+            <!-- ================================================= -->
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Date de paiement
+
+                </label>
+
+                {{ form.date_paiement }}
+
+                {% if form.date_paiement.errors %}
+
+                <div class="text-danger small mt-1">
+
+                    {{ form.date_paiement.errors }}
+
+                </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- SITUATION EN ÉDITION -->
+            <!-- ================================================= -->
+
+            {% if form.instance.pk %}
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Reste actuel
+
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    disabled
+                    value="{{ form.instance.reste|floatformat:0|intcomma }} Ar"
+                >
+
+            </div>
+
+
+            <div class="col-md-6">
+
+                <label class="form-label">
+
+                    Trop-perçu actuel
+
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    disabled
+                    value="{{ form.instance.trop_percu|floatformat:0|intcomma }} Ar"
+                >
+
+            </div>
+
+            {% endif %}
+
+
+            <!-- ================================================= -->
+            <!-- INFORMATION -->
+            <!-- ================================================= -->
+
+            <div class="col-12">
+
+                <div class="alert alert-secondary mt-3">
+
+                    <strong>Calcul automatique :</strong>
+
+                    <br>
+
+                    Salaire contractuel
+                    − avances déjà reçues
+                    − salaire payé
+                    = reste à payer.
+
+                    <br><br>
+
+                    Si le total reçu dépasse le salaire contractuel,
+                    la différence est enregistrée comme
+                    <strong>trop-perçu</strong>.
+
+                    <br><br>
+
+                    Les avances sont traitées dans l'ordre
+                    chronologique et une avance non entièrement
+                    utilisée reste disponible pour les salaires
+                    suivants.
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- ===================================================== -->
+        <!-- BOUTONS -->
+        <!-- ===================================================== -->
+
+        <div class="mt-4 d-flex gap-2">
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+
+                <i class="fas fa-save"></i>
+
+                Enregistrer
+
+            </button>
+
+
+            <a
+                href="{% url 'salaire:salaire_list' %}"
+                class="btn btn-secondary"
+            >
+
+                <i class="fas fa-arrow-left"></i>
+
+                Annuler
+
+            </a>
+
+        </div>
+
+
+    </form>
+
+
+</div>
+
+
+{% endblock %}

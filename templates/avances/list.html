@@ -1,0 +1,690 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <!-- =====================================================
+         TITRE
+    ====================================================== -->
+
+    <h2 class="text-center mb-4">
+        Liste des avances
+    </h2>
+
+
+    <!-- =====================================================
+         FILTRES
+    ====================================================== -->
+
+    <div class="card shadow-sm mb-3">
+
+        <div class="card-body">
+
+            <form method="get">
+
+                <div class="row align-items-end">
+
+                    <!-- RECHERCHE PERSONNEL -->
+
+                    <div class="col-md-4 mb-2">
+
+                        <label class="form-label">
+                            Nom ou prénom
+                        </label>
+
+                        <input
+                            type="text"
+                            name="personnel"
+                            value="{{ personnel }}"
+                            class="form-control"
+                            placeholder="Personnel"
+                        >
+
+                    </div>
+
+
+                    <!-- DATE -->
+
+                    <div class="col-md-3 mb-2">
+
+                        <label class="form-label">
+                            Date
+                        </label>
+
+                        <input
+                            type="date"
+                            name="date"
+                            value="{{ date }}"
+                            class="form-control"
+                        >
+
+                    </div>
+
+
+                    <!-- BOUTONS -->
+
+                    <div class="col-md-5 mb-2 d-flex gap-2">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                            title="Rechercher"
+                        >
+                            🔍
+                        </button>
+
+
+                        <a
+                            href="{% url 'avances:avance_list' %}"
+                            class="btn btn-secondary"
+                        >
+                            Reset
+                        </a>
+
+
+                        {% if request.session.role == "UserMica" %}
+                            <a
+                                href="{% url 'avances:avance_add' %}"
+                                class="btn btn-success"
+                            >
+                                + Nouvelle avance
+                            </a>
+
+                        {% elif request.session.role == "UserEntreprise" %}
+                            <a
+                                href="{% url 'avances:avance_add' %}"
+                                class="btn btn-success"
+                            >
+                                + Nouvelle avance
+                            </a>
+
+                        {% elif request.session.role == "Superviseur" %}
+                            <a
+                                href="{% url 'avances:avance_add' %}"
+                                class="btn btn-success"
+                            >
+                                + Nouvelle avance
+                            </a>
+
+                        {% elif request.session.role == "Admin" %}
+                            <a
+                                href="{% url 'avances:avance_add' %}"
+                                class="btn btn-success"
+                            >
+                                + Nouvelle avance
+                            </a>
+
+                        {% elif request.session.role == "SuperAdmin" %}
+                            <a
+                                href="{% url 'avances:avance_add' %}"
+                                class="btn btn-success"
+                            >
+                                + Nouvelle avance
+                            </a>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         NOMBRE D'AVANCES
+    ====================================================== -->
+
+    <div class="mb-3">
+
+        <strong>
+            Nombre d'avances :
+            {{ page_obj.paginator.count }}
+        </strong>
+
+    </div>
+
+
+    <!-- =====================================================
+         TABLEAU
+    ====================================================== -->
+
+    <div class="table-responsive">
+
+        <table
+            class="table table-bordered table-striped table-hover align-middle"
+        >
+
+            <thead class="table-dark text-center">
+
+                <tr>
+
+                    <th>N°</th>
+
+                    <th>Personnel</th>
+
+                    <th>Travail</th>
+
+                    <th>Motif</th>
+
+                    <th>Montant</th>
+
+                    <th>Type</th>
+
+                    <th>Date</th>
+
+                    <th>Enregistré par</th>
+
+                    <th width="220">
+                        Actions
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            {% for avance in avances %}
+
+                <tr>
+
+                    <!-- =================================================
+                         ID
+                    ================================================== -->
+
+                    <td class="text-center">
+                        {{ avance.id }}
+                    </td>
+
+
+                    <!-- =================================================
+                         PERSONNEL
+                    ================================================== -->
+
+                    <td>
+
+                        {% if avance.personnel %}
+
+                            <strong>
+                                {{ avance.personnel.nom|upper }}
+                            </strong>
+
+                            {{ avance.personnel.prenom|title }}
+
+                            <br>
+
+                            <small class="text-muted">
+
+                                📞
+                                {{ avance.personnel.telephone }}
+
+                            </small>
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         TYPE DE TRAVAIL
+                    ================================================== -->
+
+                    <td class="text-center">
+
+                        {% if avance.personnel %}
+
+                            {% if avance.personnel.typeTravail == "Mica" %}
+
+                                <span class="badge bg-primary">
+                                    Mica
+                                </span>
+
+                            {% elif avance.personnel.typeTravail == "Construction" %}
+
+                                <span class="badge bg-success">
+                                    Construction
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary">
+                                    {{ avance.personnel.typeTravail }}
+                                </span>
+
+                            {% endif %}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         MOTIF
+                    ================================================== -->
+
+                    <td>
+
+                        {{ avance.motifAv|title }}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         MONTANT
+                    ================================================== -->
+
+                    <td class="text-end fw-bold">
+
+                        {{ avance.montantAv|intcomma }}
+                        Ar
+
+                    </td>
+
+
+                    <!-- =================================================
+                         TYPE AVANCE
+                    ================================================== -->
+
+                    <td class="text-center">
+
+                        {{ avance.get_typeAv_display }}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         DATE
+                    ================================================== -->
+
+                    <td class="text-center">
+
+                        {{ avance.dateAv|date:"d/m/Y" }}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         ENREGISTRE PAR
+                    ================================================== -->
+
+                    <td>
+
+                        {% if avance.enregistre_par %}
+
+                            {{ avance.enregistre_par.username|title }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- =================================================
+                         ACTIONS
+                    ================================================== -->
+<td class="text-center text-nowrap">
+
+    <!-- ================================================= -->
+    <!-- VOIR -->
+    <!-- ================================================= -->
+
+    <a
+        href="{% url 'avances:avance_detail' avance.id %}"
+        class="btn btn-info btn-sm"
+        title="Voir"
+    >
+        👁
+    </a>
+
+
+    <!-- ================================================= -->
+    <!-- MODIFICATION / SUPPRESSION -->
+    <!-- SEUL L'ENREGISTREUR -->
+    <!-- ================================================= -->
+
+    {% if avance.enregistre_par_id == request.session.user_id %}
+
+        <!-- MODIFIER -->
+
+        <a
+            href="{% url 'avances:avance_edit' avance.id %}"
+            class="btn btn-warning btn-sm"
+            title="Modifier"
+        >
+            ✏️
+        </a>
+
+
+        <!-- SUPPRIMER -->
+
+        <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            data-bs-toggle="modal"
+            data-bs-target="#delete{{ avance.id }}"
+            title="Supprimer"
+        >
+            🗑️
+        </button>
+
+
+        <!-- ================================================= -->
+        <!-- MODAL CONFIRMATION SUPPRESSION -->
+        <!-- ================================================= -->
+
+        <div
+            class="modal fade"
+            id="delete{{ avance.id }}"
+            tabindex="-1"
+            aria-labelledby="deleteLabel{{ avance.id }}"
+            aria-hidden="true"
+        >
+
+            <div class="modal-dialog modal-dialog-centered">
+
+                <div class="modal-content">
+
+                    <!-- HEADER -->
+
+                    <div class="modal-header">
+
+                        <h5
+                            class="modal-title text-danger"
+                            id="deleteLabel{{ avance.id }}"
+                        >
+                            ⚠️ Confirmation de suppression
+                        </h5>
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Fermer"
+                        ></button>
+
+                    </div>
+
+
+                    <!-- BODY -->
+
+                    <div class="modal-body">
+
+                        <p class="mb-3">
+                            Voulez-vous vraiment supprimer
+                            cette avance ?
+                        </p>
+
+
+                        <div class="alert alert-warning mb-0">
+
+                            <!-- PERSONNEL -->
+
+                            <p class="mb-1">
+
+                                <strong>
+                                    Personnel :
+                                </strong>
+
+                                {% if avance.personnel %}
+                                    {{ avance.personnel.nom|upper }}
+                                    {{ avance.personnel.prenom|title }}
+                                {% else %}
+                                    -
+                                {% endif %}
+
+                            </p>
+
+
+                            <!-- MONTANT -->
+
+                            <p class="mb-1">
+
+                                <strong>
+                                    Montant :
+                                </strong>
+
+                                {{ avance.montantAv|floatformat:0|intcomma }}
+                                Ar
+
+                            </p>
+
+
+                            <!-- MOTIF -->
+
+                            <p class="mb-1">
+
+                                <strong>
+                                    Motif :
+                                </strong>
+
+                                {{ avance.motifAv|title }}
+
+                            </p>
+
+
+                            <!-- TYPE -->
+
+                            <p class="mb-1">
+
+                                <strong>
+                                    Type :
+                                </strong>
+
+                                {{ avance.get_typeAv_display }}
+
+                            </p>
+
+
+                            <!-- DATE -->
+
+                            <p class="mb-0">
+
+                                <strong>
+                                    Date :
+                                </strong>
+
+                                {{ avance.dateAv|date:"d/m/Y" }}
+
+                            </p>
+
+                        </div>
+
+
+                        <p class="text-danger small mt-3 mb-0">
+
+                            ⚠️ Cette opération est irréversible.
+
+                        </p>
+
+                    </div>
+
+
+                    <!-- FOOTER -->
+
+                    <div class="modal-footer">
+
+                        <!-- ANNULER -->
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Annuler
+                        </button>
+
+
+                        <!-- CONFIRMER -->
+
+                        <form
+                            method="post"
+                            action="{% url 'avances:avance_delete' avance.id %}"
+                        >
+
+                            {% csrf_token %}
+
+                            <button
+                                type="submit"
+                                class="btn btn-danger"
+                            >
+                                🗑️ Supprimer
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    {% else %}
+
+        <!-- ================================================= -->
+        <!-- UTILISATEUR NON AUTORISÉ -->
+        <!-- ================================================= -->
+
+        <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            disabled
+            title="Seul l'enregistreur peut modifier ou supprimer cette avance"
+        >
+            🔒
+        </button>
+
+    {% endif %}
+
+</td>
+
+
+                </tr>
+
+
+            {% empty %}
+
+                <tr>
+
+                    <td
+                        colspan="9"
+                        class="text-center text-muted py-4"
+                    >
+
+                        Aucune avance trouvée.
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- =====================================================
+         PAGINATION
+    ====================================================== -->
+
+    {% if page_obj.has_other_pages %}
+
+        <nav aria-label="Pagination">
+
+            <ul class="pagination justify-content-center">
+
+                {% if page_obj.has_previous %}
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page=1{% if query_params %}&{{ query_params }}{% endif %}"
+                        >
+                            «
+                        </a>
+
+                    </li>
+
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}"
+                        >
+                            ‹
+                        </a>
+
+                    </li>
+
+                {% endif %}
+
+
+                <li class="page-item active">
+
+                    <span class="page-link">
+
+                        Page
+                        {{ page_obj.number }}
+                        /
+                        {{ page_obj.paginator.num_pages }}
+
+                    </span>
+
+                </li>
+
+
+                {% if page_obj.has_next %}
+
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}">
+                            ›
+                        </a>
+                    </li>
+
+
+                    <li class="page-item">
+
+                        <a
+                            class="page-link"
+                            href="?page={{ page_obj.paginator.num_pages }}{% if query_params %}&{{ query_params }}{% endif %}"
+                        >
+                            »
+                        </a>
+
+                    </li>
+
+                {% endif %}
+
+            </ul>
+
+        </nav>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

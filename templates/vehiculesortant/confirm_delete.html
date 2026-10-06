@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm p-4 text-center">
+    <h4 class="text-danger">Confirmer la suppression</h4>
+    <p>Voulez-vous vraiment supprimer <strong>{{ vehicule.chauffeur|upper }}</strong> du véhicule <strong>{{ vehicule.num_vehicule|upper }}</strong> ?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Oui, supprimer</button>
+        <a href="{% url 'vehiculesortant:vehicule_sortant_list' %}" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if mode == "modification" %}
+        Modifier le point
+    {% else %}
+        Nouveau point
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        {% if mode == "modification" %}
+                            <i class="fas fa-edit"></i>Modifier le point
+                        {% else %}
+                            <i class="fas fa-location-dot"></i>Nouveau point de chantier
+                        {% endif %}
+                    </h4>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Projet :</strong>
+                            {{ projet.titre|title }}
+                            <br>
+                            <strong>Localisation :</strong>
+                            {{ projet.localisation|upper }}
+                        </div>
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">
+                                    {{ form.nom.label }}
+                                </label>
+
+                                {{ form.nom }}
+                                {% for error in form.nom.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">
+                                    {{ form.localisation.label }}
+                                </label>
+                                {{ form.localisation }}
+                                {% for error in form.localisation.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label fw-bold">
+                                    {{ form.distance_km.label }}
+                                </label>
+                                <div class="input-group">
+                                    {{ form.distance_km }}
+                                    <span class="input-group-text">km</span>
+                                </div>
+
+                                {% for error in form.distance_km.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+                            </div>
+
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">
+                                    {{ form.travail_prevu.label }}
+                                </label>
+
+                                {{ form.travail_prevu }}
+                                {% for error in form.travail_prevu.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+                            </div>
+
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold">
+                                    {{ form.observation.label }}
+                                </label>
+                                {{ form.observation }}
+                            </div>
+
+
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    {{ form.actif }}
+                                    <label class="form-check-label fw-bold">
+                                        {{ form.actif.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="card-footer bg-light d-flex justify-content-between">
+
+                        <a href="{% url 'projet:point_list' projet.id %}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i>Annuler</a>
+
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-save"></i>
+                            {% if mode == "modification" %}
+                                Enregistrer
+                            {% else %}
+                                Ajouter le point
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

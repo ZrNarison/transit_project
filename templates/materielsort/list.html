@@ -1,0 +1,539 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow-sm p-4">
+
+        <!-- ================================================= -->
+        <!-- TITRE -->
+        <!-- ================================================= -->
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <div>
+                <h3 class="mb-1">
+                    Sorties de matériel
+                </h3>
+
+                <p class="text-muted mb-0">
+                    Gestion des sorties de matériel
+                </p>
+            </div>
+
+            {% if request.session.role == "UserEntreprise" or request.session.role == "Superviseur" %}
+
+                <a
+                    href="{% url 'materielsort:materielsort_add' %}"
+                    class="btn btn-success"
+                >
+                    + Nouveau
+                </a>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- RECHERCHE -->
+        <!-- ================================================= -->
+
+        <form
+            method="get"
+            class="row g-3 mb-4"
+        >
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Matériel
+                </label>
+
+                <input
+                    type="text"
+                    name="materiel"
+                    value="{{ materiel }}"
+                    class="form-control"
+                    placeholder="Nom du matériel"
+                >
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Demandeur
+                </label>
+
+                <input
+                    type="text"
+                    name="demandeur"
+                    value="{{ demandeur }}"
+                    class="form-control"
+                    placeholder="Demandeur"
+                >
+
+            </div>
+
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Date
+                </label>
+
+                <input
+                    type="date"
+                    name="date"
+                    value="{{ date }}"
+                    class="form-control"
+                >
+
+            </div>
+
+
+            <div class="col-md-12">
+
+                <button
+                    type="submit"
+                    class="btn btn-outline-primary"
+                >
+                    🔍 Rechercher
+                </button>
+
+                <a
+                    href="{% url 'materielsort:materielsort_list' %}"
+                    class="btn btn-secondary"
+                >
+                    Reset
+                </a>
+
+            </div>
+
+        </form>
+
+
+        <!-- ================================================= -->
+        <!-- MESSAGES -->
+        <!-- ================================================= -->
+
+        {% if messages %}
+
+            {% for message in messages %}
+
+                <div
+                    class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                    role="alert"
+                >
+
+                    {{ message }}
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                    ></button>
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+
+        <!-- ================================================= -->
+        <!-- TABLEAU -->
+        <!-- ================================================= -->
+
+        <div class="table-responsive">
+
+            <table class="table table-bordered table-striped table-hover align-middle">
+
+                <thead class="table-dark">
+
+                    <tr>
+
+                        <th>ID</th>
+
+                        <th>Matériel</th>
+
+                        <th>Type</th>
+
+                        <th>Catégorie</th>
+
+                        <th>Demandeur</th>
+
+                        <th>Responsable</th>
+
+                        <th>Quantité</th>
+
+                        <th>Observation</th>
+
+                        <th>Date sortie</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for s in materielsorts %}
+
+                        <tr>
+
+                            <!-- ID -->
+
+                            <td>
+                                {{ s.id }}
+                            </td>
+
+
+                            <!-- NOM -->
+
+                            <td>
+                                <strong>
+                                    {{ s.id_Materiel.nom|upper }}
+                                </strong>
+                            </td>
+
+
+                            <!-- TYPE -->
+
+                            <td>
+                                {{ s.id_Materiel.typeMat|title }}
+                            </td>
+
+
+                            <!-- CATÉGORIE -->
+
+                            <td>
+                                {{ s.id_Materiel.catMat|title }}
+                            </td>
+
+
+                            <!-- DEMANDEUR -->
+
+                            <td>
+                                {{ s.demandeur|title }}
+                            </td>
+
+
+                            <!-- RESPONSABLE -->
+
+                            <td>
+                                {{ s.responsable_sortie|title }}
+                            </td>
+
+
+                            <!-- QUANTITÉ -->
+
+                            <td class="text-center fw-bold">
+
+                                {{ s.Nb_MatSort }}
+
+                            </td>
+
+
+                            <!-- OBSERVATION -->
+
+                            <td>
+
+                                {% if s.observation %}
+
+                                    {{ s.observation|title }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- DATE -->
+
+                            <td class="text-center">
+
+                                {{ s.dateSortie|date:"d/m/Y" }}
+
+                            </td>
+
+
+                            <!-- ACTIONS -->
+
+                            <td class="text-center">
+
+                                {% if request.session.role == "UserEntreprise" or request.session.role == "Superviseur" %}
+
+                                    <!-- MODIFIER -->
+
+                                    <a
+                                        href="{% url 'materielsort:materielsort_edit' s.id %}"
+                                        class="btn btn-warning btn-sm"
+                                        title="Modifier"
+                                    >
+                                        ✏
+                                    </a>
+
+
+                                    <!-- SUPPRIMER -->
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#delete{{ s.id }}"
+                                        title="Supprimer"
+                                    >
+                                        🗑
+                                    </button>
+
+
+                                    <!-- ================================================= -->
+                                    <!-- MODAL SUPPRESSION -->
+                                    <!-- ================================================= -->
+
+                                    <div
+                                        class="modal fade"
+                                        id="delete{{ s.id }}"
+                                        tabindex="-1"
+                                        aria-labelledby="deleteLabel{{ s.id }}"
+                                        aria-hidden="true"
+                                    >
+
+                                        <div class="modal-dialog modal-dialog-centered">
+
+                                            <div class="modal-content">
+
+
+                                                <!-- HEADER -->
+
+                                                <div class="modal-header">
+
+                                                    <h5
+                                                        class="modal-title text-danger"
+                                                        id="deleteLabel{{ s.id }}"
+                                                    >
+                                                        ⚠ Confirmation suppression
+                                                    </h5>
+
+                                                    <button
+                                                        type="button"
+                                                        class="btn-close"
+                                                        data-bs-dismiss="modal"
+                                                        aria-label="Fermer"
+                                                    ></button>
+
+                                                </div>
+
+
+                                                <!-- BODY -->
+
+                                                <div class="modal-body text-start">
+
+                                                    <p>
+                                                        Voulez-vous vraiment supprimer cette sortie de matériel ?
+                                                    </p>
+
+
+                                                    <div class="alert alert-warning">
+
+                                                        <strong>
+                                                            Matériel :
+                                                        </strong>
+
+                                                        {{ s.id_Materiel.nom|upper }}
+
+                                                        <br>
+
+
+                                                        <strong>
+                                                            Type :
+                                                        </strong>
+
+                                                        {{ s.id_Materiel.typeMat|title }}
+
+                                                        <br>
+
+
+                                                        <strong>
+                                                            Catégorie :
+                                                        </strong>
+
+                                                        {{ s.id_Materiel.catMat|title }}
+
+                                                        <br>
+
+
+                                                        <strong>
+                                                            Quantité :
+                                                        </strong>
+
+                                                        {{ s.Nb_MatSort }}
+
+                                                        <br>
+
+
+                                                        <strong>
+                                                            Demandeur :
+                                                        </strong>
+
+                                                        {{ s.demandeur|title }}
+
+                                                        <br>
+
+
+                                                        <strong>
+                                                            Date :
+                                                        </strong>
+
+                                                        {{ s.dateSortie|date:"d/m/Y" }}
+
+                                                    </div>
+
+
+                                                    {% if s.entrees.all %}
+
+                                                        <div class="alert alert-danger">
+
+                                                            ⚠ Attention :
+
+                                                            cette sortie possède éventuellement
+                                                            des entrées/remises associées.
+
+                                                            <br>
+
+                                                            La suppression de la sortie entraînera
+                                                            également la suppression de ses entrées
+                                                            associées.
+
+                                                        </div>
+
+                                                    {% endif %}
+
+                                                    <p class="text-danger fw-bold mb-0">
+
+                                                        Cette opération est irréversible.
+
+                                                    </p>
+
+                                                </div>
+
+
+                                                <!-- FOOTER -->
+
+                                                <div class="modal-footer">
+
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal"
+                                                    >
+                                                        Annuler
+                                                    </button>
+
+
+                                                    <form
+                                                        method="post"
+                                                        action="{% url 'materielsort:materielsort_delete' s.id %}"
+                                                    >
+
+                                                        {% csrf_token %}
+
+                                                        <button
+                                                            type="submit"
+                                                            class="btn btn-danger"
+                                                        >
+                                                            🗑 Supprimer
+                                                        </button>
+
+                                                    </form>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                {% else %}
+
+                                    <button
+                                        class="btn btn-secondary btn-sm"
+                                        disabled
+                                        title="Vous n'avez pas l'autorisation"
+                                    >
+                                        🔒
+                                    </button>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="10"
+                                class="text-center py-4"
+                            >
+
+                                <div class="alert alert-info mb-0">
+
+                                    Aucune sortie de matériel enregistrée.
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+
+                <!-- ================================================= -->
+                <!-- FOOTER -->
+                <!-- ================================================= -->
+
+                <tfoot class="table-secondary">
+
+                    <tr>
+
+                        <th
+                            colspan="9"
+                            class="text-end"
+                        >
+                            Nombre de sorties :
+                        </th>
+
+                        <th class="text-center">
+                            {{ materielsorts|length }}
+                        </th>
+
+                    </tr>
+
+                </tfoot>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

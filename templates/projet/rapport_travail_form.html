@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Rapport de travail{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-9">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-warning">
+
+                    <h4 class="mb-0">
+                        <i class="fas fa-hammer"></i>
+                        Rapport de travail
+                    </h4>
+
+                </div>
+
+
+                <form method="post"
+                      enctype="multipart/form-data">
+
+                    {% csrf_token %}
+
+                    <div class="card-body">
+
+                        <div class="alert alert-info">
+
+                            <strong>Projet :</strong>
+                            {{ projet.titre }}
+
+                        </div>
+
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.point.label }}
+                                </label>
+
+                                {{ form.point }}
+
+                                {% for error in form.point.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.titre.label }}
+                                </label>
+
+                                {{ form.titre }}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.localisation.label }}
+                                </label>
+
+                                {{ form.localisation }}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.date_debut.label }}
+                                </label>
+
+                                {{ form.date_debut }}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.date_fin.label }}
+                                </label>
+
+                                {{ form.date_fin }}
+
+                                <div class="form-text">
+                                    Laisser vide si le travail est encore en cours.
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.description.label }}
+                                </label>
+
+                                {{ form.description }}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.photo.label }}
+                                </label>
+
+                                {{ form.photo }}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.observation.label }}
+                                </label>
+
+                                {{ form.observation }}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="card-footer bg-light d-flex justify-content-between">
+
+                        <a href="{% url 'projet:rapport_travail_list' projet.id %}"
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Annuler
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-warning">
+                            <i class="fas fa-save"></i>
+                            Enregistrer le rapport
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

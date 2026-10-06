@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if mode == "modification" %}
+        Modifier le projet
+    {% else %}
+        Nouveau projet
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-9">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-primary text-white">
+
+                    <h4 class="mb-0 fw-bold">
+
+                        {% if mode == "modification" %}
+
+                            <i class="fas fa-edit"></i>
+                            Modifier le projet
+
+                        {% else %}
+
+                            <i class="fas fa-plus-circle"></i>
+                            Nouveau projet
+
+                        {% endif %}
+
+                    </h4>
+
+                </div>
+
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+                    <div class="card-body">
+
+                        {% if form.non_field_errors %}
+
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+
+                        {% endif %}
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-8">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.titre.label }}
+                                </label>
+
+                                {{ form.titre }}
+
+                                {% for error in form.titre.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-4">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.statut.label }}
+                                </label>
+
+                                {{ form.statut }}
+
+                                {% for error in form.statut.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.localisation.label }}
+                                </label>
+
+                                {{ form.localisation }}
+
+                                {% for error in form.localisation.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.date_debut.label }}
+                                </label>
+
+                                {{ form.date_debut }}
+
+                                {% for error in form.date_debut.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.date_fin.label }}
+                                </label>
+
+                                {{ form.date_fin }}
+
+                                {% for error in form.date_fin.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-6">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.budget_previsionnel.label }}
+                                </label>
+
+                                <div class="input-group">
+                                    {{ form.budget_previsionnel }}
+                                    <span class="input-group-text">
+                                        Ar
+                                    </span>
+                                </div>
+
+                                {% for error in form.budget_previsionnel.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+
+                            <div class="col-md-12">
+
+                                <label class="form-label fw-bold">
+                                    {{ form.observation.label }}
+                                </label>
+
+                                {{ form.observation }}
+
+                                {% for error in form.observation.errors %}
+                                <div class="text-danger small">
+                                    {{ error }}
+                                </div>
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="card-footer bg-light d-flex justify-content-between">
+
+                        <a href="{% if projet %}{% url 'projet:projet_detail' projet.id %}{% else %}{% url 'projet:projet_list' %}{% endif %}"
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Annuler
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-primary">
+
+                            {% if mode == "modification" %}
+                                <i class="fas fa-save"></i>
+                                Enregistrer les modifications
+                            {% else %}
+                                <i class="fas fa-plus"></i>
+                                Créer le projet
+                            {% endif %}
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
