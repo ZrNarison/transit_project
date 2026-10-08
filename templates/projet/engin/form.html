@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{% if object %}
+Modifier l'engin
+{% else %}
+Ajouter un engin
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+<!-- ========================================================= -->
+<!-- EN-TÊTE -->
+<!-- ========================================================= -->
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h3 class="mb-1">
+
+            {% if object %}
+                <i class="fas fa-edit me-2"></i>
+                Modifier l'engin
+            {% else %}
+                <i class="fas fa-plus-circle me-2"></i>
+                Ajouter un engin
+            {% endif %}
+
+        </h3>
+
+        <div class="text-muted">
+
+            <i class="fas fa-folder-open me-1"></i>
+
+            Projet :
+            <strong>{{ projet.titre|title }}</strong>
+
+        </div>
+
+    </div>
+
+    <a href="{% url 'projet:engin_list' projet.pk %}"
+       class="btn btn-outline-secondary">
+
+        <i class="fas fa-arrow-left me-1"></i>
+        Retour à la liste
+
+    </a>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- FORMULAIRE -->
+<!-- ========================================================= -->
+
+<div class="row justify-content-center">
+
+    <div class="col-xl-9 col-lg-10">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header bg-primary text-white">
+
+                <i class="fas fa-tractor me-2"></i>
+
+                {% if object %}
+                    Informations de l'engin
+                {% else %}
+                    Nouvel engin
+                {% endif %}
+
+            </div>
+
+
+            <div class="card-body">
+
+                {% if form.non_field_errors %}
+
+                    <div class="alert alert-danger">
+
+                        {% for error in form.non_field_errors %}
+
+                            <div>
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                {{ error }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <form method="post"
+                      novalidate>
+
+                    {% csrf_token %}
+
+
+                    <!-- ================================================= -->
+                    <!-- IDENTIFICATION -->
+                    <!-- ================================================= -->
+
+                    <h5 class="border-bottom pb-2 mb-3">
+
+                        <i class="fas fa-id-card me-2"></i>
+                        Identification
+
+                    </h5>
+
+
+                    <div class="row g-3">
+
+                        <!-- ENGIN -->
+                        <div class="col-md-6">
+
+                            <label for="{{ form.engin.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                {{ form.engin.label }}
+
+                                <span class="text-danger">*</span>
+
+                            </label>
+
+                            {{ form.engin }}
+
+                            {% if form.engin.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ form.engin.errors }}
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- CONDUCTEUR -->
+                        <div class="col-md-6">
+
+                            <label for="{{ form.conducteur.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                {{ form.conducteur.label }}
+
+                            </label>
+
+                            {{ form.conducteur }}
+
+                            {% if form.conducteur.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ form.conducteur.errors }}
+                                </div>
+
+                            {% endif %}
+
+                            <div class="form-text">
+                                Le conducteur est facultatif.
+                            </div>
+
+                        </div>
+
+
+                        <!-- ACTIF -->
+                        <div class="col-md-6">
+
+                            <div class="form-check mt-2">
+
+                                {{ form.actif }}
+
+                                <label class="form-check-label fw-semibold"
+                                       for="{{ form.actif.id_for_label }}">
+
+                                    {{ form.actif.label }}
+
+                                </label>
+
+                            </div>
+
+                            {% if form.actif.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ form.actif.errors }}
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- PÉRIODE -->
+                    <!-- ================================================= -->
+
+                    <h5 class="border-bottom pb-2 mt-4 mb-3">
+
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Période d'affectation
+
+                    </h5>
+
+
+                    <div class="row g-3">
+
+                        <!-- DATE DÉBUT -->
+                        <div class="col-md-6">
+
+                            <label for="{{ form.date_debut.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                {{ form.date_debut.label }}
+
+                                <span class="text-danger">*</span>
+
+                            </label>
+
+                            {{ form.date_debut }}
+
+                            {% if form.date_debut.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ form.date_debut.errors }}
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- DATE FIN -->
+                        <div class="col-md-6">
+
+                            <label for="{{ form.date_fin.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                {{ form.date_fin.label }}
+
+                                <span class="text-danger">*</span>
+
+                            </label>
+
+                            {{ form.date_fin }}
+
+                            {% if form.date_fin.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ form.date_fin.errors }}
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- COMPTEUR HORAIRE -->
+                    <!-- ================================================= -->
+
+                    <h5 class="border-bottom pb-2 mt-4 mb-3">
+
+                        <i class="fas fa-clock me-2"></i>
+                        Compteur horaire
+
+                    </h5>
+
+
+                    <div class="row g-3">
+
+                        <!-- HEURES INITIALES -->
+                        <div class="col-md-6">
+
+                            <label for="{{ form.heures_initiales.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                {{ form.heures_initiales.label }}
+
+                            </label>
+
+                            <div class="input-group">
+
+                                {{ form.heures_initiales }}
+
+                                <span class="input-group-text">
+                                    h
+                                </span>
+
+                            </div>
+
+                            {% if form.heures_initiales.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ form.heures_initiales.errors }}
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- HEURES FINALES -->
+                        <div class="col-md-6">
+
+                            <label for="{{ form.heures_finales.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                {{ form.heures_finales.label }}
+
+                            </label>
+
+                            <div class="input-group">
+
+                                {{ form.heures_finales }}
+
+                                <span class="input-group-text">
+                                    h
+                                </span>
+
+                            </div>
+
+                            {% if form.heures_finales.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ form.heures_finales.errors }}
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- CONSOMMATION -->
+                        <div class="col-md-6">
+
+                            <label for="{{ form.consommation_heure_litre.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                {{ form.consommation_heure_litre.label }}
+
+                            </label>
+
+                            <div class="input-group">
+
+                                {{ form.consommation_heure_litre }}
+
+                                <span class="input-group-text">
+                                    L/h
+                                </span>
+
+                            </div>
+
+                            {% if form.consommation_heure_litre.errors %}
+
+                                <div class="text-danger small mt-1">
+                                    {{ form.consommation_heure_litre.errors }}
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- RÉCAPITULATIF -->
+                    <!-- ================================================= -->
+
+                    <div class="alert alert-info mt-4">
+
+                        <div class="d-flex align-items-start">
+
+                            <i class="fas fa-info-circle fa-lg me-2 mt-1"></i>
+
+                            <div>
+
+                                <strong>Suivi de l'engin</strong>
+
+                                <div class="small mt-1">
+
+                                    Le suivi de cet engin est effectué
+                                    en <strong>heures de fonctionnement</strong>.
+                                    La consommation est calculée en
+                                    <strong>litres par heure (L/h)</strong>.
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- ERREURS -->
+                    <!-- ================================================= -->
+
+                    {% if form.errors %}
+
+                        <div class="alert alert-danger mt-3">
+
+                            <h6 class="alert-heading">
+
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+
+                                Veuillez corriger les erreurs
+
+                            </h6>
+
+                            {{ form.errors }}
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- ================================================= -->
+                    <!-- BOUTONS -->
+                    <!-- ================================================= -->
+
+                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+
+                        <a href="{% url 'projet:engin_list' projet.pk %}"
+                           class="btn btn-outline-secondary">
+
+                            <i class="fas fa-times me-1"></i>
+                            Annuler
+
+                        </a>
+
+
+                        <button type="submit"
+                                class="btn btn-primary px-4">
+
+                            {% if object %}
+
+                                <i class="fas fa-save me-1"></i>
+                                Enregistrer les modifications
+
+                            {% else %}
+
+                                <i class="fas fa-plus me-1"></i>
+                                Ajouter l'engin
+
+                            {% endif %}
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

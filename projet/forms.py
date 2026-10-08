@@ -1,14 +1,10 @@
 from django import forms
 from django.utils import timezone
-
+from decimal import Decimal
 from personnel.models import Personnel
 from materiaux.models import Materiaux, Vehicule
 
-from .models import (
-    Projet,
-    EquipeProjet,
-    PointProjet,
-    RapportProjet,
+from .models import (Projet,EquipeProjet,PointProjet,EnginProjet,RapportProjet,
     RapportTravail,
     RapportMateriau,
     VehiculeProjet,
@@ -17,7 +13,7 @@ from .models import (
     PersonnelExecutionProjet,
     MouvementPersonnelProjet,
     MouvementVehiculeProjet,
-    EquipageProjet,
+    EquipageProjet,MateriauProjet,
     AvanceEquipeProjet,
     EquipeMateriauProjet,
     VehiculeLourdsProjet,
@@ -270,8 +266,10 @@ class EquipeProjetForm(forms.ModelForm):
 
         return cleaned_data
 
+
+
 # ============================================================
-# VEHICULE / ENGIN PROJET
+# VÉHICULE ROUTIER AFFECTÉ AU PROJET
 # ============================================================
 
 class VehiculeProjetForm(forms.ModelForm):
@@ -281,44 +279,42 @@ class VehiculeProjetForm(forms.ModelForm):
 
         fields = [
             "vehicule",
-            "type_vehicule",
             "chauffeur",
             "date_debut",
             "date_fin",
-
-            # ROUTIER
             "kilometrage_initial",
             "kilometrage_final",
             "consommation_km_litre",
-
-            # ENGIN
-            "heures_initiales",
-            "heures_finales",
-            "consommation_heure_litre",
-
             "actif",
-            "observation",
         ]
 
         widgets = {
-
             "vehicule": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": (
-                        "Ex. Camion MAN 01 / Pelle CAT 320"
-                    ),
-                    "autocomplete": "off",
+                    "placeholder": "Exemple : Camion 01",
                 }
             ),
 
-            "type_vehicule": SELECT_WIDGET,
+            "chauffeur": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
 
-            "chauffeur": SELECT_WIDGET,
+            "date_debut": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
 
-            "date_debut": DATE_WIDGET,
-
-            "date_fin": DATE_WIDGET,
+            "date_fin": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
 
             "kilometrage_initial": forms.NumberInput(
                 attrs={
@@ -341,164 +337,128 @@ class VehiculeProjetForm(forms.ModelForm):
                     "class": "form-control",
                     "step": "0.01",
                     "min": "0",
-                    "placeholder": "Ex. 4.50",
+                    "placeholder": "Exemple : 3.50",
                 }
             ),
 
-            "heures_initiales": forms.NumberInput(
+            "actif": forms.CheckboxInput(
                 attrs={
-                    "class": "form-control",
-                    "step": "0.01",
-                    "min": "0",
-                    "placeholder": "Ex. 1250.00",
+                    "class": "form-check-input",
                 }
             ),
-
-            "heures_finales": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "step": "0.01",
-                    "min": "0",
-                    "placeholder": "Ex. 1287.50",
-                }
-            ),
-
-            "consommation_heure_litre": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "step": "0.01",
-                    "min": "0",
-                    "placeholder": "Ex. 8.00 L/h",
-                }
-            ),
-
-            "actif": CHECKBOX_WIDGET,
-
-            "observation": TEXTAREA_WIDGET,
         }
 
         labels = {
-
-            "vehicule": (
-                "Véhicule / Engin / Immatriculation"
-            ),
-
-            "type_vehicule": (
-                "Type de véhicule"
-            ),
-
-            "chauffeur": (
-                "Chauffeur / Conducteur"
-            ),
-
-            "date_debut": (
-                "Début de l'affectation"
-            ),
-
-            "date_fin": (
-                "Fin de l'affectation"
-            ),
-
-            "kilometrage_initial": (
-                "Kilométrage initial"
-            ),
-
-            "kilometrage_final": (
-                "Kilométrage final"
-            ),
-
-            "consommation_km_litre": (
-                "Consommation (km/L)"
-            ),
-
-            "heures_initiales": (
-                "Compteur horaire initial"
-            ),
-
-            "heures_finales": (
-                "Compteur horaire final"
-            ),
-
-            "consommation_heure_litre": (
-                "Consommation (L/h)"
-            ),
-
-            "actif": (
-                "Affectation active"
-            ),
-
-            "observation": (
-                "Observation"
-            ),
+            "vehicule": "Véhicule",
+            "chauffeur": "Conducteur / Chauffeur",
+            "date_debut": "Début de l'affectation",
+            "date_fin": "Fin de l'affectation",
+            "kilometrage_initial": "Kilométrage initial",
+            "kilometrage_final": "Kilométrage final",
+            "consommation_km_litre": "Consommation (km/L)",
+            "actif": "Affectation active",
         }
 
-    def __init__(
-        self,
-        *args,
-        projet=None,
-        **kwargs
-    ):
+    def __init__(self, *args, projet=None, **kwargs):
 
         super().__init__(*args, **kwargs)
 
         self.projet = projet
 
         # ----------------------------------------------------
-        # CHAUFFEUR / CONDUCTEUR
+        # CHAUFFEURS
         # ----------------------------------------------------
 
-        self.fields[
-            "chauffeur"
-        ].queryset = (
+        self.fields["chauffeur"].queryset = (
             Personnel.objects
-            .all()
-            .order_by(
-                "nom",
-                "prenom",
-            )
+            .filter(typeTravail="Construction")
+            .order_by("nom", "prenom")
         )
+
+        self.fields["chauffeur"].required = False
 
         # ----------------------------------------------------
         # DATES DU PROJET
         # ----------------------------------------------------
 
-        if (
-            projet
-            and not self.is_bound
-            and not self.instance.pk
-        ):
+        if projet:
 
-            self.fields[
-                "date_debut"
-            ].initial = projet.date_debut
+            if projet.date_debut:
+                self.fields["date_debut"].widget.attrs["min"] = (
+                    projet.date_debut.isoformat()
+                )
 
-            self.fields[
-                "date_fin"
-            ].initial = projet.date_fin
+            if projet.date_fin:
+                self.fields["date_debut"].widget.attrs["max"] = (
+                    projet.date_fin.isoformat()
+                )
 
-            self.fields[
-                "actif"
-            ].initial = True
+                self.fields["date_fin"].widget.attrs["min"] = (
+                    projet.date_debut.isoformat()
+                )
+
+                self.fields["date_fin"].widget.attrs["max"] = (
+                    projet.date_fin.isoformat()
+                )
+
+        # ----------------------------------------------------
+        # VALEURS PAR DÉFAUT
+        # ----------------------------------------------------
+
+        if not self.instance.pk:
+
+            if projet:
+
+                if projet.date_debut:
+                    self.fields["date_debut"].initial = (
+                        projet.date_debut
+                    )
+
+                if projet.date_fin:
+                    self.fields["date_fin"].initial = (
+                        projet.date_fin
+                    )
+
+            self.fields["actif"].initial = True
+
+    def clean_vehicule(self):
+
+        vehicule = self.cleaned_data.get("vehicule")
+
+        if vehicule:
+            vehicule = vehicule.strip()
+
+        if not vehicule:
+            raise forms.ValidationError(
+                "Veuillez saisir le véhicule."
+            )
+
+        # Vérification du doublon dans le même projet
+        if self.projet:
+
+            queryset = VehiculeProjet.objects.filter(
+                projet=self.projet,
+                vehicule__iexact=vehicule,
+            )
+
+            if self.instance.pk:
+                queryset = queryset.exclude(
+                    pk=self.instance.pk
+                )
+
+            if queryset.exists():
+                raise forms.ValidationError(
+                    "Ce véhicule est déjà affecté à ce projet."
+                )
+
+        return vehicule
 
     def clean(self):
 
         cleaned_data = super().clean()
 
-        type_vehicule = cleaned_data.get(
-            "type_vehicule"
-        )
-
-        vehicule = cleaned_data.get(
-            "vehicule"
-        )
-
-        date_debut = cleaned_data.get(
-            "date_debut"
-        )
-
-        date_fin = cleaned_data.get(
-            "date_fin"
-        )
+        date_debut = cleaned_data.get("date_debut")
+        date_fin = cleaned_data.get("date_fin")
 
         kilometrage_initial = cleaned_data.get(
             "kilometrage_initial"
@@ -508,66 +468,27 @@ class VehiculeProjetForm(forms.ModelForm):
             "kilometrage_final"
         )
 
-        consommation_km_litre = cleaned_data.get(
+        consommation = cleaned_data.get(
             "consommation_km_litre"
         )
-
-        heures_initiales = cleaned_data.get(
-            "heures_initiales"
-        )
-
-        heures_finales = cleaned_data.get(
-            "heures_finales"
-        )
-
-        consommation_heure_litre = cleaned_data.get(
-            "consommation_heure_litre"
-        )
-
-        # ----------------------------------------------------
-        # DATES AUTOMATIQUES
-        # ----------------------------------------------------
-
-        if (
-            self.projet
-            and not self.instance.pk
-        ):
-
-            if not date_debut:
-
-                date_debut = (
-                    self.projet.date_debut
-                )
-
-                cleaned_data[
-                    "date_debut"
-                ] = date_debut
-
-            if not date_fin:
-
-                date_fin = (
-                    self.projet.date_fin
-                )
-
-                cleaned_data[
-                    "date_fin"
-                ] = date_fin
 
         # ----------------------------------------------------
         # DATES
         # ----------------------------------------------------
 
-        if (
-            date_debut
-            and date_fin
-            and date_fin < date_debut
-        ):
+        if date_debut and date_fin:
 
-            self.add_error(
-                "date_fin",
-                "La fin de l'affectation doit être "
-                "postérieure ou égale au début.",
-            )
+            if date_fin < date_debut:
+
+                self.add_error(
+                    "date_fin",
+                    "La fin de l'affectation doit être "
+                    "postérieure ou égale au début.",
+                )
+
+        # ----------------------------------------------------
+        # LIMITES DU PROJET
+        # ----------------------------------------------------
 
         if self.projet:
 
@@ -596,136 +517,360 @@ class VehiculeProjetForm(forms.ModelForm):
                 )
 
         # ----------------------------------------------------
-        # ROUTIER
+        # KILOMÉTRAGE
         # ----------------------------------------------------
 
-        if type_vehicule == "ROUTIER":
+        if (
+            kilometrage_initial is not None
+            and kilometrage_initial < 0
+        ):
 
-            if (
-                kilometrage_initial is not None
-                and kilometrage_initial < 0
-            ):
+            self.add_error(
+                "kilometrage_initial",
+                "Le kilométrage initial "
+                "ne peut pas être négatif.",
+            )
 
-                self.add_error(
-                    "kilometrage_initial",
-                    "Le kilométrage initial "
-                    "ne peut pas être négatif.",
+        if (
+            kilometrage_final is not None
+            and kilometrage_final < 0
+        ):
+
+            self.add_error(
+                "kilometrage_final",
+                "Le kilométrage final "
+                "ne peut pas être négatif.",
+            )
+
+        if (
+            kilometrage_initial is not None
+            and kilometrage_final is not None
+            and kilometrage_final < kilometrage_initial
+        ):
+
+            self.add_error(
+                "kilometrage_final",
+                "Le kilométrage final doit être "
+                "supérieur ou égal au kilométrage initial.",
+            )
+
+        # ----------------------------------------------------
+        # CONSOMMATION
+        # ----------------------------------------------------
+
+        if (
+            consommation is not None
+            and consommation < 0
+        ):
+
+            self.add_error(
+                "consommation_km_litre",
+                "La consommation ne peut pas être négative.",
+            )
+
+        return cleaned_data
+
+
+# ============================================================
+# ENGIN DE CHANTIER AFFECTÉ AU PROJET
+# ============================================================
+
+class EnginProjetForm(forms.ModelForm):
+
+    class Meta:
+        model = EnginProjet
+
+        fields = [
+            "engin",
+            "conducteur",
+            "date_debut",
+            "date_fin",
+            "heures_initiales",
+            "heures_finales",
+            "consommation_heure_litre",
+            "actif",
+        ]
+
+        widgets = {
+            "engin": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Exemple : Pelle hydraulique",
+                }
+            ),
+
+            "conducteur": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+
+            "date_debut": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+
+            "date_fin": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+
+            "heures_initiales": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+
+            "heures_finales": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+
+            "consommation_heure_litre": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Exemple : 12.50",
+                }
+            ),
+
+            "actif": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input",
+                }
+            ),
+        }
+
+        labels = {
+            "engin": "Engin",
+            "conducteur": "Conducteur",
+            "date_debut": "Début de l'affectation",
+            "date_fin": "Fin de l'affectation",
+            "heures_initiales": "Heures initiales",
+            "heures_finales": "Heures finales",
+            "consommation_heure_litre": "Consommation (L/h)",
+            "actif": "Affectation active",
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.projet = projet
+
+        # ----------------------------------------------------
+        # CONDUCTEURS
+        # ----------------------------------------------------
+
+        self.fields["conducteur"].queryset = (
+            Personnel.objects
+            .filter(typeTravail="Construction")
+            .order_by("nom", "prenom")
+        )
+
+        self.fields["conducteur"].required = False
+
+        # ----------------------------------------------------
+        # DATES DU PROJET
+        # ----------------------------------------------------
+
+        if projet:
+
+            if projet.date_debut:
+                self.fields["date_debut"].widget.attrs["min"] = (
+                    projet.date_debut.isoformat()
                 )
 
-            if (
-                kilometrage_final is not None
-                and kilometrage_final < 0
-            ):
-
-                self.add_error(
-                    "kilometrage_final",
-                    "Le kilométrage final "
-                    "ne peut pas être négatif.",
+            if projet.date_fin:
+                self.fields["date_debut"].widget.attrs["max"] = (
+                    projet.date_fin.isoformat()
                 )
 
-            if (
-                kilometrage_initial is not None
-                and kilometrage_final is not None
-                and kilometrage_final
-                < kilometrage_initial
-            ):
-
-                self.add_error(
-                    "kilometrage_final",
-                    "Le kilométrage final doit être "
-                    "supérieur ou égal au kilométrage initial.",
+                self.fields["date_fin"].widget.attrs["min"] = (
+                    projet.date_debut.isoformat()
                 )
 
-            if (
-                consommation_km_litre is not None
-                and consommation_km_litre < 0
-            ):
-
-                self.add_error(
-                    "consommation_km_litre",
-                    "La consommation ne peut pas "
-                    "être négative.",
+                self.fields["date_fin"].widget.attrs["max"] = (
+                    projet.date_fin.isoformat()
                 )
 
         # ----------------------------------------------------
-        # ENGIN
+        # VALEURS PAR DÉFAUT
         # ----------------------------------------------------
 
-        elif type_vehicule == "ENGIN":
+        if not self.instance.pk:
 
-            if (
-                heures_initiales is not None
-                and heures_initiales < 0
-            ):
+            if projet:
 
-                self.add_error(
-                    "heures_initiales",
-                    "Les heures initiales "
-                    "ne peuvent pas être négatives.",
-                )
+                if projet.date_debut:
+                    self.fields["date_debut"].initial = (
+                        projet.date_debut
+                    )
 
-            if (
-                heures_finales is not None
-                and heures_finales < 0
-            ):
+                if projet.date_fin:
+                    self.fields["date_fin"].initial = (
+                        projet.date_fin
+                    )
 
-                self.add_error(
-                    "heures_finales",
-                    "Les heures finales "
-                    "ne peuvent pas être négatives.",
-                )
+            self.fields["actif"].initial = True
 
-            if (
-                heures_initiales is not None
-                and heures_finales is not None
-                and heures_finales
-                < heures_initiales
-            ):
+    def clean_engin(self):
 
-                self.add_error(
-                    "heures_finales",
-                    "Les heures finales doivent être "
-                    "supérieures ou égales aux heures initiales.",
-                )
+        engin = self.cleaned_data.get("engin")
 
-            if (
-                consommation_heure_litre is not None
-                and consommation_heure_litre < 0
-            ):
+        if engin:
+            engin = engin.strip()
 
-                self.add_error(
-                    "consommation_heure_litre",
-                    "La consommation L/h "
-                    "ne peut pas être négative.",
-                )
+        if not engin:
+            raise forms.ValidationError(
+                "Veuillez saisir l'engin."
+            )
 
-        # ----------------------------------------------------
-        # VÉHICULE DUPLIQUÉ DANS LE PROJET
-        # ----------------------------------------------------
+        # Vérification du doublon dans le même projet
+        if self.projet:
 
-        if vehicule and self.projet:
-
-            queryset = (
-                VehiculeProjet.objects
-                .filter(
-                    projet=self.projet,
-                    vehicule=vehicule,
-                )
+            queryset = EnginProjet.objects.filter(
+                projet=self.projet,
+                engin__iexact=engin,
             )
 
             if self.instance.pk:
-
                 queryset = queryset.exclude(
                     pk=self.instance.pk
                 )
 
             if queryset.exists():
+                raise forms.ValidationError(
+                    "Cet engin est déjà affecté à ce projet."
+                )
+
+        return engin
+
+    def clean(self):
+
+        cleaned_data = super().clean()
+
+        date_debut = cleaned_data.get("date_debut")
+        date_fin = cleaned_data.get("date_fin")
+
+        heures_initiales = cleaned_data.get(
+            "heures_initiales"
+        )
+
+        heures_finales = cleaned_data.get(
+            "heures_finales"
+        )
+
+        consommation = cleaned_data.get(
+            "consommation_heure_litre"
+        )
+
+        # ----------------------------------------------------
+        # DATES
+        # ----------------------------------------------------
+
+        if date_debut and date_fin:
+
+            if date_fin < date_debut:
 
                 self.add_error(
-                    "vehicule",
-                    "Ce véhicule / engin est déjà "
-                    "affecté à ce projet.",
+                    "date_fin",
+                    "La fin de l'affectation doit être "
+                    "postérieure ou égale au début.",
                 )
+
+        # ----------------------------------------------------
+        # LIMITES DU PROJET
+        # ----------------------------------------------------
+
+        if self.projet:
+
+            if (
+                date_debut
+                and self.projet.date_debut
+                and date_debut < self.projet.date_debut
+            ):
+
+                self.add_error(
+                    "date_debut",
+                    "L'affectation ne peut pas commencer "
+                    "avant le début du projet.",
+                )
+
+            if (
+                date_fin
+                and self.projet.date_fin
+                and date_fin > self.projet.date_fin
+            ):
+
+                self.add_error(
+                    "date_fin",
+                    "L'affectation ne peut pas dépasser "
+                    "la date de fin du projet.",
+                )
+
+        # ----------------------------------------------------
+        # HEURES
+        # ----------------------------------------------------
+
+        if (
+            heures_initiales is not None
+            and heures_initiales < 0
+        ):
+
+            self.add_error(
+                "heures_initiales",
+                "Les heures initiales "
+                "ne peuvent pas être négatives.",
+            )
+
+        if (
+            heures_finales is not None
+            and heures_finales < 0
+        ):
+
+            self.add_error(
+                "heures_finales",
+                "Les heures finales "
+                "ne peuvent pas être négatives.",
+            )
+
+        if (
+            heures_initiales is not None
+            and heures_finales is not None
+            and heures_finales < heures_initiales
+        ):
+
+            self.add_error(
+                "heures_finales",
+                "Les heures finales doivent être "
+                "supérieures ou égales aux heures initiales.",
+            )
+
+        # ----------------------------------------------------
+        # CONSOMMATION
+        # ----------------------------------------------------
+
+        if (
+            consommation is not None
+            and consommation < 0
+        ):
+
+            self.add_error(
+                "consommation_heure_litre",
+                "La consommation L/h "
+                "ne peut pas être négative.",
+            )
 
         return cleaned_data
 
@@ -1109,9 +1254,8 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
 
         return cleaned_data
 
-
 # ============================================================
-# POINT PROJET
+# FORMULAIRE POINT PROJET
 # ============================================================
 
 class PointProjetForm(forms.ModelForm):
@@ -1146,17 +1290,65 @@ class PointProjetForm(forms.ModelForm):
             "actif": "Point actif",
         }
 
+    # ========================================================
+    # INITIALISATION
+    # ========================================================
+
+    def __init__(
+        self,
+        *args,
+        projet=None,
+        **kwargs
+    ):
+
+        super().__init__(
+            *args,
+            **kwargs
+        )
+
+        self.projet = projet
+
+    # ========================================================
+    # VALIDATION DISTANCE
+    # ========================================================
+
     def clean_distance_km(self):
 
-        value = self.cleaned_data.get("distance_km")
+        value = self.cleaned_data.get(
+            "distance_km"
+        )
 
         if value is not None and value < 0:
+
             raise forms.ValidationError(
                 "La distance ne peut pas être négative."
             )
 
         return value
 
+    # ========================================================
+    # ENREGISTREMENT
+    # ========================================================
+
+    def save(self, commit=True):
+
+        instance = super().save(
+            commit=False
+        )
+
+        # ----------------------------------------------------
+        # Le projet vient de l'URL
+        # ----------------------------------------------------
+
+        if self.projet is not None:
+
+            instance.projet = self.projet
+
+        if commit:
+
+            instance.save()
+
+        return instance
 
 # ============================================================
 # RAPPORT PROJET
@@ -1834,12 +2026,13 @@ class ActiviteTransportProjetForm(forms.ModelForm):
         return cleaned_data
 
 # ============================================================
-# PERSONNEL EXECUTION PROJET
+# PERSONNEL D'EXÉCUTION DU PROJET
 # ============================================================
 
 class PersonnelExecutionProjetForm(forms.ModelForm):
 
     class Meta:
+
         model = PersonnelExecutionProjet
 
         fields = [
@@ -1847,95 +2040,241 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
             "personnel",
             "nom",
             "type_class",
-            "type_contrat",
-            "salaire",
+            "montant",
             "date_debut",
             "date_fin",
             "photo",
+            "point_projet",
+            "materiau_projet",
+            "quantite",
+            "prix_unitaire",
+            "date_production",
+            "observation",
             "enregistre_par",
         ]
 
         widgets = {
+
             "projet": SELECT_WIDGET,
+
             "personnel": SELECT_WIDGET,
+
             "nom": TEXT_WIDGET,
+
             "type_class": SELECT_WIDGET,
-            "type_contrat": SELECT_WIDGET,
-            "salaire": NUMBER_WIDGET,
-            "date_debut": DATETIME_WIDGET,
-            "date_fin": DATETIME_WIDGET,
+
+            "montant": NUMBER_WIDGET,
+
+            "date_debut": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                },
+            ),
+
+            "date_fin": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                },
+            ),
+
             "photo": FILE_WIDGET,
+
+            "point_projet": SELECT_WIDGET,
+
+            "materiau_projet": SELECT_WIDGET,
+
+            "quantite": NUMBER_WIDGET,
+
+            "prix_unitaire": NUMBER_WIDGET,
+
+            "date_production": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                },
+            ),
+
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Observation éventuelle...",
+                }
+            ),
+
             "enregistre_par": SELECT_WIDGET,
         }
 
         labels = {
+
             "projet": "Projet",
-            "personnel": "Personnel existant",
+
+            "personnel": "Personnel interne",
+
             "nom": "Nom",
-            "type_class": "Classe",
-            "type_contrat": "Type de contrat",
-            "salaire": "Salaire / montant",
+
+            "type_class": "Type",
+
+            "montant": "Montant",
+
             "date_debut": "Date de début",
+
             "date_fin": "Date de fin",
+
             "photo": "Photo",
+
+            "point_projet": "Point du projet",
+
+            "materiau_projet": "Matériau du projet",
+
+            "quantite": "Quantité",
+
+            "prix_unitaire": "Prix unitaire",
+
+            "date_production": "Date de production",
+
+            "observation": "Observation",
+
             "enregistre_par": "Enregistré par",
         }
+        
 
-    def __init__(self, *args, projet=None, **kwargs):
+    # ========================================================
+    # INITIALISATION
+    # ========================================================
+
+    def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-        self.projet = projet
-
         # ----------------------------------------------------
-        # PERSONNEL EXISTANT
+        # Projet
         # ----------------------------------------------------
 
-        self.fields["personnel"].queryset = (
-            Personnel.objects
-            .filter(
-                typeTravail="Construction"
+        projet_id = None
+
+        if self.data.get("projet"):
+
+            try:
+                projet_id = int(
+                    self.data.get("projet")
+                )
+            except (TypeError, ValueError):
+
+                projet_id = None
+
+        elif self.instance and self.instance.projet_id:
+
+            projet_id = self.instance.projet_id
+
+        # ----------------------------------------------------
+        # Filtrer les points du projet
+        # ----------------------------------------------------
+
+        if projet_id:
+
+            self.fields[
+                "point_projet"
+            ].queryset = PointProjet.objects.filter(
+                projet_id=projet_id,
+                actif=True,
             )
-            .order_by(
-                "nom",
-                "prenom",
+
+        else:
+
+            self.fields[
+                "point_projet"
+            ].queryset = PointProjet.objects.none()
+
+        # ----------------------------------------------------
+        # Filtrer les matériaux du projet
+        # ----------------------------------------------------
+
+        if projet_id:
+
+            self.fields[
+                "materiau_projet"
+            ].queryset = MateriauProjet.objects.filter(
+                projet_id=projet_id,
+                actif=True,
+            ).select_related(
+                "materiau"
             )
-        )
+
+        else:
+
+            self.fields[
+                "materiau_projet"
+            ].queryset = MateriauProjet.objects.none()
 
         # ----------------------------------------------------
-        # PROJET
+        # Champs facultatifs au niveau formulaire
+        #
+        # La validation dépend ensuite du type.
         # ----------------------------------------------------
 
-        if projet:
+        self.fields[
+            "personnel"
+        ].required = False
 
-            self.fields["projet"].initial = projet.pk
-            self.fields["projet"].disabled = True
+        self.fields[
+            "point_projet"
+        ].required = False
+
+        self.fields[
+            "materiau_projet"
+        ].required = False
+
+        self.fields[
+            "date_debut"
+        ].required = False
+
+        self.fields[
+            "date_fin"
+        ].required = False
+
+        self.fields[
+            "date_production"
+        ].required = False
+
+        self.fields[
+            "montant"
+        ].required = False
 
         # ----------------------------------------------------
-        # DATES PAR DÉFAUT
+        # Si modification d'un minier
         # ----------------------------------------------------
 
         if (
-            projet
-            and not self.is_bound
-            and not self.instance.pk
+            self.instance
+            and self.instance.pk
+            and self.instance.type_class == "MINIER"
         ):
 
-            if projet.date_debut:
+            self.fields[
+                "montant"
+            ].disabled = True
 
-                self.fields["date_debut"].initial = (
-                    f"{projet.date_debut}T08:00"
-                )
-
-            if projet.date_fin:
-
-                self.fields["date_fin"].initial = (
-                    f"{projet.date_fin}T17:00"
-                )
+    # ========================================================
+    # VALIDATION
+    # ========================================================
 
     def clean(self):
 
         cleaned_data = super().clean()
+
+        # ====================================================
+        # DONNÉES
+        # ====================================================
+
+        projet = cleaned_data.get(
+            "projet"
+        )
 
         type_class = cleaned_data.get(
             "type_class"
@@ -1949,12 +2288,8 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
             "nom"
         )
 
-        type_contrat = cleaned_data.get(
-            "type_contrat"
-        )
-
-        salaire = cleaned_data.get(
-            "salaire"
+        montant = cleaned_data.get(
+            "montant"
         )
 
         date_debut = cleaned_data.get(
@@ -1965,422 +2300,1490 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
             "date_fin"
         )
 
-        projet = (
-            cleaned_data.get("projet")
-            or self.projet
+        point_projet = cleaned_data.get(
+            "point_projet"
         )
 
-        # ----------------------------------------------------
-        # TYPES UTILISANT PERSONNEL
-        # ----------------------------------------------------
+        materiau_projet = cleaned_data.get(
+            "materiau_projet"
+        )
 
-        types_personnel = {
-            "INGENIEUR",
-            "CHEF_CHANTIER",
-            "CHAUFFEUR",
-            "CHEF_MAGASIN",
-            "MAGASIN",
-        }
+        quantite = cleaned_data.get(
+            "quantite"
+        )
 
-        # ----------------------------------------------------
-        # TYPES À SAISIE MANUELLE
-        # ----------------------------------------------------
+        prix_unitaire = cleaned_data.get(
+            "prix_unitaire"
+        )
 
-        types_manuels = {
+        date_production = cleaned_data.get(
+            "date_production"
+        )
+
+        # ====================================================
+        # TYPE
+        # ====================================================
+
+        if not type_class:
+
+            self.add_error(
+                "type_class",
+                "Le type de personnel est obligatoire.",
+            )
+
+            return cleaned_data
+
+        TYPES_EXTERNES = {
             "CHEF_EQUIPE",
             "CHAUFFEUR_ENGIN",
             "MINIER",
             "AUTRE",
         }
 
-        # ----------------------------------------------------
-        # PERSONNEL EXISTANT
-        # ----------------------------------------------------
+        # ====================================================
+        # PERSONNEL EXTERNE
+        # ====================================================
 
-        if type_class in types_personnel:
+        if type_class in TYPES_EXTERNES:
 
-            if not personnel:
+            if personnel:
 
                 self.add_error(
                     "personnel",
-                    "Veuillez sélectionner un personnel.",
+                    "Ce type de personnel est externe. "
+                    "Aucun personnel interne ne doit être sélectionné.",
                 )
 
-            else:
-
-                if personnel.typeTravail != "Construction":
-
-                    self.add_error(
-                        "personnel",
-                        "Le personnel sélectionné doit "
-                        "appartenir à Construction.",
-                    )
-
-                else:
-
-                    cleaned_data["nom"] = str(
-                        personnel
-                    )
-
-        # ----------------------------------------------------
-        # SAISIE MANUELLE
-        # ----------------------------------------------------
-
-        elif type_class in types_manuels:
+            cleaned_data["personnel"] = None
 
             if not nom or not nom.strip():
 
                 self.add_error(
                     "nom",
-                    "Veuillez saisir le nom du travailleur.",
+                    "Le nom est obligatoire pour ce personnel externe.",
                 )
 
-        # ----------------------------------------------------
-        # CONTRAT AUTOMATIQUE
-        # ----------------------------------------------------
+        # ====================================================
+        # DATE DÉBUT / DATE FIN
+        # ====================================================
 
-        if type_class == "CHEF_EQUIPE":
+        if date_debut and date_fin:
 
-            cleaned_data["type_contrat"] = (
-                "FORFAITAIRE"
-            )
+            if date_fin < date_debut:
 
-        elif type_class == "MINIER":
+                self.add_error(
+                    "date_fin",
+                    "La date de fin doit être "
+                    "postérieure ou égale à la date de début.",
+                )
 
-            cleaned_data["type_contrat"] = (
-                "PRE_PAYER"
-            )
-
-        else:
-
-            cleaned_data["type_contrat"] = (
-                "MENSUEL"
-            )
-
-        # ----------------------------------------------------
-        # SALAIRE
-        # ----------------------------------------------------
-
-        if (
-            salaire is not None
-            and salaire < 0
-        ):
-
-            self.add_error(
-                "salaire",
-                "Le salaire / montant ne peut pas "
-                "être négatif.",
-            )
-
-        # ----------------------------------------------------
-        # DATES
-        # ----------------------------------------------------
-
-        if (
-            date_debut
-            and date_fin
-            and date_fin < date_debut
-        ):
-
-            self.add_error(
-                "date_fin",
-                "La date de fin doit être "
-                "postérieure ou égale "
-                "à la date de début.",
-            )
-
-        # ----------------------------------------------------
-        # LIMITES DU PROJET
-        # ----------------------------------------------------
+        # ====================================================
+        # COHÉRENCE AVEC LE PROJET
+        # ====================================================
 
         if projet:
 
             if (
                 date_debut
                 and projet.date_debut
-                and date_debut.date()
-                < projet.date_debut
+                and date_debut < projet.date_debut
             ):
 
                 self.add_error(
                     "date_debut",
-                    "La date de début ne peut pas "
-                    "être avant le début du projet.",
+                    "La date de début ne peut pas être "
+                    "antérieure au début du projet.",
                 )
 
             if (
                 date_fin
                 and projet.date_fin
-                and date_fin.date()
-                > projet.date_fin
+                and date_fin > projet.date_fin
             ):
 
                 self.add_error(
                     "date_fin",
-                    "La date de fin ne peut pas "
-                    "dépasser la fin du projet.",
+                    "La date de fin ne peut pas dépasser "
+                    "la fin du projet.",
                 )
 
+        # ====================================================
+        # MONTANT
+        # ====================================================
+
+        if montant is not None:
+
+            if montant < Decimal("0.00"):
+
+                self.add_error(
+                    "montant",
+                    "Le montant ne peut pas être négatif.",
+                )
+
+        # ====================================================
+        # CHEF D'ÉQUIPE
+        # ====================================================
+
+        if type_class == "CHEF_EQUIPE":
+
+            # ------------------------------------------------
+            # Point obligatoire
+            # ------------------------------------------------
+
+            if not point_projet:
+
+                self.add_error(
+                    "point_projet",
+                    "Le point du projet est obligatoire "
+                    "pour un chef d'équipe.",
+                )
+
+            # ------------------------------------------------
+            # Matériau interdit
+            # ------------------------------------------------
+
+            cleaned_data["materiau_projet"] = None
+
+            # ------------------------------------------------
+            # Montant obligatoire
+            # ------------------------------------------------
+
+            if (
+                montant is None
+                or montant <= Decimal("0.00")
+            ):
+
+                self.add_error(
+                    "montant",
+                    "Le montant doit être supérieur à zéro "
+                    "pour un chef d'équipe.",
+                )
+
+            # ------------------------------------------------
+            # Production minière interdite
+            # ------------------------------------------------
+
+            cleaned_data["quantite"] = Decimal("0.00")
+
+            cleaned_data["prix_unitaire"] = Decimal("0.00")
+
+            cleaned_data["date_production"] = None
+
+            # ------------------------------------------------
+            # Dates obligatoires
+            # ------------------------------------------------
+
+            if not date_debut:
+
+                self.add_error(
+                    "date_debut",
+                    "La date de début est obligatoire "
+                    "pour un chef d'équipe.",
+                )
+
+            if not date_fin:
+
+                self.add_error(
+                    "date_fin",
+                    "La date de fin est obligatoire "
+                    "pour un chef d'équipe.",
+                )
+
+        # ====================================================
+        # MINIER
+        # ====================================================
+
+        elif type_class == "MINIER":
+
+            # ------------------------------------------------
+            # Aucun point
+            # ------------------------------------------------
+
+            cleaned_data["point_projet"] = None
+
+            # ------------------------------------------------
+            # Matériau obligatoire
+            # ------------------------------------------------
+
+            if not materiau_projet:
+
+                self.add_error(
+                    "materiau_projet",
+                    "Le matériau est obligatoire "
+                    "pour un minier.",
+                )
+
+            # ------------------------------------------------
+            # Cohérence matériau / projet
+            # ------------------------------------------------
+
+            if materiau_projet and projet:
+
+                if (
+                    materiau_projet.projet_id
+                    != projet.pk
+                ):
+
+                    self.add_error(
+                        "materiau_projet",
+                        "Le matériau sélectionné "
+                        "n'appartient pas à ce projet.",
+                    )
+
+                elif not materiau_projet.actif:
+
+                    self.add_error(
+                        "materiau_projet",
+                        "Le matériau sélectionné "
+                        "n'est plus actif pour ce projet.",
+                    )
+
+            # ------------------------------------------------
+            # Quantité obligatoire
+            # ------------------------------------------------
+
+            if quantite is None:
+
+                self.add_error(
+                    "quantite",
+                    "La quantité est obligatoire "
+                    "pour un minier.",
+                )
+
+            elif quantite <= Decimal("0.00"):
+
+                self.add_error(
+                    "quantite",
+                    "La quantité doit être "
+                    "supérieure à zéro.",
+                )
+
+            # ------------------------------------------------
+            # Prix unitaire obligatoire
+            # ------------------------------------------------
+
+            if prix_unitaire is None:
+
+                self.add_error(
+                    "prix_unitaire",
+                    "Le prix unitaire est obligatoire "
+                    "pour un minier.",
+                )
+
+            elif prix_unitaire <= Decimal("0.00"):
+
+                self.add_error(
+                    "prix_unitaire",
+                    "Le prix unitaire doit être "
+                    "supérieur à zéro.",
+                )
+
+            # ------------------------------------------------
+            # Date de production
+            # ------------------------------------------------
+
+            if not date_production:
+
+                self.add_error(
+                    "date_production",
+                    "La date de production est obligatoire "
+                    "pour un minier.",
+                )
+
+            # ------------------------------------------------
+            # Date dans la période du projet
+            # ------------------------------------------------
+
+            if projet and date_production:
+
+                if (
+                    projet.date_debut
+                    and date_production < projet.date_debut
+                ):
+
+                    self.add_error(
+                        "date_production",
+                        "La date de production ne peut pas "
+                        "être antérieure au début du projet.",
+                    )
+
+                if (
+                    projet.date_fin
+                    and date_production > projet.date_fin
+                ):
+
+                    self.add_error(
+                        "date_production",
+                        "La date de production ne peut pas "
+                        "dépasser la fin du projet.",
+                    )
+
+            # ------------------------------------------------
+            # Pas de montant saisi manuellement
+            # ------------------------------------------------
+
+            cleaned_data["montant"] = Decimal("0.00")
+
+            # ------------------------------------------------
+            # Dates d'affectation inutilisées
+            # ------------------------------------------------
+
+            cleaned_data["date_debut"] = None
+
+            cleaned_data["date_fin"] = None
+
+        # ====================================================
+        # CHAUFFEUR D'ENGIN
+        # ====================================================
+
+        elif type_class == "CHAUFFEUR_ENGIN":
+
+            # ------------------------------------------------
+            # Aucun point
+            # ------------------------------------------------
+
+            cleaned_data["point_projet"] = None
+
+            # ------------------------------------------------
+            # Aucun matériau
+            # ------------------------------------------------
+
+            cleaned_data["materiau_projet"] = None
+
+            # ------------------------------------------------
+            # Aucune production minière
+            # ------------------------------------------------
+
+            cleaned_data["quantite"] = Decimal("0.00")
+
+            cleaned_data["prix_unitaire"] = Decimal("0.00")
+
+            cleaned_data["date_production"] = None
+
+        # ====================================================
+        # AUTRE
+        # ====================================================
+
+        elif type_class == "AUTRE":
+
+            # ------------------------------------------------
+            # Aucun point
+            # ------------------------------------------------
+
+            cleaned_data["point_projet"] = None
+
+            # ------------------------------------------------
+            # Aucun matériau
+            # ------------------------------------------------
+
+            cleaned_data["materiau_projet"] = None
+
+            # ------------------------------------------------
+            # Aucune production
+            # ------------------------------------------------
+
+            cleaned_data["quantite"] = Decimal("0.00")
+
+            cleaned_data["prix_unitaire"] = Decimal("0.00")
+
+            cleaned_data["date_production"] = None
+
+        # ====================================================
+        # COHÉRENCE POINT / PROJET
+        # ====================================================
+
+        point_projet = cleaned_data.get(
+            "point_projet"
+        )
+
+        if point_projet and projet:
+
+            if point_projet.projet_id != projet.pk:
+
+                self.add_error(
+                    "point_projet",
+                    "Le point sélectionné "
+                    "n'appartient pas à ce projet.",
+                )
+
+            elif not point_projet.actif:
+
+                self.add_error(
+                    "point_projet",
+                    "Le point sélectionné "
+                    "n'est plus actif pour ce projet.",
+                )
+
+        # ====================================================
+        # VALEURS DE L'INSTANCE
+        # ====================================================
+
+        self.instance.type_class = type_class
+
+        if type_class in TYPES_EXTERNES:
+
+            self.instance.personnel = None
+
+        # ----------------------------------------------------
+        # Minier : montant calculé automatiquement
+        # ----------------------------------------------------
+
+        if type_class == "MINIER":
+
+            self.instance.montant = Decimal("0.00")
+
+            self.instance.point_projet = None
+
+            self.instance.date_debut = None
+
+            self.instance.date_fin = None
+
+        # ----------------------------------------------------
+        # Chef d'équipe
+        # ----------------------------------------------------
+
+        elif type_class == "CHEF_EQUIPE":
+
+            self.instance.materiau_projet = None
+
+            self.instance.quantite = Decimal("0.00")
+
+            self.instance.prix_unitaire = Decimal("0.00")
+
+            self.instance.date_production = None
+
+        # ----------------------------------------------------
+        # Chauffeur / Autre
+        # ----------------------------------------------------
+
+        elif type_class in {
+            "CHAUFFEUR_ENGIN",
+            "AUTRE",
+        }:
+
+            self.instance.point_projet = None
+
+            self.instance.materiau_projet = None
+
+            self.instance.quantite = Decimal("0.00")
+
+            self.instance.prix_unitaire = Decimal("0.00")
+
+            self.instance.date_production = None
+
+        
+        # ====================================================
+        # RETOUR
+        # ====================================================
+
         return cleaned_data
+
+
 # ============================================================
-# FORMULAIRE CHEF D'ÉQUIPE
+# FORMULAIRE CHEF D'ÉQUIPE DU PROJET
 # ============================================================
 
 class ChefEquipeProjetForm(forms.ModelForm):
 
     class Meta:
+
         model = PersonnelExecutionProjet
 
         fields = [
+            "projet",
             "nom",
-            "type_contrat",
-            "salaire",
+            "type_class",
+            "montant",
             "date_debut",
             "date_fin",
             "photo",
+            "point_projet",
+            "enregistre_par",
         ]
 
         widgets = {
-            "nom": forms.TextInput(
+
+            "projet": SELECT_WIDGET,
+
+            "nom": TEXT_WIDGET,
+
+            "type_class": SELECT_WIDGET,
+
+            "montant": NUMBER_WIDGET,
+
+            "date_debut": forms.DateInput(
+                format="%Y-%m-%d",
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Nom complet du chef d'équipe",
-                }
+                    "type": "date",
+                },
             ),
 
-            "type_contrat": forms.Select(
+            "date_fin": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                },
+            ),
+
+            "photo": FILE_WIDGET,
+
+            "point_projet": SELECT_WIDGET,
+
+            "enregistre_par": SELECT_WIDGET,
+        }
+
+        labels = {
+
+            "projet": "Projet",
+
+            "nom": "Nom du chef d'équipe",
+
+            "type_class": "Type",
+
+            "montant": "Montant",
+
+            "date_debut": "Date de début",
+
+            "date_fin": "Date de fin",
+
+            "photo": "Photo",
+
+            "point_projet": "Point du projet",
+
+            "enregistre_par": "Enregistré par",
+        }
+
+    # ========================================================
+    # INITIALISATION
+    # ========================================================
+
+    def __init__(self, *args, projet=None, **kwargs):
+
+        # ----------------------------------------------------
+        # IMPORTANT :
+        # récupérer "projet" AVANT super()
+        # pour qu'il ne soit pas envoyé à BaseModelForm
+        # ----------------------------------------------------
+
+        super().__init__(*args, **kwargs)
+
+        self.projet = projet
+
+        # ----------------------------------------------------
+        # Projet fourni par la vue
+        # ----------------------------------------------------
+
+        if self.projet is not None:
+
+            self.fields["projet"].queryset = Projet.objects.filter(
+                pk=self.projet.pk
+            )
+
+            self.fields["projet"].initial = self.projet.pk
+
+            # Le projet est imposé par l'URL.
+            self.fields["projet"].disabled = True
+
+        else:
+
+            self.fields["projet"].queryset = Projet.objects.all()
+
+        # ----------------------------------------------------
+        # Le type est toujours CHEF_EQUIPE
+        # ----------------------------------------------------
+
+        self.fields["type_class"].initial = "CHEF_EQUIPE"
+
+        self.fields["type_class"].disabled = True
+
+        # ----------------------------------------------------
+        # Filtrer les points du projet
+        # ----------------------------------------------------
+
+        if self.projet is not None:
+
+            self.fields[
+                "point_projet"
+            ].queryset = (
+                PointProjet.objects
+                .filter(
+                    projet=self.projet,
+                    actif=True,
+                )
+                .order_by("nom")
+            )
+
+        else:
+
+            # ------------------------------------------------
+            # Si aucun projet n'est fourni
+            # on essaie de récupérer celui de l'instance
+            # ------------------------------------------------
+
+            projet_id = None
+
+            if (
+                self.instance
+                and self.instance.pk
+                and self.instance.projet_id
+            ):
+
+                projet_id = self.instance.projet_id
+
+            if projet_id:
+
+                self.fields[
+                    "point_projet"
+                ].queryset = (
+                    PointProjet.objects
+                    .filter(
+                        projet_id=projet_id,
+                        actif=True,
+                    )
+                    .order_by("nom")
+                )
+
+            else:
+
+                self.fields[
+                    "point_projet"
+                ].queryset = PointProjet.objects.none()
+
+        # ----------------------------------------------------
+        # Champs obligatoires
+        # ----------------------------------------------------
+
+        self.fields["nom"].required = True
+
+        self.fields["montant"].required = True
+
+        self.fields["date_debut"].required = True
+
+        self.fields["date_fin"].required = True
+
+        self.fields["point_projet"].required = True
+
+    # ========================================================
+    # VALIDATION
+    # ========================================================
+
+    def clean(self):
+
+        cleaned_data = super().clean()
+
+        # ====================================================
+        # PROJET
+        # ====================================================
+
+        projet = cleaned_data.get("projet")
+
+        # Le projet passé par la vue est prioritaire.
+        if self.projet is not None:
+
+            projet = self.projet
+
+            cleaned_data["projet"] = projet
+
+        # ====================================================
+        # DONNÉES
+        # ====================================================
+
+        nom = cleaned_data.get("nom")
+
+        montant = cleaned_data.get("montant")
+
+        date_debut = cleaned_data.get("date_debut")
+
+        date_fin = cleaned_data.get("date_fin")
+
+        point_projet = cleaned_data.get("point_projet")
+
+        # ====================================================
+        # PROJET OBLIGATOIRE
+        # ====================================================
+
+        if not projet:
+
+            self.add_error(
+                "projet",
+                "Le projet est obligatoire.",
+            )
+
+        # ====================================================
+        # TYPE
+        # ====================================================
+
+        cleaned_data["type_class"] = "CHEF_EQUIPE"
+
+        # ====================================================
+        # NOM
+        # ====================================================
+
+        if not nom or not nom.strip():
+
+            self.add_error(
+                "nom",
+                "Le nom du chef d'équipe est obligatoire.",
+            )
+
+        # ====================================================
+        # MONTANT
+        # ====================================================
+
+        if montant is None:
+
+            self.add_error(
+                "montant",
+                "Le montant est obligatoire.",
+            )
+
+        elif montant <= Decimal("0.00"):
+
+            self.add_error(
+                "montant",
+                "Le montant doit être supérieur à zéro.",
+            )
+
+        # ====================================================
+        # DATE DE DÉBUT
+        # ====================================================
+
+        if not date_debut:
+
+            self.add_error(
+                "date_debut",
+                "La date de début est obligatoire.",
+            )
+
+        # ====================================================
+        # DATE DE FIN
+        # ====================================================
+
+        if not date_fin:
+
+            self.add_error(
+                "date_fin",
+                "La date de fin est obligatoire.",
+            )
+
+        # ====================================================
+        # COHÉRENCE DES DATES
+        # ====================================================
+
+        if date_debut and date_fin:
+
+            if date_fin < date_debut:
+
+                self.add_error(
+                    "date_fin",
+                    "La date de fin doit être "
+                    "postérieure ou égale à la date de début.",
+                )
+
+        # ====================================================
+        # COHÉRENCE AVEC LE PROJET
+        # ====================================================
+
+        if projet:
+
+            if (
+                date_debut
+                and projet.date_debut
+                and date_debut < projet.date_debut
+            ):
+
+                self.add_error(
+                    "date_debut",
+                    "La date de début du chef d'équipe "
+                    "ne peut pas être antérieure "
+                    "au début du projet.",
+                )
+
+            if (
+                date_fin
+                and projet.date_fin
+                and date_fin > projet.date_fin
+            ):
+
+                self.add_error(
+                    "date_fin",
+                    "La date de fin du chef d'équipe "
+                    "ne peut pas dépasser "
+                    "la fin du projet.",
+                )
+
+        # ====================================================
+        # POINT DU PROJET
+        # ====================================================
+
+        if not point_projet:
+
+            self.add_error(
+                "point_projet",
+                "Le point du projet est obligatoire "
+                "pour un chef d'équipe.",
+            )
+
+        elif projet:
+
+            if point_projet.projet_id != projet.pk:
+
+                self.add_error(
+                    "point_projet",
+                    "Le point sélectionné "
+                    "n'appartient pas à ce projet.",
+                )
+
+            elif not point_projet.actif:
+
+                self.add_error(
+                    "point_projet",
+                    "Le point sélectionné "
+                    "n'est plus actif pour ce projet.",
+                )
+
+        # ====================================================
+        # CHEF D'ÉQUIPE EXTERNE
+        # ====================================================
+
+        cleaned_data["personnel"] = None
+
+        # ====================================================
+        # CHAMPS NON UTILISÉS PAR CHEF_EQUIPE
+        # ====================================================
+
+        cleaned_data["materiau_projet"] = None
+
+        cleaned_data["quantite"] = Decimal("0.00")
+
+        cleaned_data["prix_unitaire"] = Decimal("0.00")
+
+        cleaned_data["date_production"] = None
+
+        # ====================================================
+        # PRÉPARER L'INSTANCE
+        # ====================================================
+
+        self.instance.type_class = "CHEF_EQUIPE"
+
+        self.instance.personnel = None
+
+        self.instance.materiau_projet = None
+
+        self.instance.quantite = Decimal("0.00")
+
+        self.instance.prix_unitaire = Decimal("0.00")
+
+        self.instance.date_production = None
+
+        if projet:
+
+            self.instance.projet = projet
+
+        # ====================================================
+        # RETOUR
+        # ====================================================
+
+        return cleaned_data
+
+    # ========================================================
+    # SAUVEGARDE
+    # ========================================================
+
+    def save(self, commit=True):
+
+        instance = super().save(commit=False)
+
+        # ----------------------------------------------------
+        # Projet imposé par la vue
+        # ----------------------------------------------------
+
+        if self.projet is not None:
+
+            instance.projet = self.projet
+
+        # ----------------------------------------------------
+        # Type
+        # ----------------------------------------------------
+
+        instance.type_class = "CHEF_EQUIPE"
+
+        # ----------------------------------------------------
+        # Chef d'équipe = personnel externe
+        # ----------------------------------------------------
+
+        instance.personnel = None
+
+        # ----------------------------------------------------
+        # Champs non utilisés
+        # ----------------------------------------------------
+
+        instance.materiau_projet = None
+
+        instance.quantite = Decimal("0.00")
+
+        instance.prix_unitaire = Decimal("0.00")
+
+        instance.date_production = None
+
+        if commit:
+
+            instance.save()
+
+        return instance
+    
+# ============================================================
+# FORMULAIRE MATÉRIAU DU PROJET
+# ============================================================
+class MateriauProjetForm(forms.ModelForm):
+
+    class Meta:
+        model = MateriauProjet
+
+        fields = [
+            "projet",
+            "materiau",
+            "unite",
+            "quantite_prevue",
+        ]
+
+        widgets = {
+            "projet": forms.Select(
                 attrs={
                     "class": "form-select",
                 }
             ),
 
-            "salaire": forms.NumberInput(
+            "materiau": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Exemple : Ciment, sable, gravier...",
+                }
+            ),
+
+            "unite": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Exemple : m³, tonne, kg, litre...",
+                }
+            ),
+
+            "quantite_prevue": forms.NumberInput(
                 attrs={
                     "class": "form-control",
                     "step": "0.01",
                     "min": "0",
-                    "placeholder": "Montant du contrat",
-                }
-            ),
-
-            "date_debut": forms.DateInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "date",
-                }
-            ),
-
-            "date_fin": forms.DateInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "date",
-                }
-            ),
-
-            "photo": forms.ClearableFileInput(
-                attrs={
-                    "class": "form-control",
+                    "placeholder": "Quantité prévue",
                 }
             ),
         }
 
         labels = {
-            "nom": "Nom du chef d'équipe",
-            "type_contrat": "Type de contrat",
-            "salaire": "Montant / rémunération",
-            "date_debut": "Date de début",
-            "date_fin": "Date de fin",
-            "photo": "Photo",
+            "projet": "Projet",
+            "materiau": "Matériau",
+            "unite": "Unité",
+            "quantite_prevue": "Quantité prévue",
         }
+
+    # ========================================================
+    # INITIALISATION
+    # ========================================================
 
     def __init__(self, *args, projet=None, **kwargs):
 
-        self.projet = projet
-
         super().__init__(*args, **kwargs)
 
-        # --------------------------------------------------------
-        # Le Chef d'équipe est obligatoirement forfaitaire
-        # --------------------------------------------------------
-        self.fields["type_contrat"].choices = [
-            ("FORFAITAIRE", "Forfaitaire"),
+        self.projet = projet
+
+        if self.projet is not None:
+
+            self.fields["projet"].queryset = (
+                Projet.objects.filter(
+                    pk=self.projet.pk
+                )
+            )
+
+            self.fields["projet"].initial = self.projet.pk
+            self.fields["projet"].disabled = True
+
+    # ========================================================
+    # VALIDATION QUANTITÉ
+    # ========================================================
+
+    def clean_quantite_prevue(self):
+
+        quantite = self.cleaned_data.get(
+            "quantite_prevue"
+        )
+
+        if (
+            quantite is not None
+            and quantite < Decimal("0.00")
+        ):
+            raise forms.ValidationError(
+                "La quantité prévue ne peut pas être négative."
+            )
+
+        return quantite
+
+    # ========================================================
+    # VALIDATION GÉNÉRALE
+    # ========================================================
+
+    def clean(self):
+
+        cleaned_data = super().clean()
+
+        projet = cleaned_data.get("projet")
+        materiau = cleaned_data.get("materiau")
+
+        if self.projet is not None:
+
+            projet = self.projet
+            cleaned_data["projet"] = projet
+
+        if not projet:
+
+            self.add_error(
+                "projet",
+                "Le projet est obligatoire.",
+            )
+
+        if not materiau:
+
+            self.add_error(
+                "materiau",
+                "Le matériau est obligatoire.",
+            )
+
+        return cleaned_data
+
+    # ========================================================
+    # ENREGISTREMENT
+    # ========================================================
+
+    def save(self, commit=True):
+
+        instance = super().save(commit=False)
+
+        if self.projet is not None:
+            instance.projet = self.projet
+
+        if commit:
+            instance.save()
+
+        return instance
+
+
+# ============================================================
+# FORMULAIRE MINIER DU PROJET
+# ============================================================
+
+class MinierProjetForm(forms.ModelForm):
+
+    class Meta:
+
+        model = PersonnelExecutionProjet
+
+        fields = [
+            "nom",
+            "materiau_projet",
+            "quantite",
+            "prix_unitaire",
+            "date_production",
+            "photo",
+            "observation",
         ]
 
-        self.fields["type_contrat"].initial = "FORFAITAIRE"
+        widgets = {
 
-    def clean_nom(self):
+            "nom": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom du minier",
+                }
+            ),
 
-        nom = self.cleaned_data.get("nom")
+            "materiau_projet": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+
+            "quantite": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0.01",
+                    "placeholder": "Quantité produite",
+                }
+            ),
+
+            "prix_unitaire": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0.01",
+                    "placeholder": "Prix unitaire",
+                }
+            ),
+
+            "date_production": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                },
+            ),
+
+            "photo": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control",
+                    "accept": "image/*",
+                }
+            ),
+
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Observation éventuelle...",
+                }
+            ),
+        }
+
+        labels = {
+
+            "nom": "Nom du minier",
+
+            "materiau_projet": "Matériau",
+
+            "quantite": "Quantité",
+
+            "prix_unitaire": "Prix unitaire",
+
+            "date_production": "Date de production",
+
+            "photo": "Photo",
+
+            "observation": "Observation",
+        }
+
+    # ========================================================
+    # INITIALISATION
+    # ========================================================
+
+    def __init__(
+        self,
+        *args,
+        projet=None,
+        **kwargs
+    ):
+
+        super().__init__(
+            *args,
+            **kwargs
+        )
+
+        self.projet = projet
+
+        # ----------------------------------------------------
+        # Aucun matériau par défaut
+        # ----------------------------------------------------
+
+        self.fields[
+            "materiau_projet"
+        ].queryset = (
+            MateriauProjet.objects.none()
+        )
+
+        # ----------------------------------------------------
+        # Matériaux du projet
+        # ----------------------------------------------------
+
+        if self.projet is not None:
+
+            self.fields[
+                "materiau_projet"
+            ].queryset = (
+
+                MateriauProjet.objects
+
+                .filter(
+                    projet=self.projet
+                )
+
+                .select_related(
+                    "projet"
+                )
+
+                .order_by(
+                    "materiau",
+                    "id"
+                )
+            )
+
+        # ----------------------------------------------------
+        # Première option
+        # ----------------------------------------------------
+
+        self.fields[
+            "materiau_projet"
+        ].empty_label = (
+            "Sélectionner un matériau"
+        )
+
+    # ========================================================
+    # VALIDATION
+    # ========================================================
+
+    def clean(self):
+
+        cleaned_data = super().clean()
+
+        nom = cleaned_data.get(
+            "nom"
+        )
+
+        materiau_projet = cleaned_data.get(
+            "materiau_projet"
+        )
+
+        quantite = cleaned_data.get(
+            "quantite"
+        )
+
+        prix_unitaire = cleaned_data.get(
+            "prix_unitaire"
+        )
+
+        date_production = cleaned_data.get(
+            "date_production"
+        )
+
+        # ====================================================
+        # PROJET OBLIGATOIRE
+        # ====================================================
+
+        if self.projet is None:
+
+            raise forms.ValidationError(
+                "Le projet est obligatoire "
+                "pour enregistrer un minier."
+            )
+
+        # ====================================================
+        # IMPORTANT :
+        # PRÉPARER L'INSTANCE AVANT LA VALIDATION DU MODÈLE
+        # ====================================================
+        #
+        # Le formulaire ne contient volontairement PAS :
+        #
+        #     personnel
+        #     type_class
+        #     projet
+        #     point_projet
+        #     montant
+        #
+        # Ces valeurs sont imposées pour un MINIER.
+        #
+        # Cela évite notamment que PersonnelExecutionProjet.clean()
+        # génère une erreur "personnel" alors que le champ n'existe
+        # pas dans ce formulaire.
+        # ====================================================
+
+        self.instance.projet = self.projet
+
+        self.instance.type_class = "MINIER"
+
+        self.instance.personnel = None
+
+        self.instance.point_projet = None
+
+        self.instance.montant = Decimal("0.00")
+
+        # ====================================================
+        # NOM
+        # ====================================================
 
         if not nom or not nom.strip():
-            raise forms.ValidationError(
-                "Le nom du chef d'équipe est obligatoire."
+
+            self.add_error(
+                "nom",
+                "Le nom du minier est obligatoire."
             )
 
-        return nom.strip()
+        # ====================================================
+        # MATÉRIAU
+        # ====================================================
 
-def clean(self):
-    cleaned_data = super().clean()
+        if not materiau_projet:
 
-    projet = self.projet
+            self.add_error(
+                "materiau_projet",
+                "Le matériau est obligatoire "
+                "pour un minier."
+            )
 
-    nom = cleaned_data.get("nom")
-    type_contrat = cleaned_data.get("type_contrat")
-    salaire = cleaned_data.get("salaire")
-    date_debut = cleaned_data.get("date_debut")
-    date_fin = cleaned_data.get("date_fin")
+        else:
 
-    # ============================================================
-    # NORMALISATION DES DATES
-    # ============================================================
-    # Django peut retourner un datetime ou un date selon le champ,
-    # le widget ou les données reçues.
-    # On convertit tout en date avant toute comparaison.
-    # ============================================================
+            # ------------------------------------------------
+            # Le matériau doit appartenir au projet
+            # ------------------------------------------------
 
-    def normaliser_date(valeur):
-        if valeur is None:
-            return None
+            if (
+                materiau_projet.projet_id
+                != self.projet.pk
+            ):
 
-        if isinstance(valeur, datetime.datetime):
-            return valeur.date()
-
-        if isinstance(valeur, datetime.date):
-            return valeur
-
-        return valeur
-
-    date_debut = normaliser_date(date_debut)
-    date_fin = normaliser_date(date_fin)
-
-    # Mettre les valeurs normalisées dans cleaned_data
-    cleaned_data["date_debut"] = date_debut
-    cleaned_data["date_fin"] = date_fin
-
-    # ============================================================
-    # PROJET OBLIGATOIRE
-    # ============================================================
-
-    if not projet:
-        raise forms.ValidationError(
-            "Le projet est obligatoire."
-        )
-
-    # ============================================================
-    # NOM
-    # ============================================================
-
-    if not nom or not str(nom).strip():
-        self.add_error(
-            "nom",
-            "Le nom du chef d'équipe est obligatoire."
-        )
-
-    # ============================================================
-    # TYPE DE CONTRAT
-    # ============================================================
-
-    if not type_contrat:
-        self.add_error(
-            "type_contrat",
-            "Le type de contrat est obligatoire."
-        )
-
-    # Un chef d'équipe externe est payé au forfait
-    if type_contrat and type_contrat != "FORFAITAIRE":
-        self.add_error(
-            "type_contrat",
-            "Un chef d'équipe externe doit avoir un contrat forfaitaire."
-        )
-
-    # ============================================================
-    # RÉMUNÉRATION
-    # ============================================================
-
-    if salaire is None:
-        self.add_error(
-            "salaire",
-            "La rémunération est obligatoire."
-        )
-    else:
-        try:
-            if salaire < 0:
                 self.add_error(
-                    "salaire",
-                    "La rémunération ne peut pas être négative."
+                    "materiau_projet",
+                    "Le matériau sélectionné "
+                    "n'appartient pas à ce projet."
                 )
-        except (TypeError, ValueError):
+
+        # ====================================================
+        # QUANTITÉ
+        # ====================================================
+
+        if quantite is None:
+
             self.add_error(
-                "salaire",
-                "La rémunération saisie est invalide."
+                "quantite",
+                "La quantité est obligatoire."
             )
 
-    # ============================================================
-    # DATES
-    # ============================================================
+        elif quantite <= Decimal("0.00"):
 
-    if not date_debut:
-        self.add_error(
-            "date_debut",
-            "La date de début est obligatoire."
+            self.add_error(
+                "quantite",
+                "La quantité doit être "
+                "supérieure à zéro."
+            )
+
+        # ====================================================
+        # PRIX UNITAIRE
+        # ====================================================
+
+        if prix_unitaire is None:
+
+            self.add_error(
+                "prix_unitaire",
+                "Le prix unitaire est obligatoire."
+            )
+
+        elif prix_unitaire <= Decimal("0.00"):
+
+            self.add_error(
+                "prix_unitaire",
+                "Le prix unitaire doit être "
+                "supérieur à zéro."
+            )
+
+        # ====================================================
+        # DATE DE PRODUCTION
+        # ====================================================
+
+        if not date_production:
+
+            self.add_error(
+                "date_production",
+                "La date de production est obligatoire."
+            )
+
+        # ====================================================
+        # DATE / PÉRIODE DU PROJET
+        # ====================================================
+
+        if (
+            self.projet
+            and date_production
+        ):
+
+            if (
+                self.projet.date_debut
+                and date_production
+                < self.projet.date_debut
+            ):
+
+                self.add_error(
+                    "date_production",
+                    "La date de production ne peut pas "
+                    "être antérieure au début du projet."
+                )
+
+            if (
+                self.projet.date_fin
+                and date_production
+                > self.projet.date_fin
+            ):
+
+                self.add_error(
+                    "date_production",
+                    "La date de production ne peut pas "
+                    "dépasser la fin du projet."
+                )
+
+        return cleaned_data
+
+    # ========================================================
+    # ENREGISTREMENT
+    # ========================================================
+
+    def save(
+        self,
+        commit=True
+    ):
+
+        instance = super().save(
+            commit=False
         )
 
-    if not date_fin:
-        self.add_error(
-            "date_fin",
-            "La date de fin est obligatoire."
+        # ----------------------------------------------------
+        # Projet
+        # ----------------------------------------------------
+
+        instance.projet = self.projet
+
+        # ----------------------------------------------------
+        # Type
+        # ----------------------------------------------------
+
+        instance.type_class = "MINIER"
+
+        # ----------------------------------------------------
+        # Le minier est externe
+        # ----------------------------------------------------
+
+        instance.personnel = None
+
+        # ----------------------------------------------------
+        # Pas de point de chantier
+        # ----------------------------------------------------
+
+        instance.point_projet = None
+
+        # ----------------------------------------------------
+        # Montant forfaitaire
+        # ----------------------------------------------------
+
+        instance.montant = Decimal(
+            "0.00"
         )
 
-    # ============================================================
-    # COMPARAISON DES DATES
-    # ============================================================
+        # ----------------------------------------------------
+        # Sauvegarde
+        # ----------------------------------------------------
 
-    if date_debut and date_fin:
+        if commit:
 
-        if date_fin < date_debut:
-            self.add_error(
-                "date_fin",
-                "La date de fin doit être supérieure ou égale "
-                "à la date de début."
-            )
+            instance.save()
 
-    # ============================================================
-    # RESPECT DE LA PÉRIODE DU PROJET
-    # ============================================================
+        return instance
 
-    projet_date_debut = normaliser_date(
-        projet.date_debut
-    )
 
-    projet_date_fin = normaliser_date(
-        projet.date_fin
-    )
-
-    if date_debut and projet_date_debut:
-
-        if date_debut < projet_date_debut:
-            self.add_error(
-                "date_debut",
-                "La date de début du chef d'équipe ne peut pas "
-                "être antérieure à la date de début du projet."
-            )
-
-    if date_fin and projet_date_fin:
-
-        if date_fin > projet_date_fin:
-            self.add_error(
-                "date_fin",
-                "La date de fin du chef d'équipe ne peut pas "
-                "dépasser la date de fin du projet."
-            )
-
-    # ============================================================
-    # RETOUR
-    # ============================================================
-
-    return cleaned_data
-
-    
 # ============================================================
 # EQUIPAGE PROJET
 # ============================================================

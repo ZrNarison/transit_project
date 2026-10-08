@@ -474,7 +474,7 @@
                             <td>
 
                                 <strong>
-                                    {{ personnel.nom }}
+                                    {{ personnel.nom|upper }}
                                 </strong>
 
                                 {% if personnel.prenom %}
@@ -482,7 +482,7 @@
                                     <br>
 
                                     <span class="text-muted">
-                                        {{ personnel.prenom }}
+                                        {{ personnel.prenom|title }}
                                     </span>
 
                                 {% endif %}

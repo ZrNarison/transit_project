@@ -414,17 +414,8 @@
                                                 </p>
 
                                                 <div class="alert alert-warning">
-
-                                                    <strong>
-                                                        {{ projet.titre }}
-                                                    </strong>
-
-                                                    <br>
-
-                                                    <small>
-                                                        {{ projet.localisation }}
-                                                    </small>
-
+                                                    <strong>{{ projet.titre|title }}</strong> de 
+                                                    <small>{{ projet.localisation|upper }}</small>
                                                 </div>
 
                                                 <p class="text-danger small mb-0">

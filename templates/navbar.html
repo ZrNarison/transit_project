@@ -42,7 +42,7 @@
 
                         <!-- PRODUIT -->
                         {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                            <li><a class="dropdown-item" href="{% url 'produit:p_produit_liste' %}">📦 Produit</a></li>
+                            <li><a class="dropdown-item" href="{% url 'produit:p_produit_liste' %}">📦 Mica</a></li>
                         {% endif %}
                     </ul>
                 </li>
@@ -194,7 +194,8 @@
                             <li><a class="dropdown-item" href="{% url 'rapportsoc:rapport_tresorerie' %}">📊 Rapport Entreprise</a></li>
                         {% endif %}
                         {% if request.session.role == "Admin" or request.session.role == "Superviseur" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
-                            <li><a class="dropdown-item" href="{% url 'projet:rapport_projet_selection'%}">📊 Rapport du Projet</a></li>
+                            <li><a class="dropdown-item" href="#">📊 Rapport du Projet</a></li>
+                            {% comment %} <li><a class="dropdown-item" href="{% url 'projet:rapport_projet_selection'%}">📊 Rapport du Projet</a></li> {% endcomment %}
                         {% endif %}
                         <!-- ADMIN / SUPERVISEUR -->
                         {% if request.session.role == "Admin" or request.session.role == "Superviseur" %}

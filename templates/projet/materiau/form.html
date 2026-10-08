@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ titre }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ===================================================== -->
+    <!-- EN-TÊTE -->
+    <!-- ===================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="mb-1">
+
+                {% if mode == "update" %}
+
+                    <i class="fas fa-edit me-2"></i>
+                    Modifier le matériau
+
+                {% else %}
+
+                    <i class="fas fa-plus-circle me-2"></i>
+                    Ajouter un matériau
+
+                {% endif %}
+
+            </h2>
+
+            <p class="text-muted mb-0">
+
+                Projet :
+                <strong>{{ projet.titre|title }}</strong>
+
+            </p>
+
+        </div>
+
+
+        <a href="{% url 'projet:materiau_list' projet.id %}"
+           class="btn btn-outline-secondary">
+
+            <i class="fas fa-arrow-left me-1"></i>
+
+            Retour
+
+        </a>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- FORMULAIRE -->
+    <!-- ===================================================== -->
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-8 col-xl-7">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-primary text-white">
+
+                    <h5 class="mb-0">
+
+                        {% if mode == "update" %}
+
+                            <i class="fas fa-edit me-2"></i>
+                            Modification du matériau
+
+                        {% else %}
+
+                            <i class="fas fa-boxes me-2"></i>
+                            Nouveau matériau
+
+                        {% endif %}
+
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <form method="post">
+
+                        {% csrf_token %}
+
+
+                        <!-- ===================================== -->
+                        <!-- ERREURS GÉNÉRALES -->
+                        <!-- ===================================== -->
+
+                        {% if form.non_field_errors %}
+
+                            <div class="alert alert-danger">
+
+                                {% for error in form.non_field_errors %}
+
+                                    <div>
+                                        {{ error }}
+                                    </div>
+
+                                {% endfor %}
+
+                            </div>
+
+                        {% endif %}
+
+
+                        <!-- ===================================== -->
+                        <!-- MATÉRIAU -->
+                        <!-- ===================================== -->
+
+                        <div class="mb-3">
+
+                            <label for="{{ form.materiau.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                Matériau
+                                <span class="text-danger">*</span>
+
+                            </label>
+
+                            {{ form.materiau }}
+
+                            {% if form.materiau.errors %}
+
+                                <div class="text-danger small mt-1">
+
+                                    {% for error in form.materiau.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- ===================================== -->
+                        <!-- QUANTITÉ PRÉVUE -->
+                        <!-- ===================================== -->
+
+                        <div class="mb-3">
+
+                            <label for="{{ form.quantite_prevue.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                Quantité prévue
+                                <span class="text-danger">*</span>
+
+                            </label>
+
+                            {{ form.quantite_prevue }}
+
+                            {% if form.quantite_prevue.errors %}
+
+                                <div class="text-danger small mt-1">
+
+                                    {% for error in form.quantite_prevue.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- ===================================== -->
+                        <!-- UNITÉ -->
+                        <!-- ===================================== -->
+
+                        <div class="mb-4">
+
+                            <label for="{{ form.unite.id_for_label }}"
+                                   class="form-label fw-semibold">
+
+                                Unité
+
+                            </label>
+
+                            {{ form.unite }}
+
+                            {% if form.unite.errors %}
+
+                                <div class="text-danger small mt-1">
+
+                                    {% for error in form.unite.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- ===================================== -->
+                        <!-- BOUTONS -->
+                        <!-- ===================================== -->
+
+                        <div class="d-flex justify-content-between">
+
+                            <a href="{% url 'projet:materiau_list' projet.id %}"
+                               class="btn btn-secondary">
+
+                                <i class="fas fa-times me-1"></i>
+
+                                Annuler
+
+                            </a>
+
+
+                            <button type="submit"
+                                    class="btn btn-primary">
+
+                                {% if mode == "update" %}
+
+                                    <i class="fas fa-save me-1"></i>
+                                    Enregistrer les modifications
+
+                                {% else %}
+
+                                    <i class="fas fa-plus me-1"></i>
+                                    Ajouter le matériau
+
+                                {% endif %}
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

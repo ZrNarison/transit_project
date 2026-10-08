@@ -11,80 +11,128 @@
     <!-- =========================================================
          EN-TÊTE PROJET
     ========================================================== -->
+
     <div class="card border-0 shadow-sm mb-4">
+
         <div class="card-body">
 
             <div class="d-flex flex-wrap justify-content-between align-items-start">
 
                 <div>
+
                     <h2 class="fw-bold mb-1">
+
                         <i class="fas fa-hard-hat text-primary me-2"></i>
+
                         {{ projet.titre|title }}
+
                     </h2>
 
-                    <div class="text-muted">
-                        <i class="fas fa-location-dot me-1"></i>
-                        {{ projet.localisation|upper }}
-                    </div>
+
+                    {% if projet.localisation %}
+
+                        <div class="text-muted">
+
+                            <i class="fas fa-location-dot me-1"></i>
+
+                            {{ projet.localisation|upper }}
+
+                        </div>
+
+                    {% endif %}
+
                 </div>
+
 
                 <div class="d-flex gap-2 mt-2 mt-md-0">
 
-                    <a href="{% url 'projet:projet_list' %}"
-                       class="btn btn-outline-secondary">
+                    <a
+                        href="{% url 'projet:projet_list' %}"
+                        class="btn btn-outline-secondary"
+                    >
+
                         <i class="fas fa-arrow-left me-1"></i>
+
                         Projets
+
                     </a>
 
+
                     {% if peut_gerer %}
-                        <a href="{% url 'projet:projet_update' projet.id %}"
-                           class="btn btn-warning">
+
+                        <a
+                            href="{% url 'projet:projet_update' projet.id %}"
+                            class="btn btn-warning"
+                        >
+
                             <i class="fas fa-edit me-1"></i>
+
                             Modifier
+
                         </a>
+
                     {% endif %}
 
                 </div>
 
             </div>
 
+
             <hr>
+
 
             <!-- =====================================================
                  INFORMATIONS PROJET
             ====================================================== -->
+
             <div class="row g-3">
 
                 <!-- DÉBUT -->
+
                 <div class="col-md-3">
+
                     <div class="small text-muted">
                         Début
                     </div>
 
                     <strong>
+
                         <i class="fas fa-calendar text-primary me-1"></i>
+
                         {{ projet.date_debut|date:"d/m/Y" }}
+
                     </strong>
+
                 </div>
 
+
                 <!-- FIN -->
+
                 <div class="col-md-3">
+
                     <div class="small text-muted">
                         Fin
                     </div>
 
                     <strong>
+
                         <i class="fas fa-calendar-check text-danger me-1"></i>
+
                         {{ projet.date_fin|date:"d/m/Y" }}
+
                     </strong>
+
                 </div>
 
+
                 <!-- STATUT -->
+
                 <div class="col-md-3">
 
                     <div class="small text-muted">
                         Statut
                     </div>
+
 
                     {% if projet.statut == "PLANIFIE" %}
 
@@ -114,12 +162,15 @@
 
                 </div>
 
+
                 <!-- TEMPS RESTANT -->
+
                 <div class="col-md-3">
 
                     <div class="small text-muted">
                         Temps restant
                     </div>
+
 
                     {% if projet.periode_terminee %}
 
@@ -130,8 +181,11 @@
                     {% else %}
 
                         <strong>
+
                             {{ projet.jours_restants }}
+
                             jour{{ projet.jours_restants|pluralize }}
+
                         </strong>
 
                     {% endif %}
@@ -141,23 +195,28 @@
             </div>
 
         </div>
+
     </div>
 
 
     <!-- =========================================================
          STATISTIQUES
     ========================================================== -->
+
     <div class="row g-3 mb-4">
 
-        <!-- ÉQUIPE -->
-        <div class="col-md-3">
+        <!-- ÉQUIPE ACTIVE -->
+
+        <div class="col-md-6 col-xl-3">
 
             <div class="card border-0 shadow-sm h-100">
+
                 <div class="card-body">
 
                     <div class="d-flex justify-content-between">
 
                         <div>
+
                             <div class="text-muted small">
                                 Équipe active
                             </div>
@@ -165,6 +224,7 @@
                             <h3 class="fw-bold mb-0">
                                 {{ equipe_active }}
                             </h3>
+
                         </div>
 
                         <i class="fas fa-users fa-2x text-primary"></i>
@@ -172,20 +232,57 @@
                     </div>
 
                 </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CHEFS D'ÉQUIPE -->
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Chefs d'équipe
+                            </div>
+
+                            <h3 class="fw-bold mb-0">
+                                {{ nombre_chefs_equipe }}
+                            </h3>
+
+                        </div>
+
+                        <i class="fas fa-user-tie fa-2x text-success"></i>
+
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
 
 
         <!-- POINTS -->
-        <div class="col-md-3">
+
+        <div class="col-md-6 col-xl-3">
 
             <div class="card border-0 shadow-sm h-100">
+
                 <div class="card-body">
 
                     <div class="d-flex justify-content-between">
 
                         <div>
+
                             <div class="text-muted small">
                                 Points chantier
                             </div>
@@ -193,6 +290,7 @@
                             <h3 class="fw-bold mb-0">
                                 {{ points|length }}
                             </h3>
+
                         </div>
 
                         <i class="fas fa-location-dot fa-2x text-danger"></i>
@@ -200,20 +298,24 @@
                     </div>
 
                 </div>
+
             </div>
 
         </div>
 
 
         <!-- RAPPORTS -->
-        <div class="col-md-3">
+
+        <div class="col-md-6 col-xl-3">
 
             <div class="card border-0 shadow-sm h-100">
+
                 <div class="card-body">
 
                     <div class="d-flex justify-content-between">
 
                         <div>
+
                             <div class="text-muted small">
                                 Rapports travaux
                             </div>
@@ -221,6 +323,7 @@
                             <h3 class="fw-bold mb-0">
                                 {{ nombre_rapports_travaux }}
                             </h3>
+
                         </div>
 
                         <i class="fas fa-hammer fa-2x text-warning"></i>
@@ -228,27 +331,42 @@
                     </div>
 
                 </div>
+
             </div>
 
         </div>
 
+    </div>
+
+
+    <!-- =========================================================
+         DEUXIÈME LIGNE STATISTIQUES
+    ========================================================== -->
+
+    <div class="row g-3 mb-4">
 
         <!-- MATÉRIAUX -->
-        <div class="col-md-3">
+
+        <div class="col-md-6 col-xl-3">
 
             <div class="card border-0 shadow-sm h-100">
+
                 <div class="card-body">
 
                     <div class="d-flex justify-content-between">
 
                         <div>
+
                             <div class="text-muted small">
                                 Matériaux ravitaillés
                             </div>
 
                             <h3 class="fw-bold mb-0">
+
                                 {{ total_materiaux|floatformat:2 }}
+
                             </h3>
+
                         </div>
 
                         <i class="fas fa-boxes-stacked fa-2x text-success"></i>
@@ -256,6 +374,106 @@
                     </div>
 
                 </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- MINIERS -->
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Miniers
+                            </div>
+
+                            <h3 class="fw-bold mb-0">
+                                {{ nombre_miniers }}
+                            </h3>
+
+                        </div>
+
+                        <i class="fas fa-person-digging fa-2x text-dark"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- MATÉRIAUX DU PROJET -->
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Matériaux du projet
+                            </div>
+
+                            <h3 class="fw-bold mb-0">
+                                {{ nombre_materiaux_projet }}
+                            </h3>
+
+                        </div>
+
+                        <i class="fas fa-box fa-2x text-info"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RAPPORTS -->
+
+        <div class="col-md-6 col-xl-3">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Total rapports
+                            </div>
+
+                            <h3 class="fw-bold mb-0">
+                                {{ total_rapports }}
+                            </h3>
+
+                        </div>
+
+                        <i class="fas fa-file-lines fa-2x text-secondary"></i>
+
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
@@ -266,6 +484,7 @@
     <!-- =========================================================
          MENU PROJET
     ========================================================== -->
+
     <div class="card border-0 shadow-sm mb-4">
 
         <div class="card-body">
@@ -273,30 +492,33 @@
             <div class="d-flex flex-wrap gap-2">
 
                 <!-- ÉQUIPE -->
-                <a href="{% url 'projet:equipe_list' projet.id %}"
-                   class="btn btn-outline-primary">
+
+                <a
+                    href="{% url 'projet:equipe_list' projet.id %}"
+                    class="btn btn-outline-primary"
+                >
 
                     <i class="fas fa-users me-1"></i>
+
                     Équipe
 
                 </a>
 
 
                 <!-- POINTS / CHEF D'ÉQUIPE -->
+
                 {% if request.session.role == "ChefMagasin" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" or request.session.role == "Magasin" %}
 
-                    <a href="{% url 'projet:point_list' projet.id %}"
-                       class="btn btn-outline-danger">
+                    <a href="{% url 'projet:point_list' projet.id %}" class="btn btn-outline-danger"><i class="fas fa-location-dot me-1"></i>Points</a>
 
-                        <i class="fas fa-location-dot me-1"></i>
-                        Points
 
-                    </a>
-
-                    <a href="{% url 'projet:chef_equipe_list' projet.id %}"
-                       class="btn btn-outline-danger">
+                    <a
+                        href="{% url 'projet:chef_equipe_list' projet.id %}"
+                        class="btn btn-outline-success"
+                    >
 
                         <i class="fas fa-user-group me-1"></i>
+
                         Chef d'équipe
 
                     </a>
@@ -304,22 +526,42 @@
                 {% endif %}
 
 
-                <!-- VÉHICULES -->
+                <!-- VÉHICULES / ENGINS / MINIERS -->
+
                 {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
 
-                    <a href="{% url 'projet:vehicule_projet_list' projet.id %}"
-                       class="btn btn-outline-dark">
+                    <a
+                        href="{% url 'projet:vehicule_projet_list' projet.id %}"
+                        class="btn btn-outline-dark"
+                    >
 
                         <i class="fas fa-truck me-1"></i>
-                        Véhicules du projet
+
+                        Véhicule
 
                     </a>
 
-                    <a href="#"
-                       class="btn btn-outline-dark">
+
+                    <a
+                        href="{% url 'projet:engin_list' projet.id %}"
+                        class="btn btn-outline-dark"
+                    >
 
                         <i class="fas fa-truck-ramp-box me-1"></i>
-                        Véhicules lourds
+
+                        Engin
+
+                    </a>
+
+
+                    <a
+                        href="{% url 'projet:minier_list' projet.id %}"
+                        class="btn btn-outline-dark"
+                    >
+
+                        <i class="fas fa-person-digging me-1"></i>
+
+                        Minier
 
                     </a>
 
@@ -327,12 +569,16 @@
 
 
                 <!-- AVANCEMENT -->
-                {% if fonction_projet == "INGENIEUR" %}
 
-                    <a href="{% url 'projet:rapport_projet_list' projet.id %}"
-                       class="btn btn-outline-info">
+                {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
+                    <a href="{% url 'projet:materiau_list' projet.id %}" class="btn btn-outline-dark"><i class="fas fa-boxes-stacked me-1"></i>Matériaux</a>
+                    <a
+                        href="{% url 'projet:rapport_projet_list' projet.id %}"
+                        class="btn btn-outline-info"
+                    >
 
                         <i class="fas fa-chart-line me-1"></i>
+
                         Avancement
 
                     </a>
@@ -341,12 +587,16 @@
 
 
                 <!-- TRAVAUX -->
+
                 {% if fonction_projet == "CHEF_CHANTIER" %}
 
-                    <a href="{% url 'projet:rapport_travail_list' projet.id %}"
-                       class="btn btn-outline-warning">
+                    <a
+                        href="{% url 'projet:rapport_travail_list' projet.id %}"
+                        class="btn btn-outline-warning"
+                    >
 
                         <i class="fas fa-hammer me-1"></i>
+
                         Travaux
 
                     </a>
@@ -355,12 +605,16 @@
 
 
                 <!-- MATÉRIAUX -->
+
                 {% if fonction_projet == "CHEF_MAGASIN" or fonction_projet == "MAGASIN" %}
 
-                    <a href="{% url 'projet:rapport_materiau_list' projet.id %}"
-                       class="btn btn-outline-success">
+                    <a
+                        href="{% url 'projet:rapport_materiau_list' projet.id %}"
+                        class="btn btn-outline-success"
+                    >
 
                         <i class="fas fa-boxes-stacked me-1"></i>
+
                         Matériaux
 
                     </a>
@@ -369,12 +623,16 @@
 
 
                 <!-- RAPPORT VÉHICULE -->
+
                 {% if fonction_projet == "CHAUFFEUR" %}
 
-                    <a href="{% url 'projet:rapport_vehicule_list' projet.id %}"
-                       class="btn btn-outline-dark">
+                    <a
+                        href="{% url 'projet:rapport_vehicule_list' projet.id %}"
+                        class="btn btn-outline-dark"
+                    >
 
                         <i class="fas fa-truck me-1"></i>
+
                         Véhicules
 
                     </a>
@@ -391,6 +649,7 @@
     <!-- =========================================================
          ÉQUIPE D'EXÉCUTION
     ========================================================== -->
+
     <div class="card border-0 shadow-sm mb-4">
 
         <div class="card-header bg-primary text-white">
@@ -398,12 +657,18 @@
             <div class="d-flex justify-content-between align-items-center">
 
                 <span class="fw-bold">
+
                     <i class="fas fa-users me-2"></i>
+
                     Équipe d'exécution
+
                 </span>
 
-                <a href="{% url 'projet:equipe_list' projet.id %}"
-                   class="btn btn-sm btn-light">
+
+                <a
+                    href="{% url 'projet:equipe_list' projet.id %}"
+                    class="btn btn-sm btn-light"
+                >
 
                     Voir tout
 
@@ -426,7 +691,8 @@
 
                             <div class="border rounded p-3 h-100">
 
-                                <!-- NOM DU MEMBRE -->
+                                <!-- NOM -->
+
                                 <div class="fw-bold">
 
                                     {% if membre.personnel %}
@@ -435,7 +701,7 @@
 
                                     {% elif membre.personnel_execution %}
 
-                                        {{ membre.personnel_execution }}
+                                        {{ membre.personnel_execution.nom }}
 
                                     {% else %}
 
@@ -449,6 +715,7 @@
 
 
                                 <!-- FONCTION -->
+
                                 <div class="text-primary small">
 
                                     <i class="fas fa-briefcase me-1"></i>
@@ -458,17 +725,20 @@
                                 </div>
 
 
-                                <!-- TYPE DE PERSONNEL -->
+                                <!-- TYPE -->
+
                                 <div class="small text-muted mt-2">
 
                                     {% if membre.personnel %}
 
                                         <i class="fas fa-building me-1"></i>
+
                                         Personnel interne
 
                                     {% elif membre.personnel_execution %}
 
                                         <i class="fas fa-user-tie me-1"></i>
+
                                         Personnel d'exécution / contractuel
 
                                     {% endif %}
@@ -477,25 +747,36 @@
 
 
                                 <!-- PÉRIODE -->
+
                                 <div class="small text-muted mt-1">
 
                                     <i class="fas fa-calendar me-1"></i>
 
-                                    {{ membre.date_debut|date:"d/m/Y" }}
+                                    {% if membre.date_debut %}
+                                        {{ membre.date_debut|date:"d/m/Y" }}
+                                    {% else %}
+                                        --
+                                    {% endif %}
 
                                     →
 
-                                    {{ membre.date_fin|date:"d/m/Y" }}
+                                    {% if membre.date_fin %}
+                                        {{ membre.date_fin|date:"d/m/Y" }}
+                                    {% else %}
+                                        --
+                                    {% endif %}
 
                                 </div>
 
 
                                 <!-- ÉTAT -->
+
                                 {% if membre.acces_actif %}
 
                                     <span class="badge bg-success mt-2">
 
                                         <i class="fas fa-check me-1"></i>
+
                                         Accès actif
 
                                     </span>
@@ -505,6 +786,7 @@
                                     <span class="badge bg-secondary mt-2">
 
                                         <i class="fas fa-clock me-1"></i>
+
                                         Expiré / inactif
 
                                     </span>
@@ -524,6 +806,7 @@
                 <p class="text-muted mb-0">
 
                     <i class="fas fa-info-circle me-1"></i>
+
                     Aucun membre dans l'équipe.
 
                 </p>
@@ -536,8 +819,278 @@
 
 
     <!-- =========================================================
+         CHEFS D'ÉQUIPE
+    ========================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-success text-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <span class="fw-bold">
+
+                    <i class="fas fa-user-tie me-2"></i>
+
+                    Chefs d'équipe
+
+                </span>
+
+
+                <a
+                    href="{% url 'projet:chef_equipe_list' projet.id %}"
+                    class="btn btn-sm btn-light"
+                >
+
+                    <i class="fas fa-list me-1"></i>
+
+                    Voir tout
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body">
+
+            {% if chefs_equipe %}
+
+                <div class="row g-3">
+
+                    {% for chef in chefs_equipe|slice:":6" %}
+
+                        <div class="col-md-6 col-lg-4">
+
+                            <div class="border rounded p-3 h-100">
+
+                                <!-- =================================
+                                     IDENTITÉ
+                                ================================== -->
+
+                                <div class="d-flex align-items-center mb-3">
+
+                                    {% if chef.photo %}
+
+                                        <img
+                                            src="{{ chef.photo.url }}"
+                                            alt="Photo de {{ chef.nom }}"
+                                            class="rounded-circle me-2"
+                                            style="
+                                                width:55px;
+                                                height:55px;
+                                                object-fit:cover;
+                                            "
+                                        >
+
+                                    {% else %}
+
+                                        <div
+                                            class="rounded-circle bg-light text-success d-flex align-items-center justify-content-center me-2"
+                                            style="
+                                                width:55px;
+                                                height:55px;
+                                            "
+                                        >
+
+                                            <i class="fas fa-user-tie fa-lg"></i>
+
+                                        </div>
+
+                                    {% endif %}
+
+
+                                    <div>
+
+                                        <div class="fw-bold">
+
+                                            {{ chef.nom|title }}
+
+                                        </div>
+
+
+                                        <div class="small text-success">
+
+                                            <i class="fas fa-user-tie me-1"></i>
+
+                                            Chef d'équipe
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- =================================
+                                     POINT
+                                ================================== -->
+
+                                {% if chef.point_projet %}
+
+                                    <div class="small mb-2">
+
+                                        <i class="fas fa-location-dot text-danger me-1"></i>
+
+                                        <strong>
+                                            Point :
+                                        </strong>
+
+                                        {{ chef.point_projet.nom }}
+
+                                    </div>
+
+                                {% else %}
+
+                                    <div class="small text-muted mb-2">
+
+                                        <i class="fas fa-location-dot me-1"></i>
+
+                                        Aucun point affecté
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <!-- =================================
+                                     MONTANT
+                                ================================== -->
+
+                                <div class="small mb-2">
+
+                                    <i class="fas fa-money-bill-wave text-success me-1"></i>
+
+                                    <strong>
+                                        Montant :
+                                    </strong>
+
+                                    {{ chef.montant|floatformat:2 }}
+                                    Ar
+
+                                </div>
+
+
+                                <!-- =================================
+                                     PÉRIODE
+                                ================================== -->
+
+                                <div class="small text-muted">
+
+                                    <i class="fas fa-calendar me-1"></i>
+
+                                    {% if chef.date_debut %}
+
+                                        {{ chef.date_debut|date:"d/m/Y" }}
+
+                                    {% else %}
+
+                                        --
+
+                                    {% endif %}
+
+                                    →
+
+                                    {% if chef.date_fin %}
+
+                                        {{ chef.date_fin|date:"d/m/Y" }}
+
+                                    {% else %}
+
+                                        --
+
+                                    {% endif %}
+
+                                </div>
+
+
+                                <!-- =================================
+                                     ÉTAT
+                                ================================== -->
+
+                                {% if chef.acces_actif %}
+
+                                    <span class="badge bg-success mt-2">
+
+                                        <i class="fas fa-check-circle me-1"></i>
+
+                                        Actif
+
+                                    </span>
+
+                                {% elif chef.periode_terminee %}
+
+                                    <span class="badge bg-secondary mt-2">
+
+                                        <i class="fas fa-clock me-1"></i>
+
+                                        Période terminée
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-warning text-dark mt-2">
+
+                                        <i class="fas fa-hourglass-half me-1"></i>
+
+                                        Inactif
+
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                {% if nombre_chefs_equipe > 6 %}
+
+                    <div class="text-center mt-3">
+
+                        <a
+                            href="{% url 'projet:chef_equipe_list' projet.id %}"
+                            class="btn btn-outline-success"
+                        >
+
+                            <i class="fas fa-list me-1"></i>
+
+                            Voir les {{ nombre_chefs_equipe }}
+                            chefs d'équipe
+
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+            {% else %}
+
+                <div class="text-muted">
+
+                    <i class="fas fa-info-circle me-1"></i>
+
+                    Aucun chef d'équipe affecté à ce projet.
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
          POINTS DE CHANTIER
     ========================================================== -->
+
     <div class="card border-0 shadow-sm mb-4">
 
         <div class="card-header bg-danger text-white">
@@ -547,12 +1100,16 @@
                 <span class="fw-bold">
 
                     <i class="fas fa-location-dot me-2"></i>
+
                     Points de chantier
 
                 </span>
 
-                <a href="{% url 'projet:point_list' projet.id %}"
-                   class="btn btn-sm btn-light">
+
+                <a
+                    href="{% url 'projet:point_list' projet.id %}"
+                    class="btn btn-sm btn-light"
+                >
 
                     Voir tout
 
@@ -574,11 +1131,27 @@
                         <thead class="table-light">
 
                             <tr>
-                                <th>Point</th>
-                                <th>Responsable</th>
-                                <th>Distance</th>
-                                <th>Travail prévu</th>
-                                <th>État</th>
+
+                                <th>
+                                    Point
+                                </th>
+
+                                <th>
+                                    Localisation
+                                </th>
+
+                                <th>
+                                    Distance
+                                </th>
+
+                                <th>
+                                    Travail prévu
+                                </th>
+
+                                <th>
+                                    État
+                                </th>
+
                             </tr>
 
                         </thead>
@@ -591,36 +1164,63 @@
                                 <tr>
 
                                     <td>
+
                                         <strong>
-                                            {{ point.nom }}
+                                            {{ point.nom|title }}
                                         </strong>
+
                                     </td>
 
-                                    <td>
-                                        {{ point.responsable }}
-                                    </td>
 
                                     <td>
+
+                                        {% if point.localisation %}
+
+                                            {{ point.localisation }}
+
+                                        {% else %}
+
+                                            <span class="text-muted">
+                                                --
+                                            </span>
+
+                                        {% endif %}
+
+                                    </td>
+
+
+                                    <td>
+
                                         {{ point.distance_km|floatformat:2 }}
+
                                         km
+
                                     </td>
 
+
                                     <td>
+
                                         {{ point.travail_prevu }}
+
                                     </td>
+
 
                                     <td>
 
                                         {% if point.actif %}
 
                                             <span class="badge bg-success">
+
                                                 Actif
+
                                             </span>
 
                                         {% else %}
 
                                             <span class="badge bg-secondary">
+
                                                 Inactif
+
                                             </span>
 
                                         {% endif %}
@@ -655,13 +1255,133 @@
 
 
     <!-- =========================================================
+         MATÉRIAUX DU PROJET
+    ========================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-info text-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <span class="fw-bold">
+
+                    <i class="fas fa-boxes-stacked me-2"></i>
+
+                    Matériaux du projet
+
+                </span>
+
+
+                <a
+                    href="{% url 'projet:materiau_list' projet.id %}"
+                    class="btn btn-sm btn-light"
+                >
+
+                    Voir tout
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body p-0">
+
+            {% if materiaux_projet %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th>
+                                    Matériau
+                                </th>
+
+                                <th>
+                                    Unité
+                                </th>
+
+                                <th>
+                                    Quantité prévue
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for materiau in materiaux_projet|slice:":8" %}
+
+                                <tr>
+
+                                    <td>
+
+                                        <strong>
+                                            {{ materiau.materiau|title }}
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {{ materiau.unite }}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        {{ materiau.quantite_prevue|floatformat:2 }}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="p-4 text-muted">
+
+                    <i class="fas fa-info-circle me-1"></i>
+
+                    Aucun matériau enregistré pour ce projet.
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
          DERNIERS RAPPORTS
     ========================================================== -->
+
     <div class="row g-4">
+
 
         <!-- =====================================================
              RAPPORTS D'AVANCEMENT
         ====================================================== -->
+
         <div class="col-lg-6">
 
             <div class="card border-0 shadow-sm h-100">
@@ -669,6 +1389,7 @@
                 <div class="card-header bg-info text-white">
 
                     <i class="fas fa-chart-line me-2"></i>
+
                     Rapports d'avancement
 
                 </div>
@@ -685,8 +1406,11 @@
                                 <div class="d-flex justify-content-between">
 
                                     <strong>
+
                                         {{ rapport.titre }}
+
                                     </strong>
+
 
                                     <span class="badge bg-info">
 
@@ -701,9 +1425,10 @@
 
                                     {{ rapport.date_rapport|date:"d/m/Y" }}
 
-                                    -
-
-                                    {{ rapport.auteur }}
+                                    {% if rapport.auteur %}
+                                        -
+                                        {{ rapport.auteur }}
+                                    {% endif %}
 
                                 </small>
 
@@ -733,6 +1458,7 @@
         <!-- =====================================================
              DERNIERS TRAVAUX
         ====================================================== -->
+
         <div class="col-lg-6">
 
             <div class="card border-0 shadow-sm h-100">
@@ -740,6 +1466,7 @@
                 <div class="card-header bg-warning">
 
                     <i class="fas fa-hammer me-2"></i>
+
                     Derniers travaux
 
                 </div>
@@ -754,8 +1481,11 @@
                             <div class="border-bottom pb-2 mb-2">
 
                                 <strong>
+
                                     {{ rapport.titre }}
+
                                 </strong>
+
 
                                 <div class="small text-muted">
 
@@ -764,6 +1494,7 @@
                                     {% if rapport.date_fin %}
 
                                         →
+
                                         {{ rapport.date_fin|date:"d/m/Y" }}
 
                                     {% endif %}

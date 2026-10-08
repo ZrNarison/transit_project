@@ -39,12 +39,13 @@ Véhicules du projet - {{ projet.titre }}
             <i class="fas fa-arrow-left me-1"></i>
             Retour au projet
         </a>
-
+        {% if request.session.role == "UserEntreprise" or request.session.role == "Admin"   %}
         <a href="{% url 'projet:vehicule_projet_create' projet.id %}"
            class="btn btn-primary">
             <i class="fas fa-plus me-1"></i>
             Affecter un véhicule
         </a>
+        {% endif %}
 
     </div>
 

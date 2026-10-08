@@ -200,23 +200,12 @@ urlpatterns = [
     # ============================================================
     # RAPPORT GLOBAL DU PROJET
     # ============================================================
-
-    # Sélection du projet avant d'afficher le rapport global.
-    #
-    # Navbar :
-    # Rapports → Rapport du Projet
-    #
     path(
         "rapports/projets/",
         views.rapport_projet_selection,
         name="rapport_projet_selection",
     ),
 
-    # Rapport complet d'un projet.
-    #
-    # Exemple :
-    # /projet/projet/5/rapports/
-    #
     path(
         "projet/<int:projet_id>/rapports/",
         views.rapport_projet_global,
@@ -266,24 +255,6 @@ urlpatterns = [
         name="rapport_travail_create",
     ),
 
-
-    # ============================================================
-    # RAPPORTS DES MATÉRIAUX / MAGASIN
-    # ============================================================
-
-    path(
-        "<int:projet_id>/materiaux/",
-        views.rapport_materiau_list,
-        name="rapport_materiau_list",
-    ),
-
-    path(
-        "<int:projet_id>/materiaux/nouveau/",
-        views.rapport_materiau_create,
-        name="rapport_materiau_create",
-    ),
-
-
     # ============================================================
     # RAPPORTS DES VÉHICULES / CHAUFFEURS
     # ============================================================
@@ -299,4 +270,72 @@ urlpatterns = [
         views.rapport_vehicule_create,
         name="rapport_vehicule_create",
     ),
+
+    # ======================================================== *
+    # ENGIN PROJET 
+    # # ======================================================== 
+    
+    path( "<int:projet_id>/engins/", views.engin_list, name="engin_list", ), 
+    path( "<int:projet_id>/engins/ajouter/", views.engin_create, name="engin_create", ), path( "<int:projet_id>/engins/<int:pk>/modifier/", views.engin_update, name="engin_update", ), path( "<int:projet_id>/engins/<int:pk>/supprimer/", views.engin_delete, name="engin_delete", ),
+    # ============================================================
+    # MATÉRIAUX DU PROJET
+    # ============================================================
+
+    path(
+        "<int:projet_id>/materiaux/",
+        views.materiau_list,
+        name="materiau_list",
+    ),
+
+    path(
+        "<int:projet_id>/materiaux/ajouter/",
+        views.materiau_create,
+        name="materiau_create",
+    ),
+
+    path(
+        "<int:projet_id>/materiaux/nouveau/",
+        views.materiau_create,
+        name="materiau_create_nouveau",
+    ),
+
+    path(
+        "<int:projet_id>/materiaux/<int:pk>/modifier/",
+        views.materiau_update,
+        name="materiau_update",
+    ),
+
+    path(
+        "<int:projet_id>/materiaux/<int:pk>/supprimer/",
+        views.materiau_delete,
+        name="materiau_delete",
+    ),
+    # ============================================================
+    # MINIER PROJET
+    # ============================================================
+
+    path(
+        "<int:projet_id>/miniers/",
+        views.minier_list,
+        name="minier_list",
+    ),
+
+    path(
+        "<int:projet_id>/miniers/ajouter/",
+        views.minier_create,
+        name="minier_create",
+    ),
+
+    path(
+        "<int:projet_id>/miniers/<int:pk>/modifier/",
+        views.minier_update,
+        name="minier_update",
+    ),
+
+    path(
+        "<int:projet_id>/miniers/<int:pk>/supprimer/",
+        views.minier_delete,
+        name="minier_delete",
+    ),
+
 ]

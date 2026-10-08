@@ -1,0 +1,800 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Engins du projet{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ========================================================= -->
+    <!-- EN-TÊTE -->
+    <!-- ========================================================= -->
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-tractor me-2"></i>
+                Engins du projet
+            </h3>
+
+            <div class="text-muted">
+                <i class="fas fa-folder-open me-1"></i>
+                {{ projet.titre|title }}
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-2 mt-md-0">
+
+            <a href="{% url 'projet:projet_detail' projet.pk %}"
+               class="btn btn-outline-secondary">
+
+                <i class="fas fa-arrow-left me-1"></i>
+                Retour au projet
+
+            </a>
+
+            {% if peut_gerer %}
+
+                <a href="{% url 'projet:engin_create' projet.pk %}"
+                   class="btn btn-primary">
+
+                    <i class="fas fa-plus me-1"></i>
+                    Ajouter un engin
+
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- INFORMATIONS PROJET -->
+    <!-- ========================================================= -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <!-- PROJET -->
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Projet
+                    </div>
+
+                    <div class="fw-bold">
+                        {{ projet.titre|title }}
+                    </div>
+
+                </div>
+
+
+                <!-- LOCALISATION -->
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Localisation
+                    </div>
+
+                    <div>
+                        {{ projet.localisation|default:"-"|upper }}
+                    </div>
+
+                </div>
+
+
+                <!-- DÉBUT -->
+                <div class="col-md-2">
+
+                    <div class="text-muted small">
+                        Début
+                    </div>
+
+                    <div>
+
+                        {% if projet.date_debut %}
+                            {{ projet.date_debut|date:"d/m/Y" }}
+                        {% else %}
+                            -
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- FIN -->
+                <div class="col-md-2">
+
+                    <div class="text-muted small">
+                        Fin
+                    </div>
+
+                    <div>
+
+                        {% if projet.date_fin %}
+                            {{ projet.date_fin|date:"d/m/Y" }}
+                        {% else %}
+                            -
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- STATISTIQUES -->
+    <!-- ========================================================= -->
+
+    <div class="row g-3 mb-4">
+
+        <!-- TOTAL ENGIN -->
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Total engins
+                            </div>
+
+                            <h3 class="mb-0">
+                                {{ total_engins }}
+                            </h3>
+
+                        </div>
+
+                        <div class="fs-2 text-primary">
+
+                            <i class="fas fa-tractor"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ENGIN ACTIFS -->
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Engins actifs
+                            </div>
+
+                            <h3 class="mb-0">
+                                {{ nombre_actifs }}
+                            </h3>
+
+                        </div>
+
+                        <div class="fs-2 text-success">
+
+                            <i class="fas fa-check-circle"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- HEURES -->
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Heures travaillées
+                            </div>
+
+                            <h3 class="mb-0">
+                                {{ total_heures|floatformat:2 }}
+                            </h3>
+
+                            <small class="text-muted">
+                                heures
+                            </small>
+
+                        </div>
+
+                        <div class="fs-2 text-warning">
+
+                            <i class="fas fa-clock"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CARBURANT -->
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <div class="text-muted small">
+                                Carburant estimé
+                            </div>
+
+                            <h3 class="mb-0">
+                                {{ total_carburant|floatformat:2 }}
+                            </h3>
+
+                            <small class="text-muted">
+                                litres
+                            </small>
+
+                        </div>
+
+                        <div class="fs-2 text-danger">
+
+                            <i class="fas fa-gas-pump"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- LISTE DES ENGINS -->
+    <!-- ========================================================= -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-header bg-primary text-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <span>
+
+                    <i class="fas fa-list me-2"></i>
+                    Liste des engins
+
+                </span>
+
+                <span class="badge bg-light text-dark">
+
+                    {{ total_engins }}
+                    engin{{ total_engins|pluralize }}
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body p-0">
+
+            {% if engins %}
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover table-striped align-middle mb-0">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th>#</th>
+
+                                <th>Engin</th>
+
+                                <th>Conducteur</th>
+
+                                <th>Période</th>
+
+                                <th>Heures initiales</th>
+
+                                <th>Heures finales</th>
+
+                                <th>Heures travaillées</th>
+
+                                <th>Consommation</th>
+
+                                <th>Carburant estimé</th>
+
+                                <th>Statut</th>
+
+                                {% if peut_gerer %}
+
+                                    <th class="text-center">
+                                        Actions
+                                    </th>
+
+                                {% endif %}
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                        {% for engin in engins %}
+
+                            <tr>
+
+                                <!-- ================================================= -->
+                                <!-- NUMÉRO -->
+                                <!-- ================================================= -->
+
+                                <td>
+                                    {{ forloop.counter }}
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- ENGIN -->
+                                <!-- ================================================= -->
+
+                                <td>
+
+                                    <div class="fw-bold">
+
+                                        <i class="fas fa-tractor text-primary me-1"></i>
+
+                                        {{ engin.engin|upper }}
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- CONDUCTEUR -->
+                                <!-- ================================================= -->
+
+                                <td>
+
+                                    {% if engin.conducteur %}
+
+                                        <span class="fw-semibold">
+
+                                            {{ engin.conducteur }}
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+
+                                            Non affecté
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- PÉRIODE -->
+                                <!-- ================================================= -->
+
+                                <td>
+
+                                    {% if engin.date_debut %}
+
+                                        {{ engin.date_debut|date:"d/m/Y" }}
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
+                                    <br>
+
+                                    <small class="text-muted">
+
+                                        au
+
+                                        {% if engin.date_fin %}
+
+                                            {{ engin.date_fin|date:"d/m/Y" }}
+
+                                        {% else %}
+
+                                            -
+
+                                        {% endif %}
+
+                                    </small>
+
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- HEURES INITIALES -->
+                                <!-- ================================================= -->
+
+                                <td>
+
+                                    {{ engin.heures_initiales|floatformat:2 }}
+
+                                    <small class="text-muted">
+                                        h
+                                    </small>
+
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- HEURES FINALES -->
+                                <!-- ================================================= -->
+
+                                <td>
+
+                                    {{ engin.heures_finales|floatformat:2 }}
+
+                                    <small class="text-muted">
+                                        h
+                                    </small>
+
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- HEURES TRAVAILLÉES -->
+                                <!-- ================================================= -->
+
+                                <td>
+
+                                    <span class="fw-semibold">
+
+                                        {{ engin.heures_travail|floatformat:2 }}
+
+                                    </span>
+
+                                    <small class="text-muted">
+                                        h
+                                    </small>
+
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- CONSOMMATION -->
+                                <!-- ================================================= -->
+
+                                <td>
+
+                                    {{ engin.consommation_heure_litre|floatformat:2 }}
+
+                                    <small class="text-muted">
+                                        L/h
+                                    </small>
+
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- CARBURANT -->
+                                <!-- ================================================= -->
+
+                                <td>
+
+                                    <span class="fw-semibold">
+
+                                        {{ engin.carburant_estime|floatformat:2 }}
+
+                                    </span>
+
+                                    <small class="text-muted">
+                                        L
+                                    </small>
+
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- STATUT -->
+                                <!-- ================================================= -->
+
+                                <td>
+
+                                    {% if engin.acces_actif %}
+
+                                        <span class="badge bg-success">
+
+                                            <i class="fas fa-check me-1"></i>
+                                            Actif
+
+                                        </span>
+
+                                    {% elif engin.actif %}
+
+                                        <span class="badge bg-warning text-dark">
+
+                                            <i class="fas fa-clock me-1"></i>
+                                            Hors période
+
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge bg-secondary">
+
+                                            <i class="fas fa-ban me-1"></i>
+                                            Inactif
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- ================================================= -->
+                                <!-- ACTIONS -->
+                                <!-- ================================================= -->
+
+                                {% if peut_gerer %}
+
+                                    <td class="text-center">
+
+                                        <div class="btn-group"
+                                             role="group">
+
+                                            <!-- MODIFIER -->
+
+                                            <a href="{% url 'projet:engin_update' projet.pk engin.pk %}"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Modifier">
+
+                                                <i class="fas fa-edit"></i>
+
+                                            </a>
+
+
+                                            <!-- SUPPRIMER -->
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal{{ engin.pk }}"
+                                                    title="Supprimer">
+
+                                                <i class="fas fa-trash"></i>
+
+                                            </button>
+
+                                        </div>
+
+                                    </td>
+
+                                {% endif %}
+
+                            </tr>
+
+
+                            <!-- ================================================= -->
+                            <!-- MODAL SUPPRESSION -->
+                            <!-- ================================================= -->
+
+                            {% if peut_gerer %}
+
+                                <div class="modal fade"
+                                     id="deleteModal{{ engin.pk }}"
+                                     tabindex="-1"
+                                     aria-hidden="true">
+
+                                    <div class="modal-dialog modal-dialog-centered">
+
+                                        <div class="modal-content">
+
+
+                                            <!-- HEADER -->
+
+                                            <div class="modal-header bg-danger text-white">
+
+                                                <h5 class="modal-title">
+
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>
+
+                                                    Confirmation de suppression
+
+                                                </h5>
+
+                                                <button type="button"
+                                                        class="btn-close btn-close-white"
+                                                        data-bs-dismiss="modal"
+                                                        aria-label="Fermer">
+                                                </button>
+
+                                            </div>
+
+
+                                            <!-- BODY -->
+
+                                            <div class="modal-body">
+
+                                                <p class="mb-3">
+
+                                                    Voulez-vous vraiment supprimer cet engin ?
+
+                                                </p>
+
+
+                                                <div class="alert alert-warning mb-0">
+
+                                                    <div class="fw-bold">
+
+                                                        <i class="fas fa-tractor me-1"></i>
+
+                                                        {{ engin.engin }}
+
+                                                    </div>
+
+                                                    <small>
+
+                                                        Projet :
+                                                        {{ projet.titre }}
+
+                                                    </small>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <!-- FOOTER -->
+
+                                            <div class="modal-footer">
+
+                                                <button type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">
+
+                                                    <i class="fas fa-times me-1"></i>
+
+                                                    Annuler
+
+                                                </button>
+
+
+                                                <form method="post"
+                                                      action="{% url 'projet:engin_delete' projet.pk engin.pk %}">
+
+                                                    {% csrf_token %}
+
+                                                    <button type="submit"
+                                                            class="btn btn-danger">
+
+                                                        <i class="fas fa-trash me-1"></i>
+
+                                                        Supprimer
+
+                                                    </button>
+
+                                                </form>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            {% endif %}
+
+                        {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <!-- ===================================================== -->
+                <!-- AUCUN ENGIN -->
+                <!-- ===================================================== -->
+
+                <div class="text-center py-5">
+
+                    <div class="display-4 text-muted mb-3">
+
+                        <i class="fas fa-tractor"></i>
+
+                    </div>
+
+                    <h5>
+                        Aucun engin
+                    </h5>
+
+                    <p class="text-muted mb-4">
+
+                        Aucun engin n'est actuellement affecté à ce projet.
+
+                    </p>
+
+
+                    {% if peut_gerer %}
+
+                        <a href="{% url 'projet:engin_create' projet.pk %}"
+                           class="btn btn-primary">
+
+                            <i class="fas fa-plus me-1"></i>
+
+                            Ajouter un engin
+
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
