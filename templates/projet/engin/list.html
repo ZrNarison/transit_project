@@ -46,6 +46,12 @@
                 </a>
 
             {% endif %}
+            {% if request.session.role == "ChefMagasin" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or request.session.role == "UserEntreprise" %}
+                <a href="{% url 'projet:engin_create' projet.pk %}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>
+                    Mouvement
+                </a>
+
+            {% endif %}
 
         </div>
 
