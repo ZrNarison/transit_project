@@ -1,0 +1,290 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Détail du mouvement - {{ projet.titre|title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1"><i class="fas fa-file-alt text-primary me-2"></i>Rapport d'activité</h3>
+            <p class="text-muted mb-0">
+                Projet : <strong>{{ projet.titre|title }}</strong>
+            </p>
+        </div>
+
+        <a href="{% url 'projet:mouvement_vehicule_projet_list' projet_id=projet.pk %}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i>Retour à la liste</a>
+    </div>
+
+    <!-- IDENTIFICATION -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0"><i class="fas fa-truck-moving me-2"></i>Identification du matériel</h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-4">
+
+                <div class="col-md-4">
+                    <div class="text-muted small mb-1">Véhicule / Engin</div>
+                    <h5>{{ mouvement.vehicule_projet.vehicule }}</h5>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small mb-1">Type de matériel</div>
+                    {% if mouvement.type_vehicule == "ENGIN" %}
+                    <span class="badge bg-warning text-dark fs-6">
+                        <i class="fas fa-cogs me-1"></i>
+                        Engin de chantier
+                    </span>
+                    {% else %}
+                    <span class="badge bg-info text-dark fs-6">
+                        <i class="fas fa-car me-1"></i>
+                        Véhicule routier
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small mb-1">Date du mouvement</div>
+                    <h5>{{ mouvement.date_mouvement|date:"d/m/Y" }}</h5>
+                    <span class="text-muted">
+                        Enregistré à {{ mouvement.date_mouvement|date:"H:i" }}
+                    </span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- TRAJET -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-route text-primary me-2"></i>
+                Trajet et horaires
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-4">
+
+                <div class="col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-success mb-2">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            <strong>Lieu de départ</strong>
+                        </div>
+                        <h5>
+                            {% if mouvement.point_depart %}
+                                {{ mouvement.point_depart |title}}
+                            {% else %}
+                                Non précisé
+                            {% endif %}
+                        </h5>
+                        <div class="text-muted small mt-2">Heure de départ</div>
+                        <div class="fs-5">
+                            {{ mouvement.heure_depart|time:"H:i"|default:"Non renseignée" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-danger mb-2">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            <strong>Destination</strong>
+                        </div>
+                        <h5>
+                            {% if mouvement.point_arrivee %}
+                                {{ mouvement.point_arrivee|title }}
+                            {% else %}
+                                Non précisée
+                            {% endif %}
+                        </h5>
+                        <div class="text-muted small mt-2">Heure d'arrivée</div>
+                        <div class="fs-5">
+                            {{ mouvement.heure_arrivee|time:"H:i"|default:"Non renseignée" }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <div class="alert alert-light border mb-0">
+                        <i class="fas fa-clock text-primary me-2"></i>
+                        <strong>Durée écoulée :</strong>
+                        {{ mouvement.duree_formatee }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPTEURS -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-calculator text-primary me-2"></i>
+                Relevés et résultats calculés
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+
+                {% if mouvement.type_vehicule == "ENGIN" %}
+
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">Compteur initial</div>
+                        <h4 class="mt-2">
+                            {{ mouvement.heures_initiales|floatformat:2 }} barre
+                        </h4>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">Compteur final</div>
+                        <h4 class="mt-2">
+                            {{ mouvement.heures_finales|floatformat:2 }} barre
+                        </h4>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="bg-light border rounded p-3 h-100">
+                        <div class="text-muted small">Total heures moteur</div>
+                        <h3 class="text-success mt-2">
+                            {{ mouvement.heures_travail|floatformat:2 }} barre
+                        </h3>
+                        <small class="text-muted">
+                            Compteur final − compteur initial
+                        </small>
+                    </div>
+                </div>
+
+                {% else %}
+
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">Kilométrage initial</div>
+                        <h4 class="mt-2">
+                            {{ mouvement.kilometrage_initial|floatformat:2 }} km
+                        </h4>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="text-muted small">Kilométrage final</div>
+                        <h4 class="mt-2">
+                            {{ mouvement.kilometrage_final|floatformat:2 }} km
+                        </h4>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="bg-light border rounded p-3 h-100">
+                        <div class="text-muted small">Distance parcourue</div>
+                        <h3 class="text-success mt-2">
+                            {{ mouvement.kilometres_parcourus|floatformat:2 }} km
+                        </h3>
+                        <small class="text-muted">
+                            Compteur final − compteur initial
+                        </small>
+                    </div>
+                </div>
+
+                {% endif %}
+
+                <div class="col-md-12">
+                    <div class="border rounded p-3">
+                        <div class="text-muted small">
+                            <i class="fas fa-gas-pump me-1"></i>
+                            Carburant consommé
+                        </div>
+                        <h3 class="text-danger mt-2 mb-0">
+                            {{ mouvement.carburant_litre|floatformat:2 }} L
+                        </h3>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- OBSERVATION -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-comment-alt text-primary me-2"></i>
+                Observation
+            </h5>
+        </div>
+
+        <div class="card-body">
+            {% if mouvement.observation %}
+                <div class="text-break">{{ mouvement.observation|linebreaksbr }}</div>
+            {% else %}
+                <span class="text-muted">Aucune observation enregistrée.</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TRAÇABILITÉ -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Enregistré par</div>
+                    <strong>
+                        {{ mouvement.enregistre_par|default:"Utilisateur inconnu" }}
+                    </strong>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Dernière modification</div>
+                    <strong>{{ mouvement.updated_at|date:"d/m/Y H:i" }}</strong>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="d-flex flex-wrap justify-content-end gap-2">
+
+        <a href="{% url 'projet:mouvement_vehicule_projet_list' projet_id=projet.pk %}"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-list me-1"></i>
+            Liste des mouvements
+        </a>
+
+        {% if mouvement.enregistre_par_id and request.session.user_id|stringformat:"s" == mouvement.enregistre_par_id|stringformat:"s" %}
+        <a href="{% url 'projet:mouvement_vehicule_projet_update' projet_id=projet.pk mouvement_id=mouvement.pk %}"
+           class="btn btn-primary">
+            <i class="fas fa-edit me-1"></i>
+            Modifier
+        </a>
+
+        <form method="post"
+              action="{% url 'projet:mouvement_vehicule_projet_delete' projet_id=projet.pk mouvement_id=mouvement.pk %}"
+              onsubmit="return confirm('Voulez-vous vraiment supprimer ce rapport ?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash me-1"></i>
+                Supprimer
+            </button>
+        </form>
+        {% endif %}
+
+    </div>
+
+</div>
+{% endblock %}

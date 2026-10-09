@@ -1,5 +1,5 @@
 from decimal import Decimal
-
+from datetime import timedelta
 from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -2369,13 +2369,15 @@ class VehiculeProjet(models.Model):
         return self.kilometres_parcourus
 
 
+
 # ============================================================
-# MOUVEMENT VÉHICULE / ENGIN
+# MOUVEMENT DU VÉHICULE / ENGIN SUR LE PROJET
 # ============================================================
+
 class MouvementVehiculeProjet(models.Model):
 
     vehicule_projet = models.ForeignKey(
-        VehiculeProjet,
+        "projet.VehiculeProjet",
         on_delete=models.PROTECT,
         related_name="mouvements",
         verbose_name="Véhicule / Engin",
@@ -2386,50 +2388,82 @@ class MouvementVehiculeProjet(models.Model):
         verbose_name="Date du mouvement",
     )
 
+    heure_depart = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name="Heure de départ",
+    )
+
+    heure_arrivee = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name="Heure d'arrivée",
+    )
+
     point_depart = models.ForeignKey(
-        PointProjet,
+        "projet.PointProjet",
         on_delete=models.PROTECT,
         related_name="mouvements_vehicules_depart",
         null=True,
         blank=True,
-        verbose_name="Point de départ",
+        verbose_name="Lieu de départ",
     )
 
     point_arrivee = models.ForeignKey(
-        PointProjet,
+        "projet.PointProjet",
         on_delete=models.PROTECT,
         related_name="mouvements_vehicules_arrivee",
         null=True,
         blank=True,
-        verbose_name="Point d'arrivée",
+        verbose_name="Destination",
     )
+
+    # --------------------------------------------------------
+    # COMPTEUR KILOMÉTRIQUE : VÉHICULE ROUTIER
+    # --------------------------------------------------------
 
     kilometrage_initial = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Kilométrage initial",
+        verbose_name="Kilométrage initial (km)",
     )
 
     kilometrage_final = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Kilométrage final",
+        verbose_name="Kilométrage final (km)",
     )
+
+    # --------------------------------------------------------
+    # COMPTEUR HORAIRE : ENGIN DE CHANTIER
+    # Le compteur final doit être inférieur ou égal à l'initial.
+    # --------------------------------------------------------
 
     heures_initiales = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Heures initiales",
+        verbose_name="Compteur initial",
     )
 
     heures_finales = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Heures finales",
+        verbose_name="Compteur final",
+    )
+
+    # --------------------------------------------------------
+    # CARBURANT
+    # --------------------------------------------------------
+
+    carburant_litre = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name="Carburant consommé (litres)",
     )
 
     observation = models.TextField(
@@ -2446,7 +2480,7 @@ class MouvementVehiculeProjet(models.Model):
     )
 
     enregistre_par = models.ForeignKey(
-        AppUser,
+        "users.AppUser",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -2455,167 +2489,189 @@ class MouvementVehiculeProjet(models.Model):
     )
 
     class Meta:
-        ordering = [
-            "-date_mouvement",
-            "-id",
-        ]
-
-        verbose_name = "Mouvement véhicule"
-        verbose_name_plural = "Mouvements véhicules"
+        ordering = ["-date_mouvement", "-id"]
+        verbose_name = "Mouvement véhicule / engin"
+        verbose_name_plural = "Mouvements véhicules / engins"
 
     def __str__(self):
-
         return (
             f"{self.vehicule_projet.vehicule} - "
-            f"{self.date_mouvement:%d/%m/%Y %H:%M}"
+            f"{self.date_mouvement:%d/%m/%Y}"
         )
 
+    # --------------------------------------------------------
+    # TYPE DE VÉHICULE
+    # --------------------------------------------------------
+
+    @property
+    def type_vehicule(self):
+        return self.vehicule_projet.type_vehicule
+
+    # --------------------------------------------------------
+    # DISTANCE PARCOURUE
+    # --------------------------------------------------------
+
+    @property
+    def kilometres_parcourus(self):
+        if self.type_vehicule == "ENGIN":
+            return Decimal("0.00")
+
+        return max(
+            Decimal("0.00"),
+            self.kilometrage_final - self.kilometrage_initial,
+        )
+
+    # --------------------------------------------------------
+    # HEURES DE TRAVAIL DE L'ENGIN
+    # --------------------------------------------------------
+
+    @property
+    def heures_travail(self):
+        """
+        Calcul : compteur horaire initial - compteur horaire final.
+        Exemple : initial = 4, final = 2, résultat = 2 heures.
+        """
+        if self.type_vehicule != "ENGIN":
+            return Decimal("0.00")
+
+        return max(
+            Decimal("0.00"),
+            self.heures_initiales - self.heures_finales,
+        )
+
+    # --------------------------------------------------------
+    # DURÉE ENTRE LE DÉPART ET L'ARRIVÉE
+    # --------------------------------------------------------
+
+    @property
+    def duree_minutes(self):
+        """Durée écoulée entre départ et arrivée, en minutes."""
+
+        if self.heure_depart is None or self.heure_arrivee is None:
+            return 0
+
+        depart = (
+            self.heure_depart.hour * 60
+            + self.heure_depart.minute
+            + self.heure_depart.second / 60
+        )
+
+        arrivee = (
+            self.heure_arrivee.hour * 60
+            + self.heure_arrivee.minute
+            + self.heure_arrivee.second / 60
+        )
+
+        # Prise en compte d'une arrivée après minuit.
+        if arrivee < depart:
+            arrivee += 24 * 60
+
+        return int(arrivee - depart)
+
+    @property
+    def duree_formatee(self):
+        minutes = self.duree_minutes
+        heures, reste = divmod(minutes, 60)
+
+        return f"{heures} h {reste:02d} min"
+
+    # --------------------------------------------------------
+    # TRAVAIL TOTAL
+    # --------------------------------------------------------
+
+    @property
+    def travail_total(self):
+        """Heures moteur pour un engin, kilomètres pour un véhicule."""
+
+        if self.type_vehicule == "ENGIN":
+            return self.heures_travail
+
+        return self.kilometres_parcourus
+
+    @property
+    def unite_travail(self):
+        return (
+            "heures moteur"
+            if self.type_vehicule == "ENGIN"
+            else "km"
+        )
+
+    # --------------------------------------------------------
+    # VALIDATION DES DONNÉES
+    # --------------------------------------------------------
+
     def clean(self):
+        super().clean()
 
-        errors = {}
+        erreurs = {}
 
-        if not self.vehicule_projet_id:
-            return
-
-        vehicule = self.vehicule_projet
-
-        if self.point_depart_id:
-
-            if self.point_depart.projet_id != vehicule.projet_id:
-                errors["point_depart"] = (
-                    "Le point de départ n'appartient pas "
-                    "au projet du véhicule."
-                )
-
-        if self.point_arrivee_id:
-
-            if self.point_arrivee.projet_id != vehicule.projet_id:
-                errors["point_arrivee"] = (
-                    "Le point d'arrivée n'appartient pas "
-                    "au projet du véhicule."
-                )
-
-        if self.date_mouvement:
-
-            if self.date_mouvement.date() < vehicule.date_debut:
-                errors["date_mouvement"] = (
-                    "La date du mouvement est avant "
-                    "le début de l'affectation."
-                )
-
-            elif self.date_mouvement.date() > vehicule.date_fin:
-                errors["date_mouvement"] = (
-                    "La date du mouvement dépasse "
-                    "la fin de l'affectation."
-                )
-
-        if self.kilometrage_initial < Decimal("0.00"):
-
-            errors["kilometrage_initial"] = (
+        # Validation des kilomètres.
+        if (
+            self.kilometrage_initial is not None
+            and self.kilometrage_initial < 0
+        ):
+            erreurs["kilometrage_initial"] = (
                 "Le kilométrage initial ne peut pas être négatif."
             )
 
-        if self.kilometrage_final < Decimal("0.00"):
-
-            errors["kilometrage_final"] = (
+        if (
+            self.kilometrage_final is not None
+            and self.kilometrage_final < 0
+        ):
+            erreurs["kilometrage_final"] = (
                 "Le kilométrage final ne peut pas être négatif."
             )
 
-        if self.kilometrage_final < self.kilometrage_initial:
-
-            errors["kilometrage_final"] = (
+        if (
+            self.kilometrage_initial is not None
+            and self.kilometrage_final is not None
+            and self.kilometrage_final < self.kilometrage_initial
+        ):
+            erreurs["kilometrage_final"] = (
                 "Le kilométrage final doit être supérieur "
                 "ou égal au kilométrage initial."
             )
 
-        if self.heures_initiales < Decimal("0.00"):
-
-            errors["heures_initiales"] = (
-                "Les heures initiales ne peuvent pas être négatives."
-            )
-
-        if self.heures_finales < Decimal("0.00"):
-
-            errors["heures_finales"] = (
-                "Les heures finales ne peuvent pas être négatives."
-            )
-
-        if self.heures_finales < self.heures_initiales:
-
-            errors["heures_finales"] = (
-                "Les heures finales doivent être supérieures "
-                "ou égales aux heures initiales."
-            )
-
-        if errors:
-            raise ValidationError(errors)
-
-    @property
-    def kilometres(self):
-
-        return max(
-            Decimal("0.00"),
-            self.kilometrage_final
-            - self.kilometrage_initial,
-        )
-
-    @property
-    def heures(self):
-
-        return max(
-            Decimal("0.00"),
-            self.heures_finales
-            - self.heures_initiales,
-        )
-
-    @property
-    def travail(self):
-
-        if self.vehicule_projet.type_vehicule == "ENGIN":
-            return self.heures
-
-        return self.kilometres
-
-    @property
-    def unite_travail(self):
-
-        if self.vehicule_projet.type_vehicule == "ENGIN":
-            return "h"
-
-        return "km"
-
-    @property
-    def carburant_estime(self):
-
-        vehicule = self.vehicule_projet
-
-        if vehicule.type_vehicule == "ENGIN":
-
-            if (
-                vehicule.consommation_heure_litre
-                <= Decimal("0.00")
-            ):
-                return Decimal("0.00")
-
-            return (
-                self.heures
-                * vehicule.consommation_heure_litre
-            ).quantize(
-                Decimal("0.01")
+        # Validation des compteurs horaires.
+        if (
+            self.heures_initiales is not None
+            and self.heures_initiales < 0
+        ):
+            erreurs["heures_initiales"] = (
+                "Le compteur horaire initial ne peut pas être négatif."
             )
 
         if (
-            vehicule.consommation_km_litre
-            <= Decimal("0.00")
+            self.heures_finales is not None
+            and self.heures_finales < 0
         ):
-            return Decimal("0.00")
+            erreurs["heures_finales"] = (
+                "Le compteur horaire final ne peut pas être négatif."
+            )
 
-        return (
-            self.kilometres
-            / vehicule.consommation_km_litre
-        ).quantize(
-            Decimal("0.01")
-        )
+        # RÈGLE MÉTIER :
+        # Le compteur final doit être inférieur ou égal à l'initial.
+        if (
+            self.heures_initiales is not None
+            and self.heures_finales is not None
+            and self.heures_finales > self.heures_initiales
+        ):
+            erreurs["heures_finales"] = (
+                "Le compteur final doit être inférieur "
+                "ou égal au compteur initial."
+            )
+
+        # Validation du carburant.
+        if (
+            self.carburant_litre is not None
+            and self.carburant_litre < 0
+        ):
+            erreurs["carburant_litre"] = (
+                "La quantité de carburant ne peut pas être négative."
+            )
+
+        if erreurs:
+            raise ValidationError(erreurs)
 
 
 # ============================================================

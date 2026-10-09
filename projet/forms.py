@@ -875,10 +875,6 @@ class EnginProjetForm(forms.ModelForm):
         return cleaned_data
 
 
-# ============================================================
-# MOUVEMENT VÉHICULE
-# ============================================================
-
 class MouvementVehiculeProjetForm(forms.ModelForm):
 
     class Meta:
@@ -889,111 +885,198 @@ class MouvementVehiculeProjetForm(forms.ModelForm):
             "date_mouvement",
             "point_depart",
             "point_arrivee",
+            "heure_depart",
+            "heure_arrivee",
             "kilometrage_initial",
             "kilometrage_final",
             "heures_initiales",
             "heures_finales",
+            "carburant_litre",
             "observation",
         ]
 
         widgets = {
-            "vehicule_projet": SELECT_WIDGET,
-            "date_mouvement": DATETIME_WIDGET,
-            "point_depart": SELECT_WIDGET,
-            "point_arrivee": SELECT_WIDGET,
+            "vehicule_projet": forms.Select(
+                attrs={"class": "form-select"}
+            ),
 
-            "kilometrage_initial": NUMBER_WIDGET,
-            "kilometrage_final": NUMBER_WIDGET,
+            "date_mouvement": forms.DateTimeInput(
+                format="%Y-%m-%dT%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "datetime-local",
+                },
+            ),
 
-            "heures_initiales": NUMBER_WIDGET,
-            "heures_finales": NUMBER_WIDGET,
+            "point_depart": forms.Select(
+                attrs={"class": "form-select"}
+            ),
 
-            "observation": TEXTAREA_WIDGET,
+            "point_arrivee": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+
+            "heure_depart": forms.TimeInput(
+                format="%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "time",
+                },
+            ),
+
+            "heure_arrivee": forms.TimeInput(
+                format="%H:%M",
+                attrs={
+                    "class": "form-control",
+                    "type": "time",
+                },
+            ),
+
+            "kilometrage_initial": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Kilométrage initial",
+                },
+            ),
+
+            "kilometrage_final": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Kilométrage final",
+                },
+            ),
+
+            "heures_initiales": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Compteur horaire initial",
+                },
+            ),
+
+            "heures_finales": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Compteur horaire final",
+                },
+            ),
+
+            "carburant_litre": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Carburant consommé en litres",
+                },
+            ),
+
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Observation sur le mouvement...",
+                },
+            ),
         }
 
-        labels = {
-            "vehicule_projet": "Véhicule / Engin",
-            "date_mouvement": "Date du mouvement",
-            "point_depart": "Point de départ",
-            "point_arrivee": "Point d'arrivée",
-            "kilometrage_initial": "Km initial",
-            "kilometrage_final": "Km final",
-            "heures_initiales": "Heures initiales",
-            "heures_finales": "Heures finales",
-            "observation": "Observation",
-        }
-
-    def __init__(self, *args, projet=None, **kwargs):
+    def __init__(self, *args, **kwargs):
+        projet = kwargs.pop("projet", None)
 
         super().__init__(*args, **kwargs)
 
-        self.fields["vehicule_projet"].queryset = (
-            VehiculeProjet.objects
-            .filter(projet=projet)
-            .select_related("projet", "chauffeur")
-            .order_by("vehicule")
-            if projet
-            else VehiculeProjet.objects.none()
-        )
+        # Configuration générale des champs.
+        for field_name, field in self.fields.items():
+            field.required = field_name in (
+                "vehicule_projet",
+                "date_mouvement",
+                "carburant_litre",
+            )
 
-        self.fields["point_depart"].queryset = (
-            PointProjet.objects
-            .filter(projet=projet)
-            .order_by("nom")
-            if projet
-            else PointProjet.objects.none()
-        )
+            if field_name not in (
+                "vehicule_projet",
+                "point_depart",
+                "point_arrivee",
+            ):
+                field.widget.attrs.setdefault(
+                    "class", "form-control"
+                )
 
-        self.fields["point_arrivee"].queryset = (
-            PointProjet.objects
-            .filter(projet=projet)
-            .order_by("nom")
-            if projet
-            else PointProjet.objects.none()
-        )
+        # Limiter les véhicules au projet concerné si le projet est fourni.
+        if projet is not None:
+            self.fields["vehicule_projet"].queryset = (
+                VehiculeProjet.objects.filter(projet=projet)
+            )
+
+            self.fields["point_depart"].queryset = (
+                PointProjet.objects.filter(projet=projet)
+            )
+
+            self.fields["point_arrivee"].queryset = (
+                PointProjet.objects.filter(projet=projet)
+            )
+        else:
+            self.fields["vehicule_projet"].queryset = (
+                VehiculeProjet.objects.all()
+            )
+
+            self.fields["point_depart"].queryset = (
+                PointProjet.objects.all()
+            )
+
+            self.fields["point_arrivee"].queryset = (
+                PointProjet.objects.all()
+            )
 
     def clean(self):
-
         cleaned_data = super().clean()
 
-        vehicule = cleaned_data.get(
-            "vehicule_projet"
-        )
+        vehicule = cleaned_data.get("vehicule_projet")
+        km_initial = cleaned_data.get("kilometrage_initial")
+        km_final = cleaned_data.get("kilometrage_final")
+        heures_initiales = cleaned_data.get("heures_initiales")
+        heures_finales = cleaned_data.get("heures_finales")
+        carburant = cleaned_data.get("carburant_litre")
 
-        if not vehicule:
-            return cleaned_data
+        # Validation du kilométrage pour les véhicules routiers.
+        if vehicule and vehicule.type_vehicule != "ENGIN":
+            if (
+                km_initial is not None
+                and km_final is not None
+                and km_final < km_initial
+            ):
+                self.add_error(
+                    "kilometrage_final",
+                    "Le kilométrage final doit être supérieur "
+                    "ou égal au kilométrage initial.",
+                )
 
-        # ----------------------------------------------------
-        # ENGIN
-        # ----------------------------------------------------
+        # Validation du compteur horaire pour les engins.
+        if vehicule and vehicule.type_vehicule == "ENGIN":
+            if (
+                heures_initiales is not None
+                and heures_finales is not None
+                and heures_finales > heures_initiales
+            ):
+                self.add_error(
+                    "heures_finales",
+                    "Le compteur final doit être inférieur ou égal au compteur initial.",
+                )
 
-        if vehicule.type_vehicule == "ENGIN":
-
-            self.fields[
-                "kilometrage_initial"
-            ].required = False
-
-            self.fields[
-                "kilometrage_final"
-            ].required = False
-
-        # ----------------------------------------------------
-        # ROUTIER
-        # ----------------------------------------------------
-
-        else:
-
-            self.fields[
-                "heures_initiales"
-            ].required = False
-
-            self.fields[
-                "heures_finales"
-            ].required = False
+        # Validation du carburant.
+        if carburant is not None and carburant < Decimal("0.00"):
+            self.add_error(
+                "carburant_litre",
+                "La quantité de carburant ne peut pas être négative.",
+            )
 
         return cleaned_data
-
-
 # ============================================================
 # MOUVEMENT PERSONNEL
 # ============================================================

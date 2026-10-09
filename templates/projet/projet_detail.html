@@ -515,29 +515,9 @@
                 <!-- VÉHICULES / ENGINS / MINIERS -->
                 {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                     <a href="{% url 'projet:vehicule_projet_list' projet.id %}" class="btn btn-outline-dark"><i class="fas fa-truck me-1"></i>Véhicule</a>
-                    <a
-                        href="{% url 'projet:engin_list' projet.id %}"
-                        class="btn btn-outline-dark"
-                    >
-
-                        <i class="fas fa-truck-ramp-box me-1"></i>
-
-                        Engin
-
-                    </a>
-
-
-                    <a
-                        href="{% url 'projet:minier_list' projet.id %}"
-                        class="btn btn-outline-dark"
-                    >
-
-                        <i class="fas fa-person-digging me-1"></i>
-
-                        Minier
-
-                    </a>
-
+                    <a href="{% url 'projet:engin_list' projet.id %}" class="btn btn-outline-dark"><i class="fas fa-truck-ramp-box me-1"></i>Engin</a>
+                    <a href="{% url 'projet:minier_list' projet.id %}" class="btn btn-outline-dark"><i class="fas fa-person-digging me-1"></i>Minier</a>
+                    <a href="{% url 'projet:mouvement_vehicule_projet_list' projet.id %}" class="btn btn-outline-dark"><i class="fas fa-person-digging me-1"></i>Rapport Véhicule</a>
                 {% endif %}
 
 

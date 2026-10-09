@@ -1,0 +1,326 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ titre_page }} - {{ projet.titre }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-truck-moving text-primary me-2"></i>
+                {{ titre_page }}
+            </h3>
+            <p class="text-muted mb-0">
+                Projet : <strong>{{ projet.titre|title }}</strong>
+            </p>
+        </div>
+
+        <a href="{% url 'projet:mouvement_vehicule_projet_list' projet_id=projet.pk %}"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la liste
+        </a>
+    </div>
+
+    <!-- FORMULAIRE -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-clipboard-list me-2"></i>
+                Informations du mouvement
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-6">
+                        <label for="{{ form.vehicule_projet.id_for_label }}"
+                               class="form-label fw-semibold">
+                            {{ form.vehicule_projet.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.vehicule_projet }}
+
+                        {% for error in form.vehicule_projet.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+
+                        <div class="form-text">
+                            Sélectionner le véhicule ou l'engin affecté au projet.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.date_mouvement.id_for_label }}"
+                               class="form-label fw-semibold">
+                            {{ form.date_mouvement.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.date_mouvement }}
+
+                        {% for error in form.date_mouvement.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-md-6">
+                        <label for="{{ form.point_depart.id_for_label }}"
+                               class="form-label fw-semibold">
+                            {{ form.point_depart.label }}
+                        </label>
+
+                        {{ form.point_depart }}
+
+                        {% for error in form.point_depart.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.point_arrivee.id_for_label }}"
+                               class="form-label fw-semibold">
+                            {{ form.point_arrivee.label }}
+                        </label>
+
+                        {{ form.point_arrivee }}
+
+                        {% for error in form.point_arrivee.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.heure_depart.id_for_label }}"
+                               class="form-label fw-semibold">
+                            <i class="fas fa-sign-out-alt text-success me-1"></i>
+                            Heure de départ
+                        </label>
+
+                        {{ form.heure_depart }}
+
+                        {% for error in form.heure_depart.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.heure_arrivee.id_for_label }}"
+                               class="form-label fw-semibold">
+                            <i class="fas fa-sign-in-alt text-danger me-1"></i>
+                            Heure d'arrivée
+                        </label>
+
+                        {{ form.heure_arrivee }}
+
+                        {% for error in form.heure_arrivee.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+                <!-- COMPTEUR KILOMÉTRIQUE -->
+                <div id="section-kilometrage">
+                    <h6 class="text-success border-bottom pb-2 mb-3">
+                        <i class="fas fa-road me-2"></i>
+                        Compteur kilométrique
+                    </h6>
+
+                    <div class="row g-3 mb-4">
+
+                        <div class="col-md-6">
+                            <label for="{{ form.kilometrage_initial.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                {{ form.kilometrage_initial.label }}
+                            </label>
+
+                            {{ form.kilometrage_initial }}
+
+                            {% for error in form.kilometrage_initial.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.kilometrage_final.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                {{ form.kilometrage_final.label }}
+                            </label>
+
+                            {{ form.kilometrage_final }}
+
+                            {% for error in form.kilometrage_final.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+
+                    <div class="alert alert-light border small">
+                        <i class="fas fa-calculator me-1"></i>
+                        Distance parcourue = kilométrage final − kilométrage initial.
+                    </div>
+                </div>
+
+                <!-- COMPTEUR HORAIRE ENGIN -->
+                <div id="section-heures-moteur">
+                    <h6 class="text-warning border-bottom pb-2 mb-3">
+                        <i class="fas fa-cogs me-2"></i>
+                        Compteur horaire de l'engin
+                    </h6>
+
+                    <div class="row g-3 mb-4">
+
+                        <div class="col-md-6">
+                            <label for="{{ form.heures_initiales.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                {{ form.heures_initiales.label }}
+                            </label>
+
+                            {{ form.heures_initiales }}
+
+                            {% for error in form.heures_initiales.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.heures_finales.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                {{ form.heures_finales.label }}
+                            </label>
+
+                            {{ form.heures_finales }}
+
+                            {% for error in form.heures_finales.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="{{ form.carburant_litre.id_for_label }}"
+                               class="form-label fw-semibold">
+                            {{ form.carburant_litre.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.carburant_litre }}
+
+                        {% for error in form.carburant_litre.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+
+                        <div class="form-text">
+                            Quantité réellement consommée en litres.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OBSERVATION -->
+                <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="fas fa-comment-alt me-2"></i>
+                    Observation
+                </h6>
+
+                <div class="mb-4">
+                    <label for="{{ form.observation.id_for_label }}"
+                           class="form-label fw-semibold">
+                        {{ form.observation.label }}
+                    </label>
+
+                    {{ form.observation }}
+
+                    {% for error in form.observation.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="d-flex flex-wrap justify-content-end gap-2 border-top pt-3">
+
+                    <a href="{% url 'projet:mouvement_vehicule_projet_list' projet_id=projet.pk %}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        Annuler
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        {% if mouvement %}
+                            Enregistrer les modifications
+                        {% else %}
+                            Enregistrer le mouvement
+                        {% endif %}
+                    </button>
+
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- AFFICHAGE CONDITIONNEL DES COMPTEURS -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const selectVehicule = document.getElementById(
+        "{{ form.vehicule_projet.id_for_label }}"
+    );
+
+    const sectionKm = document.getElementById("section-kilometrage");
+    const sectionHeures = document.getElementById("section-heures-moteur");
+
+    if (!selectVehicule || !sectionKm || !sectionHeures) {
+        return;
+    }
+
+    const typesVehicules = {
+        {% for vehicule in form.fields.vehicule_projet.queryset %}
+            "{{ vehicule.pk }}": "{{ vehicule.type_vehicule }}",
+        {% endfor %}
+    };
+
+    function actualiserChamps() {
+        const type = typesVehicules[selectVehicule.value];
+
+        if (type === "ENGIN") {
+            sectionKm.style.display = "none";
+            sectionHeures.style.display = "";
+        } else if (type) {
+            sectionKm.style.display = "";
+            sectionHeures.style.display = "none";
+        } else {
+            sectionKm.style.display = "";
+            sectionHeures.style.display = "none";
+        }
+    }
+
+    selectVehicule.addEventListener("change", actualiserChamps);
+    actualiserChamps();
+});
+</script>
+{% endblock %}

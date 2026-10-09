@@ -1,0 +1,435 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Rapports d'activité - {{ projet.titre|title }}{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-truck-moving me-2 text-primary"></i>
+                Rapports d'activité
+            </h3>
+            <div class="text-muted">
+                Projet : <strong>{{ projet.titre|title }}</strong>
+            </div>
+            <small class="text-muted">
+                Mouvements des engins, voitures et camions
+            </small>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'projet:projet_detail' projet_id=projet.pk %}"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Retour au projet
+            </a>
+
+            <a href="{% url 'projet:mouvement_vehicule_projet_create' projet_id=projet.pk %}"
+               class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>
+                Nouveau mouvement
+            </a>
+        </div>
+    </div>
+
+    <!-- STATISTIQUES -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Nombre de mouvements</div>
+                            <h3 class="mb-0 mt-2">{{ mouvements|length }}</h3>
+                        </div>
+                        <i class="fas fa-route fa-2x text-primary opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Distance totale</div>
+                            <h3 class="mb-0 mt-2">
+                                {{ total_km|default:0|floatformat:2 }}
+                                <small class="fs-6">km</small>
+                            </h3>
+                        </div>
+                        <i class="fas fa-road fa-2x text-success opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Heures moteur</div>
+                            <h3 class="mb-0 mt-2">
+                                {{ total_heures_moteur|default:0|floatformat:2 }}
+                                <small class="fs-6">h</small>
+                            </h3>
+                        </div>
+                        <i class="fas fa-cogs fa-2x text-warning opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small">Carburant consommé</div>
+                            <h3 class="mb-0 mt-2">
+                                {{ total_carburant|default:0|floatformat:2 }}
+                                <small class="fs-6">L</small>
+                            </h3>
+                        </div>
+                        <i class="fas fa-gas-pump fa-2x text-danger opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FILTRE PAR VÉHICULE / ENGIN -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+
+                <div class="col-12 col-md-6 col-lg-5">
+                    <label for="vehicule" class="form-label fw-semibold">
+                        <i class="fas fa-truck-moving me-1 text-primary"></i>
+                        Filtrer par véhicule ou engin
+                    </label>
+
+                    <select name="vehicule"
+                            id="vehicule"
+                            class="form-select">
+                        <option value="">Tous les véhicules et engins</option>
+
+                        {% for vehicule in vehicules_projet %}
+                            <option value="{{ vehicule.pk }}"
+                                {% if vehicule_filtre == vehicule.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ vehicule.vehicule }}
+                                {% if vehicule.type_vehicule == "ENGIN" %}
+                                    — Engin
+                                {% else %}
+                                    — Routier
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i>
+                        Filtrer
+                    </button>
+
+                    <a href="{% url 'projet:mouvement_vehicule_projet_list' projet_id=projet.pk %}"
+                    class="btn btn-outline-secondary">
+                        <i class="fas fa-undo me-1"></i>
+                        Réinitialiser
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Historique des mouvements
+                </h5>
+
+                <span class="badge bg-primary">
+                    {{ mouvements|length }} mouvement(s)
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+
+            {% if mouvements %}
+
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Véhicule / Engin</th>
+                            <th>Type</th>
+                            <th>Départ</th>
+                            <th>Destination</th>
+                            <th>Horaires</th>
+                            <th>Compteurs</th>
+                            <th>Travail effectué</th>
+                            <th>Carburant</th>
+                            <th>Enregistré par</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for mouvement in mouvements %}
+                        <tr>
+
+                            <!-- DATE -->
+                            <td class="text-nowrap">
+                                <strong>
+                                    {{ mouvement.date_mouvement|date:"d/m/Y" }}
+                                </strong>
+                                <div class="small text-muted">
+                                    {{ mouvement.date_mouvement|date:"H:i" }}
+                                </div>
+                            </td>
+
+                            <!-- MATÉRIEL -->
+                            <td>
+                                <strong>
+                                    {{ mouvement.vehicule_projet.vehicule }}
+                                </strong>
+                            </td>
+
+                            <!-- TYPE -->
+                            <td>
+                                {% if mouvement.type_vehicule == "ENGIN" %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-cogs me-1"></i>
+                                        Engin
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">
+                                        <i class="fas fa-car me-1"></i>
+                                        Routier
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- DÉPART -->
+                            <td>
+                                {% if mouvement.point_depart %}
+                                    {{ mouvement.point_depart|title }}
+                                {% else %}
+                                    <span class="text-muted">Non précisé</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- DESTINATION -->
+                            <td>
+                                {% if mouvement.point_arrivee %}
+                                    {{ mouvement.point_arrivee|title }}
+                                {% else %}
+                                    <span class="text-muted">Non précisée</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- HORAIRES -->
+                            <td class="text-nowrap">
+                                <div>
+                                    <i class="fas fa-sign-out-alt text-success me-1"></i>
+                                    {{ mouvement.heure_depart|time:"H:i"|default:"—" }}
+                                </div>
+
+                                <div>
+                                    <i class="fas fa-sign-in-alt text-danger me-1"></i>
+                                    {{ mouvement.heure_arrivee|time:"H:i"|default:"—" }}
+                                </div>
+
+                                <small class="text-muted">
+                                    {{ mouvement.duree_formatee }}
+                                </small>
+                            </td>
+
+                            <!-- COMPTEURS -->
+                            <td class="text-nowrap">
+                                {% if mouvement.type_vehicule == "ENGIN" %}
+
+                                    <div class="small text-muted">
+                                        Initial :
+                                        <strong class="text-dark">
+                                            {{ mouvement.heures_initiales|floatformat:2 }} 
+                                        </strong>
+                                    </div>
+
+                                    <div class="small text-muted">
+                                        Final :
+                                        <strong class="text-dark">
+                                            {{ mouvement.heures_finales|floatformat:2 }} 
+                                        </strong>
+                                    </div>
+
+                                {% else %}
+
+                                    <div class="small text-muted">
+                                        Initial :
+                                        <strong class="text-dark">
+                                            {{ mouvement.kilometrage_initial|floatformat:2 }} km
+                                        </strong>
+                                    </div>
+
+                                    <div class="small text-muted">
+                                        Final :
+                                        <strong class="text-dark">
+                                            {{ mouvement.kilometrage_final|floatformat:2 }} km
+                                        </strong>
+                                    </div>
+
+                                {% endif %}
+                            </td>
+
+                            <!-- TRAVAIL EFFECTUÉ -->
+                            <td class="text-nowrap">
+                                {% if mouvement.type_vehicule == "ENGIN" %}
+
+                                    <span class="badge bg-warning text-dark fs-6">
+                                        {{ mouvement.heures_travail|floatformat:2 }} h
+                                    </span>
+                                    <div class="small text-muted">
+                                        Heures moteur
+                                    </div>
+
+                                {% else %}
+
+                                    <span class="badge bg-success fs-6">
+                                        {{ mouvement.kilometres_parcourus|floatformat:2 }} km
+                                    </span>
+                                    <div class="small text-muted">
+                                        Distance parcourue
+                                    </div>
+
+                                {% endif %}
+                            </td>
+
+                            <!-- CARBURANT -->
+                            <td class="text-nowrap">
+                                <strong>
+                                    {{ mouvement.carburant_litre|floatformat:2 }} L
+                                </strong>
+                            </td>
+
+                            <!-- ENREGISTRÉ PAR -->
+                            <td>
+                                {% if mouvement.enregistre_par %}
+                                    {{ mouvement.enregistre_par }}
+                                {% else %}
+                                    <span class="text-muted">
+                                        Utilisateur inconnu
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- ACTIONS -->
+                            <td class="text-center text-nowrap">
+
+                                <a href="{% url 'projet:mouvement_vehicule_projet_detail' projet_id=projet.pk mouvement_id=mouvement.pk %}"
+                                   class="btn btn-sm btn-outline-info"
+                                   title="Consulter">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
+                                {% if mouvement.enregistre_par_id and request.session.user_id|stringformat:"s" == mouvement.enregistre_par_id|stringformat:"s" %}
+
+                                    <a href="{% url 'projet:mouvement_vehicule_projet_update' projet_id=projet.pk mouvement_id=mouvement.pk %}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <form method="post"
+                                          action="{% url 'projet:mouvement_vehicule_projet_delete' projet_id=projet.pk mouvement_id=mouvement.pk %}"
+                                          class="d-inline"
+                                          onsubmit="return confirm('Confirmer la suppression de ce mouvement ?');">
+                                        {% csrf_token %}
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+
+                                {% endif %}
+
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                    <!-- TOTAUX -->
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="6" class="text-end">Totaux :</th>
+                            <th>
+                                <div>
+                                    {{ total_km|default:0|floatformat:2 }} km
+                                </div>
+                                <div>
+                                    {{ total_heures_moteur|default:0|floatformat:2 }} h moteur
+                                </div>
+                            </th>
+
+                            <th>
+                                {{ total_carburant|default:0|floatformat:2 }} L
+                            </th>
+
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>
+
+                </table>
+            </div>
+
+            {% else %}
+
+            <!-- AUCUN MOUVEMENT -->
+            <div class="text-center py-5 px-3">
+                <i class="fas fa-truck-moving fa-4x text-muted mb-3"></i>
+
+                <h5>Aucun mouvement enregistré</h5>
+
+                <p class="text-muted">
+                    Aucun rapport d'activité n'a encore été enregistré
+                    pour un engin ou un véhicule de ce projet.
+                </p>
+
+                {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHEF_MAGASIN" or fonction_projet == "CHAUFFEUR" or request.session.role == "UserEntreprise" %}
+                    <a href="{% url 'projet:mouvement_vehicule_projet_create' projet_id=projet.pk %}"
+                       class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        Ajouter un mouvement
+                    </a>
+                {% endif %}
+            </div>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

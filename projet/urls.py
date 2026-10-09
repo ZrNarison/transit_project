@@ -338,4 +338,39 @@ urlpatterns = [
         name="minier_delete",
     ),
 
+
+    # ============================================================
+    # RAPPORT D'ACTIVITÉ - VÉHICULE / ENGIN
+    # ============================================================
+
+    path(
+        "projets/<int:projet_id>/mouvements-vehicules/",
+        views.mouvement_vehicule_projet_list,
+        name="mouvement_vehicule_projet_list",
+    ),
+
+    path(
+        "projets/<int:projet_id>/mouvements-vehicules/ajouter/",
+        views.mouvement_vehicule_projet_create,
+        name="mouvement_vehicule_projet_create",
+    ),
+
+    path(
+        "projets/<int:projet_id>/mouvements-vehicules/<int:mouvement_id>/",
+        views.mouvement_vehicule_projet_detail,
+        name="mouvement_vehicule_projet_detail",
+    ),
+
+    path(
+        "projets/<int:projet_id>/mouvements-vehicules/<int:mouvement_id>/modifier/",
+        views.mouvement_vehicule_projet_update,
+        name="mouvement_vehicule_projet_update",
+    ),
+
+    path(
+        "projets/<int:projet_id>/mouvements-vehicules/<int:mouvement_id>/supprimer/",
+        views.mouvement_vehicule_projet_delete,
+        name="mouvement_vehicule_projet_delete",
+    ),
+
 ]

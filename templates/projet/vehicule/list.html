@@ -47,7 +47,7 @@ Véhicules du projet - {{ projet.titre }}
         </a>
         {% endif %}
         {% if request.session.role == "ChefMagasin" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or request.session.role == "UserEntreprise" %}
-            <a href="{% url 'projet:vehicule_projet_create' projet.id %}"
+            <a href="{% url 'projet:mouvement_vehicule_projet_list' projet.id %}"
             class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 Mouvement

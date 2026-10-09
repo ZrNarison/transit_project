@@ -16,7 +16,7 @@ from materiaux.models import Materiaux, Vehicule
 
 from .forms import (ProjetForm,EquipeProjetForm,ChefEquipeProjetForm,MinierProjetForm,MateriauProjetForm,PointProjetForm,RapportProjetForm,
     RapportTravailForm,RapportMateriauForm,VehiculeProjetForm,EnginProjetForm,
-    RapportVehiculeForm,ActiviteTransportProjetForm,)
+    RapportVehiculeForm,ActiviteTransportProjetForm,MouvementVehiculeProjetForm)
 
 from .models import (
     Projet,MateriauProjet,EquipeProjet,PointProjet,RapportProjet,RapportTravail,    RapportMateriau,
@@ -5788,11 +5788,7 @@ def activite_transport_projet_update(
 # ============================================================
 
 @project_manager_required
-def activite_transport_projet_delete(
-    request,
-    projet_id,
-    activite_id,
-):
+def activite_transport_projet_delete(request,projet_id,activite_id,):
 
     projet = get_object_or_404(
         Projet,
@@ -5859,4 +5855,318 @@ def activite_transport_projet_delete(
             "activite": activite,
             "user": request.current_user,
         },
+    )
+
+
+
+# ============================================================
+# OUTILS - MOUVEMENT VÉHICULE / ENGIN
+# ============================================================
+
+def _mouvement_est_createur(mouvement, user):
+    """Vérifie si l'utilisateur connecté est le créateur."""
+    return (
+        user is not None
+        and mouvement.enregistre_par_id == getattr(user, "pk", None)
+    )
+
+
+def _mouvement_peut_gerer(mouvement, user):
+    """Créateur ou administrateur."""
+    if _mouvement_est_createur(mouvement, user):
+        return True
+
+    role = getattr(user, "role", "") if user else ""
+    return role in ("Admin", "SuperAdmin")
+
+
+# ============================================================
+# MOUVEMENTS - LISTE ET BILAN DU PROJET
+# ============================================================
+def mouvement_vehicule_projet_list(request, projet_id):
+    projet = get_object_or_404(Projet, pk=projet_id)
+
+    vehicules_projet = VehiculeProjet.objects.filter(
+        projet=projet
+    ).order_by("vehicule")
+
+    mouvements_qs = MouvementVehiculeProjet.objects.filter(
+        vehicule_projet__projet=projet
+    ).select_related(
+        "vehicule_projet",
+        "point_depart",
+        "point_arrivee",
+        "enregistre_par",
+    ).order_by("-date_mouvement", "-id")
+
+    # Filtre sélectionné
+    vehicule_filtre = request.GET.get("vehicule", "").strip()
+
+    if vehicule_filtre.isdigit():
+        mouvements_qs = mouvements_qs.filter(
+            vehicule_projet_id=int(vehicule_filtre)
+        )
+    else:
+        vehicule_filtre = ""
+
+    mouvements = list(mouvements_qs)
+
+    # Statistiques correspondant aux mouvements affichés
+    total_km = sum(
+        (
+            m.kilometres_parcourus
+            for m in mouvements
+            if m.type_vehicule != "ENGIN"
+        ),
+        Decimal("0.00"),
+    )
+
+    total_heures_moteur = sum(
+        (
+            m.heures_travail
+            for m in mouvements
+            if m.type_vehicule == "ENGIN"
+        ),
+        Decimal("0.00"),
+    )
+
+    total_carburant = sum(
+        (m.carburant_litre for m in mouvements),
+        Decimal("0.00"),
+    )
+
+    total_duree_minutes = sum(
+        (m.duree_minutes for m in mouvements),
+        0,
+    )
+
+    context = {
+        "projet": projet,
+        "vehicules_projet": vehicules_projet,
+        "vehicule_filtre": vehicule_filtre,
+        "mouvements": mouvements,
+        "total_km": total_km,
+        "total_heures_moteur": total_heures_moteur,
+        "total_carburant": total_carburant,
+        "total_duree_minutes": total_duree_minutes,
+    }
+
+    return render(
+        request,
+        "projet/mouvement_vehicule_projet_list.html",
+        context,
+    )
+
+
+# ============================================================
+# MOUVEMENTS - DÉTAIL
+# ============================================================
+
+@project_access_required
+def mouvement_vehicule_projet_detail(
+    request,
+    projet_id,
+    mouvement_id,
+):
+    mouvement = get_object_or_404(
+        MouvementVehiculeProjet.objects.select_related(
+            "vehicule_projet",
+            "vehicule_projet__projet",
+            "point_depart",
+            "point_arrivee",
+            "enregistre_par",
+        ),
+        pk=mouvement_id,
+        vehicule_projet__projet=request.projet,
+    )
+
+    return render(
+        request,
+        "projet/mouvement_vehicule_projet_detail.html",
+        {
+            "projet": request.projet,
+            "mouvement": mouvement,
+            "user": request.current_user,
+            "peut_modifier": _mouvement_peut_gerer(
+                mouvement,
+                request.current_user,
+            ),
+        },
+    )
+
+
+# ============================================================
+# MOUVEMENTS - CRÉER
+# ============================================================
+
+@project_access_required
+def mouvement_vehicule_projet_create(request, projet_id):
+    projet = request.projet
+    user = request.current_user
+
+    if request.method == "POST":
+        form = MouvementVehiculeProjetForm(
+            request.POST,
+            projet=projet,
+        )
+
+        if form.is_valid():
+            mouvement = form.save(commit=False)
+
+            # Sécurité : l'affectation doit appartenir au projet.
+            if mouvement.vehicule_projet.projet_id != projet.pk:
+                raise PermissionDenied(
+                    "Ce véhicule n'appartient pas à ce projet."
+                )
+
+            mouvement.enregistre_par = user
+            mouvement.save()
+
+            messages.success(
+                request,
+                "Le mouvement a été enregistré avec succès.",
+            )
+
+            return redirect(
+                "projet:mouvement_vehicule_projet_list",
+                projet_id=projet.pk,
+            )
+    else:
+        form = MouvementVehiculeProjetForm(projet=projet)
+
+    return render(
+        request,
+        "projet/mouvement_vehicule_projet_form.html",
+        {
+            "form": form,
+            "projet": projet,
+            "mouvement": None,
+            "titre_page": "Nouveau rapport d'activité",
+            "user": user,
+        },
+    )
+
+
+# ============================================================
+# MOUVEMENTS - MODIFIER
+# ============================================================
+
+@project_access_required
+def mouvement_vehicule_projet_update(
+    request,
+    projet_id,
+    mouvement_id,
+):
+    projet = request.projet
+    user = request.current_user
+
+    mouvement = get_object_or_404(
+        MouvementVehiculeProjet,
+        pk=mouvement_id,
+        vehicule_projet__projet=projet,
+    )
+
+    if not _mouvement_peut_gerer(mouvement, user):
+        messages.error(
+            request,
+            "Vous ne pouvez modifier que vos propres mouvements.",
+        )
+        return redirect(
+            "projet:mouvement_vehicule_projet_list",
+            projet_id=projet.pk,
+        )
+
+    if request.method == "POST":
+        form = MouvementVehiculeProjetForm(
+            request.POST,
+            instance=mouvement,
+            projet=projet,
+        )
+
+        if form.is_valid():
+            mouvement_modifie = form.save(commit=False)
+
+            if mouvement_modifie.vehicule_projet.projet_id != projet.pk:
+                raise PermissionDenied(
+                    "Ce véhicule n'appartient pas à ce projet."
+                )
+
+            # Ne pas remplacer le créateur lors d'une modification.
+            mouvement_modifie.enregistre_par = mouvement.enregistre_par
+            mouvement_modifie.save()
+
+            messages.success(
+                request,
+                "Le mouvement a été modifié avec succès.",
+            )
+
+            return redirect(
+                "projet:mouvement_vehicule_projet_list",
+                projet_id=projet.pk,
+            )
+    else:
+        form = MouvementVehiculeProjetForm(
+            instance=mouvement,
+            projet=projet,
+        )
+
+    return render(
+        request,
+        "projet/mouvement_vehicule_projet_form.html",
+        {
+            "form": form,
+            "projet": projet,
+            "mouvement": mouvement,
+            "titre_page": "Modifier le rapport d'activité",
+            "user": user,
+        },
+    )
+
+
+# ============================================================
+# MOUVEMENTS - SUPPRIMER
+# ============================================================
+
+@project_access_required
+def mouvement_vehicule_projet_delete(
+    request,
+    projet_id,
+    mouvement_id,
+):
+    projet = request.projet
+    user = request.current_user
+
+    mouvement = get_object_or_404(
+        MouvementVehiculeProjet,
+        pk=mouvement_id,
+        vehicule_projet__projet=projet,
+    )
+
+    if not _mouvement_peut_gerer(mouvement, user):
+        messages.error(
+            request,
+            "Vous ne pouvez supprimer que vos propres mouvements.",
+        )
+        return redirect(
+            "projet:mouvement_vehicule_projet_list",
+            projet_id=projet.pk,
+        )
+
+    try:
+        mouvement.delete()
+
+        messages.success(
+            request,
+            "Le mouvement a été supprimé avec succès.",
+        )
+    except Exception:
+        messages.error(
+            request,
+            "Impossible de supprimer ce mouvement. "
+            "Vérifiez s'il est utilisé par d'autres données.",
+        )
+
+    return redirect(
+        "projet:mouvement_vehicule_projet_list",
+        projet_id=projet.pk,
     )
