@@ -18,14 +18,14 @@ from users.decorators import (
     project_access_required,
     user_can_manage_projects,
     get_current_personnel,
-    login_required_projet,
+    login_required_projet,mica_required,
     project_manager_required,    
 )
 
 # =========================================================
 # LISTE
 # =========================================================
-@project_manager_required
+@mica_required
 def client_list(request):
 
     queryset = Client.objects.all().order_by("nom", "prenom")
@@ -82,7 +82,7 @@ def client_list(request):
 # =========================================================
 # AJOUT CLIENT
 # =========================================================
-project_manager_required
+@mica_required
 def client_add(request):
 
     form = ClientForm(
@@ -186,7 +186,7 @@ def client_add(request):
 # =========================================================
 # DETAIL
 # =========================================================
-
+@mica_required
 def client_detail(request, id):
 
     client = get_object_or_404(

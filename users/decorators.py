@@ -9,6 +9,8 @@ from django.utils import timezone
 from users.models import AppUser
 
 
+
+
 # ============================================================
 # CONFIGURATION DES RÔLES
 # ============================================================
@@ -20,6 +22,16 @@ PROJECT_MANAGER_ROLES = {
     "Admin",
     "Superviseur",
     "UserEntreprise",
+}
+
+# ============================================================
+# CONFIGURATION DES RÔLES MICA
+# ============================================================
+
+MICA_MANAGER_ROLES = {
+    "Admin",
+    "Superviseur",
+    "UserMica",
 }
 
 
@@ -36,6 +48,47 @@ def _get_project_models():
     return Personnel, EquipeProjet, Projet
 
 
+
+def mica_required(view_func):
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+
+        user_id = request.session.get("user_id")
+
+        if not user_id:
+            messages.error(
+                request,
+                "Veuillez vous connecter."
+            )
+            return redirect("users:login")
+
+        user = (
+            AppUser.objects
+            .filter(pk=user_id)
+            .first()
+        )
+
+        if not user:
+            request.session.flush()
+            messages.error(
+                request,
+                "Votre session a expiré. Veuillez vous reconnecter."
+            )
+            return redirect("users:login")
+
+        if user.role not in MICA_MANAGER_ROLES:
+            messages.error(
+                request,
+                "Vous n'avez pas accès au module Mica."
+            )
+            return redirect("users:login")
+
+        request.current_user = user
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
 # ============================================================
 # CONTRÔLE DES RÔLES DE SESSION
 # ============================================================
@@ -48,29 +101,29 @@ def role_required(*roles):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
 
-            if not request.session.get("user_id"):
+            user = get_current_user(request)
+
+            if not user:
                 messages.error(
                     request,
-                    "Veuillez vous connecter.",
+                    "Veuillez vous connecter."
                 )
                 return redirect("users:login")
 
-            categorie = request.session.get("categorie")
-
-            if categorie not in roles:
-                messages.error(
-                    request,
-                    "Accès interdit.",
+            # Le rôle enregistré à la connexion est "role",
+            # et non "categorie".
+            if user.role not in roles:
+                raise PermissionDenied(
+                    "Vous n'avez pas l'autorisation d'accéder à cette page."
                 )
-                return redirect("/")
+
+            request.current_user = user
 
             return view_func(request, *args, **kwargs)
 
         return wrapper
 
     return decorator
-
-
 # ============================================================
 # UTILISATEUR CONNECTÉ
 # ============================================================
@@ -163,8 +216,7 @@ def project_manager_required(view_func):
         if not user_can_manage_projects(request.current_user):
             messages.error(
                 request,
-                "Vous n'avez pas l'autorisation "
-                "de gérer les projets.",
+                "Vous n'avez pas l'autorisation de gérer les projets.",
             )
             return redirect("projet:projet_list")
 

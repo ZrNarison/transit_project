@@ -16,7 +16,38 @@ from .forms import UserForm
 
 from audit.utils import enregistrer_action
 from logs.utils import enregistrer_log
+from django.shortcuts import redirect
 
+def redirection_apres_login(user):
+    """
+    Redirige chaque utilisateur vers sa page d'accueil
+    en fonction de son rôle.
+    """
+
+    role = user.role
+
+    if role in ("Admin", "Superviseur"):
+        return redirect("projet:projet_list")
+
+    elif role in (
+            "UserMica",
+            "UserEntreprise",
+            "UserProjet",
+            "ChauffeurMica",
+            "ChauffeurEntreprise",
+        ):
+        return redirect("projet:projet_list")
+
+    elif role in ("ChefMagasin", "Magasin"):
+        return redirect("projet:projet_list")
+
+    # Éviter de renvoyer vers la connexion un utilisateur ont le rôle n'est pas encore configuré.
+    messages.error(
+            # La fonction ne reçoit pas request :
+            # le traitement du rôle inconnu doit être adapté dans users_login, comme indiqué ci-dessous.
+            None,
+            "Rôle utilisateur non configuré."
+        )
 
 # ============================================================
 # ADMIN TEMPORAIRE
@@ -333,7 +364,7 @@ def users_login(request):
                     )
                 )
 
-                return redirect("/")
+                return redirection_apres_login(user)
 
             messages.error(
                 request,

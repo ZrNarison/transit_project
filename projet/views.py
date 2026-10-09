@@ -34,7 +34,7 @@ from .models import (
 from users.decorators import (
     get_current_user,
     project_access_required,
-    user_can_manage_projects,
+    user_can_manage_projects,user_has_project_access,
     get_current_personnel,
     login_required_projet,
     project_manager_required,    
