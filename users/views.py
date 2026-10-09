@@ -1,14 +1,7 @@
-from django.shortcuts import (
-    render,
-    redirect,
-    get_object_or_404
-)
+from django.shortcuts import (render,redirect,get_object_or_404)
 
 from django.contrib import messages
-from django.contrib.auth.hashers import (
-    make_password,
-    check_password
-)
+from django.contrib.auth.hashers import (make_password,check_password)
 from django.core.paginator import Paginator
 
 from .models import AppUser
@@ -17,6 +10,16 @@ from .forms import UserForm
 from audit.utils import enregistrer_action
 from logs.utils import enregistrer_log
 from django.shortcuts import redirect
+
+from users.decorators import (
+    get_current_user,role_required,
+    project_access_required,
+    user_can_manage_projects,user_has_project_access,
+    get_current_personnel,
+    login_required_projet,
+    project_manager_required,    
+)
+from django.core.exceptions import PermissionDenied
 
 def redirection_apres_login(user):
     """
@@ -275,6 +278,74 @@ def verifier_limite_utilisateur(role, personnel=None, instance=None):
     return True, ""
 
 
+def _verifier_acces_profil(request, user_id, autoriser_admin=False): 
+    utilisateur_connecte_id = request.session.get("user_id") 
+    # Si l'utilisateur n'est pas connecté 
+    if not utilisateur_connecte_id: 
+        messages.warning(
+            request, 
+            "Veuillez vous connecter.") 
+        return None 
+    utilisateur = get_object_or_404(
+        AppUser.objects.select_related(
+            "personnel"),
+            id=user_id ) 
+    # Vérifier que l'utilisateur consulte son propre compte 
+    est_proprietaire = ( 
+        str(utilisateur_connecte_id) == str(utilisateur.id) 
+        ) 
+    role_connecte = request.session.get("role") 
+    admin_autorise = ( autoriser_admin and role_connecte in ("Admin", "Superviseur") ) 
+    if not est_proprietaire and not admin_autorise: 
+        messages.error( 
+            request, 
+            "Accès refusé : vous ne pouvez pas modifier le compte d'un autre utilisateur." 
+            ) 
+        # Retourner vers le profil de l'utilisateur connecté 
+        return redirect(
+            "users:users_detail", 
+            id=utilisateur_connecte_id
+            ) 
+        return utilisateur
+
+    """
+    Autorise :
+    - un utilisateur à accéder à son propre profil ;
+    - Admin/Superviseur à consulter les autres profils
+      uniquement si autoriser_admin=True.
+
+    Refuse l'accès aux autres comptes pour les modifications personnelles.
+    """
+
+    utilisateur_connecte_id = request.session.get("user_id")
+
+    if not utilisateur_connecte_id:
+        raise PermissionDenied(
+            "Vous devez vous connecter."
+        )
+
+    utilisateur = get_object_or_404(
+        AppUser.objects.select_related("personnel"),
+        id=user_id
+    )
+
+    est_proprietaire = (
+        str(utilisateur_connecte_id) == str(utilisateur.id)
+    )
+
+    role_connecte = request.session.get("role")
+
+    admin_autorise = (
+        autoriser_admin
+        and role_connecte in ("Admin", "Superviseur")
+    )
+
+    if not est_proprietaire and not admin_autorise:
+        raise PermissionDenied(
+            "Vous ne pouvez pas accéder au compte d'un autre utilisateur."
+        )
+
+    return utilisateur
 # ============================================================
 # LOGIN
 # ============================================================
@@ -417,7 +488,7 @@ def users_logout(request):
 # ============================================================
 # LISTE UTILISATEURS
 # ============================================================
-
+@role_required("Admin", "Superviseur")
 def users_list(request):
 
     # Toujours garantir l'existence d'un Admin.
@@ -475,7 +546,7 @@ def users_list(request):
 # ============================================================
 # AJOUT UTILISATEUR
 # ============================================================
-
+@role_required("Admin")
 def users_add(request):
 
     # Si aucun Admin existe, on le crée avant toute chose.
@@ -593,33 +664,10 @@ def users_add(request):
         }
     )
 
-
-# ============================================================
-# DETAIL
-# ============================================================
-
-def users_detail(request, id):
-
-    user = get_object_or_404(
-        AppUser.objects.select_related(
-            "personnel"
-        ),
-        id=id
-    )
-
-    return render(
-        request,
-        "users/detail.html",
-        {
-            "user": user
-        }
-    )
-
-
 # ============================================================
 # MODIFICATION
 # ============================================================
-
+@role_required("Admin", "Superviseur")
 def users_edit(request, id):
 
     user = get_object_or_404(
@@ -788,7 +836,7 @@ def users_edit(request, id):
 # ============================================================
 # SUPPRESSION
 # ============================================================
-
+@role_required("Admin")
 def users_delete(request, id):
 
     user = get_object_or_404(
@@ -874,6 +922,71 @@ def users_delete(request, id):
         }
     )
 
+# ============================================================
+# VERIFICATION DES DROITS D'ACCES AU PROFIL
+# ============================================================
+
+def _verifier_acces_profil(request, user_id):
+    """
+    Autorise uniquement l'utilisateur connecté à consulter
+    ou modifier son propre profil.
+
+    En cas d'accès non autorisé, redirige vers son profil.
+    """
+
+    utilisateur_connecte_id = request.session.get("user_id")
+
+    if not utilisateur_connecte_id:
+        messages.warning(
+            request,
+            "Veuillez vous connecter."
+        )
+        return None
+
+    # Vérifier que l'utilisateur connecté existe
+    utilisateur_connecte = get_object_or_404(
+        AppUser,
+        id=utilisateur_connecte_id
+    )
+
+    # Si l'identifiant demandé n'est pas celui de l'utilisateur connecté
+    if str(utilisateur_connecte.id) != str(user_id):
+        messages.error(
+            request,
+            "Accès refusé : vous ne pouvez pas accéder "
+            "au compte d'un autre utilisateur."
+        )
+
+        return redirect(
+            "users:users_detail",
+            id=utilisateur_connecte.id
+        )
+
+    return get_object_or_404(
+        AppUser.objects.select_related("personnel"),
+        id=utilisateur_connecte.id
+    )
+
+
+# ============================================================
+# DETAIL DU PROFIL
+# ============================================================
+
+def users_detail(request, id):
+
+    user = _verifier_acces_profil(request, id)
+
+    if user is None or hasattr(user, "status_code"):
+        return user
+
+    return render(
+        request,
+        "users/detail.html",
+        {
+            "user": user
+        }
+    )
+
 
 # ============================================================
 # CHANGER PHOTO
@@ -881,26 +994,27 @@ def users_delete(request, id):
 
 def change_photo(request, id):
 
-    user = get_object_or_404(
-        AppUser,
-        id=id
-    )
+    user = _verifier_acces_profil(request, id)
+
+    if user is None or hasattr(user, "status_code"):
+        return user
 
     if request.method == "POST":
 
-        photo = request.FILES.get(
-            "photo"
-        )
+        photo = request.FILES.get("photo")
 
-        if photo:
-
-            ancienne = str(
-                user.photo
+        if not photo:
+            messages.error(
+                request,
+                "Veuillez sélectionner une photo."
             )
+
+        else:
+            ancienne = str(user.photo) if user.photo else ""
 
             user.photo = photo
 
-            user.save()
+            user.save(update_fields=["photo"])
 
             enregistrer_action(
                 request,
@@ -913,20 +1027,11 @@ def change_photo(request, id):
                 nouvelle={
                     "photo": str(user.photo)
                 },
-                description=(
-                    "Modification photo utilisateur"
-                )
+                description="Modification photo utilisateur"
             )
 
-            if request.session.get(
-                "user_id"
-            ) == user.id:
-
-                request.session["photo"] = (
-                    user.photo.url
-                )
-
-                request.session.modified = True
+            request.session["photo"] = user.photo.url
+            request.session.modified = True
 
             messages.success(
                 request,
@@ -935,7 +1040,7 @@ def change_photo(request, id):
 
             return redirect(
                 "users:users_detail",
-                id=id
+                id=user.id
             )
 
     return render(
@@ -953,10 +1058,10 @@ def change_photo(request, id):
 
 def change_username(request, id):
 
-    user = get_object_or_404(
-        AppUser,
-        id=id
-    )
+    user = _verifier_acces_profil(request, id)
+
+    if user is None or hasattr(user, "status_code"):
+        return user
 
     if request.method == "POST":
 
@@ -975,9 +1080,9 @@ def change_username(request, id):
             )
 
         elif AppUser.objects.filter(
-            username=username
+            username__iexact=username
         ).exclude(
-            id=id
+            id=user.id
         ).exists():
 
             messages.error(
@@ -989,7 +1094,10 @@ def change_username(request, id):
 
             user.username = username
 
-            user.save()
+            user.save(update_fields=["username"])
+
+            request.session["username"] = username
+            request.session.modified = True
 
             enregistrer_action(
                 request,
@@ -1002,27 +1110,17 @@ def change_username(request, id):
                 nouvelle={
                     "username": username
                 },
-                description=(
-                    "Modification nom utilisateur"
-                )
+                description="Modification nom utilisateur"
             )
-
-            if request.session.get(
-                "user_id"
-            ) == user.id:
-
-                request.session["username"] = (
-                    username
-                )
 
             messages.success(
                 request,
-                "Nom utilisateur modifié."
+                "Nom utilisateur modifié avec succès."
             )
 
             return redirect(
                 "users:users_detail",
-                id=id
+                id=user.id
             )
 
     return render(
@@ -1040,10 +1138,10 @@ def change_username(request, id):
 
 def change_password(request, id):
 
-    user = get_object_or_404(
-        AppUser,
-        id=id
-    )
+    user = _verifier_acces_profil(request, id)
+
+    if user is None or hasattr(user, "status_code"):
+        return user
 
     if request.method == "POST":
 
@@ -1073,20 +1171,16 @@ def change_password(request, id):
 
         else:
 
-            user.password = make_password(
-                password
-            )
+            user.password = make_password(password)
 
-            user.save()
+            user.save(update_fields=["password"])
 
             enregistrer_action(
                 request,
                 "UPDATE",
                 "Utilisateur",
                 user.id,
-                description=(
-                    "Modification mot de passe utilisateur"
-                )
+                description="Modification mot de passe utilisateur"
             )
 
             messages.success(
@@ -1096,7 +1190,7 @@ def change_password(request, id):
 
             return redirect(
                 "users:users_detail",
-                id=id
+                id=user.id
             )
 
     return render(
