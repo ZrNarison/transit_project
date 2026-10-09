@@ -8,7 +8,7 @@ from audit.utils import enregistrer_action
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.contrib import messages
-
+from users.models import AppUser
 from .models import Client
 from .forms import ClientForm
 
@@ -145,7 +145,7 @@ def user_has_project_access(user, projet):
 # =========================================================
 # LISTE
 # =========================================================
-# @project_manager_required
+@project_manager_required
 def client_list(request):
 
     queryset = Client.objects.all().order_by("nom", "prenom")
@@ -202,7 +202,7 @@ def client_list(request):
 # =========================================================
 # AJOUT CLIENT
 # =========================================================
-
+project_manager_required
 def client_add(request):
 
     form = ClientForm(
