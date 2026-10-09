@@ -5,10 +5,8 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
-
+from django.views.decorators.cache import never_cache
 from users.models import AppUser
-
-
 
 
 # ============================================================
@@ -433,7 +431,6 @@ def project_access_required(view_func):
 
     return wrapper
 
-
 # ============================================================
 # CONTRÔLE DES FONCTIONS DANS L'ÉQUIPE DU PROJET
 # ============================================================
@@ -482,3 +479,43 @@ def user_has_project_function(user, projet, fonctions):
         date_fin__gte=aujourd_hui,
         fonction__in=fonctions,
     ).exists()
+
+# ============================================================
+# PROTECTION CONTRE L'ACCÈS APRÈS DÉCONNEXION
+# ============================================================
+
+def session_login_required(view_func):
+    """
+    Protège une vue contre l'accès sans session valide.
+    Empêche la mise en cache des pages protégées.
+    """
+
+    @wraps(view_func)
+    @never_cache
+    def wrapper(request, *args, **kwargs):
+
+        user_id = request.session.get("user_id")
+
+        if not user_id:
+            messages.warning(
+                request,
+                "Votre session a expiré. Veuillez vous reconnecter."
+            )
+            return redirect("users:login")
+
+        # Vérifier que l'utilisateur existe toujours.
+        user = AppUser.objects.filter(pk=user_id).first()
+
+        if not user:
+            request.session.flush()
+            messages.warning(
+                request,
+                "Votre session a expiré. Veuillez vous reconnecter."
+            )
+            return redirect("users:login")
+
+        request.current_user = user
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper

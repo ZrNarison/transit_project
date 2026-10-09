@@ -9,7 +9,6 @@ from .forms import UserForm
 
 from audit.utils import enregistrer_action
 from logs.utils import enregistrer_log
-from django.shortcuts import redirect
 
 from users.decorators import (
     get_current_user,role_required,
@@ -20,6 +19,8 @@ from users.decorators import (
     project_manager_required,    
 )
 from django.core.exceptions import PermissionDenied
+from django.views.decorators.cache import never_cache
+
 
 def redirection_apres_login(user):
     """
@@ -278,74 +279,42 @@ def verifier_limite_utilisateur(role, personnel=None, instance=None):
     return True, ""
 
 
-def _verifier_acces_profil(request, user_id, autoriser_admin=False): 
-    utilisateur_connecte_id = request.session.get("user_id") 
-    # Si l'utilisateur n'est pas connecté 
-    if not utilisateur_connecte_id: 
-        messages.warning(
-            request, 
-            "Veuillez vous connecter.") 
-        return None 
-    utilisateur = get_object_or_404(
-        AppUser.objects.select_related(
-            "personnel"),
-            id=user_id ) 
-    # Vérifier que l'utilisateur consulte son propre compte 
-    est_proprietaire = ( 
-        str(utilisateur_connecte_id) == str(utilisateur.id) 
-        ) 
-    role_connecte = request.session.get("role") 
-    admin_autorise = ( autoriser_admin and role_connecte in ("Admin", "Superviseur") ) 
-    if not est_proprietaire and not admin_autorise: 
-        messages.error( 
-            request, 
-            "Accès refusé : vous ne pouvez pas modifier le compte d'un autre utilisateur." 
-            ) 
-        # Retourner vers le profil de l'utilisateur connecté 
-        return redirect(
-            "users:users_detail", 
-            id=utilisateur_connecte_id
-            ) 
-        return utilisateur
+@never_cache
+def users_logout(request):
 
-    """
-    Autorise :
-    - un utilisateur à accéder à son propre profil ;
-    - Admin/Superviseur à consulter les autres profils
-      uniquement si autoriser_admin=True.
+    user_id = request.session.get("user_id")
+    username = request.session.get(
+        "username",
+        "Utilisateur"
+    )
 
-    Refuse l'accès aux autres comptes pour les modifications personnelles.
-    """
-
-    utilisateur_connecte_id = request.session.get("user_id")
-
-    if not utilisateur_connecte_id:
-        raise PermissionDenied(
-            "Vous devez vous connecter."
+    # Enregistrer la déconnexion dans l'audit
+    if user_id:
+        enregistrer_action(
+            request,
+            "LOGOUT",
+            "Utilisateur",
+            user_id,
+            description="Déconnexion utilisateur"
         )
 
-    utilisateur = get_object_or_404(
-        AppUser.objects.select_related("personnel"),
-        id=user_id
-    )
-
-    est_proprietaire = (
-        str(utilisateur_connecte_id) == str(utilisateur.id)
-    )
-
-    role_connecte = request.session.get("role")
-
-    admin_autorise = (
-        autoriser_admin
-        and role_connecte in ("Admin", "Superviseur")
-    )
-
-    if not est_proprietaire and not admin_autorise:
-        raise PermissionDenied(
-            "Vous ne pouvez pas accéder au compte d'un autre utilisateur."
+        enregistrer_log(
+            message=f"Déconnexion utilisateur : {username}",
+            level="INFO",
+            module="AUTH",
+            ip_address=request.META.get("REMOTE_ADDR")
         )
 
-    return utilisateur
+    # Détruire la session
+    request.session.flush()
+
+    messages.success(
+        request,
+        "Vous avez été déconnecté avec succès."
+    )
+
+    return redirect("users:login")
+
 # ============================================================
 # LOGIN
 # ============================================================
@@ -452,36 +421,6 @@ def users_login(request):
     return render(
         request,
         "users/login.html"
-    )
-
-
-# ============================================================
-# LOGOUT
-# ============================================================
-
-def users_logout(request):
-
-    username = request.session.get(
-        "username",
-        "Utilisateur"
-    )
-
-    enregistrer_log(
-        message=(
-            f"Déconnexion utilisateur : "
-            f"{username}"
-        ),
-        level="INFO",
-        module="AUTH",
-        ip_address=request.META.get(
-            "REMOTE_ADDR"
-        )
-    )
-
-    request.session.flush()
-
-    return redirect(
-        "users:login"
     )
 
 
