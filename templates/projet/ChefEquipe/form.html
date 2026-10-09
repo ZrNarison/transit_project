@@ -178,73 +178,39 @@
 
 
                 <!-- HEADER CARD -->
-
                 <div class="card-header bg-primary text-white">
-
                     <div class="d-flex align-items-center">
-
                         <i class="fas fa-user-tie fa-lg me-2"></i>
-
                         <div>
-
-                            <div class="fw-bold">
-                                Informations du chef d'équipe
-                            </div>
-
-                            <small class="opacity-75">
-                                Chef d'équipe affecté au projet
-                            </small>
-
+                            <div class="fw-bold">Informations du chef d'équipe</div>
+                            <small class="opacity-75">Chef d'équipe affecté au projet</small>
                         </div>
-
                     </div>
-
                 </div>
 
-
                 <!-- BODY -->
-
                 <div class="card-body p-4">
 
-                    <form
-                        method="post"
-                        enctype="multipart/form-data"
-                        novalidate
-                    >
-
+                    <form method="post" enctype="multipart/form-data" novalidate>
                         {% csrf_token %}
-
-
                         <!-- =================================================
                              PROJET
                         ================================================== -->
-
                         {{ form.projet }}
-
-
                         {% for error in form.projet.errors %}
-
                             <div class="text-danger small mt-1 mb-3">
-
                                 <i class="fas fa-exclamation-circle me-1"></i>
-
-                                {{ error }}
-
+                                {{ error |title}}
                             </div>
-
                         {% endfor %}
 
 
                         <!-- =================================================
                              IDENTITÉ
                         ================================================== -->
-
                         <div class="mb-4">
-
                             <h5 class="fw-bold border-bottom pb-2 mb-3">
-
                                 <i class="fas fa-id-card text-primary me-2"></i>
-
                                 Identité
 
                             </h5>
@@ -465,31 +431,20 @@
 
 
                                     <div class="input-group">
-
                                         {{ form.montant }}
-
-                                        <span class="input-group-text">
-                                            Ar
-                                        </span>
-
+                                        <span class="input-group-text">Ar</span>
                                     </div>
 
 
                                     {% for error in form.montant.errors %}
-
                                         <div class="text-danger small mt-1">
-
                                             <i class="fas fa-exclamation-circle me-1"></i>
-
                                             {{ error }}
-
                                         </div>
-
                                     {% endfor %}
 
 
                                     <div class="form-text">
-
                                         Montant prévu pour la période d'affectation.
 
                                     </div>
@@ -593,30 +548,6 @@
                             </div>
 
                         </div>
-
-
-                        <!-- =================================================
-                             TYPE
-                        ================================================== -->
-
-                        {# Le champ type_class est volontairement caché.
-                           Il est automatiquement défini à CHEF_EQUIPE
-                           par le formulaire. #}
-
-                        {{ form.type_class.as_hidden }}
-
-
-                        <!-- =================================================
-                             ENREGISTRÉ PAR
-                        ================================================== -->
-
-                        {# enregistre_par est géré côté vue.
-                           Il n'est donc pas affiché à l'utilisateur. #}
-
-
-                        <!-- =================================================
-                             ACTIONS
-                        ================================================== -->
 
                         <div class="d-flex justify-content-between align-items-center pt-3 border-top">
 

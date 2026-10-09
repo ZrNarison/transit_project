@@ -235,54 +235,6 @@ Ajouter personnel
 
                     </div>
 
-
-                    <!-- =============================================
-                         OBSERVATION
-                    ============================================== -->
-                    <div class="mb-3">
-
-                        <label class="form-label fw-bold">
-                            {{ form.observation.label }}
-                        </label>
-
-                        {{ form.observation }}
-
-                        {% for error in form.observation.errors %}
-
-                            <div class="text-danger small mt-1">
-
-                                <i class="fas fa-exclamation-circle me-1"></i>
-                                {{ error }}
-
-                            </div>
-
-                        {% endfor %}
-
-                    </div>
-
-
-                    <!-- =============================================
-                         INFORMATION SUR L'EXPIRATION
-                    ============================================== -->
-                    <div class="alert alert-warning">
-
-                        <i class="fas fa-clock me-2"></i>
-
-                        L'accès du personnel sera automatiquement
-                        considéré comme expiré après la date de fin
-                        de son affectation.
-
-                        <br><br>
-
-                        <strong>
-                            <i class="fas fa-history me-1"></i>
-                            Les anciens rapports et données ne seront
-                            pas supprimés.
-                        </strong>
-
-                    </div>
-
-
                     <!-- =============================================
                          BOUTONS
                     ============================================== -->

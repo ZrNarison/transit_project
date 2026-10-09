@@ -7,11 +7,17 @@
         <!-- ===================================================== -->
         <!-- LOGO / ACCUEIL -->
         <!-- ===================================================== -->
-        
+        {% if request.session.role == "ChefMagasin" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHAUFFEUR" or request.session.role == "UserEntreprise" or  request.session.role == "Magasin" %}
         <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
             <img src="{% static 'images/Ga.png' %}" width="35" height="35" class="me-2" style="object-fit: cover;" alt="Logo">
             Transit ERP
         </a>
+        {% elif request.session.role == "Superviseur" or request.session.role == "UserMica"  %}
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+            <img src="{% static 'images/Ga.png' %}" width="35" height="35" class="me-2" style="object-fit: cover;" alt="Logo">
+            Transit ERP
+        </a>
+        {% endif %}
 
         <!-- ===================================================== -->
         <!-- MENU MOBILE -->
@@ -31,12 +37,12 @@
                 <!-- ================================================= -->
                 <!-- ACTIVITÉ -->
                 <!-- ================================================= -->
-                {% if fonction_projet != "CHAUFFEUR" %}
+                {% if request.session.role == "ChefMagasin" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHAUFFEUR" or request.session.role == "UserEntreprise" or  request.session.role == "Magasin" %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">📋 Activité</a>
                     <ul class="dropdown-menu shadow">
                         <!-- PROJET -->
-                        {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}                            
+                        {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" or fonction_projet == "INGENIEUR" or fonction_projet == "CHAUFFEUR" or fonction_projet == "CHEF_CHANTIER" %}                            
                             <li><a class="dropdown-item" href="{% url 'projet:projet_list' %}">🏗️ Projet</a></li>
                         {% endif %}
 
@@ -75,6 +81,7 @@
                 <!-- ================================================= -->
                 <!-- FINANCE -->
                 <!-- ================================================= -->
+                {% if request.session.role == "UserMica" or request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">💰 Finance</a>
                     <ul class="dropdown-menu shadow">
@@ -130,7 +137,7 @@
                         {% endif %}
                     </ul>
                 </li>
-
+                {% endif %}
                 
                 <!-- ================================================= -->
                 <!-- MATÉRIELS -->

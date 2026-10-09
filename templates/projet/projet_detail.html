@@ -506,42 +506,15 @@
 
 
                 <!-- POINTS / CHEF D'ÉQUIPE -->
-
                 {% if request.session.role == "ChefMagasin" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" or request.session.role == "Magasin" %}
-
                     <a href="{% url 'projet:point_list' projet.id %}" class="btn btn-outline-danger"><i class="fas fa-location-dot me-1"></i>Points</a>
-
-
-                    <a
-                        href="{% url 'projet:chef_equipe_list' projet.id %}"
-                        class="btn btn-outline-success"
-                    >
-
-                        <i class="fas fa-user-group me-1"></i>
-
-                        Chef d'équipe
-
-                    </a>
-
+                    <a href="{% url 'projet:chef_equipe_list' projet.id %}" class="btn btn-outline-success"><i class="fas fa-user-group me-1"></i>Chef d'équipe</a>
                 {% endif %}
 
 
                 <!-- VÉHICULES / ENGINS / MINIERS -->
-
                 {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
-
-                    <a
-                        href="{% url 'projet:vehicule_projet_list' projet.id %}"
-                        class="btn btn-outline-dark"
-                    >
-
-                        <i class="fas fa-truck me-1"></i>
-
-                        Véhicule
-
-                    </a>
-
-
+                    <a href="{% url 'projet:vehicule_projet_list' projet.id %}" class="btn btn-outline-dark"><i class="fas fa-truck me-1"></i>Véhicule</a>
                     <a
                         href="{% url 'projet:engin_list' projet.id %}"
                         class="btn btn-outline-dark"
@@ -680,137 +653,82 @@
 
 
         <div class="card-body">
-
             {% if equipe %}
-
                 <div class="row g-3">
-
                     {% for membre in equipe|slice:":6" %}
-
                         <div class="col-md-4">
-
                             <div class="border rounded p-3 h-100">
 
                                 <!-- NOM -->
-
                                 <div class="fw-bold">
-
                                     {% if membre.personnel %}
-
                                         {{ membre.personnel }}
-
                                     {% elif membre.personnel_execution %}
-
                                         {{ membre.personnel_execution.nom }}
-
                                     {% else %}
-
                                         <span class="text-muted">
                                             Membre non identifié
                                         </span>
-
                                     {% endif %}
-
                                 </div>
 
-
                                 <!-- FONCTION -->
-
                                 <div class="text-primary small">
-
                                     <i class="fas fa-briefcase me-1"></i>
-
                                     {{ membre.get_fonction_display }}
-
                                 </div>
 
 
                                 <!-- TYPE -->
-
                                 <div class="small text-muted mt-2">
-
                                     {% if membre.personnel %}
-
                                         <i class="fas fa-building me-1"></i>
-
                                         Personnel interne
-
                                     {% elif membre.personnel_execution %}
-
                                         <i class="fas fa-user-tie me-1"></i>
-
                                         Personnel d'exécution / contractuel
-
                                     {% endif %}
-
                                 </div>
 
 
                                 <!-- PÉRIODE -->
-
                                 <div class="small text-muted mt-1">
-
                                     <i class="fas fa-calendar me-1"></i>
-
                                     {% if membre.date_debut %}
                                         {{ membre.date_debut|date:"d/m/Y" }}
                                     {% else %}
                                         --
                                     {% endif %}
-
                                     →
-
                                     {% if membre.date_fin %}
                                         {{ membre.date_fin|date:"d/m/Y" }}
                                     {% else %}
                                         --
                                     {% endif %}
-
                                 </div>
 
 
                                 <!-- ÉTAT -->
-
                                 {% if membre.acces_actif %}
-
                                     <span class="badge bg-success mt-2">
-
                                         <i class="fas fa-check me-1"></i>
-
                                         Accès actif
-
                                     </span>
-
                                 {% else %}
-
                                     <span class="badge bg-secondary mt-2">
-
                                         <i class="fas fa-clock me-1"></i>
-
                                         Expiré / inactif
-
                                     </span>
-
                                 {% endif %}
-
                             </div>
-
                         </div>
-
                     {% endfor %}
-
                 </div>
-
             {% else %}
-
                 <p class="text-muted mb-0">
-
                     <i class="fas fa-info-circle me-1"></i>
-
                     Aucun membre dans l'équipe.
-
                 </p>
-
             {% endif %}
 
         </div>
@@ -872,659 +790,291 @@
                                 <div class="d-flex align-items-center mb-3">
 
                                     {% if chef.photo %}
-
-                                        <img
-                                            src="{{ chef.photo.url }}"
-                                            alt="Photo de {{ chef.nom }}"
-                                            class="rounded-circle me-2"
-                                            style="
-                                                width:55px;
-                                                height:55px;
-                                                object-fit:cover;
-                                            "
-                                        >
-
+                                        <img src="{{ chef.photo.url }}" alt="Photo de {{ chef.nom }}" class="rounded-circle me-2" style="width:55px;height:55px;object-fit:cover;">
                                     {% else %}
-
-                                        <div
-                                            class="rounded-circle bg-light text-success d-flex align-items-center justify-content-center me-2"
-                                            style="
-                                                width:55px;
-                                                height:55px;
-                                            "
-                                        >
-
+                                        <div class="rounded-circle bg-light text-success d-flex align-items-center justify-content-center me-2" style="width:55px;height:55px;">
                                             <i class="fas fa-user-tie fa-lg"></i>
-
                                         </div>
-
                                     {% endif %}
-
-
                                     <div>
-
                                         <div class="fw-bold">
-
-                                            {{ chef.nom|title }}
-
+                                            {{ chef.nom|upper }}
                                         </div>
-
-
                                         <div class="small text-success">
-
                                             <i class="fas fa-user-tie me-1"></i>
-
                                             Chef d'équipe
-
                                         </div>
-
                                     </div>
-
                                 </div>
 
 
                                 <!-- =================================
                                      POINT
                                 ================================== -->
-
                                 {% if chef.point_projet %}
-
                                     <div class="small mb-2">
-
                                         <i class="fas fa-location-dot text-danger me-1"></i>
-
-                                        <strong>
-                                            Point :
-                                        </strong>
-
-                                        {{ chef.point_projet.nom }}
-
+                                        <strong>Point :</strong>
+                                        {{ chef.point_projet.nom|title }}
                                     </div>
-
                                 {% else %}
-
                                     <div class="small text-muted mb-2">
-
                                         <i class="fas fa-location-dot me-1"></i>
-
                                         Aucun point affecté
-
                                     </div>
-
                                 {% endif %}
 
 
                                 <!-- =================================
                                      MONTANT
                                 ================================== -->
-
                                 <div class="small mb-2">
-
                                     <i class="fas fa-money-bill-wave text-success me-1"></i>
-
-                                    <strong>
-                                        Montant :
-                                    </strong>
-
-                                    {{ chef.montant|floatformat:2 }}
-                                    Ar
-
+                                    <strong>Montant :</strong>
+                                    {{ chef.montant|floatformat:2 }}Ar
                                 </div>
-
 
                                 <!-- =================================
                                      PÉRIODE
                                 ================================== -->
-
                                 <div class="small text-muted">
-
                                     <i class="fas fa-calendar me-1"></i>
-
                                     {% if chef.date_debut %}
-
                                         {{ chef.date_debut|date:"d/m/Y" }}
-
                                     {% else %}
-
                                         --
-
                                     {% endif %}
-
                                     →
-
                                     {% if chef.date_fin %}
-
                                         {{ chef.date_fin|date:"d/m/Y" }}
-
                                     {% else %}
-
                                         --
-
                                     {% endif %}
-
                                 </div>
-
 
                                 <!-- =================================
                                      ÉTAT
                                 ================================== -->
-
                                 {% if chef.acces_actif %}
-
                                     <span class="badge bg-success mt-2">
-
                                         <i class="fas fa-check-circle me-1"></i>
-
                                         Actif
-
                                     </span>
-
                                 {% elif chef.periode_terminee %}
-
                                     <span class="badge bg-secondary mt-2">
-
                                         <i class="fas fa-clock me-1"></i>
-
                                         Période terminée
-
                                     </span>
-
                                 {% else %}
-
                                     <span class="badge bg-warning text-dark mt-2">
-
                                         <i class="fas fa-hourglass-half me-1"></i>
-
                                         Inactif
-
                                     </span>
-
                                 {% endif %}
-
                             </div>
-
                         </div>
-
                     {% endfor %}
-
                 </div>
-
 
                 {% if nombre_chefs_equipe > 6 %}
-
                     <div class="text-center mt-3">
-
-                        <a
-                            href="{% url 'projet:chef_equipe_list' projet.id %}"
-                            class="btn btn-outline-success"
-                        >
-
-                            <i class="fas fa-list me-1"></i>
-
-                            Voir les {{ nombre_chefs_equipe }}
+                        <a href="{% url 'projet:chef_equipe_list' projet.id %}" class="btn btn-outline-success"><i class="fas fa-list me-1"></i>Voir les {{ nombre_chefs_equipe }}
                             chefs d'équipe
-
                         </a>
-
                     </div>
-
                 {% endif %}
-
             {% else %}
-
                 <div class="text-muted">
-
                     <i class="fas fa-info-circle me-1"></i>
-
                     Aucun chef d'équipe affecté à ce projet.
-
                 </div>
-
             {% endif %}
-
         </div>
-
     </div>
-
 
     <!-- =========================================================
          POINTS DE CHANTIER
     ========================================================== -->
-
     <div class="card border-0 shadow-sm mb-4">
-
         <div class="card-header bg-danger text-white">
-
             <div class="d-flex justify-content-between align-items-center">
-
                 <span class="fw-bold">
-
                     <i class="fas fa-location-dot me-2"></i>
-
                     Points de chantier
-
                 </span>
-
-
-                <a
-                    href="{% url 'projet:point_list' projet.id %}"
-                    class="btn btn-sm btn-light"
-                >
-
-                    Voir tout
-
-                </a>
-
+                <a href="{% url 'projet:point_list' projet.id %}" class="btn btn-sm btn-light">Voir tout</a>
             </div>
-
         </div>
 
-
         <div class="card-body p-0">
-
             {% if points %}
-
                 <div class="table-responsive">
-
                     <table class="table table-hover mb-0">
-
                         <thead class="table-light">
-
                             <tr>
-
-                                <th>
-                                    Point
-                                </th>
-
-                                <th>
-                                    Localisation
-                                </th>
-
-                                <th>
-                                    Distance
-                                </th>
-
-                                <th>
-                                    Travail prévu
-                                </th>
-
-                                <th>
-                                    État
-                                </th>
-
+                                <th>Point</th>
+                                <th>Localisation</th>
+                                <th>Distance</th>
+                                <th>Travail prévu</th>
+                                <th>État</th>
                             </tr>
-
                         </thead>
 
-
                         <tbody>
-
                             {% for point in points|slice:":8" %}
-
                                 <tr>
-
+                                    <td><strong>{{ point.nom|title }}</strong></td>
                                     <td>
-
-                                        <strong>
-                                            {{ point.nom|title }}
-                                        </strong>
-
-                                    </td>
-
-
-                                    <td>
-
                                         {% if point.localisation %}
-
-                                            {{ point.localisation }}
-
+                                            {{ point.localisation|upper }}
                                         {% else %}
-
                                             <span class="text-muted">
                                                 --
                                             </span>
-
                                         {% endif %}
-
                                     </td>
-
-
+                                    <td>{{ point.distance_km|floatformat:2 }}km</td>
+                                    <td>{{ point.travail_prevu|title }}</td>
                                     <td>
-
-                                        {{ point.distance_km|floatformat:2 }}
-
-                                        km
-
-                                    </td>
-
-
-                                    <td>
-
-                                        {{ point.travail_prevu }}
-
-                                    </td>
-
-
-                                    <td>
-
                                         {% if point.actif %}
-
                                             <span class="badge bg-success">
-
                                                 Actif
-
                                             </span>
-
                                         {% else %}
-
                                             <span class="badge bg-secondary">
-
                                                 Inactif
-
                                             </span>
-
                                         {% endif %}
-
                                     </td>
-
                                 </tr>
-
                             {% endfor %}
-
                         </tbody>
-
                     </table>
-
                 </div>
-
             {% else %}
-
                 <div class="p-4 text-muted">
-
                     <i class="fas fa-info-circle me-1"></i>
-
                     Aucun point de chantier enregistré.
-
                 </div>
-
             {% endif %}
-
         </div>
-
     </div>
-
 
     <!-- =========================================================
          MATÉRIAUX DU PROJET
     ========================================================== -->
-
     <div class="card border-0 shadow-sm mb-4">
-
         <div class="card-header bg-info text-white">
-
             <div class="d-flex justify-content-between align-items-center">
-
-                <span class="fw-bold">
-
-                    <i class="fas fa-boxes-stacked me-2"></i>
-
-                    Matériaux du projet
-
-                </span>
-
-
-                <a
-                    href="{% url 'projet:materiau_list' projet.id %}"
-                    class="btn btn-sm btn-light"
-                >
-
-                    Voir tout
-
-                </a>
-
+                <span class="fw-bold"> <i class="fas fa-boxes-stacked me-2"></i>Matériaux du projet</span>
+                <a href="{% url 'projet:materiau_list' projet.id %}" class="btn btn-sm btn-light">Voir tout</a>
             </div>
-
         </div>
-
 
         <div class="card-body p-0">
-
             {% if materiaux_projet %}
-
                 <div class="table-responsive">
-
                     <table class="table table-hover mb-0">
-
                         <thead class="table-light">
-
                             <tr>
-
-                                <th>
-                                    Matériau
-                                </th>
-
-                                <th>
-                                    Unité
-                                </th>
-
-                                <th>
-                                    Quantité prévue
-                                </th>
-
+                                <th>Matériau</th>
+                                <th>Unité</th>
+                                <th>Quantité prévue</th>
                             </tr>
-
                         </thead>
 
-
                         <tbody>
-
                             {% for materiau in materiaux_projet|slice:":8" %}
-
                                 <tr>
-
-                                    <td>
-
-                                        <strong>
-                                            {{ materiau.materiau|title }}
-                                        </strong>
-
-                                    </td>
-
-
-                                    <td>
-
-                                        {{ materiau.unite }}
-
-                                    </td>
-
-
-                                    <td>
-
-                                        {{ materiau.quantite_prevue|floatformat:2 }}
-
-                                    </td>
-
+                                    <td><strong>{{ materiau.materiau|title }}</strong></td>
+                                    <td>{{ materiau.unite |title}}</td>
+                                    <td>{{ materiau.quantite_prevue|floatformat:2 }}</td>
                                 </tr>
-
                             {% endfor %}
-
                         </tbody>
-
                     </table>
-
                 </div>
-
             {% else %}
-
                 <div class="p-4 text-muted">
-
                     <i class="fas fa-info-circle me-1"></i>
-
                     Aucun matériau enregistré pour ce projet.
-
                 </div>
-
             {% endif %}
-
         </div>
-
     </div>
 
-
-    <!-- =========================================================
-         DERNIERS RAPPORTS
-    ========================================================== -->
-
+    <!-- =========================================================DERNIERS RAPPORTS========================================================== -->
     <div class="row g-4">
 
-
-        <!-- =====================================================
-             RAPPORTS D'AVANCEMENT
-        ====================================================== -->
-
+        <!-- =====================================================RAPPORTS D'AVANCEMENT====================================================== -->
         <div class="col-lg-6">
-
             <div class="card border-0 shadow-sm h-100">
-
                 <div class="card-header bg-info text-white">
-
                     <i class="fas fa-chart-line me-2"></i>
-
                     Rapports d'avancement
-
                 </div>
 
-
                 <div class="card-body">
-
                     {% if rapports_projet %}
-
                         {% for rapport in rapports_projet|slice:":5" %}
-
                             <div class="border-bottom pb-2 mb-2">
-
                                 <div class="d-flex justify-content-between">
-
-                                    <strong>
-
-                                        {{ rapport.titre }}
-
-                                    </strong>
-
-
+                                    <strong>{{ rapport.titre|title }}</strong>
                                     <span class="badge bg-info">
-
                                         {{ rapport.avancement }} %
-
                                     </span>
-
                                 </div>
 
-
                                 <small class="text-muted">
-
                                     {{ rapport.date_rapport|date:"d/m/Y" }}
-
                                     {% if rapport.auteur %}
                                         -
                                         {{ rapport.auteur }}
                                     {% endif %}
-
                                 </small>
-
                             </div>
-
                         {% endfor %}
-
                     {% else %}
-
                         <p class="text-muted mb-0">
-
                             <i class="fas fa-info-circle me-1"></i>
-
                             Aucun rapport d'avancement.
-
                         </p>
-
                     {% endif %}
-
                 </div>
-
             </div>
-
         </div>
 
-
-        <!-- =====================================================
-             DERNIERS TRAVAUX
-        ====================================================== -->
-
+        <!-- =====================================================DERNIERS TRAVAUX====================================================== -->
         <div class="col-lg-6">
-
             <div class="card border-0 shadow-sm h-100">
-
                 <div class="card-header bg-warning">
-
                     <i class="fas fa-hammer me-2"></i>
-
                     Derniers travaux
-
                 </div>
-
 
                 <div class="card-body">
-
                     {% if rapports_travaux %}
-
                         {% for rapport in rapports_travaux|slice:":5" %}
-
                             <div class="border-bottom pb-2 mb-2">
-
-                                <strong>
-
-                                    {{ rapport.titre }}
-
-                                </strong>
-
-
+                                <strong>{{ rapport.titre }}</strong>
                                 <div class="small text-muted">
-
                                     {{ rapport.date_debut|date:"d/m/Y" }}
-
                                     {% if rapport.date_fin %}
-
                                         →
-
                                         {{ rapport.date_fin|date:"d/m/Y" }}
-
                                     {% endif %}
-
                                 </div>
-
                             </div>
-
                         {% endfor %}
-
                     {% else %}
-
                         <p class="text-muted mb-0">
-
                             <i class="fas fa-info-circle me-1"></i>
-
                             Aucun rapport de travaux.
-
                         </p>
-
                     {% endif %}
-
                 </div>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
-
 {% endblock %}

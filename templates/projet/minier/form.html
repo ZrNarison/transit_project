@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    {{ titre }} - {{ projet.titre }}
+    {{ titre }} - {{ projet.titre |title}}
 {% endblock %}
 
 {% block content %}
@@ -36,7 +36,7 @@
             <div class="text-muted">
 
                 Projet :
-                <strong>{{ projet.titre }}</strong>
+                <strong>{{ projet.titre |title}}</strong>
 
             </div>
 
@@ -342,61 +342,6 @@
                             </div>
 
                         {% endfor %}
-
-                    </div>
-
-                </div>
-
-
-                <!-- ================================================= -->
-                <!-- INFORMATIONS ENREGISTREUR -->
-                <!-- ================================================= -->
-
-                <hr class="my-4">
-
-                <div class="alert alert-info mb-0">
-
-                    <div class="d-flex">
-
-                        <i class="fas fa-user-lock fs-4 me-3"></i>
-
-                        <div>
-
-                            {% if mode == "create" %}
-
-                                <strong>Enregistreur :</strong>
-
-                                {{ personnel.nom }}
-                                {{ personnel.prenom }}
-
-                                <div class="small mt-1">
-                                    Vous serez automatiquement enregistré
-                                    comme responsable de cet enregistrement.
-                                </div>
-
-                            {% else %}
-
-                                <strong>Enregistreur :</strong>
-
-                                {% if minier.enregistre_par %}
-
-                                    {{ minier.enregistre_par.nom }}
-                                    {{ minier.enregistre_par.prenom }}
-
-                                {% else %}
-
-                                    Non renseigné
-
-                                {% endif %}
-
-                                <div class="small mt-1">
-                                    Seul l'enregistreur peut modifier
-                                    ou supprimer ce minier.
-                                </div>
-
-                            {% endif %}
-
-                        </div>
 
                     </div>
 

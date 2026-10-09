@@ -1005,7 +1005,7 @@ def chef_equipe_update(
 
     return render(
         request,
-        "projet/chef_equipe_form.html",
+        "projet/ChefEquipe/form.html",
         {
             "form": form,
             "projet": projet,
@@ -1022,16 +1022,10 @@ def chef_equipe_update(
 # ============================================================
 
 @project_manager_required
-def chef_equipe_delete(
-    request,
-    projet_id,
-    pk,
-):
+def chef_equipe_delete(request,projet_id,pk,):
     """
     Supprimer un chef d'équipe.
-
-    Seul le Personnel ayant enregistré le chef
-    peut le supprimer.
+    Seul le Personnel ayant enregistré le chef peut le supprimer.
     """
 
     projet = get_object_or_404(
@@ -2326,7 +2320,7 @@ def equipe_list(
 
     return render(
         request,
-        "projet/equipe_list.html",
+        "projet/equipage/list.html",
         {
             "projet": projet,
             "equipe": equipe,
@@ -2418,7 +2412,7 @@ def equipe_create(
 
     return render(
         request,
-        "projet/equipe_form.html",
+        "projet/equipage/form.html",
         {
             "form": form,
             "projet": projet,
@@ -2506,7 +2500,7 @@ def equipe_update(
 
     return render(
         request,
-        "projet/equipe_form.html",
+        "projet/equipage/form.html",
         {
             "form": form,
             "projet": projet,
@@ -3784,33 +3778,19 @@ def rapport_materiau_create(request, projet_id):
 # ============================================================
 
 @login_required_projet
-def vehicule_projet_list(
-    request,
-    projet_id,
-):
+def vehicule_projet_list(request,projet_id,):
 
-    projet = get_object_or_404(
-        Projet,
-        pk=projet_id,
-    )
+    projet = get_object_or_404(Projet,pk=projet_id,)
 
     # --------------------------------------------------------
     # VÉRIFICATION DE L'ACCÈS AU PROJET
     # --------------------------------------------------------
 
-    if not user_has_project_access(
-        request.current_user,
-        projet,
-    ):
+    if not user_has_project_access(request.current_user,projet,):
 
-        messages.error(
-            request,
-            "Votre accès à ce projet n'est pas actif.",
-        )
+        messages.error(request,"Votre accès à ce projet n'est pas actif.",)
 
-        return redirect(
-            "projet:projet_list"
-        )
+        return redirect("projet:projet_list")
 
     # --------------------------------------------------------
     # LISTE DES AFFECTATIONS
@@ -3865,7 +3845,7 @@ def vehicule_projet_list(
 
     return render(
         request,
-        "projet/vehicule_projet_list.html",
+        "projet/vehicule/list.html",
         {
             "projet": projet,
             "affectations": affectations,
@@ -3885,15 +3865,9 @@ def vehicule_projet_list(
 # ============================================================
 
 @project_manager_required
-def vehicule_projet_create(
-    request,
-    projet_id,
-):
+def vehicule_projet_create(request,projet_id,):
 
-    projet = get_object_or_404(
-        Projet,
-        pk=projet_id,
-    )
+    projet = get_object_or_404(Projet,pk=projet_id,)
 
     # --------------------------------------------------------
     # POST
@@ -3901,16 +3875,11 @@ def vehicule_projet_create(
 
     if request.method == "POST":
 
-        form = VehiculeProjetForm(
-            request.POST,
-            projet=projet,
-        )
+        form = VehiculeProjetForm(request.POST,projet=projet,)
 
         if form.is_valid():
 
-            affectation = form.save(
-                commit=False
-            )
+            affectation = form.save(commit=False)
 
             # ------------------------------------------------
             # PROJET
@@ -3955,7 +3924,7 @@ def vehicule_projet_create(
 
     return render(
         request,
-        "projet/vehicule_projet_form.html",
+        "projet/vehicule/form.html",
         {
             "form": form,
             "projet": projet,
@@ -3976,16 +3945,9 @@ def vehicule_projet_create(
 # ============================================================
 
 @project_manager_required
-def vehicule_projet_update(
-    request,
-    projet_id,
-    vehicule_projet_id,
-):
+def vehicule_projet_update(request,projet_id,vehicule_projet_id,):
 
-    projet = get_object_or_404(
-        Projet,
-        pk=projet_id,
-    )
+    projet = get_object_or_404(Projet,pk=projet_id,)
 
     # --------------------------------------------------------
     # RÉCUPÉRATION DE L'AFFECTATION
@@ -4020,9 +3982,7 @@ def vehicule_projet_update(
 
         if form.is_valid():
 
-            affectation_modifiee = form.save(
-                commit=False
-            )
+            affectation_modifiee = form.save(commit=False)
 
             # ------------------------------------------------
             # GARANTIR LE PROJET
@@ -4067,7 +4027,7 @@ def vehicule_projet_update(
 
     return render(
         request,
-        "projet/vehicule_projet_form.html",
+        "projet/vehicule/form.html",
         {
             "form": form,
             "projet": projet,
@@ -4088,26 +4048,15 @@ def vehicule_projet_update(
 # ============================================================
 
 @project_manager_required
-def vehicule_projet_delete(
-    request,
-    projet_id,
-    vehicule_projet_id,
-):
+def vehicule_projet_delete(request,projet_id,vehicule_projet_id,):
 
-    projet = get_object_or_404(
-        Projet,
-        pk=projet_id,
-    )
+    projet = get_object_or_404(Projet,pk=projet_id,)
 
     # --------------------------------------------------------
     # RÉCUPÉRATION DE L'AFFECTATION
     # --------------------------------------------------------
 
-    affectation = get_object_or_404(
-        VehiculeProjet,
-        pk=vehicule_projet_id,
-        projet=projet,
-    )
+    affectation = get_object_or_404(VehiculeProjet,pk=vehicule_projet_id,projet=projet,)
 
     # --------------------------------------------------------
     # SUPPRESSION UNIQUEMENT EN POST
@@ -6092,7 +6041,7 @@ def equipe_projet_selection(request):
 
     return render(
         request,
-        "projet/equipe_projet_selection.html",
+        "projet/equipage/selection.html",
         {
             "projets": projets,
             "user": request.current_user,

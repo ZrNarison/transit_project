@@ -544,54 +544,6 @@
 
             </div>
 
-
-            <!-- ================================================= -->
-            <!-- OBSERVATION -->
-            <!-- ================================================= -->
-            <div class="mb-4">
-
-                <label for="{{ form.observation.id_for_label }}"
-                       class="form-label fw-semibold">
-
-                    <i class="fas fa-comment-alt text-primary"></i>
-
-                    Observation
-
-                </label>
-
-                {{ form.observation }}
-
-                {% if form.observation.errors %}
-
-                    <div class="text-danger small mt-1">
-
-                        {% for error in form.observation.errors %}
-                            <div>{{ error }}</div>
-                        {% endfor %}
-
-                    </div>
-
-                {% endif %}
-
-            </div>
-
-
-            <!-- ================================================= -->
-            <!-- RAPPEL -->
-            <!-- ================================================= -->
-            <div class="alert alert-info">
-
-                <i class="fas fa-info-circle"></i>
-
-                <strong>Rappel :</strong>
-
-                l'affectation du véhicule est limitée à la période
-                du projet. Les données historiques restent conservées
-                pour les rapports de l'entreprise.
-
-            </div>
-
-
             <!-- ================================================= -->
             <!-- BOUTONS -->
             <!-- ================================================= -->
@@ -629,55 +581,6 @@
             </div>
 
         </form>
-
-    </div>
-
-</div>
-
-
-<!-- ========================================================= -->
-<!-- AIDE -->
-<!-- ========================================================= -->
-<div class="card shadow-sm mt-4">
-
-    <div class="card-body">
-
-        <h6 class="fw-bold">
-
-            <i class="fas fa-lightbulb text-warning"></i>
-
-            Informations
-
-        </h6>
-
-        <ul class="mb-0 text-muted">
-
-            <li>
-                Le véhicule doit être actif dans le parc automobile.
-            </li>
-
-            <li>
-                Un véhicule déjà affecté à ce projet n'est pas
-                proposé pour une nouvelle affectation.
-            </li>
-
-            <li>
-                Le chauffeur doit être membre de l'équipe du projet
-                avec la fonction <strong>Chauffeur</strong>.
-            </li>
-
-            <li>
-                Le kilométrage final doit être supérieur ou égal
-                au kilométrage initial.
-            </li>
-
-            <li>
-                Le carburant estimé est calculé automatiquement
-                à partir du kilométrage et de la consommation
-                en km/L.
-            </li>
-
-        </ul>
 
     </div>
 
