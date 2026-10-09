@@ -5918,7 +5918,7 @@ def rapport_vehicule_list(
 
     return render(
         request,
-        "projet/rapport_vehicule_list.html",
+        "projet/vehicule/rapport_list.html",
         {
             "projet": request.projet,
             "rapports": rapports,
@@ -6001,7 +6001,7 @@ def rapport_vehicule_create(
 
     return render(
         request,
-        "projet/rapport_vehicule_form.html",
+        "projet/vehicule/rapport_form.html",
         {
             "form": form,
             "projet": projet,
