@@ -13,134 +13,14 @@ from .models import Client
 from .forms import ClientForm
 
 from audit.utils import enregistrer_action
-
-# ============================================================
-
-# UTILISATEUR CONNECTÉ
-
-# ============================================================
-
-def get_current_user(request):
-    user_id = request.session.get("user_id")
-
-    if not user_id:
-        return None
-
-    return (
-        AppUser.objects
-        .select_related("personnel")
-        .filter(pk=user_id)
-        .first()
-    )
-
-
-# ============================================================
-
-# AUTHENTIFICATION
-
-# ============================================================
-
-def login_required_projet(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-
-        user = get_current_user(request)
-
-        if not user:
-            return redirect("users:login")
-
-        request.current_user = user
-
-        return view_func(request, *args, **kwargs)
-
-    return wrapper
-
-# ============================================================
-
-# DROITS DE GESTION DES PROJETS
-
-# ============================================================
-
-def user_can_manage_projects(user):
-    if not user:
-        return False
-
-    return user.role in {
-        "Admin",
-        "Superviseur",
-        "UserMica",
-    }
-
-
-def project_manager_required(view_func):
-    @wraps(view_func)
-    @login_required_projet
-    def wrapper(request, *args, **kwargs):
-
-        if not user_can_manage_projects(request.current_user):
-            messages.error(
-                request,
-                "Vous n'avez pas l'autorisation de gérer les projets."
-            )
-            return redirect("projet:projet_list")
-
-        return view_func(request, *args, **kwargs)
-
-    return wrapper
-
-
-# ============================================================
-
-# PERSONNEL DE L'UTILISATEUR
-
-# ============================================================
-
-def get_current_personnel(request):
-    user = getattr(request,"current_user",None,)
-
-    if not user:
-        return None
-
-    return getattr(
-        user,
-        "personnel",
-        None,
-    )
-
-
-# ============================================================
-
-# VÉRIFICATION D'ACCÈS À UN PROJET
-
-# ============================================================
-
-def user_has_project_access(user, projet):
-
-    if not user:
-        return False
-
-    if user_can_manage_projects(user):
-        return True
-
-    personnel = getattr(
-        user,
-        "personnel",
-        None,
-    )
-
-    if not personnel:
-        return False
-
-    aujourd_hui = timezone.localdate()
-
-    return EquipeProjet.objects.filter(
-        projet=projet,
-        personnel=personnel,
-        actif=True,
-        date_debut__lte=aujourd_hui,
-        date_fin__gte=aujourd_hui,
-    ).exists()
-
+from users.decorators import (
+    get_current_user,
+    project_access_required,
+    user_can_manage_projects,
+    get_current_personnel,
+    login_required_projet,
+    project_manager_required,    
+)
 
 # =========================================================
 # LISTE
