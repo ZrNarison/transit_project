@@ -1,0 +1,100 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Détails de l'ancien personnel{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-user text-primary me-2"></i>
+                {{ personnel.nom }} {{ personnel.prenom }}
+            </h3>
+            <p class="text-muted mb-0">Fiche détaillée de l'ancien personnel</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="{% url 'h_personnel_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Retour
+            </a>
+
+            <a
+                href="{% url 'h_personnel_update' personnel.pk %}"
+                class="btn btn-warning"
+            >
+                <i class="fas fa-edit me-1"></i>
+                Modifier
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white py-3">
+            <i class="fas fa-address-card me-2"></i>
+            Informations personnelles
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row g-4">
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Nom</div>
+                    <div class="fw-semibold">{{ personnel.nom|default:"—" }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Prénom</div>
+                    <div class="fw-semibold">{{ personnel.prenom|default:"—" }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Adresse</div>
+                    <div>{{ personnel.adresse|default:"—" }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Téléphone</div>
+                    <div>{{ personnel.telephone|default:"—" }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Fonction</div>
+                    <div>{{ personnel.fonction|default:"—" }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Catégorie</div>
+                    <div>{{ personnel.categorie|default:"—" }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Type de travail</div>
+                    <div>{{ personnel.typeTravail|default:"—" }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Type de contrat</div>
+                    <div>{{ personnel.typeContrat|default:"—" }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-muted small">Salaire</div>
+                    <div class="fw-semibold">
+                        {% if personnel.psalaire != None %}
+                            {{ personnel.psalaire }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

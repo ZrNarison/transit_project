@@ -14,4 +14,10 @@ urlpatterns = [
         name="logs_list"
     ),
 
+
+    path(
+            "",
+            views.h_logs_list,
+            name="h_logs_list"
+        ),
 ]

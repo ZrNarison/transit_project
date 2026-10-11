@@ -6,8 +6,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.utils import enregistrer_action
 
-from .forms import MaterielsForm
-from .models import Materiels
+from .forms import MaterielsForm, H_MaterielsForm
+from .models import Materiels, H_Materiels
+from users.models import AppUser, H_AppUser
 
 
 # ================================================================
@@ -1388,4 +1389,406 @@ def supprimer_stock_initial(
         nom=materiel.nom,
         typeMat=materiel.typeMat,
         catMat=materiel.catMat,
+    )
+
+
+# ============================================================
+# ENTREPRISE H — GESTION DES MATÉRIELS
+# ============================================================
+
+# ============================================================
+# AUTORISATION ENTREPRISE H
+# ============================================================
+
+def h_role_autorise(request, roles):
+    """Vérifie le rôle de l'utilisateur connecté à Entreprise H."""
+    return request.session.get("h_role") in roles
+
+
+def h_materiel_audit_data(materiel):
+    """Prépare les informations du matériel H pour l'audit."""
+    return {
+        "id": materiel.pk,
+        "nom": getattr(materiel, "nom", ""),
+        "typeMat": getattr(materiel, "typeMat", ""),
+        "catMat": getattr(materiel, "catMat", ""),
+        "stock_initial": getattr(materiel, "stock_initial", 0),
+    }
+
+
+# ============================================================
+# LISTE DES MATÉRIELS H
+# ============================================================
+
+def h_materiels_list(request):
+    if not h_role_autorise(request, ["Dir", "Compta"]):
+        messages.error(request, "Vous n'avez pas accès aux matériels de l'Entreprise H.")
+        return redirect("users:h_login")
+
+    materiels = H_Materiels.objects.all().order_by("nom")
+
+    return render(
+        request,
+        "materiels/list.html",
+        {
+            "materiels": materiels,
+            "role": request.session.get("h_role"),
+            "entreprise_h": True,
+        },
+    )
+
+
+# ============================================================
+# AJOUTER UN MATÉRIEL H
+# ============================================================
+
+def h_materiels_add(request):
+    if not h_role_autorise(request, ["Dir", "Compta"]):
+        messages.error(request, "Vous n'êtes pas autorisé à ajouter un matériel.")
+        return redirect("materiels:h_materiels_list")
+
+    utilisateur_id = request.session.get("h_user_id")
+
+    utilisateur = get_object_or_404(
+        H_AppUser,
+        pk=utilisateur_id,
+        role__in=["Dir", "Compta"],
+    )
+
+    if request.method == "POST":
+        form = H_MaterielsForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            materiel = form.save(commit=False)
+            materiel.enregistreur = utilisateur
+            materiel.save()
+            form.save_m2m()
+
+            enregistrer_action(
+                request=request,
+                action="CREATE",
+                modele="H_Materiels",
+                objet_id=materiel.pk,
+                details=h_materiel_audit_data(materiel),
+            )
+
+            messages.success(request, "Matériel H ajouté avec succès.")
+            return redirect("materiels:h_materiels_list")
+    else:
+        form = H_MaterielsForm()
+
+    return render(
+        request,
+        "materiels/h_form.html",
+        {
+            "form": form,
+            "titre": "Ajouter un matériel — Entreprise H",
+            "action": "Ajouter",
+            "entreprise_h": True,
+        },
+    )
+
+
+# ============================================================
+# MODIFIER UN MATÉRIEL H
+# Seul l'enregistreur peut modifier
+# ============================================================
+
+def h_materiels_edit(request, pk):
+    if not h_role_autorise(request, ["Dir", "Compta"]):
+        messages.error(request, "Vous n'êtes pas autorisé à modifier ce matériel.")
+        return redirect("materiels:h_materiels_list")
+
+    materiel = get_object_or_404(H_Materiels, pk=pk)
+
+    utilisateur_id = request.session.get("h_user_id")
+    utilisateur = get_object_or_404(H_AppUser, pk=utilisateur_id)
+
+    if materiel.enregistreur_id != utilisateur.pk:
+        messages.error(
+            request,
+            "Seul l'utilisateur ayant enregistré ce matériel peut le modifier.",
+        )
+        return redirect("materiels:h_materiels_detail", pk=pk)
+
+    if request.method == "POST":
+        form = H_MaterielsForm(
+            request.POST,
+            request.FILES,
+            instance=materiel,
+        )
+
+        if form.is_valid():
+            materiel_modifie = form.save(commit=False)
+
+            # Conserver l'enregistreur d'origine.
+            materiel_modifie.enregistreur_id = materiel.enregistreur_id
+            materiel_modifie.save()
+            form.save_m2m()
+
+            enregistrer_action(
+                request=request,
+                action="UPDATE",
+                modele="H_Materiels",
+                objet_id=materiel_modifie.pk,
+                details=h_materiel_audit_data(materiel_modifie),
+            )
+
+            messages.success(request, "Matériel H modifié avec succès.")
+            return redirect(
+                "materiels:h_materiels_detail",
+                pk=materiel_modifie.pk,
+            )
+    else:
+        form = H_MaterielsForm(instance=materiel)
+
+    return render(
+        request,
+        "materiels/h_form.html",
+        {
+            "form": form,
+            "materiel": materiel,
+            "titre": "Modifier un matériel — Entreprise H",
+            "action": "Modifier",
+            "entreprise_h": True,
+        },
+    )
+
+
+# ============================================================
+# SUPPRIMER UN MATÉRIEL H
+# ============================================================
+
+def h_materiels_delete(request, pk):
+    if not h_role_autorise(request, ["Dir", "Compta"]):
+        messages.error(request, "Vous n'êtes pas autorisé à supprimer ce matériel.")
+        return redirect("materiels:h_materiels_list")
+
+    materiel = get_object_or_404(H_Materiels, pk=pk)
+
+    if request.method == "POST":
+        details = h_materiel_audit_data(materiel)
+        objet_id = materiel.pk
+
+        try:
+            materiel.delete()
+
+            enregistrer_action(
+                request=request,
+                action="DELETE",
+                modele="H_Materiels",
+                objet_id=objet_id,
+                details=details,
+            )
+
+            messages.success(request, "Matériel H supprimé avec succès.")
+            return redirect("materiels:h_materiels_list")
+
+        except Exception as exc:
+            messages.error(
+                request,
+                f"Impossible de supprimer ce matériel : {exc}",
+            )
+            return redirect(
+                "materiels:h_materiels_detail",
+                pk=materiel.pk,
+            )
+
+    return render(
+        request,
+        "materiels/h_confirm_delete.html",
+        {
+            "materiel": materiel,
+            "entreprise_h": True,
+        },
+    )
+
+
+# ================================================================
+# ENTREPRISE H — GROUPE DE MATÉRIELS
+# ================================================================
+
+def h_groupe_materiel_queryset(nom, typeMat, catMat):
+    """Récupère les matériels H appartenant au même groupe."""
+    return (
+        H_Materiels.objects.filter(
+            nom__iexact=(nom or "").strip(),
+            typeMat__iexact=(typeMat or "").strip(),
+            catMat__iexact=(catMat or "").strip(),
+        )
+        .prefetch_related("sorties", "sorties__entrees")
+        .order_by("id")
+    )
+
+
+def h_calcul_stock_materiel(materiel):
+    """Calcule le stock restant d'un matériel H."""
+    stock_initial = materiel.stock_initial or Decimal("0")
+
+    stock_sorti = (
+        materiel.sorties.aggregate(
+            total=Sum("Nb_MatSort")
+        )["total"] or Decimal("0")
+    )
+
+    stock_entre = (
+        materiel.sorties.aggregate(
+            total=Sum("entrees__Nb_Entre")
+        )["total"] or Decimal("0")
+    )
+
+    return {
+        "stock_initial": stock_initial,
+        "stock_sorti": stock_sorti,
+        "stock_entre": stock_entre,
+        "stock_restant": stock_initial - stock_sorti + stock_entre,
+    }
+
+
+def h_calcul_stock_groupe(materiels):
+    """Additionne les stocks des matériels H d'un même groupe."""
+    total_initial = Decimal("0")
+    total_sorti = Decimal("0")
+    total_entre = Decimal("0")
+
+    for materiel in materiels:
+        stock = h_calcul_stock_materiel(materiel)
+        total_initial += stock["stock_initial"]
+        total_sorti += stock["stock_sorti"]
+        total_entre += stock["stock_entre"]
+
+    return {
+        "stock_initial": total_initial,
+        "stock_sorti": total_sorti,
+        "stock_entre": total_entre,
+        "stock_restant": total_initial - total_sorti + total_entre,
+    }
+
+
+# ================================================================
+# ENTREPRISE H — DÉTAIL D'UN GROUPE
+# ================================================================
+
+def h_materiels_mdetail(request, nom, typeMat, catMat):
+    if not h_role_autorise(request, ["Dir", "Compta"]):
+        messages.error(request, "Accès refusé aux matériels de l'Entreprise H.")
+        return redirect("materiels:h_materiels_list")
+
+    queryset = h_groupe_materiel_queryset(nom, typeMat, catMat)
+    liste = list(queryset)
+
+    if not liste:
+        messages.error(request, "Aucun matériel H trouvé pour ce groupe.")
+        return redirect("materiels:h_materiels_list")
+
+    stocks = h_calcul_stock_groupe(liste)
+    lignes = []
+
+    for materiel in liste:
+        stock = h_calcul_stock_materiel(materiel)
+        lignes.append({
+            "materiel": materiel,
+            **stock,
+        })
+
+    return render(
+        request,
+        "materiels/h_mdetail.html",
+        {
+            "nom": nom,
+            "typeMat": typeMat,
+            "catMat": catMat,
+            "materiels": liste,
+            "lignes": lignes,
+            "total_stock_initial": stocks["stock_initial"],
+            "total_sorties": stocks["stock_sorti"],
+            "total_entrees": stocks["stock_entre"],
+            "stock_restant": stocks["stock_restant"],
+            "role": request.session.get("h_role"),
+            "entreprise_h": True,
+        },
+    )
+
+
+# ================================================================
+# ENTREPRISE H — DÉTAIL CLASSIQUE
+# ================================================================
+
+def h_materiels_detail(request, nom, typeMat, catMat):
+    if not h_role_autorise(request, ["Dir", "Compta"]):
+        messages.error(request, "Accès refusé aux matériels de l'Entreprise H.")
+        return redirect("materiels:h_materiels_list")
+
+    liste = list(h_groupe_materiel_queryset(nom, typeMat, catMat))
+
+    if not liste:
+        messages.error(request, "Matériel H introuvable.")
+        return redirect("materiels:h_materiels_list")
+
+    stocks = h_calcul_stock_groupe(liste)
+
+    return render(
+        request,
+        "materiels/h_detail.html",
+        {
+            "materiel": liste[0],
+            "materiels": liste,
+            "nom": nom,
+            "typeMat": typeMat,
+            "catMat": catMat,
+            "stock_initial": stocks["stock_initial"],
+            "stock_sorti": stocks["stock_sorti"],
+            "stock_entre": stocks["stock_entre"],
+            "stock_restant": stocks["stock_restant"],
+            "role": request.session.get("h_role"),
+            "entreprise_h": True,
+        },
+    )
+
+
+# ================================================================
+# ENTREPRISE H — SUPPRIMER LE STOCK INITIAL D'UN GROUPE
+# ================================================================
+
+def h_supprimer_stock_initial(request, nom, typeMat, catMat):
+    if not h_role_autorise(request, ["Dir", "Compta"]):
+        messages.error(request, "Vous n'êtes pas autorisé à modifier le stock initial.")
+        return redirect("materiels:h_materiels_list")
+
+    if request.method != "POST":
+        messages.error(request, "Action non autorisée.")
+        return redirect("materiels:h_materiels_list")
+
+    liste = list(h_groupe_materiel_queryset(nom, typeMat, catMat))
+
+    if not liste:
+        messages.error(request, "Aucun matériel H trouvé pour ce groupe.")
+        return redirect("materiels:h_materiels_list")
+
+    for materiel in liste:
+        ancien_stock = materiel.stock_initial or Decimal("0")
+
+        if ancien_stock == 0:
+            continue
+
+        materiel.stock_initial = Decimal("0")
+        materiel.save(update_fields=["stock_initial"])
+
+        enregistrer_action(
+            request,
+            "UPDATE",
+            "H_Materiels",
+            materiel.pk,
+            ancienne={"stock_initial": str(ancien_stock)},
+            nouvelle={"stock_initial": "0"},
+            description="Suppression du stock initial du groupe Entreprise H",
+        )
+
+    messages.success(request, "Le stock initial du groupe H a été remis à zéro.")
+
+    return redirect(
+        "materiels:h_materiels_mdetail",
+        nom=nom,
+        typeMat=typeMat,
+        catMat=catMat,
     )

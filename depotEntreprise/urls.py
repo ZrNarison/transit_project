@@ -56,4 +56,34 @@ urlpatterns = [
         views.depot_soc_delete,
         name="depot_soc_delete"
     ),
+
+    # ============================================================
+    # ENTREPRISE H
+    # ============================================================
+    path(
+        "h/",
+        views.h_depot_soc_list,
+        name="h_depot_soc_list"
+    ),
+    path(
+        "h/add/",
+        views.h_depot_soc_add,
+        name="h_depot_soc_add"
+    ),
+    path(
+        "h/<int:id>/",
+        views.h_depot_soc_detail,
+        name="h_depot_soc_detail"
+    ),
+    path(
+        "h/<int:id>/edit/",
+        views.h_depot_soc_edit,
+        name="h_depot_soc_edit"
+    ),
+    path(
+        "h/<int:id>/delete/",
+        views.h_depot_soc_delete,
+        name="h_depot_soc_delete"
+    ),
+    
 ]

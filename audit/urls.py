@@ -13,4 +13,10 @@ urlpatterns = [
         name="audit_list"
     ),
 
+    path(
+            "",
+            views.h_audit_list,
+            name="h_audit_list"
+        ),
+    
 ]

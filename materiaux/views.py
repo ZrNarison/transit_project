@@ -39,38 +39,131 @@ from .models import (
     ReparationVehicule,
     Vehicule,
 )
+from users.models import H_AppUser
 
 
 # ============================================================
 # UTILITAIRES
 # ============================================================
+# ============================================================
+# AUTHENTIFICATION ENTREPRISE PRINCIPALE ET ENTREPRISE H
+# ============================================================
+from django.contrib import messages
+from django.shortcuts import redirect
+from users.models import AppUser, H_AppUser
+
+
+def check_user(request):
+    """Vérifie la session de l'entreprise principale."""
+
+    user_id = request.session.get("user_id")
+
+    if not user_id:
+        messages.warning(
+            request,
+            "Veuillez vous connecter à l'entreprise principale."
+        )
+        return redirect("users:login")
+
+    user = AppUser.objects.filter(pk=user_id).first()
+
+    if user is None:
+        for key in ("user_id", "username", "role", "photo", "typeTravail"):
+            request.session.pop(key, None)
+
+        messages.error(
+            request,
+            "Session de l'entreprise principale invalide."
+        )
+        return redirect("users:login")
+
+    return user
+
+
+def check_h_user(request):
+    """Vérifie la session d'Entreprise H."""
+
+    h_user_id = request.session.get("h_user_id")
+    h_role = request.session.get("h_role")
+
+    if not h_user_id or not h_role:
+        messages.warning(
+            request,
+            "Veuillez vous connecter à Entreprise H."
+        )
+        return redirect("users:login")
+
+    user = H_AppUser.objects.filter(
+        pk=h_user_id,
+        role=h_role,
+    ).first()
+
+    if user is None:
+        for key in ("h_user_id", "h_username", "h_role", "h_photo"):
+            request.session.pop(key, None)
+
+        messages.error(
+            request,
+            "Session Entreprise H invalide. Veuillez vous reconnecter."
+        )
+        return redirect("users:login")
+
+    return user
+
+
+def check_user(request):
+    user_id = request.session.get("user_id")
+
+    print("=== DEBUG AUTHENTIFICATION GALAXY ===")
+    print("URL :", request.path)
+    print("Session key :", request.session.session_key)
+    print("Session complète :", dict(request.session))
+    print("user_id :", user_id)
+
+    if not user_id:
+        print("ERREUR : user_id absent")
+        messages.warning(
+            request,
+            "Veuillez vous connecter à l'entreprise principale."
+        )
+        return redirect("users:login")
+
+    user = AppUser.objects.filter(pk=user_id).first()
+
+    print("Utilisateur trouvé :", user)
+
+    if user is None:
+        print("ERREUR : AppUser introuvable")
+        for key in ("user_id", "username", "role", "photo", "typeTravail"):
+            request.session.pop(key, None)
+
+        messages.error(
+            request,
+            "Session de l'entreprise principale invalide."
+        )
+        return redirect("users:login")
+
+    print("Authentification GALAXY valide")
+    return user
+
+
+# ============================================================
+# AUTHENTIFICATION ENTREPRISE PRINCIPALE ET ENTREPRISE H
+# ============================================================
 
 def get_current_user(request):
-    """
-    Récupère l'utilisateur connecté à partir de la session.
-    """
-
+    """Utilisateur connecté à l'entreprise principale."""
     user_id = request.session.get("user_id")
 
     if not user_id:
         return None
 
-    return AppUser.objects.filter(
-        id=user_id
-    ).first()
+    return AppUser.objects.filter(pk=user_id).first()
 
 
 def require_user(request):
+    """Compatibilité avec le code existant de l'entreprise principale."""
     return get_current_user(request)
-
-
-def check_user(request):
-    user = get_current_user(request)
-
-    if not user:
-        return redirect("users:login")
-
-    return user
 
 
 def add_validation_errors(form, error):
@@ -98,9 +191,9 @@ def add_validation_errors(form, error):
 # ============================================================
 
 def dashboard(request):
-    user = check_user(request)
+    user = check_h_user(request)
 
-    if not isinstance(user, AppUser):
+    if not isinstance(user, H_AppUser):
         return user
 
     # ========================================================
@@ -437,6 +530,7 @@ def dashboard(request):
             total_general,
     }
 
+    
     return render(
         request,
         "materiaux/dashboard.html",
@@ -2649,7 +2743,7 @@ def depense_gasoil_delete(request, pk):
 
 
 # ============================================================
-# RÉPARATIONS VÉHICULES
+# LISTE DES RÉPARATIONS DE VÉHICULES
 # ============================================================
 
 def reparations_list(request):
@@ -2664,7 +2758,7 @@ def reparations_list(request):
             "vehicule",
             "enregistreur",
         )
-        .all()
+        .order_by("-id")
     )
 
     total_pieces = sum(
@@ -2683,10 +2777,7 @@ def reparations_list(request):
         Decimal("0"),
     )
 
-    total_general = (
-        total_pieces
-        + total_main_oeuvre
-    )
+    total_general = total_pieces + total_main_oeuvre
 
     return render(
         request,
@@ -2699,7 +2790,6 @@ def reparations_list(request):
             "total_general": total_general,
         },
     )
-
 
 def reparation_add(request):
     user = check_user(request)

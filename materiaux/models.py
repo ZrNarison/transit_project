@@ -10,7 +10,6 @@ from users.models import AppUser
 # ============================================================
 # MATÉRIAUX
 # ============================================================
-
 class Materiaux(models.Model):
     libelle = models.CharField(
         max_length=100,

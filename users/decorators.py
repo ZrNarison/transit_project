@@ -7,7 +7,9 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from users.models import AppUser
-
+from django.contrib.auth import get_user_model
+from django.shortcuts import redirect
+from .models import H_AppUser
 
 # ============================================================
 # CONFIGURATION DES RÔLES
@@ -519,3 +521,40 @@ def session_login_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return wrapper
+
+
+
+
+def h_role_required(*roles):
+    """
+    Protection des vues réservées aux utilisateurs historiques H_AppUser.
+    Session indépendante : h_user_id / h_role.
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            h_user_id = request.session.get("h_user_id")
+
+            if not h_user_id:
+                return redirect("users:login")
+
+            try:
+                user = H_AppUser.objects.get(pk=h_user_id)
+            except H_AppUser.DoesNotExist:
+                request.session.pop("h_user_id", None)
+                request.session.pop("h_username", None)
+                request.session.pop("h_role", None)
+                request.session.pop("h_photo", None)
+                return redirect("users:login")
+
+            # La base de données est la référence pour le rôle.
+            if user.role not in roles:
+                raise PermissionDenied(
+                    "Vous n'avez pas l'autorisation d'accéder à cette page."
+                )
+
+            request.h_current_user = user
+            return view_func(request, *args, **kwargs)
+
+        return _wrapped_view
+    return decorator

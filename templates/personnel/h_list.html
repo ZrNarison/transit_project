@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Historique du personnel{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-archive text-primary me-2"></i>
+                Historique du personnel
+            </h3>
+            <p class="text-muted mb-0">
+                Gestion des anciens personnels
+            </p>
+        </div>
+
+        <a href="{% url 'personnel:h_personnel_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            Ajouter un ancien personnel
+        </a>
+    </div>
+
+    <!-- MESSAGES -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- RECHERCHE -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" action="{% url 'personnel:h_personnel_list' %}" class="row g-2">
+                <div class="col-md-9">
+                    <input
+                        type="search"
+                        name="q"
+                        value="{{ recherche|default:'' }}"
+                        class="form-control"
+                        placeholder="Rechercher par nom, prénom, CIN, téléphone ou adresse..."
+                        aria-label="Rechercher un ancien personnel"
+                    >
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="fas fa-search me-1"></i>
+                        Rechercher
+                    </button>
+
+                    <a
+                        href="{% url 'personnel:h_personnel_list' %}"
+                        class="btn btn-outline-secondary"
+                        title="Réinitialiser la recherche"
+                        aria-label="Réinitialiser la recherche"
+                    >
+                        <i class="fas fa-redo"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- STATISTIQUES -->
+    <div class="row mb-3">
+        <div class="col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-primary-subtle text-primary p-3 me-3">
+                        <i class="fas fa-users fa-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Nombre de résultats</div>
+                        <h4 class="mb-0">{{ total_personnels|default:0 }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <strong>
+                <i class="fas fa-list me-2"></i>
+                Liste des anciens personnels
+            </strong>
+
+            {% if page_obj %}
+                <span class="badge bg-secondary">
+                    Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center">N°</th>
+                            <th>Nom</th>
+                            <th>Prénom</th>
+                            <th>Catégorie</th>
+                            <th>CIN</th>
+                            <th>Téléphone</th>
+                            <th>Adresse</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for personnel in h_personnels %}
+                            <tr>
+                                <td class="text-center">
+                                    {% if page_obj %}
+                                        {{ page_obj.start_index|add:forloop.counter0 }}
+                                    {% else %}
+                                        {{ forloop.counter }}
+                                    {% endif %}
+                                </td>
+
+                                <td class="fw-semibold">
+                                    {{ personnel.nom|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ personnel.prenom|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ personnel.get_categorie_display|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ personnel.cin|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ personnel.telephone|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {{ personnel.adresse|default:"—" }}
+                                </td>
+
+                                <td class="text-center">
+                                    <div class="d-inline-flex gap-1">
+
+                                        <!-- DÉTAILS -->
+                                        <a
+                                            href="{% url 'personnel:h_personnel_detail' personnel.pk %}"
+                                            class="btn btn-sm btn-outline-info"
+                                            title="Voir les détails"
+                                            aria-label="Voir les détails de {{ personnel.nom }}"
+                                        >
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+
+                                        <!-- MODIFIER -->
+                                        <a
+                                            href="{% url 'personnel:h_personnel_update' personnel.pk %}"
+                                            class="btn btn-sm btn-outline-warning"
+                                            title="Modifier"
+                                            aria-label="Modifier {{ personnel.nom }}"
+                                        >
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        <!-- SUPPRIMER -->
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            title="Supprimer"
+                                            aria-label="Supprimer {{ personnel.nom }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal{{ personnel.pk }}"
+                                        >
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- MODALE DE CONFIRMATION -->
+                                    <div
+                                        class="modal fade"
+                                        id="deleteModal{{ personnel.pk }}"
+                                        tabindex="-1"
+                                        aria-labelledby="deleteModalLabel{{ personnel.pk }}"
+                                        aria-hidden="true"
+                                    >
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content text-start">
+
+                                                <div class="modal-header">
+                                                    <h5
+                                                        class="modal-title"
+                                                        id="deleteModalLabel{{ personnel.pk }}"
+                                                    >
+                                                        <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+                                                        Confirmer la suppression
+                                                    </h5>
+
+                                                    <button
+                                                        type="button"
+                                                        class="btn-close"
+                                                        data-bs-dismiss="modal"
+                                                        aria-label="Fermer"
+                                                    ></button>
+                                                </div>
+
+                                                <div class="modal-body">
+                                                    <p>
+                                                        Voulez-vous vraiment supprimer
+                                                        <strong>
+                                                            {{ personnel.nom }}
+                                                            {{ personnel.prenom }}
+                                                        </strong>
+                                                        de l'historique du personnel ?
+                                                    </p>
+
+                                                    <div class="alert alert-warning mb-0">
+                                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                                        Cette action est définitive.
+                                                    </div>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal"
+                                                    >
+                                                        <i class="fas fa-times me-1"></i>
+                                                        Annuler
+                                                    </button>
+
+                                                    <form
+                                                        method="post"
+                                                        action="{% url 'personnel:h_personnel_delete' personnel.pk %}"
+                                                    >
+                                                        {% csrf_token %}
+
+                                                        <button type="submit" class="btn btn-danger">
+                                                            <i class="fas fa-trash me-1"></i>
+                                                            Supprimer
+                                                        </button>
+                                                    </form>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+
+                                    <h5 class="text-muted mt-2">
+                                        Aucun ancien personnel trouvé
+                                    </h5>
+
+                                    <p class="text-muted mb-3">
+                                        {% if recherche %}
+                                            Aucun résultat ne correspond à « {{ recherche }} ».
+                                        {% else %}
+                                            Aucun personnel n'a encore été ajouté à l'historique.
+                                        {% endif %}
+                                    </p>
+
+                                    {% if recherche %}
+                                        <a
+                                            href="{% url 'personnel:h_personnel_list' %}"
+                                            class="btn btn-outline-primary"
+                                        >
+                                            <i class="fas fa-redo me-1"></i>
+                                            Réinitialiser la recherche
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PAGINATION -->
+        {% if page_obj and page_obj.has_other_pages %}
+            <div class="card-footer bg-white">
+                <nav aria-label="Pagination de l'historique du personnel">
+                    <ul class="pagination justify-content-center flex-wrap mb-0">
+
+                        <!-- PREMIÈRE PAGE -->
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a
+                                    class="page-link"
+                                    href="?{% if query_params %}{{ query_params }}&{% endif %}page=1"
+                                    aria-label="Première page"
+                                >
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+
+                            <li class="page-item">
+                                <a
+                                    class="page-link"
+                                    href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.previous_page_number }}"
+                                    aria-label="Page précédente"
+                                >
+                                    Précédent
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </span>
+                            </li>
+
+                            <li class="page-item disabled">
+                                <span class="page-link">Précédent</span>
+                            </li>
+                        {% endif %}
+
+                        <!-- NUMÉRO DE PAGE -->
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        <!-- PAGE SUIVANTE -->
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a
+                                    class="page-link"
+                                    href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.next_page_number }}"
+                                    aria-label="Page suivante"
+                                >
+                                    Suivant
+                                </a>
+                            </li>
+
+                            <li class="page-item">
+                                <a
+                                    class="page-link"
+                                    href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.paginator.num_pages }}"
+                                    aria-label="Dernière page"
+                                >
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Suivant</span>
+                            </li>
+
+                            <li class="page-item disabled">
+                                <span class="page-link">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </span>
+                            </li>
+                        {% endif %}
+
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,153 +1,204 @@
 ﻿{% extends "base.html" %}
+
+{% block title %}Liste des utilisateurs{% endblock %}
+
 {% block content %}
+<div class="container-fluid py-4">
 
-<div class="container mt-4">
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-            <h2 class="mb-1">Liste des utilisateurs</h2>
-            <p class="text-muted mb-0">Comptes d’accès internes.</p>
+            <h2 class="mb-1">
+                <i class="fas fa-users text-primary me-2"></i>
+                Liste des utilisateurs
+            </h2>
+            <p class="text-muted mb-0">Gestion des comptes d'accès internes.</p>
         </div>
-
-        <a href="{% url 'users:users_add' %}" class="btn btn-primary">
-            + Nouveau
-        </a>
-    </div>
-
-
-    <!-- ================= FILTRE ================= -->
-
-    <form method="get" class="row g-2 align-items-end mb-4">
-
-        <div class="col-md-4">
-            <label class="form-label small">
-                Nom d’utilisateur
-            </label>
-
-            <input type="text"
-                   name="username"
-                   value="{{ username }}"
-                   class="form-control"
-                   placeholder="Nom d’utilisateur">
-        </div>
-
-
-        <div class="col-md-4">
-            <label class="form-label small">
-                Email
-            </label>
-
-            <input type="text"
-                   name="email"
-                   value="{{ email }}"
-                   class="form-control"
-                   placeholder="Email">
-        </div>
-
-
-        <div class="col-md-2 d-flex align-items-end gap-2">
-
-            <button type="submit"
-                    class="btn btn-primary w-100">
-                Rechercher
-            </button>
-
-            <a href="{% url 'users:users_list' %}"
-               class="btn btn-secondary w-100">
-                Réinitialiser
+        {% if type_compte == "H" %}
+            <a href="{% url 'users:h_users_add' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i> Nouvel utilisateur
             </a>
-
-        </div>
-
-    </form>
-
-
-    <!-- ================= LISTE ================= -->
-
-    <div class="table-responsive">
-
-        <table class="table table-bordered table-hover align-middle">
-
-            <thead class="table-dark">
-
-                <tr>
-                    <th>Nom d’utilisateur</th>
-                    <th>Email</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-
-            </thead>
-
-
-            <tbody>
-
-                {% for user in users %}
-
-                <tr>
-
-                    <td>
-                        {{ user.username }}
-                    </td>
-
-                    <td>
-                        {{ user.email }}
-                    </td>
-
-
-                    <td class="text-center">
-
-                        {% comment %} {% if user.id == request.session.user_id %} {% endcomment %}
-
-                            <!-- ================= MON COMPTE ================= -->
-
-                            <a href="{% url 'users:users_detail' user.id %}"
-                               class="btn btn-info btn-sm"
-                               title="Voir mon compte">
-                                👁
-                            </a>
-
-                            <a href="{% url 'users:users_edit' user.id %}"
-                               class="btn btn-warning btn-sm"
-                               title="Modifier mon compte">
-                                ✏
-                            </a>
-
-                        {% comment %} {% else %} {% endcomment %}
-
-                            <!-- ================= AUTRE COMPTE ================= -->
-
-                            {% comment %} <span class="text-muted">
-                                Aucune action
-                            </span>
-
-                        {% endif %} {% endcomment %}
-
-                    </td>
-
-                </tr>
-
-
-                {% empty %}
-
-                <tr>
-
-                    <td colspan="3"
-                        class="text-center text-muted">
-
-                        Aucun utilisateur trouvé
-
-                    </td>
-
-                </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
+        {% else %}
+            <a href="{% url 'users:users_add' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i> Nouvel utilisateur
+            </a>
+        {% endif %}
+        
     </div>
 
-</div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="alert" aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+                    <label for="username" class="form-label">Nom d'utilisateur</label>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           value="{{ username|default:'' }}"
+                           class="form-control"
+                           placeholder="Rechercher un utilisateur">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="email" class="form-label">Adresse e-mail</label>
+                    <input type="text"
+                           id="email"
+                           name="email"
+                           value="{{ email|default:'' }}"
+                           class="form-control"
+                           placeholder="Rechercher un e-mail">
+                </div>
+
+                <div class="col-md-4 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i> Rechercher
+                    </button>
+
+                    <a href="{% url 'users:users_list' %}"
+                       class="btn btn-outline-secondary">
+                        Réinitialiser
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered align-middle mb-0">
+
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width:60px;">N°</th>
+                            <th>Nom d'utilisateur</th>
+                            <th>E-mail</th>
+                            <th>Rôle</th>
+                            <th>Personnel</th>
+                            <th class="text-center" style="width:180px;">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+
+                            <td>
+                                <i class="fas fa-user-circle text-secondary me-1"></i>
+                                {{ user.username }}
+                            </td>
+
+                            <td>{{ user.email|default:"—" }}</td>
+
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {{ user.get_role_display|default:user.role }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {% if user.personnel %}
+                                    {{ user.personnel }}
+                                {% else %}
+                                    <span class="text-muted">Non associé</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-1">
+
+                                    <a href="{% url 'users:users_detail' user.id %}"
+                                       class="btn btn-sm btn-info text-white"
+                                       title="Consulter le profil"
+                                       aria-label="Consulter le profil">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    <a href="{% url 'users:users_edit' user.id %}"
+                                       class="btn btn-sm btn-warning"
+                                       title="Modifier l'utilisateur"
+                                       aria-label="Modifier l'utilisateur">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <a href="{% url 'users:users_delete' user.id %}"
+                                       class="btn btn-sm btn-danger"
+                                       title="Supprimer l'utilisateur"
+                                       aria-label="Supprimer l'utilisateur">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Aucun utilisateur trouvé.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+            {% if page_obj %}
+            <nav class="mt-4" aria-label="Pagination des utilisateurs">
+                <ul class="pagination justify-content-center">
+
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ page_obj.previous_page_number }}&username={{ username|urlencode }}&email={{ email|urlencode }}">
+                            Précédent
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Précédent</span>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ page_obj.next_page_number }}&username={{ username|urlencode }}&email={{ email|urlencode }}">
+                            Suivant
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Suivant</span>
+                    </li>
+                    {% endif %}
+
+                </ul>
+            </nav>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
 {% endblock %}

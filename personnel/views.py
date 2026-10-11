@@ -2,10 +2,57 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models import Q
-
-from .models import Personnel
-from .forms import PersonnelForm
+from django.views.decorators.http import require_POST
+from .models import Personnel, H_Personnel
+from .forms import PersonnelForm, H_PersonnelForm
 from audit.utils import enregistrer_action
+
+
+from functools import wraps
+from django.shortcuts import redirect
+from django.contrib import messages
+
+from users.models import H_AppUser
+
+
+def h_login_required(view_func):
+    """Protège une vue réservée aux utilisateurs d'Entreprise H."""
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        h_user_id = request.session.get("h_user_id")
+        h_role = request.session.get("h_role")
+
+        if not h_user_id or not h_role:
+            messages.warning(
+                request,
+                "Veuillez vous connecter à Entreprise H."
+            )
+            return redirect("users:login")
+
+        utilisateur = H_AppUser.objects.filter(
+            pk=h_user_id,
+            role=h_role,
+        ).first()
+
+        if utilisateur is None:
+            for key in (
+                "h_user_id",
+                "h_username",
+                "h_role",
+                "h_photo",
+            ):
+                request.session.pop(key, None)
+
+            messages.error(
+                request,
+                "Votre session Entreprise H est invalide."
+            )
+            return redirect("users:login")
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
 
 
 # =========================================================
@@ -405,3 +452,169 @@ def personnel_delete(request, id):
             "personnel": personnel,
         }
     )
+
+
+
+
+# ============================================================
+# LISTE ET RECHERCHE DES PERSONNELS DE L'ENTREPRISE H
+# ============================================================
+@h_login_required
+def h_personnel_list(request):
+    queryset = H_Personnel.objects.all().order_by("nom", "prenom")
+
+    recherche = request.GET.get("q", "").strip()
+
+    if recherche:
+        queryset = queryset.filter(
+            Q(nom__icontains=recherche)
+            | Q(prenom__icontains=recherche)
+            | Q(cin__icontains=recherche)
+            | Q(telephone__icontains=recherche)
+            | Q(adresse__icontains=recherche)
+        )
+
+    paginator = Paginator(queryset, 12)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+
+    context = {
+        "h_personnels": page_obj,
+        "personnels": page_obj,
+        "page_obj": page_obj,
+        "recherche": recherche,
+        "total_personnels": queryset.count(),
+        "query_params": query_params.urlencode(),
+    }
+
+    return render(
+        request,
+        "personnel/h_list.html",
+        context,
+    )
+
+# ============================================================
+# DÉTAIL D'UN PERSONNEL DE L'ENTREPRISE H
+# ============================================================
+@h_login_required
+def h_personnel_detail(request, pk):
+    personnel = get_object_or_404(
+        H_Personnel,
+        pk=pk,
+    )
+
+    return render(
+        request,
+        "personnel/h_detail.html",
+        {"personnel": personnel},
+    )
+# ============================================================
+# AJOUT D'UN PERSONNEL DE L'ENTREPRISE H
+# ============================================================
+@h_login_required
+def h_personnel_create(request):
+    if request.method == "POST":
+        form = H_PersonnelForm(
+            request.POST,
+            request.FILES,
+        )
+
+        if form.is_valid():
+            personnel = form.save()
+
+            messages.success(
+                request,
+                f"L'ancien personnel {personnel.nom} "
+                f"{personnel.prenom} a été ajouté avec succès.",
+            )
+
+            return redirect("personnel:h_personnel_list")
+
+        messages.error(
+            request,
+            "Veuillez corriger les erreurs du formulaire.",
+        )
+    else:
+        form = H_PersonnelForm()
+
+    return render(
+        request,
+        "personnel/h_form.html",
+        {
+            "form": form,
+            "personnel": None,
+            "titre": "Ajouter un ancien personnel",
+            "action": "Ajouter",
+        },
+    )
+
+
+# ============================================================
+# MODIFICATION D'UN PERSONNEL DE L'ENTREPRISE H
+# ============================================================
+@h_login_required
+def h_personnel_update(request, id):
+    personnel = get_object_or_404(
+        H_Personnel,
+        pk=id,
+    )
+
+    if request.method == "POST":
+        form = H_PersonnelForm(
+            request.POST,
+            request.FILES,
+            instance=personnel,
+        )
+
+        if form.is_valid():
+            personnel = form.save()
+
+            messages.success(
+                request,
+                f"Les informations de {personnel.nom} "
+                f"{personnel.prenom} ont été modifiées avec succès.",
+            )
+
+            return redirect("personnel:h_personnel_list")
+
+        messages.error(
+            request,
+            "Veuillez corriger les erreurs du formulaire.",
+        )
+
+    else:
+        form = H_PersonnelForm(instance=personnel)
+
+    return render(
+        request,
+        "personnel/h_form.html",
+        {
+            "form": form,
+            "personnel": personnel,
+            "titre": "Modifier un ancien personnel",
+            "action": "Enregistrer les modifications",
+        },
+    )
+# ============================================================
+# SUPPRESSION D'UN PERSONNEL DE L'ENTREPRISE H
+# POST UNIQUEMENT
+# ============================================================
+@h_login_required
+@require_POST
+def h_personnel_delete(request, id):
+    personnel = get_object_or_404(
+        H_Personnel,
+        pk=id,
+    )
+
+    nom_complet = f"{personnel.nom} {personnel.prenom}".strip()
+    personnel.delete()
+
+    messages.success(
+        request,
+        f"L'ancien personnel {nom_complet} a été supprimé avec succès.",
+    )
+
+    return redirect("personnel:h_personnel_list")

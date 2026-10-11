@@ -1,6 +1,6 @@
 from django.db import models
 
-from users.models import AppUser
+from users.models import AppUser, H_AppUser
 
 
 class DepotSoc(models.Model):
@@ -26,3 +26,4 @@ class DepotSoc(models.Model):
 
     def __str__(self):
         return f"{self.montant} Ar - {self.date}"
+

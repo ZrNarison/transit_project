@@ -25,4 +25,26 @@ urlpatterns = [
         views.rapport_tresorerie_print,
         name="rapport_tresorerie_print"
     ),
+
+
+
+    #============================================================
+    #
+    # ENTREPRISE H
+    #
+    #===========================================================
+    path(
+        "",
+        views.h_rapport_tresorerie,
+        name="h_rapport_tresorerie"
+    ),
+
+    # ============================================================
+    # RAPPORT DE TRÉSORERIE — IMPRESSION
+    # ============================================================
+    path(
+        "rapport-tresorerie/impression/",
+        views.h_rapport_tresorerie_print,
+        name="h_rapport_tresorerie_print"
+    ),
 ]

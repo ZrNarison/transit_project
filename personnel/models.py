@@ -95,3 +95,87 @@ class Personnel(models.Model):
                 ]
             )
         )
+
+
+class H_Personnel(models.Model):
+
+    TYPE_CONTRAT_CHOICES = [
+        ("CDI", "CDI"),
+        ("CDD", "CDD"),
+        ("Journalier", "Journalier"),
+        ("Stage", "Stage"),
+    ]
+    CATEGORIES_CHOICES = [
+        ("DIRECTEUR", "Administration"),
+        ("COMPTABLE", "Comptabilité"),
+        ("MPIASA", "Employé"),
+    ]
+
+    nom = models.CharField(
+        max_length=100,
+        verbose_name="Nom",
+    )
+
+    prenom = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Prénom",
+    )
+
+    adresse = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Adresse",
+    )
+
+    salaire = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name="Salaire",
+    )
+
+    cin = models.CharField(
+        max_length=12,
+        unique=True,
+        verbose_name="CIN",
+    )
+
+    telephone = models.CharField(
+        max_length=10,
+        verbose_name="Téléphone",
+    )
+
+    typeContrat = models.CharField(
+        max_length=30,
+        choices=TYPE_CONTRAT_CHOICES,
+        default="CDI",
+        verbose_name="Type de contrat",
+    )
+
+    debutContrat = models.DateField(
+        verbose_name="Début du contrat",
+    )
+
+    finContrat = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Fin du contrat",
+    )
+
+    
+    categorie = models.CharField(
+        max_length=30,
+        choices=CATEGORIES_CHOICES,
+        default="MPIASA",
+        verbose_name="Catégorie",
+    )
+
+
+    class Meta:
+        ordering = ["nom", "prenom"]
+        verbose_name = "Personnel"
+        verbose_name_plural = "Personnels"
+
+    def __str__(self):
+        return f"{self.nom} {self.prenom}".strip()

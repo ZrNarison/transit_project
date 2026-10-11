@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Modifier un utilisateur
+    {% else %}
+        Créer un utilisateur
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <h4 class="mb-0">
+                <i class="fas fa-user-edit me-2"></i>
+                {% if form.instance.pk %}
+                    Modifier un utilisateur
+                {% else %}
+                    Créer un utilisateur
+                {% endif %}
+            </h4>
+        </div>
+
+        <div class="card-body p-4">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close"
+                                data-bs-dismiss="alert" aria-label="Fermer"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label for="{{ form.personnel.id_for_label }}" class="form-label">
+                            Personnel
+                        </label>
+                        {{ form.personnel }}
+                        {% for error in form.personnel.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.role.id_for_label }}" class="form-label">
+                            Rôle utilisateur
+                        </label>
+                        {{ form.role }}
+                        {% for error in form.role.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">
+                            Nom d'utilisateur <span class="text-danger">*</span>
+                        </label>
+                        {{ form.username }}
+                        {% for error in form.username.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">
+                            Adresse e-mail
+                        </label>
+                        {{ form.email }}
+                        {% for error in form.email.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.password.id_for_label }}" class="form-label">
+                            Mot de passe
+                            {% if form.instance.pk %}
+                                <span class="text-muted small">(laisser vide pour conserver l'ancien)</span>
+                            {% else %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                        {{ form.password }}
+                        {% for error in form.password.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    {% if form.confirm_password %}
+                    <div class="col-md-6">
+                        <label for="{{ form.confirm_password.id_for_label }}" class="form-label">
+                            Confirmation du mot de passe
+                        </label>
+                        {{ form.confirm_password }}
+                        {% for error in form.confirm_password.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="col-md-6">
+                        <label for="{{ form.photo.id_for_label }}" class="form-label">
+                            Photo de profil
+                        </label>
+                        {{ form.photo }}
+                        {% for error in form.photo.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+
+                        {% if form.instance.photo %}
+                            <div class="mt-3">
+                                <p class="text-muted small mb-2">Photo actuelle</p>
+                                <img src="{{ form.instance.photo.url }}"
+                                     alt="Photo de profil"
+                                     class="img-thumbnail"
+                                     style="width:150px;height:150px;object-fit:cover;">
+                            </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex flex-wrap justify-content-between gap-2">
+                    <a href="{% url 'users:users_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Retour
+                    </a>
+
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-1"></i>
+                        {% if form.instance.pk %}
+                            Enregistrer les modifications
+                        {% else %}
+                            Créer l'utilisateur
+                        {% endif %}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
