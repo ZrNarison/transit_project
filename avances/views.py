@@ -10,6 +10,7 @@ from django.contrib import messages
 from salaire.views import recalculer_situation_personnel
 from .forms import AvanceForm
 from .models import Avance
+from django.shortcuts import render
 
 from personnel.models import Personnel
 from users.models import AppUser
@@ -285,28 +286,27 @@ def avance_add(request):
     )
 
 
+
 # =========================================================
-# LISTE
+# LISTE DES AVANCES
 # =========================================================
 
 def avance_list(request):
 
     # -----------------------------------------------------
-    # RÔLE
+    # RÔLE DE L'UTILISATEUR
     # -----------------------------------------------------
 
     role = request.session.get("role")
 
     # -----------------------------------------------------
-    # AVANCES AUTORISÉES
+    # AVANCES AUTORISÉES SELON LE RÔLE
     # -----------------------------------------------------
 
-    avances = get_avance_queryset_for_role(
-        role
-    )
+    avances = get_avance_queryset_for_role(role)
 
     # -----------------------------------------------------
-    # RECHERCHE PERSONNEL
+    # RÉCUPÉRATION DES FILTRES
     # -----------------------------------------------------
 
     recherche = request.GET.get(
@@ -314,40 +314,54 @@ def avance_list(request):
         ""
     ).strip()
 
-    # -----------------------------------------------------
-    # FILTRE DATE
-    # -----------------------------------------------------
+    date_debut = request.GET.get(
+        "date_debut",
+        ""
+    ).strip()
 
-    date = request.GET.get(
-        "date",
+    date_fin = request.GET.get(
+        "date_fin",
         ""
     ).strip()
 
     # -----------------------------------------------------
-    # RECHERCHE
+    # RECHERCHE PAR NOM OU PRÉNOM
     # -----------------------------------------------------
 
     if recherche:
-
         avances = avances.filter(
-            Q(
-                personnel__nom__icontains=recherche
-            )
-            |
-            Q(
-                personnel__prenom__icontains=recherche
-            )
+            Q(personnel__nom__icontains=recherche)
+            | Q(personnel__prenom__icontains=recherche)
         )
 
     # -----------------------------------------------------
-    # DATE
+    # FILTRE PAR DATE DE DÉBUT
+    # DateField : date incluse
     # -----------------------------------------------------
 
-    if date:
-
+    if date_debut:
         avances = avances.filter(
-            dateAv__date=date
+            dateAv__gte=date_debut
         )
+
+    # -----------------------------------------------------
+    # FILTRE PAR DATE DE FIN
+    # DateField : date incluse
+    # -----------------------------------------------------
+
+    if date_fin:
+        avances = avances.filter(
+            dateAv__lte=date_fin
+        )
+
+    # -----------------------------------------------------
+    # TRI CHRONOLOGIQUE INVERSÉ
+    # -----------------------------------------------------
+
+    avances = avances.order_by(
+        "-dateAv",
+        "-id"
+    )
 
     # -----------------------------------------------------
     # PAGINATION
@@ -358,24 +372,18 @@ def avance_list(request):
         12
     )
 
-    page_number = request.GET.get(
-        "page"
-    )
-
     page_obj = paginator.get_page(
-        page_number
+        request.GET.get("page")
     )
 
     # -----------------------------------------------------
-    # PARAMÈTRES POUR PAGINATION
+    # PARAMÈTRES DE PAGINATION
+    # CONSERVATION DES FILTRES
     # -----------------------------------------------------
 
     query_params = request.GET.copy()
 
-    query_params.pop(
-        "page",
-        None
-    )
+    query_params.pop("page", None)
 
     # -----------------------------------------------------
     # AFFICHAGE
@@ -388,12 +396,12 @@ def avance_list(request):
             "avances": page_obj,
             "page_obj": page_obj,
             "personnel": recherche,
-            "date": date,
+            "date_debut": date_debut,
+            "date_fin": date_fin,
             "role": role,
-            "query_params": query_params.urlencode()
+            "query_params": query_params.urlencode(),
         }
     )
-
 
 # =========================================================
 # DETAIL

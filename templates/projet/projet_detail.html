@@ -52,7 +52,8 @@
                     </a>
 
 
-                    {% if peut_gerer %}
+                    {% comment %} {% if peut_gerer %} {% endcomment %}
+                    {% if projet.enregistre_par_id == user.id %}
 
                         <a href="{% url 'projet:projet_update' projet.id %}" class="btn btn-warning">
                             <i class="fas fa-edit me-1"></i>

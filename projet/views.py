@@ -1835,16 +1835,12 @@ def equipe_list(
         },
     )
 
-
 # ============================================================
-# CREATION D'UNE AFFECTATION D'EQUIPE
+# CRÉATION D'UNE AFFECTATION D'ÉQUIPE
 # ============================================================
 
 @project_manager_required
-def equipe_create(
-    request,
-    projet_id,
-):
+def equipe_create(request, projet_id):
 
     projet = get_object_or_404(
         Projet,
@@ -1860,15 +1856,10 @@ def equipe_create(
 
         form.instance.projet = projet
 
-        form = prepare_equipe_form(
-            form,
-            projet=projet,
-        )
-
         if form.is_valid():
 
             affectation = form.save(
-                commit=False
+                commit=False,
             )
 
             affectation.projet = projet
@@ -1896,24 +1887,6 @@ def equipe_create(
 
         form.instance.projet = projet
 
-        form = prepare_equipe_form(
-            form,
-            projet=projet,
-        )
-
-        if "date_debut" in form.fields:
-            form.fields["date_debut"].initial = (
-                projet.date_debut
-            )
-
-        if "date_fin" in form.fields:
-            form.fields["date_fin"].initial = (
-                projet.date_fin
-            )
-
-        if "actif" in form.fields:
-            form.fields["actif"].initial = True
-
     return render(
         request,
         "projet/equipage/form.html",
@@ -1926,7 +1899,6 @@ def equipe_create(
             "user": request.current_user,
         },
     )
-
 
 # ============================================================
 # MODIFIER UNE AFFECTATION
@@ -1960,7 +1932,7 @@ def equipe_update(
 
         form.instance.projet = projet
 
-        form = prepare_equipe_form(
+        form = EquipeProjetForm(
             form,
             projet=projet,
             affectation=affectation,
@@ -1996,7 +1968,7 @@ def equipe_update(
             projet=projet,
         )
 
-        form = prepare_equipe_form(
+        form = EquipeProjetForm(
             form,
             projet=projet,
             affectation=affectation,
@@ -5883,72 +5855,146 @@ def _mouvement_peut_gerer(mouvement, user):
 # ============================================================
 # MOUVEMENTS - LISTE ET BILAN DU PROJET
 # ============================================================
+
+@project_access_required
 def mouvement_vehicule_projet_list(request, projet_id):
-    projet = get_object_or_404(Projet, pk=projet_id)
+    projet = request.projet
+    user = request.current_user
 
     vehicules_projet = VehiculeProjet.objects.filter(
-        projet=projet
+        projet=projet,
     ).order_by("vehicule")
 
-    mouvements_qs = MouvementVehiculeProjet.objects.filter(
-        vehicule_projet__projet=projet
-    ).select_related(
-        "vehicule_projet",
-        "point_depart",
-        "point_arrivee",
-        "enregistre_par",
-    ).order_by("-date_mouvement", "-id")
+    engins_projet = EnginProjet.objects.filter(
+        projet=projet,
+    ).order_by("engin")
 
-    # Filtre sélectionné
-    vehicule_filtre = request.GET.get("vehicule", "").strip()
-
-    if vehicule_filtre.isdigit():
-        mouvements_qs = mouvements_qs.filter(
-            vehicule_projet_id=int(vehicule_filtre)
+    mouvements_qs = (
+        MouvementVehiculeProjet.objects.filter(
+            Q(vehicule_projet__projet=projet)
+            | Q(engin_projet__projet=projet)
         )
+        .select_related(
+            "vehicule_projet",
+            "vehicule_projet__projet",
+            "engin_projet",
+            "engin_projet__projet",
+            "point_depart",
+            "point_arrivee",
+            "enregistre_par",
+        )
+        .order_by("-date_mouvement", "-id")
+    )
+
+    # --------------------------------------------------------
+    # FILTRES
+    # --------------------------------------------------------
+
+    type_filtre = request.GET.get("type", "").strip().upper()
+    materiel_filtre = request.GET.get("materiel", "").strip()
+
+    if type_filtre not in ("ROUTIER", "ENGIN"):
+        type_filtre = ""
+
+    if type_filtre == "ROUTIER":
+        mouvements_qs = mouvements_qs.filter(
+            vehicule_projet__isnull=False,
+            engin_projet__isnull=True,
+        )
+    elif type_filtre == "ENGIN":
+        mouvements_qs = mouvements_qs.filter(
+            engin_projet__isnull=False,
+            vehicule_projet__isnull=True,
+        )
+
+    if materiel_filtre.isdigit():
+        materiel_id = int(materiel_filtre)
+
+        if type_filtre == "ENGIN":
+            mouvements_qs = mouvements_qs.filter(
+                engin_projet_id=materiel_id,
+            )
+        elif type_filtre == "ROUTIER":
+            mouvements_qs = mouvements_qs.filter(
+                vehicule_projet_id=materiel_id,
+            )
+        else:
+            mouvements_qs = mouvements_qs.filter(
+                Q(vehicule_projet_id=materiel_id)
+                | Q(engin_projet_id=materiel_id)
+            )
     else:
-        vehicule_filtre = ""
+        materiel_filtre = ""
 
     mouvements = list(mouvements_qs)
 
-    # Statistiques correspondant aux mouvements affichés
+    # --------------------------------------------------------
+    # STATISTIQUES DES MOUVEMENTS AFFICHÉS
+    # --------------------------------------------------------
+
     total_km = sum(
         (
-            m.kilometres_parcourus
-            for m in mouvements
-            if m.type_vehicule != "ENGIN"
+            mouvement.kilometres_parcourus
+            for mouvement in mouvements
+            if mouvement.vehicule_projet_id is not None
         ),
         Decimal("0.00"),
     )
 
     total_heures_moteur = sum(
         (
-            m.heures_travail
-            for m in mouvements
-            if m.type_vehicule == "ENGIN"
+            mouvement.heures_travail
+            for mouvement in mouvements
+            if mouvement.engin_projet_id is not None
         ),
         Decimal("0.00"),
     )
 
     total_carburant = sum(
-        (m.carburant_litre for m in mouvements),
+        (
+            mouvement.carburant_litre
+            for mouvement in mouvements
+        ),
         Decimal("0.00"),
     )
 
     total_duree_minutes = sum(
-        (m.duree_minutes for m in mouvements),
+        (
+            mouvement.duree_minutes
+            for mouvement in mouvements
+        ),
         0,
     )
 
+    total_duree_heures, total_duree_reste = divmod(
+        total_duree_minutes,
+        60,
+    )
+
+    # --------------------------------------------------------
+    # AUTORISATIONS D'ACTION
+    # --------------------------------------------------------
+
+    mouvements_gerables = {
+        mouvement.pk: _mouvement_peut_gerer(mouvement, user)
+        for mouvement in mouvements
+    }
+
     context = {
         "projet": projet,
+        "user": user,
         "vehicules_projet": vehicules_projet,
-        "vehicule_filtre": vehicule_filtre,
+        "engins_projet": engins_projet,
+        "type_filtre": type_filtre,
+        "materiel_filtre": materiel_filtre,
         "mouvements": mouvements,
+        "mouvements_gerables": mouvements_gerables,
         "total_km": total_km,
         "total_heures_moteur": total_heures_moteur,
         "total_carburant": total_carburant,
         "total_duree_minutes": total_duree_minutes,
+        "total_duree_heures": total_duree_heures,
+        "total_duree_reste": total_duree_reste,
     }
 
     return render(
@@ -5956,7 +6002,6 @@ def mouvement_vehicule_projet_list(request, projet_id):
         "projet/mouvement_vehicule_projet_list.html",
         context,
     )
-
 
 # ============================================================
 # MOUVEMENTS - DÉTAIL
@@ -5968,23 +6013,39 @@ def mouvement_vehicule_projet_detail(
     projet_id,
     mouvement_id,
 ):
+    projet = request.projet
+
     mouvement = get_object_or_404(
         MouvementVehiculeProjet.objects.select_related(
             "vehicule_projet",
             "vehicule_projet__projet",
+            "engin_projet",
+            "engin_projet__projet",
             "point_depart",
             "point_arrivee",
             "enregistre_par",
-        ),
-        pk=mouvement_id,
-        vehicule_projet__projet=request.projet,
+        ).filter(pk=mouvement_id),
     )
+
+    # Vérifier que le mouvement appartient au projet.
+    appartient_au_projet = (
+        mouvement.vehicule_projet is not None
+        and mouvement.vehicule_projet.projet_id == projet.pk
+    ) or (
+        mouvement.engin_projet is not None
+        and mouvement.engin_projet.projet_id == projet.pk
+    )
+
+    if not appartient_au_projet:
+        raise PermissionDenied(
+            "Ce mouvement n'appartient pas à ce projet."
+        )
 
     return render(
         request,
         "projet/mouvement_vehicule_projet_detail.html",
         {
-            "projet": request.projet,
+            "projet": projet,
             "mouvement": mouvement,
             "user": request.current_user,
             "peut_modifier": _mouvement_peut_gerer(
@@ -6013,24 +6074,37 @@ def mouvement_vehicule_projet_create(request, projet_id):
         if form.is_valid():
             mouvement = form.save(commit=False)
 
-            # Sécurité : l'affectation doit appartenir au projet.
-            if mouvement.vehicule_projet.projet_id != projet.pk:
+            # Un mouvement doit concerner un véhicule OU un engin
+            # appartenant au projet courant.
+            vehicule = mouvement.vehicule_projet
+            engin = mouvement.engin_projet
+
+            if bool(vehicule) == bool(engin):
+                form.add_error(
+                    None,
+                    "Sélectionnez un seul véhicule ou un seul engin.",
+                )
+            elif vehicule and vehicule.projet_id != projet.pk:
                 raise PermissionDenied(
                     "Ce véhicule n'appartient pas à ce projet."
                 )
+            elif engin and engin.projet_id != projet.pk:
+                raise PermissionDenied(
+                    "Cet engin n'appartient pas à ce projet."
+                )
+            else:
+                mouvement.enregistre_par = user
+                mouvement.save()
 
-            mouvement.enregistre_par = user
-            mouvement.save()
+                messages.success(
+                    request,
+                    "Le rapport d'activité a été enregistré avec succès.",
+                )
 
-            messages.success(
-                request,
-                "Le mouvement a été enregistré avec succès.",
-            )
-
-            return redirect(
-                "projet:mouvement_vehicule_projet_list",
-                projet_id=projet.pk,
-            )
+                return redirect(
+                    "projet:mouvement_vehicule_projet_list",
+                    projet_id=projet.pk,
+                )
     else:
         form = MouvementVehiculeProjetForm(projet=projet)
 
@@ -6061,10 +6135,25 @@ def mouvement_vehicule_projet_update(
     user = request.current_user
 
     mouvement = get_object_or_404(
-        MouvementVehiculeProjet,
+        MouvementVehiculeProjet.objects.select_related(
+            "vehicule_projet",
+            "engin_projet",
+        ),
         pk=mouvement_id,
-        vehicule_projet__projet=projet,
     )
+
+    appartient_au_projet = (
+        mouvement.vehicule_projet is not None
+        and mouvement.vehicule_projet.projet_id == projet.pk
+    ) or (
+        mouvement.engin_projet is not None
+        and mouvement.engin_projet.projet_id == projet.pk
+    )
+
+    if not appartient_au_projet:
+        raise PermissionDenied(
+            "Ce mouvement n'appartient pas à ce projet."
+        )
 
     if not _mouvement_peut_gerer(mouvement, user):
         messages.error(
@@ -6086,24 +6175,38 @@ def mouvement_vehicule_projet_update(
         if form.is_valid():
             mouvement_modifie = form.save(commit=False)
 
-            if mouvement_modifie.vehicule_projet.projet_id != projet.pk:
+            vehicule = mouvement_modifie.vehicule_projet
+            engin = mouvement_modifie.engin_projet
+
+            if bool(vehicule) == bool(engin):
+                form.add_error(
+                    None,
+                    "Sélectionnez un seul véhicule ou un seul engin.",
+                )
+            elif vehicule and vehicule.projet_id != projet.pk:
                 raise PermissionDenied(
                     "Ce véhicule n'appartient pas à ce projet."
                 )
+            elif engin and engin.projet_id != projet.pk:
+                raise PermissionDenied(
+                    "Cet engin n'appartient pas à ce projet."
+                )
+            else:
+                # Conserver le créateur initial.
+                mouvement_modifie.enregistre_par = (
+                    mouvement.enregistre_par
+                )
+                mouvement_modifie.save()
 
-            # Ne pas remplacer le créateur lors d'une modification.
-            mouvement_modifie.enregistre_par = mouvement.enregistre_par
-            mouvement_modifie.save()
+                messages.success(
+                    request,
+                    "Le rapport d'activité a été modifié avec succès.",
+                )
 
-            messages.success(
-                request,
-                "Le mouvement a été modifié avec succès.",
-            )
-
-            return redirect(
-                "projet:mouvement_vehicule_projet_list",
-                projet_id=projet.pk,
-            )
+                return redirect(
+                    "projet:mouvement_vehicule_projet_list",
+                    projet_id=projet.pk,
+                )
     else:
         form = MouvementVehiculeProjetForm(
             instance=mouvement,
@@ -6137,10 +6240,25 @@ def mouvement_vehicule_projet_delete(
     user = request.current_user
 
     mouvement = get_object_or_404(
-        MouvementVehiculeProjet,
+        MouvementVehiculeProjet.objects.select_related(
+            "vehicule_projet",
+            "engin_projet",
+        ),
         pk=mouvement_id,
-        vehicule_projet__projet=projet,
     )
+
+    appartient_au_projet = (
+        mouvement.vehicule_projet is not None
+        and mouvement.vehicule_projet.projet_id == projet.pk
+    ) or (
+        mouvement.engin_projet is not None
+        and mouvement.engin_projet.projet_id == projet.pk
+    )
+
+    if not appartient_au_projet:
+        raise PermissionDenied(
+            "Ce mouvement n'appartient pas à ce projet."
+        )
 
     if not _mouvement_peut_gerer(mouvement, user):
         messages.error(
@@ -6154,10 +6272,9 @@ def mouvement_vehicule_projet_delete(
 
     try:
         mouvement.delete()
-
         messages.success(
             request,
-            "Le mouvement a été supprimé avec succès.",
+            "Le rapport d'activité a été supprimé avec succès.",
         )
     except Exception:
         messages.error(

@@ -1952,9 +1952,12 @@ class EnginProjet(models.Model):
                     "la date de fin du projet."
                 )
 
-        # ----------------------------------------------------
+                # ----------------------------------------------------
         # COMPTEUR D'HEURES
+        # Le compteur initial doit être supérieur ou égal
+        # au compteur final.
         # ----------------------------------------------------
+
         if (
             self.heures_initiales is not None
             and self.heures_initiales < Decimal("0.00")
@@ -1974,11 +1977,11 @@ class EnginProjet(models.Model):
         if (
             self.heures_initiales is not None
             and self.heures_finales is not None
-            and self.heures_finales < self.heures_initiales
+            and self.heures_initiales < self.heures_finales
         ):
             errors["heures_finales"] = (
-                "Les heures finales doivent être supérieures "
-                "ou égales aux heures initiales."
+                "Le compteur initial doit être supérieur "
+                "ou égal au compteur final."
             )
 
         # ----------------------------------------------------
@@ -2368,19 +2371,25 @@ class VehiculeProjet(models.Model):
 
         return self.kilometres_parcourus
 
-
-
-# ============================================================
-# MOUVEMENT DU VÉHICULE / ENGIN SUR LE PROJET
-# ============================================================
-
 class MouvementVehiculeProjet(models.Model):
+    """Rapport de déplacement d'un véhicule ou d'un engin de chantier."""
 
     vehicule_projet = models.ForeignKey(
         "projet.VehiculeProjet",
         on_delete=models.PROTECT,
         related_name="mouvements",
-        verbose_name="Véhicule / Engin",
+        null=True,
+        blank=True,
+        verbose_name="Véhicule routier",
+    )
+
+    engin_projet = models.ForeignKey(
+        "projet.EnginProjet",
+        on_delete=models.PROTECT,
+        related_name="mouvements",
+        null=True,
+        blank=True,
+        verbose_name="Engin de chantier",
     )
 
     date_mouvement = models.DateTimeField(
@@ -2419,7 +2428,7 @@ class MouvementVehiculeProjet(models.Model):
     )
 
     # --------------------------------------------------------
-    # COMPTEUR KILOMÉTRIQUE : VÉHICULE ROUTIER
+    # COMPTEURS KILOMÉTRIQUES : VÉHICULE ROUTIER
     # --------------------------------------------------------
 
     kilometrage_initial = models.DecimalField(
@@ -2437,7 +2446,7 @@ class MouvementVehiculeProjet(models.Model):
     )
 
     # --------------------------------------------------------
-    # COMPTEUR HORAIRE : ENGIN DE CHANTIER
+    # COMPTEURS HORAIRES : ENGIN
     # Le compteur final doit être inférieur ou égal à l'initial.
     # --------------------------------------------------------
 
@@ -2445,18 +2454,18 @@ class MouvementVehiculeProjet(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Compteur initial",
+        verbose_name="Compteur horaire initial",
     )
 
     heures_finales = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Compteur final",
+        verbose_name="Compteur horaire final",
     )
 
     # --------------------------------------------------------
-    # CARBURANT
+    # CARBURANT ET OBSERVATIONS
     # --------------------------------------------------------
 
     carburant_litre = models.DecimalField(
@@ -2471,13 +2480,8 @@ class MouvementVehiculeProjet(models.Model):
         verbose_name="Observation",
     )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     enregistre_par = models.ForeignKey(
         "users.AppUser",
@@ -2494,18 +2498,43 @@ class MouvementVehiculeProjet(models.Model):
         verbose_name_plural = "Mouvements véhicules / engins"
 
     def __str__(self):
-        return (
-            f"{self.vehicule_projet.vehicule} - "
-            f"{self.date_mouvement:%d/%m/%Y}"
-        )
+        if self.engin_projet_id:
+            materiel = str(self.engin_projet)
+        elif self.vehicule_projet_id:
+            materiel = str(self.vehicule_projet)
+        else:
+            materiel = "Matériel non défini"
+
+        return f"{materiel} - {self.date_mouvement:%d/%m/%Y}"
 
     # --------------------------------------------------------
-    # TYPE DE VÉHICULE
+    # TYPE DE MATÉRIEL
     # --------------------------------------------------------
 
     @property
     def type_vehicule(self):
-        return self.vehicule_projet.type_vehicule
+        if self.engin_projet_id:
+            return "ENGIN"
+
+        if self.vehicule_projet_id:
+            return self.vehicule_projet.type_vehicule
+
+        return None
+
+    @property
+    def materiel(self):
+        """Retourne le véhicule ou l'engin concerné."""
+        return self.engin_projet or self.vehicule_projet
+
+    @property
+    def designation_materiel(self):
+        if self.engin_projet_id:
+            return str(self.engin_projet)
+
+        if self.vehicule_projet_id:
+            return str(self.vehicule_projet)
+
+        return "Matériel non défini"
 
     # --------------------------------------------------------
     # DISTANCE PARCOURUE
@@ -2513,40 +2542,34 @@ class MouvementVehiculeProjet(models.Model):
 
     @property
     def kilometres_parcourus(self):
-        if self.type_vehicule == "ENGIN":
+        if self.engin_projet_id or self.type_vehicule == "ENGIN":
             return Decimal("0.00")
 
-        return max(
-            Decimal("0.00"),
-            self.kilometrage_final - self.kilometrage_initial,
-        )
+        initial = self.kilometrage_initial or Decimal("0.00")
+        final = self.kilometrage_final or Decimal("0.00")
+
+        return max(Decimal("0.00"), final - initial)
 
     # --------------------------------------------------------
-    # HEURES DE TRAVAIL DE L'ENGIN
+    # HEURES MOTEUR
     # --------------------------------------------------------
 
     @property
     def heures_travail(self):
-        """
-        Calcul : compteur horaire initial - compteur horaire final.
-        Exemple : initial = 4, final = 2, résultat = 2 heures.
-        """
-        if self.type_vehicule != "ENGIN":
+        if not self.engin_projet_id:
             return Decimal("0.00")
 
-        return max(
-            Decimal("0.00"),
-            self.heures_initiales - self.heures_finales,
-        )
+        initial = self.heures_initiales or Decimal("0.00")
+        final = self.heures_finales or Decimal("0.00")
+
+        return max(Decimal("0.00"), initial - final)
 
     # --------------------------------------------------------
-    # DURÉE ENTRE LE DÉPART ET L'ARRIVÉE
+    # DURÉE DU DÉPLACEMENT
     # --------------------------------------------------------
 
     @property
     def duree_minutes(self):
-        """Durée écoulée entre départ et arrivée, en minutes."""
-
         if self.heure_depart is None or self.heure_arrivee is None:
             return 0
 
@@ -2562,7 +2585,7 @@ class MouvementVehiculeProjet(models.Model):
             + self.heure_arrivee.second / 60
         )
 
-        # Prise en compte d'une arrivée après minuit.
+        # Arrivée le lendemain si elle est après minuit.
         if arrivee < depart:
             arrivee += 24 * 60
 
@@ -2570,10 +2593,8 @@ class MouvementVehiculeProjet(models.Model):
 
     @property
     def duree_formatee(self):
-        minutes = self.duree_minutes
-        heures, reste = divmod(minutes, 60)
-
-        return f"{heures} h {reste:02d} min"
+        heures, minutes = divmod(self.duree_minutes, 60)
+        return f"{heures} h {minutes:02d} min"
 
     # --------------------------------------------------------
     # TRAVAIL TOTAL
@@ -2581,23 +2602,20 @@ class MouvementVehiculeProjet(models.Model):
 
     @property
     def travail_total(self):
-        """Heures moteur pour un engin, kilomètres pour un véhicule."""
-
-        if self.type_vehicule == "ENGIN":
+        if self.engin_projet_id or self.type_vehicule == "ENGIN":
             return self.heures_travail
 
         return self.kilometres_parcourus
 
     @property
     def unite_travail(self):
-        return (
-            "heures moteur"
-            if self.type_vehicule == "ENGIN"
-            else "km"
-        )
+        if self.engin_projet_id or self.type_vehicule == "ENGIN":
+            return "heures moteur"
+
+        return "km"
 
     # --------------------------------------------------------
-    # VALIDATION DES DONNÉES
+    # VALIDATION
     # --------------------------------------------------------
 
     def clean(self):
@@ -2605,22 +2623,25 @@ class MouvementVehiculeProjet(models.Model):
 
         erreurs = {}
 
-        # Validation des kilomètres.
-        if (
-            self.kilometrage_initial is not None
-            and self.kilometrage_initial < 0
-        ):
-            erreurs["kilometrage_initial"] = (
-                "Le kilométrage initial ne peut pas être négatif."
+        # Un seul matériel doit être sélectionné.
+        if bool(self.vehicule_projet_id) == bool(self.engin_projet_id):
+            erreurs["vehicule_projet"] = (
+                "Sélectionnez un véhicule routier ou un engin, "
+                "mais pas les deux."
             )
 
-        if (
-            self.kilometrage_final is not None
-            and self.kilometrage_final < 0
-        ):
-            erreurs["kilometrage_final"] = (
-                "Le kilométrage final ne peut pas être négatif."
-            )
+        # Kilométrage.
+        if self.kilometrage_initial is not None:
+            if self.kilometrage_initial < 0:
+                erreurs["kilometrage_initial"] = (
+                    "Le kilométrage initial ne peut pas être négatif."
+                )
+
+        if self.kilometrage_final is not None:
+            if self.kilometrage_final < 0:
+                erreurs["kilometrage_final"] = (
+                    "Le kilométrage final ne peut pas être négatif."
+                )
 
         if (
             self.kilometrage_initial is not None
@@ -2628,40 +2649,34 @@ class MouvementVehiculeProjet(models.Model):
             and self.kilometrage_final < self.kilometrage_initial
         ):
             erreurs["kilometrage_final"] = (
-                "Le kilométrage final doit être supérieur "
-                "ou égal au kilométrage initial."
+                "Le kilométrage final doit être supérieur ou égal "
+                "au kilométrage initial."
             )
 
-        # Validation des compteurs horaires.
-        if (
-            self.heures_initiales is not None
-            and self.heures_initiales < 0
-        ):
-            erreurs["heures_initiales"] = (
-                "Le compteur horaire initial ne peut pas être négatif."
-            )
+        # Compteurs horaires.
+        if self.heures_initiales is not None:
+            if self.heures_initiales < 0:
+                erreurs["heures_initiales"] = (
+                    "Le compteur horaire initial ne peut pas être négatif."
+                )
 
-        if (
-            self.heures_finales is not None
-            and self.heures_finales < 0
-        ):
-            erreurs["heures_finales"] = (
-                "Le compteur horaire final ne peut pas être négatif."
-            )
+        if self.heures_finales is not None:
+            if self.heures_finales < 0:
+                erreurs["heures_finales"] = (
+                    "Le compteur horaire final ne peut pas être négatif."
+                )
 
-        # RÈGLE MÉTIER :
-        # Le compteur final doit être inférieur ou égal à l'initial.
         if (
             self.heures_initiales is not None
             and self.heures_finales is not None
             and self.heures_finales > self.heures_initiales
         ):
             erreurs["heures_finales"] = (
-                "Le compteur final doit être inférieur "
-                "ou égal au compteur initial."
+                "Le compteur final doit être inférieur ou égal "
+                "au compteur initial."
             )
 
-        # Validation du carburant.
+        # Carburant.
         if (
             self.carburant_litre is not None
             and self.carburant_litre < 0
@@ -2672,8 +2687,6 @@ class MouvementVehiculeProjet(models.Model):
 
         if erreurs:
             raise ValidationError(erreurs)
-
-
 # ============================================================
 # MOUVEMENT DU PERSONNEL D'EXÉCUTION
 # ============================================================

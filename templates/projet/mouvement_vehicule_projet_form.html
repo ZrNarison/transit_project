@@ -8,14 +8,17 @@
 <div class="container py-4">
 
     <!-- EN-TÊTE -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div class="d-flex flex-wrap justify-content-between
+                align-items-center gap-3 mb-4">
         <div>
             <h3 class="mb-1">
                 <i class="fas fa-truck-moving text-primary me-2"></i>
                 {{ titre_page }}
             </h3>
+
             <p class="text-muted mb-0">
-                Projet : <strong>{{ projet.titre|title }}</strong>
+                Projet :
+                <strong>{{ projet.titre|title }}</strong>
             </p>
         </div>
 
@@ -28,6 +31,7 @@
 
     <!-- FORMULAIRE -->
     <div class="card border-0 shadow-sm">
+
         <div class="card-header bg-primary text-white py-3">
             <h5 class="mb-0">
                 <i class="fas fa-clipboard-list me-2"></i>
@@ -39,19 +43,26 @@
 
             {% if form.non_field_errors %}
                 <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
                     {{ form.non_field_errors }}
                 </div>
             {% endif %}
 
             <form method="post" novalidate>
                 {% csrf_token %}
+
+                <!-- MATÉRIEL ET DATE -->
+                <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="fas fa-truck me-2"></i>
+                    Matériel concerné
+                </h6>
+
                 <div class="row g-3 mb-4">
 
                     <div class="col-md-6">
                         <label for="{{ form.vehicule_projet.id_for_label }}"
                                class="form-label fw-semibold">
                             {{ form.vehicule_projet.label }}
-                            <span class="text-danger">*</span>
                         </label>
 
                         {{ form.vehicule_projet }}
@@ -61,7 +72,24 @@
                         {% endfor %}
 
                         <div class="form-text">
-                            Sélectionner le véhicule ou l'engin affecté au projet.
+                            Choisir un véhicule routier.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.engin_projet.id_for_label }}"
+                               class="form-label fw-semibold">
+                            {{ form.engin_projet.label }}
+                        </label>
+
+                        {{ form.engin_projet }}
+
+                        {% for error in form.engin_projet.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+
+                        <div class="form-text">
+                            Choisir un engin de chantier.
                         </div>
                     </div>
 
@@ -81,11 +109,18 @@
 
                 </div>
 
+                <!-- ITINÉRAIRE -->
+                <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="fas fa-route me-2"></i>
+                    Itinéraire et horaires
+                </h6>
+
                 <div class="row g-3 mb-4">
 
                     <div class="col-md-6">
                         <label for="{{ form.point_depart.id_for_label }}"
                                class="form-label fw-semibold">
+                            <i class="fas fa-map-marker-alt text-success me-1"></i>
                             {{ form.point_depart.label }}
                         </label>
 
@@ -99,6 +134,7 @@
                     <div class="col-md-6">
                         <label for="{{ form.point_arrivee.id_for_label }}"
                                class="form-label fw-semibold">
+                            <i class="fas fa-flag-checkered text-danger me-1"></i>
                             {{ form.point_arrivee.label }}
                         </label>
 
@@ -112,7 +148,6 @@
                     <div class="col-md-6">
                         <label for="{{ form.heure_depart.id_for_label }}"
                                class="form-label fw-semibold">
-                            <i class="fas fa-sign-out-alt text-success me-1"></i>
                             Heure de départ
                         </label>
 
@@ -126,7 +161,6 @@
                     <div class="col-md-6">
                         <label for="{{ form.heure_arrivee.id_for_label }}"
                                class="form-label fw-semibold">
-                            <i class="fas fa-sign-in-alt text-danger me-1"></i>
                             Heure d'arrivée
                         </label>
 
@@ -140,13 +174,14 @@
                 </div>
 
                 <!-- COMPTEUR KILOMÉTRIQUE -->
-                <div id="section-kilometrage">
+                <div id="section-kilometrage" class="mb-4">
+
                     <h6 class="text-success border-bottom pb-2 mb-3">
                         <i class="fas fa-road me-2"></i>
                         Compteur kilométrique
                     </h6>
 
-                    <div class="row g-3 mb-4">
+                    <div class="row g-3">
 
                         <div class="col-md-6">
                             <label for="{{ form.kilometrage_initial.id_for_label }}"
@@ -176,20 +211,22 @@
 
                     </div>
 
-                    <div class="alert alert-light border small">
+                    <div class="alert alert-light border small mt-3 mb-0">
                         <i class="fas fa-calculator me-1"></i>
-                        Distance parcourue = kilométrage final − kilométrage initial.
+                        Distance parcourue =
+                        kilométrage final − kilométrage initial.
                     </div>
                 </div>
 
-                <!-- COMPTEUR HORAIRE ENGIN -->
-                <div id="section-heures-moteur">
+                <!-- COMPTEUR HORAIRE -->
+                <div id="section-heures-moteur" class="mb-4">
+
                     <h6 class="text-warning border-bottom pb-2 mb-3">
                         <i class="fas fa-cogs me-2"></i>
                         Compteur horaire de l'engin
                     </h6>
 
-                    <div class="row g-3 mb-4">
+                    <div class="row g-3">
 
                         <div class="col-md-6">
                             <label for="{{ form.heures_initiales.id_for_label }}"
@@ -218,14 +255,26 @@
                         </div>
 
                     </div>
+
+                    <div class="alert alert-light border small mt-3 mb-0">
+                        <i class="fas fa-calculator me-1"></i>
+                        Heures moteur =
+                        compteur initial − compteur final.
+                    </div>
                 </div>
 
+                <!-- CARBURANT -->
+                <h6 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="fas fa-gas-pump me-2"></i>
+                    Consommation de carburant
+                </h6>
+
                 <div class="row g-3 mb-4">
+
                     <div class="col-md-6">
                         <label for="{{ form.carburant_litre.id_for_label }}"
                                class="form-label fw-semibold">
                             {{ form.carburant_litre.label }}
-                            <span class="text-danger">*</span>
                         </label>
 
                         {{ form.carburant_litre }}
@@ -238,6 +287,7 @@
                             Quantité réellement consommée en litres.
                         </div>
                     </div>
+
                 </div>
 
                 <!-- OBSERVATION -->
@@ -260,7 +310,8 @@
                 </div>
 
                 <!-- ACTIONS -->
-                <div class="d-flex flex-wrap justify-content-end gap-2 border-top pt-3">
+                <div class="d-flex flex-wrap justify-content-end
+                            gap-2 border-top pt-3">
 
                     <a href="{% url 'projet:mouvement_vehicule_projet_list' projet_id=projet.pk %}"
                        class="btn btn-outline-secondary">
@@ -270,6 +321,7 @@
 
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-1"></i>
+
                         {% if mouvement %}
                             Enregistrer les modifications
                         {% else %}
@@ -284,42 +336,51 @@
     </div>
 </div>
 
-<!-- AFFICHAGE CONDITIONNEL DES COMPTEURS -->
+<!-- AFFICHAGE CONDITIONNEL -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const selectVehicule = document.getElementById(
         "{{ form.vehicule_projet.id_for_label }}"
     );
 
+    const selectEngin = document.getElementById(
+        "{{ form.engin_projet.id_for_label }}"
+    );
+
     const sectionKm = document.getElementById("section-kilometrage");
     const sectionHeures = document.getElementById("section-heures-moteur");
 
-    if (!selectVehicule || !sectionKm || !sectionHeures) {
+    if (!selectVehicule || !selectEngin || !sectionKm || !sectionHeures) {
         return;
     }
 
-    const typesVehicules = {
-        {% for vehicule in form.fields.vehicule_projet.queryset %}
-            "{{ vehicule.pk }}": "{{ vehicule.type_vehicule }}",
-        {% endfor %}
-    };
-
     function actualiserChamps() {
-        const type = typesVehicules[selectVehicule.value];
+        const vehiculeSelectionne = Boolean(selectVehicule.value);
+        const enginSelectionne = Boolean(selectEngin.value);
 
-        if (type === "ENGIN") {
-            sectionKm.style.display = "none";
-            sectionHeures.style.display = "";
-        } else if (type) {
-            sectionKm.style.display = "";
-            sectionHeures.style.display = "none";
-        } else {
-            sectionKm.style.display = "";
-            sectionHeures.style.display = "none";
-        }
+        sectionKm.style.display =
+            vehiculeSelectionne && !enginSelectionne ? "" : "none";
+
+        sectionHeures.style.display =
+            enginSelectionne && !vehiculeSelectionne ? "" : "none";
     }
 
-    selectVehicule.addEventListener("change", actualiserChamps);
+    selectVehicule.addEventListener("change", function () {
+        if (selectVehicule.value) {
+            selectEngin.value = "";
+        }
+
+        actualiserChamps();
+    });
+
+    selectEngin.addEventListener("change", function () {
+        if (selectEngin.value) {
+            selectVehicule.value = "";
+        }
+
+        actualiserChamps();
+    });
+
     actualiserChamps();
 });
 </script>

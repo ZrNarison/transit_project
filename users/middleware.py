@@ -33,6 +33,7 @@ class LoginRequiredMiddleware:
 
         try:
             match = resolve(request.path_info)
+
             namespace = match.namespace or ""
             view_name = match.view_name or ""
 
@@ -47,32 +48,36 @@ class LoginRequiredMiddleware:
         h_role = request.session.get("h_role")
 
         # Applications réservées à Entreprise H.
-        # "salaire" est partagé entre GALAXY et H.
-        # "recette" est accessible avec la session GALAXY.
+        # "avances" est retiré car les vues partagées
+        # utilisent ici la session GALAXY.
+        # "salaire" peut être partagé entre GALAXY et H.
+        # "recette" utilise la session GALAXY.
+
         h_namespaces = {
             "materiaux",
             "categorie",
-            "avances",
             "depotSoc",
-            "materiels",
-            "materielEntre",
-            "materielsort",
-            "rapportsoc",
             "audit",
             "logs",
         }
 
-        # Les vues H partagées avec un autre namespace
-        # doivent être identifiées par leur nom.
+        # =====================================================
+        # IDENTIFICATION DES ROUTES ENTREPRISE H
+        # =====================================================
+
         is_h_route = (
             namespace in h_namespaces
             or view_name.startswith("users:h_")
-            or view_name.startswith("personnel:h_personnel_")
-            or view_name.startswith("salaire:h_salaire_")
+            or view_name.startswith(
+                "personnel:h_personnel_"
+            )
+            or view_name.startswith(
+                "salaire:h_salaire_"
+            )
         )
 
         # =====================================================
-        # CONTRÔLE ENTREPRISE H
+        # CONTRÔLE SESSION ENTREPRISE H
         # =====================================================
 
         if is_h_route:
@@ -83,7 +88,7 @@ class LoginRequiredMiddleware:
             return self.get_response(request)
 
         # =====================================================
-        # CONTRÔLE GALAXY
+        # CONTRÔLE SESSION GALAXY
         # =====================================================
 
         if not request.session.get("user_id"):
