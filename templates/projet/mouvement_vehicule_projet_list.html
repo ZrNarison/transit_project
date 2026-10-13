@@ -238,7 +238,7 @@
                                     <!-- DÉPART -->
                                     <td>
                                         {% if mouvement.point_depart %}
-                                            {{ mouvement.point_depart }}
+                                            {{ mouvement.point_depart|title }}
                                         {% else %}
                                             <span class="text-muted">Non précisé</span>
                                         {% endif %}
@@ -247,7 +247,7 @@
                                     <!-- DESTINATION -->
                                     <td>
                                         {% if mouvement.point_arrivee %}
-                                            {{ mouvement.point_arrivee }}
+                                            {{ mouvement.point_arrivee|title }}
                                         {% else %}
                                             <span class="text-muted">Non précisée</span>
                                         {% endif %}
