@@ -2953,11 +2953,22 @@ class EquipageProjet(models.Model):
 # ============================================================
 class AvanceEquipeProjet(models.Model):
 
-    personnel_execution = models.ForeignKey(
-        "PersonnelExecutionProjet",
+    equipe_execution = models.ForeignKey(
+        "projet.EquipeProjet",
         on_delete=models.PROTECT,
-        related_name="avances",
-        verbose_name="Travailleur",
+        related_name="avances_equipe",
+        null=True,
+        blank=True,
+        verbose_name="Équipe d'exécution",
+    )
+
+    miniers_execution = models.ForeignKey(
+        "projet.EquipeProjet",
+        on_delete=models.PROTECT,
+        related_name="avances_miniers",
+        null=True,
+        blank=True,
+        verbose_name="Équipe de miniers",
     )
 
     montant = models.DecimalField(
@@ -2981,7 +2992,7 @@ class AvanceEquipeProjet(models.Model):
     )
 
     enregistre_par = models.ForeignKey(
-        AppUser,
+        "users.AppUser",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -2990,41 +3001,41 @@ class AvanceEquipeProjet(models.Model):
     )
 
     class Meta:
-        ordering = [
-            "-date_avance",
-            "-id",
-        ]
+        ordering = ["-date_avance", "-id"]
         verbose_name = "Avance d'équipe"
         verbose_name_plural = "Avances d'équipe"
 
     def __str__(self):
+        equipe = self.equipe_execution or self.miniers_execution
 
-        return (
-            f"{self.personnel_execution.nom} - "
-            f"{self.montant}"
-        )
+        if equipe:
+            return f"Avance - {equipe} - {self.montant}"
+
+        return f"Avance d'équipe - {self.montant}"
 
     def clean(self):
-
+        super().clean()
         errors = {}
 
-        if (
-            self.montant is not None
-            and self.montant < Decimal("0.00")
-        ):
-
+        if self.montant is not None and self.montant < Decimal("0.00"):
             errors["montant"] = (
                 "Le montant de l'avance ne peut pas être négatif."
             )
 
+        if bool(self.equipe_execution_id) == bool(self.miniers_execution_id):
+            message = (
+                "Sélectionnez une seule équipe : équipe d'exécution "
+                "ou équipe de miniers."
+            )
+            errors["equipe_execution"] = message
+            errors["miniers_execution"] = message
+
         if errors:
             raise ValidationError(errors)
-
 
 # ============================================================
 # MATÉRIAUX UTILISÉS PAR L'ÉQUIPE
 # ============================================================
-
 class EquipeMateriauProjet(models.Model):
 
     personnel_execution = models.ForeignKey(

@@ -35,10 +35,22 @@ from users.decorators import (
     get_current_user,
     project_access_required,
     user_can_manage_projects,user_has_project_access,
-    get_current_personnel,
+    get_current_personnel,user_can_manage_materiaux,
     login_required_projet,
     project_manager_required,    
 )
+from materiaux.models import (
+        MateriauxOut,
+        ActiviteTransport,
+        ReceptionMateriau,
+        UtilisationMateriau,
+        MateriauxRetour,
+        Depense,
+        DepenseGasoil,
+        ReparationVehicule,
+        PaiementDocker,
+    )
+
 
 # ============================================================
 # CONSTANTES
@@ -1332,17 +1344,6 @@ def projet_detail(
     # IMPORTS MATÉRIAUX / TRANSPORT / DÉPENSES
     # ============================================================
 
-    from materiaux.models import (
-        MateriauxOut,
-        ActiviteTransport,
-        ReceptionMateriau,
-        UtilisationMateriau,
-        MateriauxRetour,
-        Depense,
-        DepenseGasoil,
-        ReparationVehicule,
-        PaiementDocker,
-    )
 
     # ============================================================
     # SORTIES MATÉRIAUX
@@ -3124,8 +3125,6 @@ def rapport_travail_create(
 # ============================================================
 # RAPPORT MATERIAU - CREER
 # ============================================================
-
-# @login_required_projet
 def rapport_materiau_create(request, projet_id):
     """
     Ajout d'un rapport matériau pour un projet.
@@ -4241,11 +4240,12 @@ def materiau_list(request, projet_id):
     )
 
 
+
 # ============================================================
 # AJOUTER UN MATÉRIAU AU PROJET
 # ============================================================
 
-@login_required_projet
+# @login_required_projet
 def materiau_create(request, projet_id):
 
     # ========================================================

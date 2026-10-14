@@ -4019,9 +4019,8 @@ class EquipageProjetForm(forms.ModelForm):
         return cleaned_data
 
 
-
 # ============================================================
-# AVANCE EQUIPE PROJET
+# FORMULAIRE AVANCE EQUIPE PROJET
 # ============================================================
 
 class AvanceEquipeProjetForm(forms.ModelForm):
@@ -4030,126 +4029,141 @@ class AvanceEquipeProjetForm(forms.ModelForm):
         model = AvanceEquipeProjet
 
         fields = [
-            "personnel_execution",
+            "equipe_execution",
+            "miniers_execution",
             "montant",
             "date_avance",
             "enregistre_par",
         ]
 
         widgets = {
-            "personnel_execution": SELECT_WIDGET,
+            "equipe_execution": SELECT_WIDGET,
+            "miniers_execution": SELECT_WIDGET,
             "montant": NUMBER_WIDGET,
             "date_avance": DATETIME_WIDGET,
             "enregistre_par": SELECT_WIDGET,
         }
 
         labels = {
-            "personnel_execution": "Travailleur",
-            "montant": "Montant de l'avance",
+            "equipe_execution": "Équipe d'exécution",
+            "miniers_execution": "Équipe de miniers",
+            "montant": "Montant de l'avance (Ar)",
             "date_avance": "Date de l'avance",
             "enregistre_par": "Enregistré par",
         }
 
-    def __init__(
-        self,
-        *args,
-        projet=None,
-        **kwargs
-    ):
-
+    def __init__(self, *args, projet=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.projet = projet
 
+        # ----------------------------------------------------
+        # ÉQUIPES AUTORISÉES POUR LE PROJET
+        # ----------------------------------------------------
+
         if projet:
-
-            self.fields[
-                "personnel_execution"
-            ].queryset = (
-                PersonnelExecutionProjet.objects
-                .filter(
-                    projet=projet
+            equipes = (
+                EquipeProjet.objects
+                .filter(projet=projet)
+                .select_related(
+                    "projet",
+                    "personnel",
+                    "personnel_execution",
                 )
-                .order_by(
-                    "nom"
-                )
+                .order_by("id")
             )
-
         else:
+            equipes = EquipeProjet.objects.none()
 
-            self.fields[
-                "personnel_execution"
-            ].queryset = (
-                PersonnelExecutionProjet.objects.none()
-            )
+        self.fields["equipe_execution"].queryset = equipes
+        self.fields["miniers_execution"].queryset = equipes
+
+        # ----------------------------------------------------
+        # DATE PAR DÉFAUT
+        # ----------------------------------------------------
+
+        if not self.instance.pk and not self.is_bound:
+            self.fields["date_avance"].initial = timezone.now()
+
+        # Le montant doit être strictement positif.
+        self.fields["montant"].widget.attrs["min"] = "0.01"
 
     def clean(self):
-
         cleaned_data = super().clean()
 
-        personnel_execution = cleaned_data.get(
-            "personnel_execution"
-        )
+        equipe_execution = cleaned_data.get("equipe_execution")
+        miniers_execution = cleaned_data.get("miniers_execution")
+        montant = cleaned_data.get("montant")
+        date_avance = cleaned_data.get("date_avance")
 
-        montant = cleaned_data.get(
-            "montant"
-        )
+        # ----------------------------------------------------
+        # UNE SEULE ÉQUIPE DOIT ÊTRE SÉLECTIONNÉE
+        # ----------------------------------------------------
 
-        date_avance = cleaned_data.get(
-            "date_avance"
-        )
-
-        if (
-            montant is not None
-            and montant <= 0
-        ):
-
-            self.add_error(
-                "montant",
-                "Le montant de l'avance doit "
-                "être supérieur à zéro.",
+        if bool(equipe_execution) == bool(miniers_execution):
+            message = (
+                "Sélectionnez une seule option : "
+                "équipe d'exécution ou équipe de miniers."
             )
 
-        if self.projet and personnel_execution:
+            self.add_error("equipe_execution", message)
+            self.add_error("miniers_execution", message)
 
-            if (
-                personnel_execution.projet_id
-                != self.projet.pk
-            ):
+        # ----------------------------------------------------
+        # MONTANT
+        # ----------------------------------------------------
 
-                self.add_error(
-                    "personnel_execution",
-                    "Ce travailleur n'appartient "
-                    "pas à ce projet.",
-                )
+        if montant is not None and montant <= Decimal("0.00"):
+            self.add_error(
+                "montant",
+                "Le montant de l'avance doit être supérieur à zéro.",
+            )
+
+        # ----------------------------------------------------
+        # APPARTENANCE AU PROJET
+        # ----------------------------------------------------
+
+        for champ, equipe in (
+            ("equipe_execution", equipe_execution),
+            ("miniers_execution", miniers_execution),
+        ):
+            if equipe and self.projet:
+                if equipe.projet_id != self.projet.pk:
+                    self.add_error(
+                        champ,
+                        "Cette équipe n'appartient pas au projet sélectionné.",
+                    )
+
+        # ----------------------------------------------------
+        # DATE DE L'AVANCE
+        # ----------------------------------------------------
 
         if self.projet and date_avance:
+            date_avance_jour = date_avance.date()
 
             if (
                 self.projet.date_debut
-                and date_avance.date()
-                < self.projet.date_debut
+                and date_avance_jour < self.projet.date_debut
             ):
-
                 self.add_error(
                     "date_avance",
-                    "La date de l'avance ne peut pas "
-                    "être avant le début du projet.",
+                    "La date de l'avance ne peut pas être "
+                    "antérieure au début du projet.",
                 )
 
             if (
                 self.projet.date_fin
-                and date_avance.date()
-                > self.projet.date_fin
+                and date_avance_jour > self.projet.date_fin
             ):
-
                 self.add_error(
                     "date_avance",
-                    "La date de l'avance ne peut pas "
-                    "dépasser la fin du projet.",
+                    "La date de l'avance ne peut pas dépasser "
+                    "la fin du projet.",
                 )
 
         return cleaned_data
+
+
 # ============================================================
 # EQUIPE MATERIAU PROJET
 # ============================================================
