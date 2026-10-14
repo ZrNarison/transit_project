@@ -74,16 +74,16 @@
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <!-- PHOTO -->
                             {% if request.session.h_photo %}
-                <img src="{{ request.session.h_photo }}"
-                     width="35"
-                     height="35"
-                     class="rounded-circle border border-light"
-                     style="object-fit: cover;"
-                     alt="Photo utilisateur">
-            {% else %}
-                <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center"
-                      style="width:35px;height:35px;">👤</span>
-            {% endif %}
+                                <img src="{{ request.session.h_photo }}"
+                                    width="35"
+                                    height="35"
+                                    class="rounded-circle border border-light"
+                                    style="object-fit: cover;"
+                                    alt="Photo utilisateur">
+                            {% else %}
+                                <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center"
+                                    style="width:35px;height:35px;">👤</span>
+                            {% endif %}
                             <span>{{ request.session.username|title }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
@@ -241,7 +241,7 @@
                     
                     <!-- =================================================MATÉRIELS================================================= -->
                     <li class="nav-item dropdown">
-                        {% if request.session.role == "MAGASIN" or request.session.role == "CHEF_MAGASIN" or request.session.role == "Admin" or request.session.role == "Superviseur"  or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHEF_MAGASIN" or fonction_projet == "MAGASINIER" %}
+                        {% if request.session.role == "MAGASIN" or request.session.role == "CHEF_MAGASIN" or request.session.role == "Admin" or request.session.role == "Superviseur"  or fonction_projet == "INGENIEUR"  or fonction_projet == "CHEF_MAGASIN" or fonction_projet == "MAGASINIER" %}
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">🔧 Matériels</a>
                         <ul class="dropdown-menu shadow">
 
