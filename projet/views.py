@@ -6383,18 +6383,6 @@ def avance_equipe_projet_delete(request, projet_id, avance_id):
 # ======================================================
 @project_access_required
 def dashboard_materiaux(request, projet_id):
-    """
-    Tableau de bord des matériaux du projet.
-
-    Dépôt 2 :
-        RéceptionMateriauProjet avec point=None.
-
-    Livraison directe :
-        RéceptionMateriauProjet avec point renseigné.
-
-    Distribution :
-        Sortie du Dépôt 2 vers un point du projet.
-    """
 
     projet = request.projet
     ZERO = Decimal("0.00")

@@ -3919,13 +3919,6 @@ class ConsommationMateriauProjetForm(forms.ModelForm):
         return cleaned_data
 
 class RetourMateriauProjetForm(forms.ModelForm):
-    """
-    Formulaire de retour de matériaux du Dépôt 2.
-
-    Le matériau et le point sont sélectionnés séparément.
-    Le retour est automatiquement réparti entre les distributions
-    correspondantes, de la plus ancienne à la plus récente.
-    """
 
     materiau = forms.ChoiceField(
         label="Matériau",

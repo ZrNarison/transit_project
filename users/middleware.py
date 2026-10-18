@@ -48,7 +48,7 @@ class LoginRequiredMiddleware:
         h_role = request.session.get("h_role")
 
         h_namespaces = {
-            # "materiaux",
+            "materiaux",
             "categorie",
             "depotSoc",
             "audit",
