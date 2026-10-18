@@ -1,0 +1,493 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid py-3">
+
+<!-- ==========================================================
+     EN-TÊTE
+=========================================================== -->
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">🔧 Réparations / Entretien véhicules</h2>
+        <small class="text-muted">Suivi des réparations, pièces et main d'œuvre</small>
+    </div>
+    {% if fonction_projet == "CHAUFFEUR" %}
+    <a href="{% url 'materiaux:reparation_add' %}" class="btn btn-primary">Nouvelle réparation</a>
+    {% endif %}
+</div>
+
+
+<!-- ==========================================================
+     MESSAGES
+=========================================================== -->
+
+{% if messages %}
+
+    {% for message in messages %}
+
+        <div
+            class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+            role="alert">
+
+            {{ message }}
+
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="alert">
+            </button>
+
+        </div>
+
+    {% endfor %}
+
+{% endif %}
+
+
+<!-- ==========================================================
+     RESUME GENERAL
+=========================================================== -->
+
+<div class="row mb-4">
+    <!-- TOTAL PIECES -->
+
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-primary mb-2">Total pièces</h6>
+                        <h4 class="mb-0">{{ total_pieces|default:"0"|floatformat:2 }}</h4>
+                    </div>
+                    <div class="fs-1 opacity-25">🔩</div>
+                </div>
+                <small class="text-muted">Montant total des pièces</small>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- TOTAL MAIN D'OEUVRE -->
+
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-warning mb-2">Main d'œuvre</h6>
+                        <h4 class="mb-0">{{ total_main_oeuvre|default:"0"|floatformat:2 }}</h4>
+                    </div>
+                    <div class="fs-1 opacity-25">👨‍🔧</div>
+                </div>
+                <small class="text-muted">Montant total de la main d'œuvre</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOTAL GENERAL -->
+
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-success mb-2">Total général</h6>
+                        <h4 class="mb-0">{{ total_general|default:"0"|floatformat:2 }}</h4>
+                    </div>
+                    <div class="fs-1 opacity-25">💰</div>
+                </div>
+                <small class="text-muted">Pièces + main d'œuvre</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================================
+     TABLEAU
+=========================================================== -->
+<div class="card shadow-sm w-100">
+
+    <div class="card-header d-flex justify-content-between align-items-center">
+
+        <strong>
+            🔧 RÉPARATIONS VÉHICULES
+        </strong>
+
+        <span class="badge bg-secondary">
+
+            {{ reparations|length }}
+
+            enregistrement{{ reparations|length|pluralize }}
+
+        </span>
+
+    </div>
+
+
+    <div class="table-responsive">
+
+        <table class="table table-hover table-bordered align-middle mb-0">
+
+            <thead class="table-dark">
+
+                <!-- ==================================================
+                     PREMIERE LIGNE
+                =================================================== -->
+
+                <tr>
+
+                    <th rowspan="2" class="text-center text-nowrap">Date</th>
+                    <th rowspan="2" class="text-center">Véhicule</th>
+                    <th rowspan="2" class="text-center">Chauffeur</th>
+                    <th rowspan="2">Désignation</th>
+                    <th rowspan="2" class="text-center">Type</th>
+                    <th rowspan="2">Garage</th>
+                    <th rowspan="2" class="text-center">Quantité</th>
+                    <th rowspan="2" class="text-center text-nowrap">Prix unitaire</th>
+                    <th colspan="2" class="text-center">Pièces</th>
+                    <th rowspan="2" class="text-center text-nowrap">Total pièce</th>
+                    <th rowspan="2" class="text-center text-nowrap">Main d'œuvre</th>
+                    <th rowspan="2" class="text-center">Total</th>
+                    <th rowspan="2" class="text-center">Actions</th>
+                </tr>
+                <!-- ==================================================DEUXIEME LIGNE=================================================== -->
+                <tr>
+                    <th class="text-center">Remplacée</th>
+                    <th class="text-center">Remplaçante</th>
+                </tr>
+            </thead>
+
+            <!-- ======================================================CORPS======================================================= -->
+
+            <tbody>
+                {% for reparation in reparations %}
+                <tr>
+                    <!-- DATE -->
+                    <td class="text-nowrap">{{ reparation.date_reparation|date:"d/m/Y" }}</td>
+
+                    <!-- VEHICULE -->
+                    <td class="text-center">{% if reparation.vehicule %}
+                            <strong>
+                                {{ reparation.vehicule.immatriculation }}
+                            </strong>
+
+                            {% if reparation.vehicule.marque or reparation.vehicule.modele %}
+                                <br>
+                                <small class="text-muted">
+                                    {{ reparation.vehicule.marque|default:"" }}
+                                    {{ reparation.vehicule.modele|default:"" }}
+                                </small>
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <!-- CHAUFFEUR -->
+                    <td>{{ reparation.chauffeur|upper|default:"-" }}</td>
+
+                    <!-- DESIGNATION -->
+                    <td>
+                        <strong>{{ reparation.designation|title|default:"-" }}</strong>
+                    </td>
+
+
+                    <!-- TYPE -->
+                    <td class="text-center">
+                        {% if reparation.type_reparation == "CHANGEMENT" %}
+                            <span class="badge bg-warning text-dark">
+                                Changement
+                            </span>
+                        {% elif reparation.type_reparation == "REPARATION" %}
+                            <span class="badge bg-info">
+                                Réparation
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary">
+                                {{ reparation.type_reparation|default:"-" }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- GARAGE -->
+                    <td>{{ reparation.garage|upper|default:"-" }}</td>
+
+
+                    <!-- QUANTITE -->
+
+                    <td class="text-end text-nowrap">
+
+                        {{ reparation.quantite|default:"0"|floatformat:2 }}
+
+                        {% if reparation.unite %}
+
+                            <small class="text-muted">
+                                {{ reparation.unite }}
+                            </small>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- PRIX UNITAIRE -->
+
+                    <td class="text-end text-nowrap">
+
+                        {{ reparation.prix_unitaire|default:"0"|floatformat:2 }}
+
+                    </td>
+
+
+                    <!-- PIECE REMPLACEE -->
+
+                    <td>
+
+                        {% if reparation.photo_piece_remplacee %}
+
+                            <a
+                                href="{{ reparation.photo_piece_remplacee.url }}"
+                                target="_blank"
+                                class="btn btn-sm btn-outline-primary"
+                                title="Voir la photo de la pièce remplacée">
+
+                                📷 Photo
+
+                            </a>
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- PIECE REMPLACANTE -->
+
+                    <td>
+
+                        {% if reparation.photo_piece_remplacante %}
+
+                            <a
+                                href="{{ reparation.photo_piece_remplacante.url }}"
+                                target="_blank"
+                                class="btn btn-sm btn-outline-success"
+                                title="Voir la photo de la pièce remplaçante">
+
+                                📷 Photo
+
+                            </a>
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <!-- TOTAL PIECE -->
+
+                    <td class="text-end text-nowrap">
+
+                        <strong>
+
+                            {{ reparation.montant_piece|default:"0"|floatformat:2 }}
+
+                        </strong>
+
+                    </td>
+
+
+                    <!-- MAIN D'OEUVRE -->
+
+                    <td class="text-end text-nowrap">
+
+                        {{ reparation.montant_main_oeuvre|default:"0"|floatformat:2 }}
+
+                    </td>
+
+
+                    <!-- TOTAL GENERAL -->
+
+                    <td class="text-end text-nowrap">
+
+                        <strong class="text-success">
+
+                            {{ reparation.montant_total|default:"0"|floatformat:2 }}
+
+                        </strong>
+
+                    </td>
+
+
+                    <!-- ==================================================
+                         ACTIONS
+                         SEUL L'ENREGISTREUR PEUT MODIFIER/SUPPRIMER
+                    =================================================== -->
+
+                    <td class="text-nowrap text-center">
+
+                        {% if reparation.enregistreur_id == user.id %}
+
+                            <a
+                                href="{% url 'materiaux:reparation_edit' reparation.pk %}"
+                                class="btn btn-sm btn-warning"
+                                title="Modifier ma réparation">
+
+                                ✏️
+
+                            </a>
+
+
+                            <form
+                                method="post"
+                                action="{% url 'materiaux:reparation_delete' reparation.pk %}"
+                                class="d-inline">
+
+                                {% csrf_token %}
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    title="Supprimer ma réparation"
+                                    onclick="return confirm('Voulez-vous vraiment supprimer cette réparation ?');">
+
+                                    🗑️
+
+                                </button>
+
+                            </form>
+
+                        {% else %}
+
+                            <span
+                                class="badge bg-secondary"
+                                title="Seul l'enregistreur peut modifier ou supprimer cet enregistrement">
+
+                                🔒 Lecture seule
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+
+                {% empty %}
+
+                <!-- ==================================================
+                     AUCUNE DONNEE
+                =================================================== -->
+
+                <tr>
+
+                    <td
+                        colspan="14"
+                        class="text-center text-muted py-5">
+
+                        <div class="fs-1 mb-2">
+                            🔧
+                        </div>
+
+                        <strong>
+                            Aucune réparation enregistrée.
+                        </strong>
+
+                        <br>
+
+                        <small>
+                            Cliquez sur « Nouvelle réparation »
+                            pour enregistrer une intervention.
+                        </small>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+
+            <!-- ======================================================
+                 TOTAUX
+            ======================================================= -->
+
+            <tfoot class="table-light">
+
+                <tr>
+
+                    <th
+                        colspan="10"
+                        class="text-end">
+
+                        TOTAL
+
+                    </th>
+
+
+                    <!-- TOTAL PIECES -->
+
+                    <th class="text-end text-nowrap">
+
+                        <strong>
+
+                            {{ total_pieces|default:"0"|floatformat:2 }}
+
+                        </strong>
+
+                    </th>
+
+
+                    <!-- TOTAL MAIN D'OEUVRE -->
+
+                    <th class="text-end text-nowrap">
+
+                        <strong>
+
+                            {{ total_main_oeuvre|default:"0"|floatformat:2 }}
+
+                        </strong>
+
+                    </th>
+
+
+                    <!-- TOTAL GENERAL -->
+
+                    <th class="text-end text-nowrap">
+
+                        <strong class="text-success">
+
+                            {{ total_general|default:"0"|floatformat:2 }}
+
+                        </strong>
+
+                    </th>
+
+
+                    <!-- ACTIONS -->
+
+                    <th></th>
+
+                </tr>
+
+            </tfoot>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

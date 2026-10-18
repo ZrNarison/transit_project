@@ -1,0 +1,634 @@
+{% extends "base.html" %}
+
+{% block title %}Véhicules{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-4">
+
+    <!-- ===================================================== -->
+    <!-- EN-TÊTE -->
+    <!-- ===================================================== -->
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-truck text-primary me-2"></i>
+                Véhicules
+            </h2>
+
+            <p class="text-muted mb-0">
+                Gestion du parc automobile et suivi des coûts.
+            </p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+
+            <a href="{% url 'materiaux:vehicule_add' %}"
+               class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>
+                Nouveau véhicule
+            </a>
+
+            <a href="{% url 'materiaux:depenses_gasoil_list' %}"
+               class="btn btn-outline-success">
+                <i class="fas fa-gas-pump me-1"></i>
+                Gasoil
+            </a>
+
+            <a href="{% url 'materiaux:reparations_list' %}"
+               class="btn btn-outline-warning">
+                <i class="fas fa-tools me-1"></i>
+                Réparations
+            </a>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- STATISTIQUES -->
+    <!-- ===================================================== -->
+
+    <div class="row g-3 mb-4">
+
+        <!-- TOTAL -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="text-muted small">
+                                Total véhicules
+                            </div>
+
+                            <div class="fs-3 fw-bold">
+                                {{ vehicules|length }}
+                            </div>
+                        </div>
+
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                            <i class="fas fa-truck text-primary fa-lg"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ACTIFS -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="text-muted small">
+                                Véhicules actifs
+                            </div>
+
+                            <div class="fs-3 fw-bold text-success">
+                                {{ vehicules|length }}
+                            </div>
+                        </div>
+
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                            <i class="fas fa-check-circle text-success fa-lg"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- GASOIL -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="text-muted small">
+                                Coût gasoil
+                            </div>
+
+                            <div class="fw-bold text-success">
+                                {{ vehicules|length }} véhicule(s)
+                            </div>
+                        </div>
+
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                            <i class="fas fa-gas-pump text-success fa-lg"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <!-- RÉPARATIONS -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <div class="text-muted small">
+                                Suivi entretien
+                            </div>
+
+                            <div class="fw-bold text-warning">
+                                Réparations
+                            </div>
+                        </div>
+
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                            <i class="fas fa-wrench text-warning fa-lg"></i>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- TABLEAU -->
+    <!-- ===================================================== -->
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white border-0 py-3">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+
+                <div>
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-list me-2 text-primary"></i>
+                        Liste des véhicules
+                    </h5>
+
+                    <small class="text-muted">
+                        {{ vehicules|length }} véhicule(s)
+                    </small>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-body p-0">
+
+            {% if vehicules %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th class="ps-3">
+                                #
+                            </th>
+
+                            <th>
+                                Véhicule
+                            </th>
+
+                            <th>
+                                Immatriculation
+                            </th>
+
+                            <th class="text-end">
+                                Kilométrage
+                            </th>
+
+                            <th class="text-end">
+                                Gasoil
+                            </th>
+
+                            <th class="text-end">
+                                Réparations
+                            </th>
+
+                            <th class="text-end">
+                                Dépenses
+                            </th>
+
+                            <th class="text-end">
+                                Dockers
+                            </th>
+
+                            <th class="text-end">
+                                Coût total
+                            </th>
+
+                            <th class="text-center">
+                                État
+                            </th>
+
+                            <th class="text-center pe-3">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                    {% for vehicule in vehicules %}
+
+                        <tr>
+
+                            <!-- NUMÉRO -->
+
+                            <td class="ps-3 text-muted">
+                                {{ forloop.counter }}
+                            </td>
+
+
+                            <!-- VÉHICULE -->
+
+                            <td>
+
+                                <div class="d-flex align-items-center">
+
+                                    <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-2">
+                                        <i class="fas fa-truck text-primary"></i>
+                                    </div>
+
+                                    <div>
+
+                                        <div class="fw-semibold">
+
+                                            {% if vehicule.marque %}
+                                                {{ vehicule.marque }}
+                                            {% else %}
+                                                Véhicule
+                                            {% endif %}
+
+                                        </div>
+
+                                        {% if vehicule.modele %}
+                                            <small class="text-muted">
+                                                {{ vehicule.modele }}
+                                            </small>
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+
+                            <!-- IMMATRICULATION -->
+
+                            <td>
+
+                                <span class="badge bg-dark fs-6">
+                                    {{ vehicule.immatriculation }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- KM -->
+
+                            <td class="text-end">
+
+                                <span class="fw-semibold">
+                                    {{ vehicule.kilometrage|floatformat:2 }}
+                                </span>
+
+                                <small class="text-muted">
+                                    km
+                                </small>
+
+                            </td>
+
+
+                            <!-- GASOIL -->
+
+                            <td class="text-end">
+
+                                <div class="fw-semibold text-success">
+
+                                    {{ vehicule.total_gasoil|floatformat:2 }}
+
+                                </div>
+
+                                <small class="text-muted">
+
+                                    {{ vehicule.total_litres_gasoil|floatformat:3 }}
+                                    L
+
+                                </small>
+
+                            </td>
+
+
+                            <!-- RÉPARATIONS -->
+
+                            <td class="text-end">
+
+                                <span class="fw-semibold text-warning">
+
+                                    {{ vehicule.total_reparations|floatformat:2 }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- DÉPENSES -->
+
+                            <td class="text-end">
+
+                                <span class="fw-semibold">
+
+                                    {{ vehicule.total_depenses|floatformat:2 }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- DOCKERS -->
+
+                            <td class="text-end">
+
+                                <span class="fw-semibold">
+
+                                    {{ vehicule.total_dockers|floatformat:2 }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- COÛT TOTAL -->
+
+                            <td class="text-end">
+
+                                <span class="fw-bold text-danger">
+
+                                    {{ vehicule.cout_total|floatformat:2 }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- ÉTAT -->
+
+                            <td class="text-center">
+
+                                {% if vehicule.actif %}
+
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>
+                                        Actif
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-ban me-1"></i>
+                                        Inactif
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- ACTIONS -->
+
+                            <td class="text-center pe-3">
+
+                                <div class="btn-group">
+
+                                    <!-- MODIFIER -->
+
+                                    <a href="{% url 'materiaux:vehicule_edit' vehicule.pk %}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Modifier">
+
+                                        <i class="fas fa-edit"></i>
+
+                                    </a>
+
+
+                                    <!-- GASOIL -->
+
+                                    <a href="{% url 'materiaux:depenses_gasoil_list' %}?vehicule={{ vehicule.pk }}"
+                                       class="btn btn-sm btn-outline-success"
+                                       title="Voir le gasoil">
+
+                                        <i class="fas fa-gas-pump"></i>
+
+                                    </a>
+
+
+                                    <!-- RÉPARATIONS -->
+
+                                    <a href="{% url 'materiaux:reparations_list' %}"
+                                       class="btn btn-sm btn-outline-warning"
+                                       title="Voir les réparations">
+
+                                        <i class="fas fa-tools"></i>
+
+                                    </a>
+
+
+                                    <!-- SUPPRIMER -->
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            title="Supprimer"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal{{ vehicule.pk }}">
+
+                                        <i class="fas fa-trash"></i>
+
+                                    </button>
+
+                                </div>
+
+
+                                <!-- ================================================= -->
+                                <!-- MODAL SUPPRESSION -->
+                                <!-- ================================================= -->
+
+                                <div class="modal fade"
+                                     id="deleteModal{{ vehicule.pk }}"
+                                     tabindex="-1"
+                                     aria-hidden="true">
+
+                                    <div class="modal-dialog modal-dialog-centered">
+
+                                        <div class="modal-content">
+
+                                            <div class="modal-header bg-danger text-white">
+
+                                                <h5 class="modal-title">
+
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>
+
+                                                    Confirmer la suppression
+
+                                                </h5>
+
+                                                <button type="button"
+                                                        class="btn-close btn-close-white"
+                                                        data-bs-dismiss="modal">
+                                                </button>
+
+                                            </div>
+
+
+                                            <div class="modal-body text-start">
+
+                                                <p>
+                                                    Voulez-vous vraiment supprimer le véhicule :
+                                                </p>
+
+                                                <div class="alert alert-warning">
+
+                                                    <strong>
+                                                        {{ vehicule.immatriculation }}
+                                                    </strong>
+
+                                                    {% if vehicule.marque %}
+                                                        — {{ vehicule.marque }}
+                                                    {% endif %}
+
+                                                    {% if vehicule.modele %}
+                                                        {{ vehicule.modele }}
+                                                    {% endif %}
+
+                                                </div>
+
+                                                <p class="text-danger mb-0">
+
+                                                    <i class="fas fa-info-circle me-1"></i>
+
+                                                    Si ce véhicule possède déjà des
+                                                    activités, dépenses, gasoil,
+                                                    réparations ou paiements docker,
+                                                    Django empêchera sa suppression.
+
+                                                </p>
+
+                                            </div>
+
+
+                                            <div class="modal-footer">
+
+                                                <button type="button"
+                                                        class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">
+
+                                                    <i class="fas fa-times me-1"></i>
+                                                    Annuler
+
+                                                </button>
+
+
+                                                <form method="post"
+                                                      action="{% url 'materiaux:vehicule_delete' vehicule.pk %}">
+
+                                                    {% csrf_token %}
+
+                                                    <button type="submit"
+                                                            class="btn btn-danger">
+
+                                                        <i class="fas fa-trash me-1"></i>
+                                                        Supprimer
+
+                                                    </button>
+
+                                                </form>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+                <!-- ================================================= -->
+                <!-- AUCUN VÉHICULE -->
+                <!-- ================================================= -->
+
+                <div class="text-center py-5">
+
+                    <div class="mb-3">
+
+                        <i class="fas fa-truck fa-4x text-muted"></i>
+
+                    </div>
+
+                    <h5 class="fw-bold">
+                        Aucun véhicule enregistré
+                    </h5>
+
+                    <p class="text-muted">
+                        Commencez par ajouter un véhicule.
+                    </p>
+
+                    <a href="{% url 'materiaux:vehicule_add' %}"
+                       class="btn btn-primary">
+
+                        <i class="fas fa-plus me-1"></i>
+                        Ajouter un véhicule
+
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

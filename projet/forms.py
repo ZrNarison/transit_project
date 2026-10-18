@@ -1,9 +1,11 @@
 from django import forms
+from django.db import models
 from django.utils import timezone
 from decimal import Decimal
+from django.db import transaction
 from personnel.models import Personnel
 from materiaux.models import Materiaux, Vehicule
-
+from django.core.exceptions import ValidationError
 from .models import (Projet,EquipeProjet,PointProjet,EnginProjet,RapportProjet,
     RapportTravail,
     RapportMateriau,
@@ -16,9 +18,19 @@ from .models import (Projet,EquipeProjet,PointProjet,EnginProjet,RapportProjet,
     EquipageProjet,MateriauProjet,
     AvanceEquipeProjet,
     EquipeMateriauProjet,
-    VehiculeLourdsProjet,
+    VehiculeLourdsProjet
 )
-
+from .models import (
+    MateriauProjet,
+    AchatMateriauProjet,
+    ReceptionMateriauProjet,
+    DistributionMateriauProjet,
+    ConsommationMateriauProjet,
+    RetourMateriauProjet,
+    PersonnelExecutionProjet,
+    PointProjet,
+)
+from django.urls import path, reverse, reverse_lazy
 
 # ============================================================
 # WIDGETS BOOTSTRAP
@@ -3293,7 +3305,903 @@ class ChefEquipeProjetForm(forms.ModelForm):
             instance.save()
 
         return instance
-    
+# ============================================================
+# MATERIAU
+# ============================================================
+
+# ============================================================
+# FORMULAIRES — MATÉRIAUX DE CHANTIER GALAXY
+# ============================================================
+
+class FormulaireMateriauProjet(forms.ModelForm):
+    """Planification des matériaux nécessaires au projet."""
+
+    class Meta:
+        model = MateriauProjet
+        fields = [
+            "materiau",
+            "unite",
+            "quantite_prevue",
+        ]
+        widgets = {
+            "materiau": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ex. : Ciment, sable, gravier...",
+            }),
+            "unite": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ex. : sac, m³, kg, pièce...",
+            }),
+            "quantite_prevue": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0.001",
+                "step": "0.001",
+            }),
+        }
+
+    def clean_quantite_prevue(self):
+        quantite = self.cleaned_data["quantite_prevue"]
+        if quantite <= Decimal("0"):
+            raise ValidationError("La quantité prévue doit être supérieure à zéro.")
+        return quantite
+
+
+# ============================================================
+# FORMULAIRE — ACHAT DE MATÉRIAUX DU PROJET
+# ============================================================
+class AchatMateriauProjetForm(forms.ModelForm):
+    """Enregistrement d'un achat de matériaux pour un projet."""
+
+    class Meta:
+        model = AchatMateriauProjet
+
+        fields = [
+            "materiau_projet",
+            "fournisseur",
+            "date_achat",
+            "quantite_achetee",
+            "prix_unitaire",
+            "observation",
+        ]
+
+        widgets = {
+            "materiau_projet": forms.Select(attrs={
+                "class": "form-select",
+            }),
+            "fournisseur": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nom du fournisseur",
+            }),
+            "date_achat": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date",
+            }),
+            "quantite_achetee": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0.01",
+                "step": "0.01",
+            }),
+            "prix_unitaire": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "step": "0.01",
+            }),
+            "observation": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Observations éventuelles...",
+            }),
+        }
+
+        labels = {
+            "materiau_projet": "Matériau acheté",
+            "fournisseur": "Fournisseur",
+            "date_achat": "Date d'achat",
+            "quantite_achetee": "Quantité achetée",
+            "prix_unitaire": "Prix unitaire",
+            "observation": "Observation",
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.projet = projet
+
+        # Limiter les matériaux à ceux du projet courant.
+        if projet is not None:
+            self.fields["materiau_projet"].queryset = (
+                MateriauProjet.objects.filter(
+                    projet=projet
+                ).order_by("materiau")
+            )
+        else:
+            self.fields["materiau_projet"].queryset = (
+                MateriauProjet.objects.none()
+            )
+
+    def clean_quantite_achetee(self):
+        quantite = self.cleaned_data.get("quantite_achetee")
+
+        if quantite is None or quantite <= Decimal("0"):
+            raise ValidationError(
+                "La quantité achetée doit être strictement supérieure à zéro."
+            )
+
+        return quantite
+
+    def clean_prix_unitaire(self):
+        prix = self.cleaned_data.get("prix_unitaire")
+
+        if prix is None or prix < Decimal("0"):
+            raise ValidationError(
+                "Le prix unitaire ne peut pas être négatif."
+            )
+
+        return prix
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        materiau = cleaned_data.get("materiau_projet")
+        date_achat = cleaned_data.get("date_achat")
+
+        if self.projet is None:
+            raise ValidationError(
+                "Le projet doit être fourni pour enregistrer un achat."
+            )
+
+        if materiau and materiau.projet_id != self.projet.pk:
+            self.add_error(
+                "materiau_projet",
+                "Ce matériau n'appartient pas au projet sélectionné.",
+            )
+
+        if materiau and date_achat:
+            projet_materiau = materiau.projet
+
+            if (
+                projet_materiau.date_debut
+                and date_achat < projet_materiau.date_debut
+            ):
+                self.add_error(
+                    "date_achat",
+                    "La date d'achat ne peut pas précéder le début du projet.",
+                )
+
+            if (
+                projet_materiau.date_fin
+                and date_achat > projet_materiau.date_fin
+            ):
+                self.add_error(
+                    "date_achat",
+                    "La date d'achat ne peut pas dépasser la fin du projet.",
+                )
+
+        return cleaned_data
+
+class ReceptionMateriauProjetForm(forms.ModelForm):
+    """Enregistrement d'une réception de matériaux pour le projet."""
+
+    class Meta:
+        model = ReceptionMateriauProjet
+        fields = [
+            "materiau_projet",
+            "date_reception",
+            "quantite_recue",
+            "point",
+            "piece_justificative",
+            "observation",
+        ]
+
+        widgets = {
+            "materiau_projet": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "date_reception": forms.DateInput(
+                attrs={"class": "form-control", "type": "date"}
+            ),
+            "quantite_recue": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                }
+            ),
+            "point": forms.Select(
+                attrs={"class": "form-select", "id": "id_point"}
+            ),
+            "piece_justificative": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control",
+                    "accept": ".pdf,.jpg,.jpeg,.png,.webp",
+                }
+            ),
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Observations éventuelles...",
+                }
+            ),
+        }
+
+        labels = {
+            "materiau_projet": "Matériau",
+            "date_reception": "Date de réception",
+            "quantite_recue": "Quantité reçue",
+            "point": "Point de réception / livraison",
+            "piece_justificative": "Photo ou pièce justificative",
+            "observation": "Observation",
+        }
+
+        help_texts = {
+            "piece_justificative": (
+                "Formats acceptés : PDF, JPG, JPEG, PNG et WEBP."
+            ),
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.projet = projet
+
+        self.fields["point"].required = False
+        self.fields["piece_justificative"].required = False
+
+        self.fields["materiau_projet"].queryset = (
+            MateriauProjet.objects.none()
+        )
+        self.fields["point"].queryset = PointProjet.objects.none()
+
+        if projet is not None:
+            self.fields["materiau_projet"].queryset = (
+                MateriauProjet.objects.filter(
+                    projet=projet
+                ).order_by("materiau")
+            )
+
+            self.fields["point"].queryset = (
+                PointProjet.objects.filter(
+                    projet=projet
+                ).order_by("nom")
+            )
+
+    def clean_quantite_recue(self):
+        quantite = self.cleaned_data.get("quantite_recue")
+
+        if quantite is None or quantite <= Decimal("0"):
+            raise forms.ValidationError(
+                "La quantité reçue doit être strictement supérieure à zéro."
+            )
+
+        return quantite
+
+    def clean_piece_justificative(self):
+        fichier = self.cleaned_data.get("piece_justificative")
+
+        if fichier and fichier.size > 10 * 1024 * 1024:
+            raise forms.ValidationError(
+                "La pièce justificative ne doit pas dépasser 10 Mo."
+            )
+
+        return fichier
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        materiau = cleaned_data.get("materiau_projet")
+        date_reception = cleaned_data.get("date_reception")
+        point = cleaned_data.get("point")
+
+        if self.projet is None:
+            raise forms.ValidationError(
+                "Le projet doit être fourni pour enregistrer une réception."
+            )
+
+        if materiau and materiau.projet_id != self.projet.pk:
+            self.add_error(
+                "materiau_projet",
+                "Ce matériau n'appartient pas au projet sélectionné.",
+            )
+
+        if point and point.projet_id != self.projet.pk:
+            self.add_error(
+                "point",
+                "Le point sélectionné n'appartient pas à ce projet.",
+            )
+
+        if date_reception:
+            date_debut = getattr(self.projet, "date_debut", None)
+            date_fin = getattr(self.projet, "date_fin", None)
+
+            if date_debut and date_reception < date_debut:
+                self.add_error(
+                    "date_reception",
+                    "La réception ne peut pas précéder le début du projet.",
+                )
+
+            if date_fin and date_reception > date_fin:
+                self.add_error(
+                    "date_reception",
+                    "La réception ne peut pas dépasser la fin du projet.",
+                )
+
+        return cleaned_data
+
+
+class DistributionMateriauProjetForm(forms.ModelForm):
+    """Distribution de matériaux vers un point du chantier."""
+
+    class Meta:
+        model = DistributionMateriauProjet
+        fields = [
+            "materiau_projet",
+            "vehicule",
+            "point",
+            "date_distribution",
+            "quantite",
+            "observation",
+        ]
+
+        widgets = {
+            "materiau_projet": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "vehicule": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "point": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "date_distribution": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "quantite": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                }
+            ),
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                }
+            ),
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.projet = projet
+
+        self.fields["materiau_projet"].queryset = (
+            MateriauProjet.objects.none()
+        )
+        self.fields["vehicule"].queryset = (
+            VehiculeProjet.objects.none()
+        )
+        self.fields["point"].queryset = (
+            PointProjet.objects.none()
+        )
+
+        self.fields["vehicule"].required = False
+        self.fields["vehicule"].empty_label = "Aucun véhicule"
+
+        if projet is not None:
+            self.fields["materiau_projet"].queryset = (
+                MateriauProjet.objects.filter(
+                    projet=projet
+                ).order_by("materiau", "id")
+            )
+
+            self.fields["vehicule"].queryset = (
+                VehiculeProjet.objects.filter(
+                    projet=projet,
+                    actif=True,
+                ).order_by("vehicule", "id")
+            )
+
+            self.fields["point"].queryset = (
+                PointProjet.objects.filter(
+                    projet=projet
+                ).order_by("nom", "id")
+            )
+
+    def clean_quantite(self):
+        quantite = self.cleaned_data.get("quantite")
+
+        if quantite is None or quantite <= Decimal("0"):
+            raise forms.ValidationError(
+                "La quantité distribuée doit être supérieure à zéro."
+            )
+
+        return quantite
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        materiau = cleaned_data.get("materiau_projet")
+        vehicule = cleaned_data.get("vehicule")
+        point = cleaned_data.get("point")
+
+        if self.projet is None:
+            raise forms.ValidationError(
+                "Le projet doit être fourni pour enregistrer une distribution."
+            )
+
+        if materiau and materiau.projet_id != self.projet.pk:
+            self.add_error(
+                "materiau_projet",
+                "Ce matériau n'appartient pas au projet sélectionné.",
+            )
+
+        if point and point.projet_id != self.projet.pk:
+            self.add_error(
+                "point",
+                "Le point sélectionné n'appartient pas à ce projet.",
+            )
+
+        if vehicule and vehicule.projet_id != self.projet.pk:
+            self.add_error(
+                "vehicule",
+                "Ce véhicule ou engin n'appartient pas au projet sélectionné.",
+            )
+
+        return cleaned_data
+
+
+
+class ConsommationMateriauProjetForm(forms.ModelForm):
+    """Enregistrement de la consommation des matériaux du projet."""
+
+    class Meta:
+        model = ConsommationMateriauProjet
+
+        fields = [
+            "distribution",
+            "reception_directe",
+            "date_consommation",
+            "quantite_utilisee",
+            "observation",
+        ]
+
+        widgets = {
+            "distribution": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "reception_directe": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "date_consommation": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "quantite_utilisee": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                }
+            ),
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                }
+            ),
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.projet = projet
+
+        self.fields["distribution"].required = False
+        self.fields["reception_directe"].required = False
+
+        self.fields["distribution"].queryset = (
+            DistributionMateriauProjet.objects.none()
+        )
+
+        self.fields["reception_directe"].queryset = (
+            ReceptionMateriauProjet.objects.none()
+        )
+
+        self.fields["date_consommation"].input_formats = [
+            "%Y-%m-%d"
+        ]
+
+        self.fields["quantite_utilisee"].min_value = Decimal("0.01")
+
+        if projet is not None:
+            self.fields["distribution"].queryset = (
+                DistributionMateriauProjet.objects.filter(
+                    materiau_projet__projet=projet,
+                )
+                .select_related(
+                    "materiau_projet",
+                    "vehicule",
+                    "point",
+                    "enregistre_par",
+                )
+                .order_by("-date_distribution", "-id")
+            )
+
+            self.fields["reception_directe"].queryset = (
+                ReceptionMateriauProjet.objects.filter(
+                    materiau_projet__projet=projet,
+                    point__isnull=False,
+                )
+                .select_related(
+                    "materiau_projet",
+                    "point",
+                )
+                .order_by("-date_reception", "-id")
+            )
+
+    def clean_quantite_utilisee(self):
+        quantite = self.cleaned_data.get("quantite_utilisee")
+
+        if quantite is None or quantite <= Decimal("0"):
+            raise forms.ValidationError(
+                "La quantité consommée doit être supérieure à zéro."
+            )
+
+        return quantite
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        distribution = cleaned_data.get("distribution")
+        reception = cleaned_data.get("reception_directe")
+
+        if self.projet is None:
+            raise forms.ValidationError(
+                "Le projet doit être fourni pour enregistrer une consommation."
+            )
+
+        # Ne pas ajouter une seconde erreur si un champ est déjà invalide.
+        if (
+            "distribution" in self.errors
+            or "reception_directe" in self.errors
+        ):
+            return cleaned_data
+
+        # Une seule source doit être sélectionnée.
+        if distribution is None and reception is None:
+            self.add_error(
+                None,
+                "Sélectionnez une distribution ou une réception directe.",
+            )
+            return cleaned_data
+
+        if distribution is not None and reception is not None:
+            self.add_error(
+                None,
+                "Choisissez une seule source : distribution ou réception directe.",
+            )
+            return cleaned_data
+
+        # Vérifier que la distribution appartient au projet.
+        if distribution is not None:
+            if distribution.materiau_projet.projet_id != self.projet.pk:
+                self.add_error(
+                    "distribution",
+                    "Cette distribution n'appartient pas au projet sélectionné.",
+                )
+
+            if distribution.point_id is None:
+                self.add_error(
+                    "distribution",
+                    "Cette distribution n'a pas de point de stockage associé.",
+                )
+
+        # Vérifier que la réception appartient au projet.
+        if reception is not None:
+            if reception.materiau_projet.projet_id != self.projet.pk:
+                self.add_error(
+                    "reception_directe",
+                    "Cette réception n'appartient pas au projet sélectionné.",
+                )
+
+            if reception.point_id is None:
+                self.add_error(
+                    "reception_directe",
+                    "Cette réception ne possède pas de point de stockage.",
+                )
+
+        return cleaned_data
+
+class RetourMateriauProjetForm(forms.ModelForm):
+    """
+    Formulaire de retour de matériaux du Dépôt 2.
+
+    Le matériau et le point sont sélectionnés séparément.
+    Le retour est automatiquement réparti entre les distributions
+    correspondantes, de la plus ancienne à la plus récente.
+    """
+
+    materiau = forms.ChoiceField(
+        label="Matériau",
+        choices=[],
+        required=True,
+        widget=forms.Select(
+            attrs={"class": "form-select"}
+        ),
+    )
+
+    point = forms.ModelChoiceField(
+        label="Point",
+        queryset=PointProjet.objects.none(),
+        required=True,
+        empty_label="Sélectionner un point",
+        widget=forms.Select(
+            attrs={"class": "form-select"}
+        ),
+    )
+
+    class Meta:
+        model = RetourMateriauProjet
+        fields = [
+            "materiau",
+            "point",
+            "date_retour",
+            "quantite",
+            "observation",
+        ]
+
+        widgets = {
+            "date_retour": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "quantite": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                }
+            ),
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                }
+            ),
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.projet = projet
+
+        self.fields["date_retour"].input_formats = ["%Y-%m-%d"]
+        self.fields["quantite"].min_value = Decimal("0.01")
+
+        if projet is None:
+            return
+
+        distributions = DistributionMateriauProjet.objects.filter(
+            materiau_projet__projet=projet,
+        )
+
+        materiaux = (
+            distributions
+            .values_list("materiau_projet__materiau", flat=True)
+            .distinct()
+            .order_by("materiau_projet__materiau")
+        )
+
+        self.fields["materiau"].choices = [
+            (nom, nom)
+            for nom in materiaux
+            if nom
+        ]
+
+        points_ids = distributions.values_list(
+            "point_id",
+            flat=True,
+        ).distinct()
+
+        self.fields["point"].queryset = (
+            PointProjet.objects.filter(pk__in=points_ids)
+            .order_by("nom")
+        )
+
+    def _distributions_concernees(self, verrouiller=False):
+        """
+        Récupère les distributions du matériau et du point choisis,
+        par ordre chronologique FIFO.
+        """
+
+        materiau = self.cleaned_data.get("materiau")
+        point = self.cleaned_data.get("point")
+
+        if not materiau or not point or self.projet is None:
+            return DistributionMateriauProjet.objects.none()
+
+        queryset = DistributionMateriauProjet.objects.filter(
+            materiau_projet__projet=self.projet,
+            materiau_projet__materiau=materiau,
+            point=point,
+        ).order_by("date_distribution", "id")
+
+        if verrouiller:
+            queryset = queryset.select_for_update()
+
+        return queryset
+
+    @staticmethod
+    def _quantite_deja_retournee(distribution):
+        """
+        Additionne les retours déjà enregistrés sur une distribution.
+        Ne nécessite pas l'import de Sum.
+        """
+
+        total = Decimal("0.00")
+
+        retours = distribution.retours.only("quantite").iterator()
+
+        for retour in retours:
+            total += retour.quantite
+
+        return total
+
+    def _calculer_disponible(self, distributions=None):
+        """
+        Calcule la quantité distribuée restant disponible pour retour,
+        après déduction des retours précédents.
+        """
+
+        if distributions is None:
+            distributions = self._distributions_concernees()
+
+        disponible = Decimal("0.00")
+
+        for distribution in distributions:
+            deja_retournee = self._quantite_deja_retournee(
+                distribution
+            )
+
+            reste = distribution.quantite - deja_retournee
+
+            if reste > 0:
+                disponible += reste
+
+        return disponible
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        materiau = cleaned_data.get("materiau")
+        point = cleaned_data.get("point")
+        quantite = cleaned_data.get("quantite")
+
+        if self.projet is None:
+            raise ValidationError(
+                "Le projet doit être fourni pour enregistrer un retour."
+            )
+
+        if not materiau or not point or quantite is None:
+            return cleaned_data
+
+        distributions = self._distributions_concernees()
+
+        if not distributions.exists():
+            self.add_error(
+                "point",
+                "Aucune distribution n'existe pour ce matériau "
+                "à ce point dans ce projet.",
+            )
+            return cleaned_data
+
+        if quantite <= Decimal("0"):
+            self.add_error(
+                "quantite",
+                "La quantité retournée doit être supérieure à zéro.",
+            )
+            return cleaned_data
+
+        disponible = self._calculer_disponible(distributions)
+
+        if quantite > disponible:
+            self.add_error(
+                "quantite",
+                (
+                    f"Quantité demandée : {quantite}. "
+                    f"Quantité disponible pour retour : {disponible}."
+                ),
+            )
+
+        return cleaned_data
+
+    @transaction.atomic
+    def enregistrer_retour(self, enregistre_par):
+        """
+        Enregistre le retour en répartissant sa quantité entre les
+        distributions FIFO. Chaque objet créé conserve sa distribution.
+        """
+
+        if not self.is_valid():
+            raise ValidationError(
+                "Le formulaire contient des erreurs."
+            )
+
+        quantite_restante = self.cleaned_data["quantite"]
+
+        distributions = list(
+            self._distributions_concernees(verrouiller=True)
+        )
+
+        disponible = self._calculer_disponible(distributions)
+
+        if quantite_restante > disponible:
+            raise ValidationError(
+                {
+                    "quantite": (
+                        f"Quantité disponible insuffisante : {disponible}."
+                    )
+                }
+            )
+
+        retours_crees = []
+
+        for distribution in distributions:
+            if quantite_restante <= Decimal("0"):
+                break
+
+            deja_retournee = self._quantite_deja_retournee(
+                distribution
+            )
+
+            reste_distribution = (
+                distribution.quantite - deja_retournee
+            )
+
+            if reste_distribution <= Decimal("0"):
+                continue
+
+            quantite_affectee = min(
+                quantite_restante,
+                reste_distribution,
+            )
+
+            retour = RetourMateriauProjet(
+                distribution=distribution,
+                reception_directe=None,
+                date_retour=self.cleaned_data["date_retour"],
+                quantite=quantite_affectee,
+                observation=self.cleaned_data.get("observation", ""),
+                enregistre_par=enregistre_par,
+            )
+
+            retour.full_clean()
+            retour.save()
+
+            retours_crees.append(retour)
+            quantite_restante -= quantite_affectee
+
+        if quantite_restante > Decimal("0"):
+            raise ValidationError(
+                {
+                    "quantite": (
+                        "La quantité n'a pas pu être répartie intégralement "
+                        "entre les distributions."
+                    )
+                }
+            )
+
+        return retours_crees
+
 # ============================================================
 # FORMULAIRE MATÉRIAU DU PROJET
 # ============================================================
@@ -3440,7 +4348,6 @@ class MateriauProjetForm(forms.ModelForm):
 # ============================================================
 # FORMULAIRE MINIER DU PROJET
 # ============================================================
-
 class MinierProjetForm(forms.ModelForm):
 
     class Meta:
@@ -4019,11 +4926,18 @@ class EquipageProjetForm(forms.ModelForm):
         return cleaned_data
 
 
+
 # ============================================================
 # FORMULAIRE AVANCE EQUIPE PROJET
 # ============================================================
-
 class AvanceEquipeProjetForm(forms.ModelForm):
+    """
+    Formulaire de gestion des avances des chefs d'équipe et miniers.
+
+    Les bénéficiaires sont filtrés par projet.
+    Les listes sont reconstruites depuis la base de données
+    à chaque création ou modification du formulaire.
+    """
 
     class Meta:
         model = AvanceEquipeProjet
@@ -4033,136 +4947,277 @@ class AvanceEquipeProjetForm(forms.ModelForm):
             "miniers_execution",
             "montant",
             "date_avance",
-            "enregistre_par",
         ]
 
         widgets = {
-            "equipe_execution": SELECT_WIDGET,
-            "miniers_execution": SELECT_WIDGET,
-            "montant": NUMBER_WIDGET,
-            "date_avance": DATETIME_WIDGET,
-            "enregistre_par": SELECT_WIDGET,
+            "equipe_execution": forms.Select(
+                attrs={
+                    "class": "form-select",
+                    "id": "id_equipe_execution",
+                }
+            ),
+
+            "miniers_execution": forms.Select(
+                attrs={
+                    "class": "form-select",
+                    "id": "id_miniers_execution",
+                }
+            ),
+
+            "montant": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                    "placeholder": "Montant de l'avance",
+                }
+            ),
+
+            "date_avance": forms.DateInput(
+                format="%Y-%m-%d",
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                },
+            ),
         }
 
-        labels = {
-            "equipe_execution": "Équipe d'exécution",
-            "miniers_execution": "Équipe de miniers",
-            "montant": "Montant de l'avance (Ar)",
-            "date_avance": "Date de l'avance",
-            "enregistre_par": "Enregistré par",
-        }
+    # ========================================================
+    # INITIALISATION
+    # ========================================================
 
     def __init__(self, *args, projet=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.projet = projet
 
+        # Les deux champs sont facultatifs individuellement.
+        # La méthode clean() impose ensuite un seul bénéficiaire.
+        self.fields["equipe_execution"].required = False
+        self.fields["miniers_execution"].required = False
+
         # ----------------------------------------------------
-        # ÉQUIPES AUTORISÉES POUR LE PROJET
+        # AUCUN PROJET
         # ----------------------------------------------------
 
-        if projet:
-            equipes = (
-                EquipeProjet.objects
-                .filter(projet=projet)
-                .select_related(
-                    "projet",
-                    "personnel",
-                    "personnel_execution",
-                )
-                .order_by("id")
+        if projet is None:
+            self.fields["equipe_execution"].queryset = (
+                EquipeProjet.objects.none()
             )
+
+            self.fields["miniers_execution"].queryset = (
+                EquipeProjet.objects.none()
+            )
+
         else:
-            equipes = EquipeProjet.objects.none()
+            # ------------------------------------------------
+            # CHEFS D'ÉQUIPE DU PROJET
+            # ------------------------------------------------
 
-        self.fields["equipe_execution"].queryset = equipes
-        self.fields["miniers_execution"].queryset = equipes
+            chefs = EquipeProjet.objects.filter(
+                projet_id=projet.pk,
+                fonction="CHEF_EQUIPE",
+            ).filter(
+                models.Q(personnel_execution__isnull=False)
+                | models.Q(personnel__isnull=False)
+            ).select_related(
+                "personnel",
+                "personnel_execution",
+                "projet",
+            ).order_by("id")
+
+            # ------------------------------------------------
+            # MINIERS DU PROJET
+            # ------------------------------------------------
+
+            miniers = EquipeProjet.objects.filter(
+                projet_id=projet.pk,
+                fonction="MINIER",
+            ).filter(
+                models.Q(personnel_execution__isnull=False)
+                | models.Q(personnel__isnull=False)
+            ).select_related(
+                "personnel",
+                "personnel_execution",
+                "projet",
+            ).order_by("id")
+
+            # Les QuerySets sont évalués selon les besoins
+            # lors du rendu du formulaire.
+            self.fields["equipe_execution"].queryset = chefs
+            self.fields["miniers_execution"].queryset = miniers
 
         # ----------------------------------------------------
-        # DATE PAR DÉFAUT
+        # LIBELLÉS
         # ----------------------------------------------------
 
+        self.fields["equipe_execution"].label = "Chef d'équipe"
+        self.fields["miniers_execution"].label = "Minier"
+
+        self.fields["equipe_execution"].empty_label = (
+            "— Choisir un chef d'équipe —"
+        )
+
+        self.fields["miniers_execution"].empty_label = (
+            "— Choisir un minier —"
+        )
+
+        self.fields["equipe_execution"].label_from_instance = (
+            self._afficher_beneficiaire
+        )
+
+        self.fields["miniers_execution"].label_from_instance = (
+            self._afficher_beneficiaire
+        )
+
+        # ----------------------------------------------------
+        # FORMAT DE DATE
+        # ----------------------------------------------------
+
+        self.fields["date_avance"].input_formats = [
+            "%Y-%m-%d",
+        ]
+
+        # Valeur initiale pour une nouvelle avance.
         if not self.instance.pk and not self.is_bound:
-            self.fields["date_avance"].initial = timezone.now()
+            from django.utils import timezone
 
-        # Le montant doit être strictement positif.
-        self.fields["montant"].widget.attrs["min"] = "0.01"
+            self.initial.setdefault(
+                "date_avance",
+                timezone.localdate(),
+            )
+
+    # ========================================================
+    # AFFICHAGE DU BÉNÉFICIAIRE
+    # ========================================================
+
+    @staticmethod
+    def _afficher_beneficiaire(affectation):
+        execution = getattr(
+            affectation,
+            "personnel_execution",
+            None,
+        )
+
+        if execution and execution.nom:
+            nom = execution.nom.strip()
+
+            if execution.type_class == "CHEF_EQUIPE":
+                return f"{nom} — Chef d'équipe"
+
+            if execution.type_class == "MINIER":
+                return f"{nom} — Minier"
+
+            return nom
+
+        personnel = getattr(affectation, "personnel", None)
+
+        if personnel:
+            return str(personnel)
+
+        return f"Affectation #{affectation.pk}"
+
+    # ========================================================
+    # VALIDATION DU MONTANT
+    # ========================================================
+
+    def clean_montant(self):
+        montant = self.cleaned_data.get("montant")
+
+        if montant is None or montant <= 0:
+            raise ValidationError(
+                "Le montant de l'avance doit être supérieur à zéro."
+            )
+
+        return montant
+
+    # ========================================================
+    # VALIDATION DE LA DATE
+    # ========================================================
+
+    def clean_date_avance(self):
+        date_avance = self.cleaned_data.get("date_avance")
+
+        if not date_avance:
+            raise ValidationError(
+                "Veuillez renseigner la date de l'avance."
+            )
+
+        return date_avance
+
+    # ========================================================
+    # VALIDATION GÉNÉRALE
+    # UN SEUL BÉNÉFICIAIRE
+    # ========================================================
 
     def clean(self):
         cleaned_data = super().clean()
 
-        equipe_execution = cleaned_data.get("equipe_execution")
-        miniers_execution = cleaned_data.get("miniers_execution")
-        montant = cleaned_data.get("montant")
-        date_avance = cleaned_data.get("date_avance")
+        chef = cleaned_data.get("equipe_execution")
+        minier = cleaned_data.get("miniers_execution")
+
+        if self.projet is None:
+            raise ValidationError(
+                "Le projet doit être défini pour enregistrer l'avance."
+            )
 
         # ----------------------------------------------------
-        # UNE SEULE ÉQUIPE DOIT ÊTRE SÉLECTIONNÉE
+        # OBLIGER À CHOISIR UN SEUL BÉNÉFICIAIRE
         # ----------------------------------------------------
 
-        if bool(equipe_execution) == bool(miniers_execution):
+        if chef and minier:
             message = (
-                "Sélectionnez une seule option : "
-                "équipe d'exécution ou équipe de miniers."
+                "Choisissez un seul bénéficiaire : "
+                "un chef d'équipe ou un minier."
+            )
+
+            self.add_error("equipe_execution", message)
+            self.add_error("miniers_execution", message)
+
+        elif not chef and not minier:
+            message = (
+                "Veuillez sélectionner un chef d'équipe "
+                "ou un minier."
             )
 
             self.add_error("equipe_execution", message)
             self.add_error("miniers_execution", message)
 
         # ----------------------------------------------------
-        # MONTANT
+        # VÉRIFIER LE CHEF D'ÉQUIPE
         # ----------------------------------------------------
 
-        if montant is not None and montant <= Decimal("0.00"):
-            self.add_error(
-                "montant",
-                "Le montant de l'avance doit être supérieur à zéro.",
-            )
-
-        # ----------------------------------------------------
-        # APPARTENANCE AU PROJET
-        # ----------------------------------------------------
-
-        for champ, equipe in (
-            ("equipe_execution", equipe_execution),
-            ("miniers_execution", miniers_execution),
-        ):
-            if equipe and self.projet:
-                if equipe.projet_id != self.projet.pk:
-                    self.add_error(
-                        champ,
-                        "Cette équipe n'appartient pas au projet sélectionné.",
-                    )
-
-        # ----------------------------------------------------
-        # DATE DE L'AVANCE
-        # ----------------------------------------------------
-
-        if self.projet and date_avance:
-            date_avance_jour = date_avance.date()
-
-            if (
-                self.projet.date_debut
-                and date_avance_jour < self.projet.date_debut
-            ):
+        if chef:
+            if chef.projet_id != self.projet.pk:
                 self.add_error(
-                    "date_avance",
-                    "La date de l'avance ne peut pas être "
-                    "antérieure au début du projet.",
+                    "equipe_execution",
+                    "Ce bénéficiaire n'appartient pas à ce projet.",
                 )
 
-            if (
-                self.projet.date_fin
-                and date_avance_jour > self.projet.date_fin
-            ):
+            elif chef.fonction != "CHEF_EQUIPE":
                 self.add_error(
-                    "date_avance",
-                    "La date de l'avance ne peut pas dépasser "
-                    "la fin du projet.",
+                    "equipe_execution",
+                    "Le bénéficiaire sélectionné doit être un chef d'équipe.",
+                )
+
+        # ----------------------------------------------------
+        # VÉRIFIER LE MINIER
+        # ----------------------------------------------------
+
+        if minier:
+            if minier.projet_id != self.projet.pk:
+                self.add_error(
+                    "miniers_execution",
+                    "Ce bénéficiaire n'appartient pas à ce projet.",
+                )
+
+            elif minier.fonction != "MINIER":
+                self.add_error(
+                    "miniers_execution",
+                    "Le bénéficiaire sélectionné doit être un minier.",
                 )
 
         return cleaned_data
-
 
 # ============================================================
 # EQUIPE MATERIAU PROJET

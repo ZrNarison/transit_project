@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Dépenses{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+
+<h2>💰 Dépenses générales</h2>
+
+<a
+href="{% url 'materiaux:depense_add' %}"
+class="btn btn-primary">
++ Nouvelle dépense
+</a>
+
+</div>
+
+<div class="alert alert-info">
+
+<strong>Total dépenses :</strong>
+
+{{ total|floatformat:2 }}
+
+</div>
+
+<div class="card shadow-sm">
+
+<div class="table-responsive">
+
+<table class="table table-hover">
+
+<thead class="table-dark">
+
+<tr>
+<th>Date</th>
+<th>Désignation</th>
+<th>Montant</th>
+<th>Localisation</th>
+<th>Motif</th>
+<th>Actions</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for depense in depenses %}
+
+<tr>
+
+<td>
+{{ depense.date_depense|date:"d/m/Y" }}
+</td>
+
+<td>
+{{ depense.designation|title }}
+</td>
+
+<td>
+<strong>
+{{ depense.montant|floatformat:2 }}
+</strong>
+</td>
+
+<td>
+{{ depense.localisation|upper|default:"-" }}
+</td>
+<td>
+{{ depense.observation|title|default:"-" }}
+</td>
+<td>
+
+<a
+href="{% url 'materiaux:depense_edit' depense.pk %}"
+class="btn btn-sm btn-warning">
+✏️
+</a>
+
+<form
+method="post"
+action="{% url 'materiaux:depense_delete' depense.pk %}"
+class="d-inline">
+
+{% csrf_token %}
+
+<button
+class="btn btn-sm btn-danger"
+onclick="return confirm('Supprimer cette dépense ?');">
+🗑️
+</button>
+
+</form>
+
+</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+<td colspan="9" class="text-center text-muted">
+Aucune dépense.
+</td>
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+{% endblock %}

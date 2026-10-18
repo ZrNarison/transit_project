@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Retours de matériaux au magasin de chantier</h3>
+    <a class="btn btn-primary" href="{% url 'materiaux:retour_materiau_add' %}">Nouveau retour</a>
+  </div>
+  {% include "materiaux/_suivi_nav.html" %}
+  <div class="table-responsive card"><table class="table table-striped mb-0">
+    <thead class="table-dark"><tr><th>Date</th><th>Matériau</th><th>Point</th><th>Réception</th><th>Quantité retournée</th><th>Observation</th><th>Actions</th></tr></thead>
+    <tbody>{% for r in retours %}
+      <tr><td>{{ r.date_retour|date:"d/m/Y" }}</td><td>{{ r.sortie.division.entree.materiau }}</td><td>{{ r.point|default:r.reception.point }}</td><td>{{ r.reception|default:"—" }}</td><td>{{ r.quantite }}</td><td>{{ r.observation|default:"—" }}</td>
+      <td class="d-flex gap-1"><a class="btn btn-sm btn-outline-primary" href="{% url 'materiaux:retour_materiau_edit' r.pk %}">Modifier</a>
+      <form method="post" action="{% url 'materiaux:retour_materiau_delete' r.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Supprimer ce retour ?')">Supprimer</button></form></td></tr>
+    {% empty %}<tr><td colspan="7" class="text-center py-4">Aucun retour enregistré.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}

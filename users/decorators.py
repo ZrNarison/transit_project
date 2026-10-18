@@ -15,9 +15,6 @@ from .models import H_AppUser
 # CONFIGURATION DES RÔLES
 # ============================================================
 
-# Vérifie que ces rôles correspondent bien aux droits souhaités
-# dans ton projet. Ne donne pas un rôle de gestion par défaut
-# à un utilisateur qui ne doit pas posséder ces droits.
 PROJECT_MANAGER_ROLES = {
     "Admin",
     "Superviseur",
@@ -94,8 +91,6 @@ def mica_required(view_func):
 # ============================================================
 
 def role_required(*roles):
-    """Autorise uniquement les rôles de session indiqués."""
-
     def decorator(view_func):
 
         @wraps(view_func)
@@ -129,11 +124,6 @@ def role_required(*roles):
 # ============================================================
 
 def get_current_user(request):
-    """
-    Retourne l'AppUser connecté.
-
-    La session user_id doit contenir l'identifiant de AppUser.
-    """
 
     user_id = request.session.get("user_id")
 
@@ -153,8 +143,6 @@ def get_current_user(request):
 # ============================================================
 
 def login_required_projet(view_func):
-    """Vérifie que l'utilisateur AppUser est connecté."""
-
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
 
@@ -179,12 +167,6 @@ def login_required_projet(view_func):
 # ============================================================
 
 def user_can_manage_projects(user):
-    """
-    Vérifie si l'utilisateur possède un rôle de gestion.
-
-    Accepte un AppUser ou, par précaution, un Personnel.
-    """
-
     if not user:
         return False
 
@@ -230,8 +212,6 @@ def project_manager_required(view_func):
 # ============================================================
 
 def get_current_personnel(request):
-    """Retourne le Personnel associé à l'utilisateur connecté."""
-
     user = getattr(request, "current_user", None)
 
     if not user:
@@ -248,14 +228,6 @@ def get_current_personnel(request):
 # ============================================================
 
 def user_can_manage_materiaux(user, projet=None):
-    """
-    Autorise :
-    - les gestionnaires globaux ;
-    - les ingénieurs ;
-    - les chefs de chantier ;
-    - les chefs d'équipe affectés activement au projet.
-    """
-
     if not user or not projet:
         return False
 
@@ -295,11 +267,6 @@ def user_can_manage_materiaux(user, projet=None):
 # ============================================================
 
 def prepare_equipe_form(form, projet=None, affectation=None):
-    """
-    Filtre les personnels proposés dans le formulaire d'équipe.
-    Évite de proposer un personnel déjà affecté au même projet.
-    """
-
     if "personnel" not in form.fields:
         return form
 
@@ -346,13 +313,6 @@ def prepare_equipe_form(form, projet=None, affectation=None):
 # ============================================================
 
 def user_has_project_access(user, projet):
-    """
-    Vérifie l'accès actuel au projet.
-
-    Les gestionnaires globaux ont accès à tous les projets.
-    Les autres utilisateurs doivent avoir une affectation active.
-    """
-
     if not user or not projet:
         return False
 
@@ -396,11 +356,6 @@ def user_has_project_access(user, projet):
 # ============================================================
 
 def project_access_required(view_func):
-    """
-    Vérifie l'accès au projet identifié par le paramètre URL
-    projet_id, puis rend le projet disponible via request.projet.
-    """
-
     @wraps(view_func)
     @login_required_projet
     def wrapper(request, *args, **kwargs):
@@ -438,11 +393,6 @@ def project_access_required(view_func):
 # ============================================================
 
 def user_has_project_function(user, projet, fonctions):
-    """
-    Vérifie si l'utilisateur exerce l'une des fonctions
-    demandées dans l'équipe du projet.
-    """
-
     if not user or not projet:
         return False
 
@@ -485,13 +435,7 @@ def user_has_project_function(user, projet, fonctions):
 # ============================================================
 # PROTECTION CONTRE L'ACCÈS APRÈS DÉCONNEXION
 # ============================================================
-
 def session_login_required(view_func):
-    """
-    Protège une vue contre l'accès sans session valide.
-    Empêche la mise en cache des pages protégées.
-    """
-
     @wraps(view_func)
     @never_cache
     def wrapper(request, *args, **kwargs):
@@ -526,10 +470,6 @@ def session_login_required(view_func):
 
 
 def h_role_required(*roles):
-    """
-    Protection des vues réservées aux utilisateurs historiques H_AppUser.
-    Session indépendante : h_user_id / h_role.
-    """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):

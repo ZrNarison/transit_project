@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+<!-- =====================================================
+     EN-TÊTE : LISTE DES RÉCEPTIONS DE MATÉRIAUX
+====================================================== -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">
+            <i class="fas fa-truck-ramp-box text-primary me-2"></i>
+            Liste des réceptions de matériaux
+        </h3>
+
+        <div class="text-muted">
+            <i class="fas fa-building me-1"></i>
+            GALAXY
+            <span class="mx-2">|</span>
+            <i class="fas fa-folder-open me-1"></i>
+            {{ projet.titre|title }}
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-3 mt-md-0">
+
+        <!-- RETOUR AU TABLEAU DE BORD DES MATÉRIAUX -->
+        <a href="{% url 'projet:dashboard_materiaux' projet_id=projet.pk %}"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour
+        </a>
+
+        <!-- NOUVELLE RÉCEPTION -->
+        <a href="{% url 'projet:reception_materiau_projet_create' projet_id=projet.pk %}"
+           class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            Nouvelle réception
+        </a>
+
+    </div>
+</div>
+
+<!-- =====================================================
+     INFORMATIONS DU PROJET
+====================================================== -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+
+            <div class="col-md-4">
+                <div class="text-muted small">Projet</div>
+                <div class="fw-bold">
+                    {{ projet.titre|title }}
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="text-muted small">Localisation</div>
+                <div>
+                    {{ projet.localisation|default:"-"|upper }}
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <div class="text-muted small">Date de début</div>
+                <div>
+                    {{ projet.date_debut|date:"d/m/Y"|default:"-" }}
+                </div>
+            </div>
+
+            <div class="col-md-2">
+                <div class="text-muted small">Date de fin</div>
+                <div>
+                    {{ projet.date_fin|date:"d/m/Y"|default:"-" }}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+  {% include "materiaux/_suivi_nav.html" %}
+  <div class="table-responsive card"><table class="table table-striped mb-0">
+    <thead class="table-dark"><tr><th>Date</th><th>Matériau</th><th>Projet</th><th>Point</th><th>Responsable</th><th>Chef d’équipe</th><th>Reçu</th><th>Utilisé</th><th>Retourné</th><th>Reliquat global</th><th></th></tr></thead>
+    <tbody>
+    {% for r in receptions %}
+      <tr>
+        <td>{{ r.date_reception|date:"d/m/Y" }}</td>
+        <td>{{ r.transport.materiau|default:r.transport.mission }}</td>
+        <td>{{ r.projet }}</td><td>{{ r.point }}</td><td>{{ r.responsable }}</td><td>{{ r.chef_equipe|default:"—" }}</td>
+        <td>{{ r.quantite_recue }}</td><td>{{ r.quantite_utilisee }}</td><td>{{ r.quantite_retournee }}</td><td>{{ r.quantite_restante }}</td>
+        <td><a class="btn btn-sm btn-outline-primary" href="{% url 'materiaux:reception_materiau_edit' r.pk %}">Modifier</a></td>
+      </tr>
+    {% empty %}<tr><td colspan="11" class="text-center py-4">Aucune réception enregistrée.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}

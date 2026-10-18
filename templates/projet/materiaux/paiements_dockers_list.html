@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid py-3">
+
+    <!-- ======================================================
+         EN-TÊTE
+    ======================================================= -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                💵 Paiements dockers
+            </h2>
+
+            <small class="text-muted">
+                Suivi des paiements effectués aux dockers
+            </small>
+
+        </div>
+
+        <a
+            href="{% url 'materiaux:paiement_docker_add' %}"
+            class="btn btn-primary"
+        >
+            ➕ Nouveau paiement
+        </a>
+
+    </div>
+
+
+    <!-- ======================================================
+         MESSAGES
+    ======================================================= -->
+
+    {% if messages %}
+
+        {% for message in messages %}
+
+            <div
+                class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                role="alert"
+            >
+
+                {{ message }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                ></button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    <!-- ======================================================
+         RÉSUMÉ
+    ======================================================= -->
+
+    <div class="row mb-4">
+
+        <!-- TOTAL PAYÉ -->
+
+        <div class="col-md-6 mb-3">
+
+            <div class="card shadow-sm border-success h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <h6 class="text-success mb-2">
+                                💵 Total payé
+                            </h6>
+
+                            <h3 class="fw-bold mb-0">
+
+                                {{ total|default:"0"|floatformat:2 }}
+
+                                <small class="text-muted">
+                                    Ar
+                                </small>
+
+                            </h3>
+
+                        </div>
+
+                        <div class="fs-1 opacity-25">
+                            💵
+                        </div>
+
+                    </div>
+
+                    <small class="text-muted">
+                        Montant total des paiements dockers
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- NOMBRE DE PAIEMENTS -->
+
+        <div class="col-md-6 mb-3">
+
+            <div class="card shadow-sm border-primary h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <h6 class="text-primary mb-2">
+                                📋 Paiements
+                            </h6>
+
+                            <h3 class="fw-bold mb-0">
+
+                                {{ paiements|length }}
+
+                            </h3>
+
+                        </div>
+
+                        <div class="fs-1 opacity-25">
+                            📋
+                        </div>
+
+                    </div>
+
+                    <small class="text-muted">
+                        Nombre de paiements enregistrés
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         TABLEAU
+    ======================================================= -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <strong>
+                💵 PAIEMENTS DOCKERS
+            </strong>
+
+            <span class="badge bg-secondary">
+
+                {{ paiements|length }}
+
+                paiement{{ paiements|length|pluralize }}
+
+            </span>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table table-hover table-bordered align-middle mb-0">
+
+                <thead class="table-dark">
+
+                    <tr>
+                        <th class="text-center">
+                            Date
+                        </th>
+                        <th class="text-center">
+                            Activité
+                        </th>
+
+                        <th class="text-center">
+                            Véhicule
+                        </th>
+
+                        <th class="text-center">
+                            Conducteur
+                        </th>
+
+                        <th class="text-end">
+                            Montant
+                        </th>
+
+                        <th>
+                            Observation
+                        </th>
+
+                        <th class="text-center">
+                            Enregistreur
+                        </th>
+
+                        <th class="text-center">
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for paiement in paiements %}
+
+                    <tr>
+
+                        <!-- ==================================================
+                             ACTIVITÉ
+                        =================================================== -->
+
+                        <td>
+                            {{ paiement.activite.date_activite|date:"d/m/Y" }}
+                        </td>
+                        <td>
+
+                            <strong>
+                                {{ paiement.activite.mission }}
+                            </strong>
+
+                            <br>
+
+                            <small class="text-muted">
+
+                                {{ paiement.activite.date_activite|date:"d/m/Y" }}
+
+                                {% if paiement.activite.type_transport %}
+
+                                    —
+                                    {{ paiement.activite.get_type_transport_display }}
+
+                                {% endif %}
+
+                            </small>
+
+                        </td>
+
+
+                        <!-- ==================================================
+                             VÉHICULE
+                        =================================================== -->
+
+                        <td class="text-center">
+
+                            {% if paiement.activite.vehicule %}
+
+                                <strong>
+                                    {{ paiement.activite.vehicule.immatriculation }}
+                                </strong>
+
+                                {% if paiement.activite.vehicule.marque or paiement.activite.vehicule.modele %}
+
+                                    <br>
+
+                                    <small class="text-muted">
+
+                                        {{ paiement.activite.vehicule.marque|default:"" }}
+
+                                        {{ paiement.activite.vehicule.modele|default:"" }}
+
+                                    </small>
+
+                                {% endif %}
+
+                            {% else %}
+
+                                <span class="text-muted">
+                                    -
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ==================================================
+                             CONDUCTEUR
+                        =================================================== -->
+
+                        <td class="text-center">
+
+                            {% if paiement.activite.conducteur %}
+
+                                {{ paiement.activite.conducteur }}
+
+                            {% else %}
+
+                                <span class="text-muted">
+                                    Non renseigné
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ==================================================
+                             MONTANT
+                        =================================================== -->
+
+                        <td class="text-end text-nowrap">
+
+                            <strong class="text-success">
+
+                                {{ paiement.montant|default:"0"|floatformat:2 }}
+
+                            </strong>
+
+                            Ar
+
+                        </td>
+
+
+                        <!-- ==================================================
+                             OBSERVATION
+                        =================================================== -->
+
+                        <td>
+
+                            {% if paiement.observation %}
+
+                                {{ paiement.observation }}
+
+                            {% else %}
+
+                                <span class="text-muted">
+                                    -
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ==================================================
+                             ENREGISTREUR
+                        =================================================== -->
+
+                        <td class="text-center">
+
+                            {% if paiement.enregistreur %}
+
+                                {{ paiement.enregistreur.username }}
+
+                            {% else %}
+
+                                <span class="text-muted">
+                                    -
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ==================================================
+                             ACTIONS
+                        =================================================== -->
+
+                        <td class="text-center text-nowrap">
+
+                            {% if paiement.enregistreur_id == user.id %}
+
+                                <a
+                                    href="{% url 'materiaux:paiement_docker_edit' paiement.pk %}"
+                                    class="btn btn-sm btn-warning"
+                                    title="Modifier mon paiement"
+                                >
+                                    ✏️
+                                </a>
+
+
+                                <form
+                                    method="post"
+                                    action="{% url 'materiaux:paiement_docker_delete' paiement.pk %}"
+                                    class="d-inline"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-danger"
+                                        title="Supprimer mon paiement"
+                                        onclick="return confirm('Voulez-vous vraiment supprimer ce paiement docker ?');"
+                                    >
+                                        🗑️
+                                    </button>
+
+                                </form>
+
+                            {% else %}
+
+                                <span
+                                    class="badge bg-secondary"
+                                    title="Seul l'enregistreur peut modifier ou supprimer cet enregistrement"
+                                >
+                                    🔒 Lecture seule
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td
+                            colspan="7"
+                            class="text-center text-muted py-5"
+                        >
+
+                            <div class="fs-1 mb-3">
+                                💵
+                            </div>
+
+                            <strong>
+                                Aucun paiement docker enregistré.
+                            </strong>
+
+                            <br>
+
+                            <small>
+                                Cliquez sur « Nouveau paiement »
+                                pour enregistrer un paiement.
+                            </small>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Consommations de matériaux</h3>
+    <a class="btn btn-primary" href="{% url 'materiaux:utilisation_materiau_add' %}">Nouvelle consommation</a>
+  </div>
+  {% include "materiaux/_suivi_nav.html" %}
+  <div class="table-responsive card"><table class="table table-striped mb-0">
+    <thead class="table-dark"><tr><th>Date</th><th>Réception / matériau</th><th>Point</th><th>Quantité utilisée</th><th>Observation</th><th>Actions</th></tr></thead>
+    <tbody>{% for u in utilisations %}
+      <tr><td>{{ u.date_utilisation|date:"d/m/Y" }}</td><td>{{ u.reception }}</td><td>{{ u.point|default:u.reception.point }}</td><td>{{ u.quantite_utilisee }}</td><td>{{ u.observation|default:"—" }}</td>
+      <td class="d-flex gap-1"><a class="btn btn-sm btn-outline-primary" href="{% url 'materiaux:utilisation_materiau_edit' u.pk %}">Modifier</a>
+      <form method="post" action="{% url 'materiaux:utilisation_materiau_delete' u.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Supprimer cette consommation ?')">Supprimer</button></form></td></tr>
+    {% empty %}<tr><td colspan="6" class="text-center py-4">Aucune consommation enregistrée.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}

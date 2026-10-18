@@ -1,0 +1,279 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if mode == "modification" %}
+        Modifier une avance
+    {% else %}
+        Nouvelle avance
+    {% endif %}
+    - {{ projet.titre|title }}
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-money-bill-wave me-2"></i>
+                {% if mode == "modification" %}
+                    Modifier une avance
+                {% else %}
+                    Nouvelle avance
+                {% endif %}
+            </h3>
+
+            <div class="text-muted">
+                Projet :
+                <strong>{{ projet.titre|title }}</strong>
+            </div>
+        </div>
+
+        <a href="{% url 'projet:avance_equipe_projet_list' projet.id %}"
+           class="btn btn-outline-secondary mt-3 mt-md-0">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la liste
+        </a>
+    </div>
+
+    <!-- MESSAGES DJANGO -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer">
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- FORMULAIRE -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2"></i>
+
+                        {% if mode == "modification" %}
+                            Modifier les informations de l'avance
+                        {% else %}
+                            Informations de l'avance
+                        {% endif %}
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <!-- ERREURS GÉNÉRALES -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- CHEF D'ÉQUIPE -->
+                        <div class="mb-3">
+                            <label for="{{ form.equipe_execution.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                <i class="fas fa-user-tie me-1"></i>
+                                Chef d'équipe
+                            </label>
+
+                            {{ form.equipe_execution }}
+
+                            {% for error in form.equipe_execution.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+
+                            {% if form.equipe_execution.help_text %}
+                                <div class="form-text">
+                                    {{ form.equipe_execution.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- SÉPARATEUR -->
+                        <div class="text-center text-muted my-3">
+                            <span class="badge bg-light text-dark border px-3 py-2">
+                                OU
+                            </span>
+                        </div>
+
+                        <!-- MINIER -->
+                        <div class="mb-3">
+                            <label for="{{ form.miniers_execution.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                <i class="fas fa-hard-hat me-1"></i>
+                                Minier
+                            </label>
+
+                            {{ form.miniers_execution }}
+
+                            {% for error in form.miniers_execution.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+
+                            {% if form.miniers_execution.help_text %}
+                                <div class="form-text">
+                                    {{ form.miniers_execution.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- MONTANT -->
+                        <div class="mb-3">
+                            <label for="{{ form.montant.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                <i class="fas fa-money-bill-wave me-1"></i>
+                                Montant de l'avance (Ar)
+                            </label>
+
+                            {{ form.montant }}
+
+                            {% for error in form.montant.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- DATE ET HEURE -->
+                        <div class="mb-4">
+                            <label for="{{ form.date_avance.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                Date et heure de l'avance
+                            </label>
+
+                            {{ form.date_avance }}
+
+                            {% for error in form.date_avance.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- AUTRES ERREURS DE CHAMPS -->
+                        {% for field in form %}
+                            {% if field.name != "equipe_execution" and field.name != "miniers_execution" and field.name != "montant" and field.name != "date_avance" %}
+                                {% if field.errors %}
+                                    <div class="alert alert-danger">
+                                        <strong>{{ field.label }} :</strong>
+                                        {{ field.errors }}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- BOUTONS -->
+                        <div class="d-flex flex-wrap justify-content-end gap-2 border-top pt-3">
+
+                            <a href="{% url 'projet:avance_equipe_projet_list' projet.id %}"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                Annuler
+                            </a>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+
+                                {% if mode == "modification" %}
+                                    Enregistrer les modifications
+                                {% else %}
+                                    Enregistrer l'avance
+                                {% endif %}
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .card {
+        border-radius: .75rem;
+        overflow: hidden;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: .45rem;
+    }
+
+    .btn {
+        border-radius: .45rem;
+    }
+
+    #id_equipe_execution,
+    #id_miniers_execution {
+        width: 100%;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const chef = document.getElementById("id_equipe_execution");
+    const minier = document.getElementById("id_miniers_execution");
+
+    if (!chef || !minier) {
+        return;
+    }
+
+    /**
+     * Un seul bénéficiaire peut être sélectionné.
+     * La sélection du chef vide le minier.
+     * La sélection du minier vide le chef.
+     */
+    function gererBeneficiaires(champModifie) {
+        if (champModifie === chef && chef.value !== "") {
+            minier.value = "";
+        } else if (champModifie === minier && minier.value !== "") {
+            chef.value = "";
+        }
+    }
+
+    chef.addEventListener("change", function () {
+        gererBeneficiaires(chef);
+    });
+
+    minier.addEventListener("change", function () {
+        gererBeneficiaires(minier);
+    });
+
+    // En modification, préserver une sélection valide.
+    // Si les deux champs sont renseignés, le chef est conservé.
+    if (chef.value !== "" && minier.value !== "") {
+        minier.value = "";
+    }
+});
+</script>
+
+{% endblock %}

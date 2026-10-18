@@ -1,0 +1,216 @@
+{% extends "materiaux/base.html" %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-shopping-cart text-primary me-2"></i>
+                {{ titre_page }}
+            </h3>
+            <p class="text-muted mb-0">
+                Projet : <strong>{{ projet.titre }}</strong>
+            </p>
+        </div>
+
+        <a href="{{ url_retour }}"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la liste
+        </a>
+    </div>
+
+    <!-- MESSAGES -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- FORMULAIRE -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-file-invoice-dollar me-2"></i>
+                Informations sur l'achat
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="row g-3">
+
+                    <!-- MATÉRIAU -->
+                    <div class="col-md-6">
+                        <label for="{{ form.materiau_projet.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Matériau <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.materiau_projet }}
+
+                        {% for error in form.materiau_projet.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- FOURNISSEUR -->
+                    <div class="col-md-6">
+                        <label for="{{ form.fournisseur.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Fournisseur <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.fournisseur }}
+
+                        {% for error in form.fournisseur.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- DATE -->
+                    <div class="col-md-6">
+                        <label for="{{ form.date_achat.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Date d'achat <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.date_achat }}
+
+                        {% for error in form.date_achat.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- QUANTITÉ -->
+                    <div class="col-md-6">
+                        <label for="{{ form.quantite_achetee.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Quantité achetée <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.quantite_achetee }}
+
+                        {% for error in form.quantite_achetee.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- PRIX UNITAIRE -->
+                    <div class="col-md-6">
+                        <label for="{{ form.prix_unitaire.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Prix unitaire <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.prix_unitaire }}
+
+                        {% for error in form.prix_unitaire.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+
+                        <div class="form-text">
+                            Saisir le prix d'une unité du matériau.
+                        </div>
+                    </div>
+
+                    <!-- MONTANT INDICATIF -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Montant total indicatif
+                        </label>
+
+                        <input type="text"
+                               id="montant-total"
+                               class="form-control bg-light fw-bold"
+                               value="{% if objet %}{{ objet.montant_total|floatformat:2 }}{% else %}0,00{% endif %}"
+                               readonly>
+
+                        <div class="form-text">
+                            Quantité achetée × prix unitaire.
+                        </div>
+                    </div>
+
+                    <!-- OBSERVATION -->
+                    <div class="col-12">
+                        <label for="{{ form.observation.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Observation
+                        </label>
+
+                        {{ form.observation }}
+
+                        {% for error in form.observation.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex flex-wrap justify-content-end gap-2">
+                    <a href="{{ url_retour }}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        Annuler
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        {% if mode == "update" %}
+                            Enregistrer
+                        {% else %}
+                            Enregistrer
+                        {% endif %}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const quantite = document.getElementById("id_quantite_achetee");
+    const prix = document.getElementById("id_prix_unitaire");
+    const montant = document.getElementById("montant-total");
+
+    function calculerMontant() {
+        const q = parseFloat(quantite?.value) || 0;
+        const p = parseFloat(prix?.value) || 0;
+        const total = q * p;
+
+        montant.value = total.toLocaleString("fr-FR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    quantite?.addEventListener("input", calculerMontant);
+    prix?.addEventListener("input", calculerMontant);
+
+    calculerMontant();
+});
+</script>
+{% endblock %}

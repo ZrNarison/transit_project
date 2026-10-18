@@ -517,7 +517,7 @@ Miniers - {{ projet.titre|title }}
                                 <!-- ACTIONS -->
                                 <td class="text-center">
 
-                                    {% if minier.peut_modifier %}
+                                    {% if peut_gerer %}
 
                                         <div class="d-flex justify-content-center gap-1">
 
@@ -779,15 +779,15 @@ Miniers - {{ projet.titre|title }}
 
                     {% if peut_gerer %}
 
-                        <a href="{% url 'projet:minier_create' projet.id %}"
-                           class="btn btn-primary">
+    <a href="{% url 'projet:minier_create' projet.id %}"
+       class="btn btn-primary">
 
-                            <i class="fas fa-plus me-1"></i>
-                            Ajouter le premier minier
+        <i class="fas fa-plus me-1"></i>
+        Ajouter le premier minier
 
-                        </a>
+    </a>
 
-                    {% endif %}
+{% endif %}
 
                 {% endif %}
 

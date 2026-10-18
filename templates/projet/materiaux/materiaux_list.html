@@ -1,0 +1,542 @@
+
+{% extends "materiaux/base.html" %}
+
+{% block materiaux_content %}
+
+<div class="container-fluid py-4">
+
+    <!-- =====================================================
+         EN-TÊTE
+    ====================================================== -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">
+                <i class="fas fa-boxes-stacked me-2"></i>
+                Matériaux du projet
+            </h3>
+
+            <div class="text-muted">
+                Projet : <strong>{{ projet }}</strong>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'projet:dashboard_materiaux' projet_id=projet.pk %}"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Retour
+            </a>
+
+            {% if peut_ajouter_materiau %}
+                <a href="{% url 'projet:materiau_create' projet_id=projet.pk %}"
+                   class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>
+                    Ajouter un matériau
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- =====================================================
+         NOTIFICATIONS FLOTTANTES EN HAUT À DROITE
+    ====================================================== -->
+    {% if messages %}
+        <div id="messagesFlottants"
+             class="position-fixed top-0 end-0 p-3"
+             style="z-index: 1100; width: min(420px, 95vw);">
+
+            {% for message in messages %}
+                <div class="alert
+                    {% if 'success' in message.tags %}
+                        alert-success
+                    {% elif 'error' in message.tags %}
+                        alert-danger
+                    {% elif 'warning' in message.tags %}
+                        alert-warning
+                    {% else %}
+                        alert-info
+                    {% endif %}
+                    alert-dismissible fade show shadow mb-2"
+                    role="alert">
+
+                    {% if 'success' in message.tags %}
+                        <i class="fas fa-check-circle me-2"></i>
+                    {% elif 'error' in message.tags %}
+                        <i class="fas fa-times-circle me-2"></i>
+                    {% elif 'warning' in message.tags %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                    {% endif %}
+
+                    {{ message }}
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"
+                            aria-label="Fermer">
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- =====================================================
+         INDICATEURS
+    ====================================================== -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-2">
+                        Nombre de matériaux
+                    </div>
+                    <div class="fs-3 fw-bold">
+                        {{ total_materiaux }}
+                    </div>
+                    <div class="small text-muted">
+                        Références enregistrées
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-2">
+                        Quantité totale prévue
+                    </div>
+                    <div class="fs-3 fw-bold text-primary">
+                        {{ total_quantite_prevue|floatformat:2 }}
+                    </div>
+                    <div class="small text-muted">
+                        Toutes unités confondues
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-2">
+                        Stock magasin — Dépôt 2
+                    </div>
+                    <div class="fs-3 fw-bold text-success">
+                        {{ total_stock_magasin|floatformat:2 }}
+                    </div>
+                    <div class="small text-muted">
+                        Solde calculé du magasin de chantier
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small mb-2">
+                        Total distribué
+                    </div>
+                    <div class="fs-3 fw-bold text-info">
+                        {{ total_distribue|floatformat:2 }}
+                    </div>
+                    <div class="small text-muted">
+                        Quantité brute distribuée aux équipes
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =====================================================
+         TABLEAU DES MATÉRIAUX
+    ====================================================== -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-list me-2"></i>
+                    Liste des matériaux
+                </h5>
+
+                <span class="badge bg-secondary">
+                    {{ materiaux|length }}
+                    matériau{{ materiaux|length|pluralize }}
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+
+                <table class="table table-hover table-striped align-middle mb-0"
+                       style="width: 100%; table-layout: auto;">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center text-nowrap">#</th>
+                            <th>Libellé</th>
+                            <th>Unité</th>
+                            <th class="text-end text-nowrap">Quantité prévue</th>
+                            <th class="text-end text-nowrap">Stock magasin</th>
+                            <th class="text-end text-nowrap">Total distribué</th>
+                            <th class="text-nowrap">Enregistré le</th>
+                            <th>Enregistré par</th>
+                            <th class="text-center text-nowrap">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for materiau in materiaux %}
+                            <tr>
+
+                                <!-- NUMÉRO -->
+                                <td class="text-center">
+                                    {{ forloop.counter }}
+                                </td>
+
+                                <!-- LIBELLÉ -->
+                                <td>
+                                    <span class="fw-semibold">
+                                        {{ materiau.materiau }}
+                                    </span>
+                                </td>
+
+                                <!-- UNITÉ -->
+                                <td>
+                                    <small class="text-muted">
+                                        {{ materiau.unite|default:"—" }}
+                                    </small>
+                                </td>
+
+                                <!-- QUANTITÉ PRÉVUE -->
+                                <td class="text-end text-nowrap">
+                                    {{ materiau.quantite_prevue_affichee|floatformat:2 }}
+                                </td>
+
+                                <!-- STOCK MAGASIN : DÉPÔT 2 -->
+                                <td class="text-end text-nowrap
+                                    {% if materiau.stock_magasin < 0 %}
+                                        text-danger fw-bold
+                                    {% else %}
+                                        text-success
+                                    {% endif %}">
+                                    {{ materiau.stock_magasin|floatformat:2 }}
+                                </td>
+
+                                <!-- TOTAL DISTRIBUÉ -->
+                                <td class="text-end text-nowrap">
+                                    {{ materiau.total_distribue|floatformat:2 }}
+                                </td>
+
+                                <!-- DATE D'ENREGISTREMENT -->
+                                <td class="text-nowrap">
+                                    {% if materiau.created_at %}
+                                        <div>
+                                            {{ materiau.created_at|date:"d/m/Y" }}
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ materiau.created_at|date:"H:i" }}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- ENREGISTRÉ PAR -->
+                                <td>
+                                    {% if materiau.enregistre_par %}
+                                        <span class="text-nowrap">
+                                            <i class="fas fa-user text-primary me-1"></i>
+                                            {{ materiau.enregistre_par }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">Non renseigné</span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- ACTIONS -->
+                                <td class="text-center text-nowrap">
+                                    <div class="d-inline-flex justify-content-center align-items-center gap-1">
+
+                                        
+                                        {% comment %} {% if materiau.peut_modifier %} {% endcomment %}
+                                            <!-- MODIFIER -->
+                                            <a href="{% url 'projet:materiau_update' projet_id=projet.pk pk=materiau.pk %}"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Modifier"
+                                               aria-label="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+
+                                            <!-- SUPPRIMER -->
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    title="Supprimer"
+                                                    aria-label="Supprimer"
+                                                    onclick="confirmerSuppressionMateriau(
+                                                        '{% url 'projet:materiau_delete' projet_id=projet.pk pk=materiau.pk %}',
+                                                        '{{ materiau.materiau|escapejs }}'
+                                                    )">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+
+                                        {% comment %} {% else %}
+
+                                            <!-- ACTIONS VERROUILLÉES -->
+                                            <span class="text-muted px-2"
+                                                  title="Vous n'êtes pas autorisé à modifier ou supprimer ce matériau."
+                                                  aria-label="Modification et suppression interdites">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+
+                                        {% endif %} {% endcomment %}
+
+                                    </div>
+                                </td>
+
+                            </tr>
+
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <i class="fas fa-box-open fa-2x text-muted mb-3"></i>
+
+                                    <p class="text-muted mb-0">
+                                        Aucun matériau n'est enregistré pour ce projet.
+                                    </p>
+
+                                    {% if peut_ajouter_materiau %}
+                                        <a href="{% url 'projet:materiau_create' projet_id=projet.pk %}"
+                                           class="btn btn-primary btn-sm mt-3">
+                                            <i class="fas fa-plus me-1"></i>
+                                            Ajouter le premier matériau
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                    <!-- TOTAUX -->
+                    {% if materiaux %}
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td colspan="3" class="text-end">
+                                    TOTAL
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    {{ total_quantite_prevue|floatformat:2 }}
+                                </td>
+
+                                <td class="text-end text-nowrap
+                                    {% if total_stock_magasin < 0 %}
+                                        text-danger
+                                    {% else %}
+                                        text-success
+                                    {% endif %}">
+                                    {{ total_stock_magasin|floatformat:2 }}
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    {{ total_distribue|floatformat:2 }}
+                                </td>
+
+                                <td colspan="3"></td>
+                            </tr>
+                        </tfoot>
+                    {% endif %}
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- =====================================================
+     FOND ASSOMBRI DE LA CONFIRMATION
+====================================================== -->
+<div id="fondConfirmationMateriau"
+     class="position-fixed top-0 start-0 w-100 h-100"
+     style="display: none; z-index: 1190; background: rgba(0, 0, 0, 0.45);">
+</div>
+
+<!-- =====================================================
+     CONFIRMATION DE SUPPRESSION CENTRÉE
+====================================================== -->
+<div id="confirmationSuppressionMateriau"
+     class="position-fixed top-50 start-50 translate-middle"
+     style="display: none; z-index: 1200; width: min(430px, 95vw);">
+
+    <div class="card border-0 shadow-lg rounded-4">
+        <div class="card-body p-4">
+
+            <div class="text-center mb-3">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10"
+                     style="width: 80px; height: 80px;">
+                    <i class="fas fa-triangle-exclamation text-danger"
+                       style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+
+            <h5 class="text-center fw-bold mb-3">
+                Confirmer la suppression
+            </h5>
+
+            <p class="text-center text-muted mb-2">
+                Voulez-vous vraiment supprimer le matériau :
+            </p>
+
+            <p id="nomMateriauASupprimer"
+               class="text-center fw-bold text-danger mb-3">
+            </p>
+
+            <div class="alert alert-warning small">
+                <i class="fas fa-exclamation-triangle me-1"></i>
+                Cette suppression peut être refusée si des mouvements de stock
+                sont liés à ce matériau.
+            </div>
+
+            <div class="d-flex justify-content-center gap-2 mt-3">
+
+                <button type="button"
+                        class="btn btn-light border"
+                        onclick="annulerSuppressionMateriau()">
+                    <i class="fas fa-times me-1"></i>
+                    Annuler
+                </button>
+
+                <button type="button"
+                        id="boutonConfirmerSuppressionMateriau"
+                        class="btn btn-danger"
+                        onclick="executerSuppressionMateriau()">
+                    <i class="fas fa-trash-alt me-1"></i>
+                    Supprimer
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     FORMULAIRE POST CSRF
+====================================================== -->
+<form id="formSuppressionMateriau"
+      method="post"
+      style="display: none;">
+    {% csrf_token %}
+</form>
+
+<!-- =====================================================
+     JAVASCRIPT
+====================================================== -->
+<script>
+(function () {
+    "use strict";
+
+    let urlSuppression = null;
+
+    const panneau = document.getElementById(
+        "confirmationSuppressionMateriau"
+    );
+
+    const fond = document.getElementById(
+        "fondConfirmationMateriau"
+    );
+
+    const formulaire = document.getElementById(
+        "formSuppressionMateriau"
+    );
+
+    const nomMateriau = document.getElementById(
+        "nomMateriauASupprimer"
+    );
+
+    const boutonConfirmer = document.getElementById(
+        "boutonConfirmerSuppressionMateriau"
+    );
+
+    // Afficher la confirmation au centre de l'écran.
+    window.confirmerSuppressionMateriau = function (url, nom) {
+        if (!url) {
+            console.error("URL de suppression du matériau absente.");
+            return;
+        }
+
+        urlSuppression = url;
+        nomMateriau.textContent = nom || "ce matériau";
+
+        panneau.style.display = "block";
+        fond.style.display = "block";
+
+        boutonConfirmer.disabled = false;
+        boutonConfirmer.innerHTML =
+            '<i class="fas fa-trash-alt me-1"></i> Supprimer';
+    };
+
+    // Fermer la confirmation.
+    window.annulerSuppressionMateriau = function () {
+        panneau.style.display = "none";
+        fond.style.display = "none";
+        urlSuppression = null;
+    };
+
+    // Envoyer la suppression par POST.
+    window.executerSuppressionMateriau = function () {
+        if (!urlSuppression) {
+            return;
+        }
+
+        boutonConfirmer.disabled = true;
+        boutonConfirmer.innerHTML =
+            '<span class="spinner-border spinner-border-sm me-1" ' +
+            'role="status" aria-hidden="true"></span> Suppression...';
+
+        formulaire.action = urlSuppression;
+        formulaire.submit();
+    };
+
+    // Fermer en cliquant sur le fond.
+    fond.addEventListener("click", function () {
+        window.annulerSuppressionMateriau();
+    });
+
+    // Fermer avec la touche Échap.
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            window.annulerSuppressionMateriau();
+        }
+    });
+
+    // Masquer les notifications après 5 secondes.
+    document.querySelectorAll("#messagesFlottants .alert").forEach(
+        function (alerte) {
+            window.setTimeout(function () {
+                if (!alerte || !alerte.parentNode) {
+                    return;
+                }
+
+                if (window.bootstrap && window.bootstrap.Alert) {
+                    window.bootstrap.Alert
+                        .getOrCreateInstance(alerte)
+                        .close();
+                } else {
+                    alerte.remove();
+                }
+            }, 5000);
+        }
+    );
+
+})();
+</script>
+
+{% endblock %}

@@ -28,10 +28,9 @@
                             <li><a class="dropdown-item" href="{% url 'personnel:h_personnel_list' %}">👷 Personnel</a></li>
                             <li><a class="dropdown-item" href="{% url 'users:h_users_list' %}">👥 Utilisateurs</a></li>
                         </ul>
-                    </li>
-                    
+                    </li>                    
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'materiaux:dashboard' %}">🧱 Matériaux</a>
+                        <a class="nav-link" href="{% url 'materiaux:dashboard' %}">🧱 Matériaux</a> ceci reste toujour pour MCCR
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">💰 Finance</a>
@@ -54,9 +53,9 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">🔧 Matériels</a>
                         <ul class="dropdown-menu shadow">
-                                <li><a class="dropdown-item" href="{% url 'materiels:h_materiels_list' %}">🛠️ Stock matériel</a></li>
-                                <li><a class="dropdown-item" href="{% url 'materielEntre:h_materielEntre_list' %}">📥 Entrée matériel</a></li>
-                                <li><a class="dropdown-item" href="{% url 'materielsort:h_materielsort_list' %}">📤 Sortie matériel</a></li>
+                            <li><a class="dropdown-item" href="{% url 'materiels:h_materiels_list' %}">🛠️ Stock matériel</a></li>
+                            <li><a class="dropdown-item" href="{% url 'materielEntre:h_materielEntre_list' %}">📥 Entrée matériel</a></li>
+                            <li><a class="dropdown-item" href="{% url 'materielsort:h_materielsort_list' %}">📤 Sortie matériel</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
@@ -175,7 +174,7 @@
                             </ul>
                         </li>
                     {% endif %}
-
+                    
                     <!-- ================================================= -->
                     <!-- FINANCE -->
                     <!-- ================================================= -->

@@ -4,10 +4,10 @@ from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
-
+from django.urls import path, reverse, reverse_lazy
 from users.models import AppUser
 from personnel.models import Personnel
-
+from django.core.validators import FileExtensionValidator
 
 # ============================================================
 # PROJET
@@ -954,7 +954,6 @@ class PersonnelExecutionProjet(models.Model):
 # ============================================================
 # EQUIPE DU PROJET
 # ============================================================
-
 class EquipeProjet(models.Model):
     """
     Affectation d'une personne à l'équipe du projet.
@@ -1347,14 +1346,10 @@ class PointProjet(models.Model):
 
         if errors:
             raise ValidationError(errors)
-
+# =============================================================
+# MATERIAU
+# =============================================================
 class MateriauProjet(models.Model):
-    """
-    Matériau prévu pour un projet.
-
-    Le nom du matériau est enregistré directement
-    dans ce modèle sous forme de texte.
-    """
 
     projet = models.ForeignKey(
         Projet,
@@ -1382,6 +1377,15 @@ class MateriauProjet(models.Model):
 
     created_at = models.DateTimeField(
         auto_now_add=True,
+    )
+
+    enregistre_par = models.ForeignKey(
+        AppUser,
+        on_delete=models.PROTECT,
+        related_name="materiaux_projet_enregistres",
+        verbose_name="Enregistré par",
+        null=True,
+        blank=True,
     )
 
     updated_at = models.DateTimeField(
@@ -1427,6 +1431,467 @@ class MateriauProjet(models.Model):
         if errors:
             raise ValidationError(errors)
 
+
+
+
+# ============================================================
+# ACHATS DE MATÉRIAUX DU PROJET
+# ============================================================
+class AchatMateriauProjet(models.Model):
+    materiau_projet = models.ForeignKey(
+        "MateriauProjet",
+        on_delete=models.PROTECT,
+        related_name="achats",
+        verbose_name="Matériau prévu",
+    )
+    fournisseur = models.CharField(max_length=200, verbose_name="Fournisseur")
+    
+    date_achat = models.DateField(
+        default=timezone.localdate, verbose_name="Date d'achat"
+    )
+    quantite_achetee = models.DecimalField(
+        max_digits=12, decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        verbose_name="Quantité achetée",
+    )
+    prix_unitaire = models.DecimalField(
+        max_digits=14, decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00"))],
+        default=Decimal("0.00"),
+        verbose_name="Prix unitaire",
+    )
+    observation = models.TextField(blank=True)
+    enregistre_par = models.ForeignKey(
+        AppUser, on_delete=models.PROTECT,
+        related_name="achats_materiaux_projet",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date_achat", "-id"]
+        verbose_name = "Achat de matériau"
+        verbose_name_plural = "Achats de matériaux"
+
+    def __str__(self):
+        return f"{self.materiau_projet.materiau} — {self.fournisseur}"
+
+    @property
+    def montant_total(self):
+        return (
+            self.quantite_achetee * self.prix_unitaire
+        ).quantize(Decimal("0.01"))
+
+    def clean(self):
+        if self.materiau_projet_id and self.date_achat:
+            projet = self.materiau_projet.projet
+            if not (projet.date_debut <= self.date_achat <= projet.date_fin):
+                raise ValidationError({
+                    "date_achat": "La date d'achat doit être comprise dans la période du projet."
+                })
+
+
+# ============================================================
+# RÉCEPTION DE MATÉRIAUX AU DÉPÔT OU SUR UN POINT DU CHANTIER
+# Le point indique le lieu. Aucun achat ni destination distincte.
+# ============================================================
+
+class ReceptionMateriauProjet(models.Model):
+    materiau_projet = models.ForeignKey(
+        "MateriauProjet",
+        on_delete=models.PROTECT,
+        related_name="receptions",
+        verbose_name="Matériau",
+    )
+
+    date_reception = models.DateField(
+        default=timezone.localdate,
+        verbose_name="Date de réception",
+    )
+
+    quantite_recue = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        verbose_name="Quantité reçue",
+    )
+
+    point = models.ForeignKey(
+        "PointProjet",
+        on_delete=models.PROTECT,
+        related_name="receptions_materiaux_projet",
+        null=True,
+        blank=True,
+        verbose_name="Point de réception / livraison",
+    )
+
+    piece_justificative = models.FileField(
+        upload_to="materiaux/receptions/%Y/%m/",
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=["pdf", "jpg", "jpeg", "png", "webp"]
+            )
+        ],
+        blank=True,
+        null=True,
+        verbose_name="Pièce justificative",
+    )
+
+    observation = models.TextField(
+        blank=True,
+        verbose_name="Observation",
+    )
+
+    enregistre_par = models.ForeignKey(
+        "users.AppUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="receptions_materiaux_enregistrees",
+        verbose_name="Enregistré par",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date_reception", "-id"]
+        verbose_name = "Réception de matériau"
+        verbose_name_plural = "Réceptions de matériaux"
+
+    def __str__(self):
+        return (
+            f"{self.materiau_projet.materiau} — "
+            f"{self.quantite_recue}"
+        )
+
+    def clean(self):
+        errors = {}
+
+        if self.materiau_projet_id and self.date_reception:
+            projet = self.materiau_projet.projet
+
+            date_debut = getattr(projet, "date_debut", None)
+            date_fin = getattr(projet, "date_fin", None)
+
+            if date_debut and self.date_reception < date_debut:
+                errors["date_reception"] = (
+                    "La date ne peut pas précéder le début du projet."
+                )
+
+            if date_fin and self.date_reception > date_fin:
+                errors["date_reception"] = (
+                    "La date ne peut pas dépasser la fin du projet."
+                )
+
+        if self.point_id and self.materiau_projet_id:
+            if self.point.projet_id != self.materiau_projet.projet_id:
+                errors["point"] = (
+                    "Le point doit appartenir au même projet que le matériau."
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+
+# ============================================================
+# DISTRIBUTION DU DÉPÔT VERS UNE ÉQUIPE
+# ============================================================
+class DistributionMateriauProjet(models.Model):
+    materiau_projet = models.ForeignKey(
+        "MateriauProjet",
+        on_delete=models.PROTECT,
+        related_name="distributions",
+        verbose_name="Matériau",
+    )
+
+    vehicule = models.ForeignKey(
+        "VehiculeProjet",
+        on_delete=models.PROTECT,
+        related_name="distributions_materiaux",
+        null=True,
+        blank=True,
+        verbose_name="Véhicule / Engin",
+        help_text="Facultatif : laisser vide si aucun véhicule n'est utilisé.",
+    )
+
+    point = models.ForeignKey(
+        "PointProjet",
+        on_delete=models.PROTECT,
+        related_name="distributions_materiaux",
+        verbose_name="Point de chantier",
+    )
+
+    date_distribution = models.DateField(
+        default=timezone.localdate,
+        verbose_name="Date de distribution",
+    )
+
+    quantite = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[
+            MinValueValidator(Decimal("0.01")),
+        ],
+        verbose_name="Quantité distribuée",
+    )
+
+    observation = models.TextField(
+        blank=True,
+        verbose_name="Observation",
+    )
+
+    enregistre_par = models.ForeignKey(
+        "users.AppUser",
+        on_delete=models.PROTECT,
+        related_name="distributions_materiaux_projet",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-date_distribution", "-id"]
+        verbose_name = "Distribution de matériau"
+        verbose_name_plural = "Distributions de matériaux"
+
+    def __str__(self):
+        return (
+            f"{self.materiau_projet.materiau} — "
+            f"{self.quantite} {self.materiau_projet.unite} — "
+            f"{self.point}"
+        )
+
+    def clean(self):
+        errors = {}
+
+        if self.materiau_projet_id and self.point_id:
+            if (
+                self.materiau_projet.projet_id
+                != self.point.projet_id
+            ):
+                errors["point"] = (
+                    "Le point doit appartenir au même projet "
+                    "que le matériau."
+                )
+
+        if self.vehicule_id and self.materiau_projet_id:
+            if (
+                self.vehicule.projet_id
+                != self.materiau_projet.projet_id
+            ):
+                errors["vehicule"] = (
+                    "Le véhicule ou l'engin doit être affecté "
+                    "au même projet que le matériau."
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+# ============================================================
+# CONSOMMATION DE MATÉRIAUX
+# ============================================================
+
+class ConsommationMateriauProjet(models.Model):
+    distribution = models.ForeignKey(
+        "DistributionMateriauProjet",
+        on_delete=models.PROTECT,
+        related_name="consommations",
+        null=True,
+        blank=True,
+        verbose_name="Distribution du dépôt",
+    )
+
+    reception_directe = models.ForeignKey(
+        "ReceptionMateriauProjet",
+        on_delete=models.PROTECT,
+        related_name="consommations_directes",
+        null=True,
+        blank=True,
+        verbose_name="Réception directe",
+    )
+
+    date_consommation = models.DateField(
+        default=timezone.localdate,
+        verbose_name="Date de consommation",
+    )
+
+    quantite_utilisee = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        verbose_name="Quantité utilisée",
+    )
+
+    observation = models.TextField(
+        blank=True,
+        verbose_name="Observation",
+    )
+
+    enregistre_par = models.ForeignKey(
+        "users.AppUser",
+        on_delete=models.PROTECT,
+        related_name="consommations_materiaux_projet",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date_consommation", "-id"]
+        verbose_name = "Consommation de matériau"
+        verbose_name_plural = "Consommations de matériaux"
+
+    def clean(self):
+        super().clean()
+
+        errors = {}
+
+        # Une consommation ne peut pas provenir des deux sources.
+        if self.distribution_id and self.reception_directe_id:
+            errors["__all__"] = (
+                "Choisissez une seule source : distribution "
+                "ou réception directe."
+            )
+
+        # Vérification de la distribution.
+        if self.distribution_id:
+            distribution = self.distribution
+
+            if not distribution.materiau_projet_id:
+                errors["__all__"] = (
+                    "La distribution ne possède pas de matériau associé."
+                )
+
+            if not distribution.point_id:
+                errors["__all__"] = (
+                    "La distribution ne possède pas de point de stockage."
+                )
+
+        # Vérification de la réception directe.
+        if self.reception_directe_id:
+            reception = self.reception_directe
+
+            if not reception.point_id:
+                errors["__all__"] = (
+                    "La réception directe ne possède pas de point de stockage."
+                )
+
+        # Vérification de la quantité.
+        if (
+            self.quantite_utilisee is not None
+            and self.quantite_utilisee <= Decimal("0")
+        ):
+            errors["quantite_utilisee"] = (
+                "La quantité utilisée doit être supérieure à zéro."
+            )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self):
+        if self.distribution_id:
+            source = f"Distribution : {self.distribution}"
+        elif self.reception_directe_id:
+            source = f"Réception directe : {self.reception_directe}"
+        else:
+            source = "Source non définie"
+
+        return (
+            f"Consommation du {self.date_consommation} — "
+            f"{self.quantite_utilisee} — {source}"
+        )
+
+# ============================================================
+# RETOUR DE MATÉRIAUX NON UTILISÉS
+# ============================================================
+
+class RetourMateriauProjet(models.Model):
+    distribution = models.ForeignKey(
+        "DistributionMateriauProjet",
+        on_delete=models.PROTECT,
+        related_name="retours",
+        null=True,
+        blank=True,
+        verbose_name="Distribution du dépôt",
+    )
+
+    reception_directe = models.ForeignKey(
+        "ReceptionMateriauProjet",
+        on_delete=models.PROTECT,
+        related_name="retours_directs",
+        null=True,
+        blank=True,
+        verbose_name="Réception directe",
+    )
+
+    date_retour = models.DateField(
+        default=timezone.localdate,
+        verbose_name="Date du retour",
+    )
+
+    quantite = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        verbose_name="Quantité retournée",
+    )
+
+    observation = models.TextField(
+        blank=True,
+        verbose_name="Observation",
+    )
+
+    enregistre_par = models.ForeignKey(
+        "users.AppUser",
+        on_delete=models.PROTECT,
+        related_name="retours_materiaux_projet",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-date_retour", "-id"]
+        verbose_name = "Retour de matériau"
+        verbose_name_plural = "Retours de matériaux"
+
+    def clean(self):
+        errors = {}
+
+        # Une distribution et une réception directe ne peuvent
+        # pas être renseignées simultanément.
+        if self.distribution_id and self.reception_directe_id:
+            errors["__all__"] = (
+                "Sélectionnez une distribution ou une réception directe, "
+                "mais pas les deux."
+            )
+
+        # Une réception directe doit obligatoirement être associée
+        # à un point du projet.
+        if (
+            self.reception_directe_id
+            and self.reception_directe.point_id is None
+        ):
+            errors["__all__"] = (
+                "La réception sélectionnée n'a pas de point associé."
+            )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def __str__(self):
+        if self.distribution_id:
+            source = str(self.distribution)
+        elif self.reception_directe_id:
+            source = str(self.reception_directe)
+        else:
+            source = "Source non définie"
+
+        return (
+            f"Retour du {self.date_retour} — "
+            f"{self.quantite} — {source}"
+        )
 
 
 # ============================================================
@@ -1821,7 +2286,6 @@ class RapportMateriau(models.Model):
 # ============================================================
 # ENGIN AFFECTÉ AU PROJET
 # ============================================================
-
 class EnginProjet(models.Model):
 
     projet = models.ForeignKey(

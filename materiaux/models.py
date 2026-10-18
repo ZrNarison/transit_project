@@ -1,30 +1,29 @@
-from decimal import Decimal
+﻿from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 
-from users.models import AppUser
-
+from users.models import AppUser, H_AppUser
 
 # ============================================================
-# MATÉRIAUX
+# MAT├ëRIAUX
 # ============================================================
 class Materiaux(models.Model):
     libelle = models.CharField(
         max_length=100,
-        verbose_name="Libellé",
+        verbose_name="Libell├®",
     )
 
     unite = models.CharField(
         max_length=50,
-        verbose_name="Unité",
+        verbose_name="Unit├®",
     )
 
     class Meta:
         ordering = ["libelle"]
-        verbose_name = "Matériau"
-        verbose_name_plural = "Matériaux"
+        verbose_name = "Mat├®riau"
+        verbose_name_plural = "Mat├®riaux"
 
     def __str__(self):
         return f"{self.libelle} ({self.unite})"
@@ -74,7 +73,7 @@ class Materiaux(models.Model):
     @property
     def stock_entrepot(self):
         """
-        Stock encore disponible dans l'entrepôt,
+        Stock encore disponible dans l'entrep├┤t,
         avant division vers le magasin.
         """
         return self.total_entrees - self.total_divisions
@@ -100,7 +99,7 @@ class Materiaux(models.Model):
 
 
 # ============================================================
-# ENTRÉE ENTREPÔT
+# ENTR├ëE ENTREP├öT
 # ============================================================
 
 class MateriauxEntree(models.Model):
@@ -108,17 +107,17 @@ class MateriauxEntree(models.Model):
         Materiaux,
         on_delete=models.PROTECT,
         related_name="entrees",
-        verbose_name="Matériau",
+        verbose_name="Mat├®riau",
     )
 
     entree = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantité entrée",
+        verbose_name="Quantit├® entr├®e",
     )
 
     date_entree = models.DateField(
-        verbose_name="Date d'entrée",
+        verbose_name="Date d'entr├®e",
     )
 
     destination = models.CharField(
@@ -130,14 +129,14 @@ class MateriauxEntree(models.Model):
     vehicule = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name="Véhicule",
+        verbose_name="V├®hicule",
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="materiaux_entrees",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     date_creation = models.DateTimeField(
@@ -146,14 +145,14 @@ class MateriauxEntree(models.Model):
 
     class Meta:
         ordering = ["-date_entree", "-id"]
-        verbose_name = "Entrée matériau"
-        verbose_name_plural = "Entrées matériaux"
+        verbose_name = "Entr├®e mat├®riau"
+        verbose_name_plural = "Entr├®es mat├®riaux"
 
     def clean(self):
         if self.entree is None or self.entree <= 0:
             raise ValidationError({
                 "entree": (
-                    "La quantité entrée doit être supérieure à zéro."
+                    "La quantit├® entr├®e doit ├¬tre sup├®rieure ├á z├®ro."
                 )
             })
 
@@ -170,8 +169,8 @@ class MateriauxEntree(models.Model):
             if self.entree < total_divisions:
                 raise ValidationError({
                     "entree": (
-                        "Impossible de diminuer cette entrée à cette "
-                        "quantité car une partie a déjà été divisée."
+                        "Impossible de diminuer cette entr├®e ├á cette "
+                        "quantit├® car une partie a d├®j├á ├®t├® divis├®e."
                     )
                 })
 
@@ -212,7 +211,7 @@ class MateriauxEntree(models.Model):
 
 
 # ============================================================
-# DIVISION ENTREPÔT → MAGASIN
+# DIVISION ENTREP├öT ÔåÆ MAGASIN
 # ============================================================
 
 class MateriauxDivision(models.Model):
@@ -220,7 +219,7 @@ class MateriauxDivision(models.Model):
         MateriauxEntree,
         on_delete=models.PROTECT,
         related_name="divisions",
-        verbose_name="Entrée entrepôt",
+        verbose_name="Entr├®e entrep├┤t",
     )
 
     destination = models.CharField(
@@ -231,7 +230,7 @@ class MateriauxDivision(models.Model):
     quantite = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantité divisée",
+        verbose_name="Quantit├® divis├®e",
     )
 
     date_division = models.DateField(
@@ -239,10 +238,10 @@ class MateriauxDivision(models.Model):
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="materiaux_divisions",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     date_creation = models.DateTimeField(
@@ -251,8 +250,8 @@ class MateriauxDivision(models.Model):
 
     class Meta:
         ordering = ["-date_division", "-id"]
-        verbose_name = "Division matériau"
-        verbose_name_plural = "Divisions matériaux"
+        verbose_name = "Division mat├®riau"
+        verbose_name_plural = "Divisions mat├®riaux"
 
     def clean(self):
         if not self.entree_id:
@@ -261,7 +260,7 @@ class MateriauxDivision(models.Model):
         if self.quantite is None or self.quantite <= 0:
             raise ValidationError({
                 "quantite": (
-                    "La quantité doit être supérieure à zéro."
+                    "La quantit├® doit ├¬tre sup├®rieure ├á z├®ro."
                 )
             })
 
@@ -279,7 +278,7 @@ class MateriauxDivision(models.Model):
         if self.quantite > disponible:
             raise ValidationError({
                 "quantite": (
-                    f"Quantité insuffisante dans l'entrepôt. "
+                    f"Quantit├® insuffisante dans l'entrep├┤t. "
                     f"Disponible : {disponible} "
                     f"{self.entree.materiau.unite}."
                 )
@@ -297,8 +296,8 @@ class MateriauxDivision(models.Model):
             if self.quantite < sorties:
                 raise ValidationError({
                     "quantite": (
-                        "Impossible de réduire cette division en dessous "
-                        "des quantités déjà sorties."
+                        "Impossible de r├®duire cette division en dessous "
+                        "des quantit├®s d├®j├á sorties."
                     )
                 })
 
@@ -344,7 +343,7 @@ class MateriauxDivision(models.Model):
 
 
 # ============================================================
-# SORTIE MAGASIN → PROJET
+# SORTIE MAGASIN ÔåÆ PROJET
 # ============================================================
 
 class MateriauxOut(models.Model):
@@ -358,7 +357,7 @@ class MateriauxOut(models.Model):
     quantite = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantité sortie",
+        verbose_name="Quantit├® sortie",
     )
 
     date_sortie = models.DateField(
@@ -374,7 +373,7 @@ class MateriauxOut(models.Model):
     vehicule = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name="Véhicule",
+        verbose_name="V├®hicule",
     )
 
     # --------------------------------------------------------
@@ -400,10 +399,10 @@ class MateriauxOut(models.Model):
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="materiaux_sorties",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     date_creation = models.DateTimeField(
@@ -412,8 +411,8 @@ class MateriauxOut(models.Model):
 
     class Meta:
         ordering = ["-date_sortie", "-id"]
-        verbose_name = "Sortie matériau"
-        verbose_name_plural = "Sorties matériaux"
+        verbose_name = "Sortie mat├®riau"
+        verbose_name_plural = "Sorties mat├®riaux"
 
     def clean(self):
         if not self.division_id:
@@ -422,7 +421,7 @@ class MateriauxOut(models.Model):
         if self.quantite is None or self.quantite <= 0:
             raise ValidationError({
                 "quantite": (
-                    "La quantité doit être supérieure à zéro."
+                    "La quantit├® doit ├¬tre sup├®rieure ├á z├®ro."
                 )
             })
 
@@ -460,13 +459,13 @@ class MateriauxOut(models.Model):
                 )
             })
 
-        # Le point doit appartenir au même projet.
+        # Le point doit appartenir au m├¬me projet.
         if self.point_projet_id and self.projet_id:
             if self.point_projet.projet_id != self.projet_id:
                 raise ValidationError({
                     "point_projet": (
                         "Le point de chantier doit appartenir "
-                        "au projet sélectionné."
+                        "au projet s├®lectionn├®."
                     )
                 })
 
@@ -510,7 +509,7 @@ class MateriauxOut(models.Model):
 
 
 # ============================================================
-# VÉHICULE
+# V├ëHICULE
 # ============================================================
 
 class Vehicule(models.Model):
@@ -529,14 +528,14 @@ class Vehicule(models.Model):
     modele = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name="Modèle",
+        verbose_name="Mod├¿le",
     )
 
     kilometrage = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0"),
-        verbose_name="Kilométrage",
+        verbose_name="Kilom├®trage",
     )
 
     actif = models.BooleanField(
@@ -550,14 +549,14 @@ class Vehicule(models.Model):
 
     class Meta:
         ordering = ["immatriculation"]
-        verbose_name = "Véhicule"
-        verbose_name_plural = "Véhicules"
+        verbose_name = "V├®hicule"
+        verbose_name_plural = "V├®hicules"
 
     def clean(self):
         if self.kilometrage is not None and self.kilometrage < 0:
             raise ValidationError({
                 "kilometrage": (
-                    "Le kilométrage ne peut pas être négatif."
+                    "Le kilom├®trage ne peut pas ├¬tre n├®gatif."
                 )
             })
 
@@ -626,7 +625,7 @@ class Vehicule(models.Model):
 
 
 # ============================================================
-# CATÉGORIE DE DÉPENSE
+# CAT├ëGORIE DE D├ëPENSE
 # ============================================================
 
 class CategorieDepense(models.Model):
@@ -648,15 +647,15 @@ class CategorieDepense(models.Model):
 
     class Meta:
         ordering = ["nom"]
-        verbose_name = "Catégorie de dépense"
-        verbose_name_plural = "Catégories de dépenses"
+        verbose_name = "Cat├®gorie de d├®pense"
+        verbose_name_plural = "Cat├®gories de d├®penses"
 
     def __str__(self):
         return self.nom
 
 
 # ============================================================
-# ACTIVITÉ DE TRANSPORT
+# ACTIVIT├ë DE TRANSPORT
 # ============================================================
 
 class ActiviteTransport(models.Model):
@@ -667,8 +666,8 @@ class ActiviteTransport(models.Model):
 
     TYPE_TRANSPORT_CHOICES = [
         (PERSONNEL, "Personnel"),
-        (MATERIELS, "Matériels"),
-        (MATERIAUX, "Matériaux"),
+        (MATERIELS, "Mat├®riels"),
+        (MATERIAUX, "Mat├®riaux"),
     ]
 
     date_activite = models.DateField(
@@ -679,10 +678,10 @@ class ActiviteTransport(models.Model):
         Vehicule,
         on_delete=models.PROTECT,
         related_name="activites_transport",
-        verbose_name="Véhicule",
+        verbose_name="V├®hicule",
     )
 
-    # Ancien champ conservé pour compatibilité
+    # Ancien champ conserv├® pour compatibilit├®
     conducteur = models.CharField(
         max_length=150,
         blank=True,
@@ -707,7 +706,7 @@ class ActiviteTransport(models.Model):
     lieu_depart = models.CharField(
         max_length=255,
         blank=True,
-        verbose_name="Lieu de départ",
+        verbose_name="Lieu de d├®part",
     )
 
     destination = models.CharField(
@@ -727,7 +726,7 @@ class ActiviteTransport(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal("0"),
-        verbose_name="Quantité",
+        verbose_name="Quantit├®",
     )
 
     # --------------------------------------------------------
@@ -753,7 +752,7 @@ class ActiviteTransport(models.Model):
     )
 
     # --------------------------------------------------------
-    # MATÉRIAU TRANSPORTÉ
+    # MAT├ëRIAU TRANSPORT├ë
     # --------------------------------------------------------
 
     sortie_materiau = models.ForeignKey(
@@ -762,32 +761,32 @@ class ActiviteTransport(models.Model):
         related_name="transports",
         null=True,
         blank=True,
-        verbose_name="Sortie matériau",
+        verbose_name="Sortie mat├®riau",
     )
 
     # --------------------------------------------------------
-    # KILOMÉTRAGE
+    # KILOM├ëTRAGE
     # --------------------------------------------------------
 
     kilometrage_depart = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0"),
-        verbose_name="Km départ",
+        verbose_name="Km d├®part",
     )
 
     kilometrage_arrivee = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0"),
-        verbose_name="Km arrivée",
+        verbose_name="Km arriv├®e",
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="activites_transport_enregistrees",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     date_creation = models.DateTimeField(
@@ -796,15 +795,15 @@ class ActiviteTransport(models.Model):
 
     class Meta:
         ordering = ["-date_activite", "-id"]
-        verbose_name = "Activité de transport"
-        verbose_name_plural = "Activités de transport"
+        verbose_name = "Activit├® de transport"
+        verbose_name_plural = "Activit├®s de transport"
 
     def clean(self):
         errors = {}
 
         if self.quantite is not None and self.quantite < 0:
             errors["quantite"] = (
-                "La quantité ne peut pas être négative."
+                "La quantit├® ne peut pas ├¬tre n├®gative."
             )
 
         if (
@@ -812,7 +811,7 @@ class ActiviteTransport(models.Model):
             and self.kilometrage_depart < 0
         ):
             errors["kilometrage_depart"] = (
-                "Le kilométrage de départ ne peut pas être négatif."
+                "Le kilom├®trage de d├®part ne peut pas ├¬tre n├®gatif."
             )
 
         if (
@@ -820,7 +819,7 @@ class ActiviteTransport(models.Model):
             and self.kilometrage_arrivee < 0
         ):
             errors["kilometrage_arrivee"] = (
-                "Le kilométrage d'arrivée ne peut pas être négatif."
+                "Le kilom├®trage d'arriv├®e ne peut pas ├¬tre n├®gatif."
             )
 
         if (
@@ -829,12 +828,12 @@ class ActiviteTransport(models.Model):
             and self.kilometrage_arrivee < self.kilometrage_depart
         ):
             errors["kilometrage_arrivee"] = (
-                "Le kilométrage d'arrivée doit être supérieur "
-                "ou égal au kilométrage de départ."
+                "Le kilom├®trage d'arriv├®e doit ├¬tre sup├®rieur "
+                "ou ├®gal au kilom├®trage de d├®part."
             )
 
         # ----------------------------------------------------
-        # Un transport de matériaux doit être lié à une sortie.
+        # Un transport de mat├®riaux doit ├¬tre li├® ├á une sortie.
         # ----------------------------------------------------
 
         if (
@@ -862,25 +861,25 @@ class ActiviteTransport(models.Model):
 
             if self.quantite > disponible:
                 errors["quantite"] = (
-                    f"Quantité trop élevée. "
+                    f"Quantit├® trop ├®lev├®e. "
                     f"Disponible pour transport : "
                     f"{disponible} "
                     f"{sortie.division.entree.materiau.unite}."
                 )
 
         # ----------------------------------------------------
-        # Cohérence Projet / Point
+        # Coh├®rence Projet / Point
         # ----------------------------------------------------
 
         if self.point_projet_id and self.projet_id:
             if self.point_projet.projet_id != self.projet_id:
                 errors["point_projet"] = (
-                    "Le point sélectionné n'appartient pas "
-                    "au projet sélectionné."
+                    "Le point s├®lectionn├® n'appartient pas "
+                    "au projet s├®lectionn├®."
                 )
 
         # ----------------------------------------------------
-        # Cohérence Projet / Sortie matériau
+        # Coh├®rence Projet / Sortie mat├®riau
         # ----------------------------------------------------
 
         if self.sortie_materiau_id and self.projet_id:
@@ -889,7 +888,7 @@ class ActiviteTransport(models.Model):
                 and self.sortie_materiau.projet_id != self.projet_id
             ):
                 errors["sortie_materiau"] = (
-                    "La sortie de matériau appartient à un autre projet."
+                    "La sortie de mat├®riau appartient ├á un autre projet."
                 )
 
         if errors:
@@ -929,7 +928,7 @@ class ActiviteTransport(models.Model):
 
 
 # ============================================================
-# RÉCEPTION DES MATÉRIAUX AU POINT DE CHANTIER
+# R├ëCEPTION DES MAT├ëRIAUX AU POINT DE CHANTIER
 # ============================================================
 
 class ReceptionMateriau(models.Model):
@@ -958,11 +957,11 @@ class ReceptionMateriau(models.Model):
     quantite_recue = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantité reçue",
+        verbose_name="Quantit├® re├ºue",
     )
 
     date_reception = models.DateField(
-        verbose_name="Date de réception",
+        verbose_name="Date de r├®ception",
     )
 
     responsable = models.ForeignKey(
@@ -983,15 +982,15 @@ class ReceptionMateriau(models.Model):
 
     class Meta:
         ordering = ["-date_reception", "-id"]
-        verbose_name = "Réception de matériau"
-        verbose_name_plural = "Réceptions de matériaux"
+        verbose_name = "R├®ception de mat├®riau"
+        verbose_name_plural = "R├®ceptions de mat├®riaux"
 
     def clean(self):
         errors = {}
 
         if self.quantite_recue is None or self.quantite_recue <= 0:
             errors["quantite_recue"] = (
-                "La quantité reçue doit être supérieure à zéro."
+                "La quantit├® re├ºue doit ├¬tre sup├®rieure ├á z├®ro."
             )
 
         if self.transport_id:
@@ -999,8 +998,8 @@ class ReceptionMateriau(models.Model):
 
             if transport.type_transport != ActiviteTransport.MATERIAUX:
                 errors["transport"] = (
-                    "Le transport sélectionné ne transporte pas "
-                    "des matériaux."
+                    "Le transport s├®lectionn├® ne transporte pas "
+                    "des mat├®riaux."
                 )
 
             receptions_existantes = (
@@ -1022,14 +1021,14 @@ class ReceptionMateriau(models.Model):
                 and self.quantite_recue > disponible
             ):
                 errors["quantite_recue"] = (
-                    f"Quantité reçue supérieure à la quantité "
-                    f"transportée. Disponible : {disponible}."
+                    f"Quantit├® re├ºue sup├®rieure ├á la quantit├® "
+                    f"transport├®e. Disponible : {disponible}."
                 )
 
         if self.projet_id and self.point_id:
             if self.point.projet_id != self.projet_id:
                 errors["point"] = (
-                    "Le point n'appartient pas à ce projet."
+                    "Le point n'appartient pas ├á ce projet."
                 )
 
         if self.transport_id and self.projet_id:
@@ -1038,7 +1037,7 @@ class ReceptionMateriau(models.Model):
                 and self.transport.projet_id != self.projet_id
             ):
                 errors["projet"] = (
-                    "Le transport appartient à un autre projet."
+                    "Le transport appartient ├á un autre projet."
                 )
 
         if errors:
@@ -1082,7 +1081,7 @@ class ReceptionMateriau(models.Model):
 
 
 # ============================================================
-# UTILISATION DES MATÉRIAUX SUR LE CHANTIER
+# UTILISATION DES MAT├ëRIAUX SUR LE CHANTIER
 # ============================================================
 
 class UtilisationMateriau(models.Model):
@@ -1091,13 +1090,13 @@ class UtilisationMateriau(models.Model):
         ReceptionMateriau,
         on_delete=models.PROTECT,
         related_name="utilisations",
-        verbose_name="Réception",
+        verbose_name="R├®ception",
     )
 
     quantite_utilisee = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantité utilisée",
+        verbose_name="Quantit├® utilis├®e",
     )
 
     date_utilisation = models.DateField(
@@ -1110,10 +1109,10 @@ class UtilisationMateriau(models.Model):
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="utilisations_materiaux",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     created_at = models.DateTimeField(
@@ -1122,8 +1121,8 @@ class UtilisationMateriau(models.Model):
 
     class Meta:
         ordering = ["-date_utilisation", "-id"]
-        verbose_name = "Utilisation de matériau"
-        verbose_name_plural = "Utilisations de matériaux"
+        verbose_name = "Utilisation de mat├®riau"
+        verbose_name_plural = "Utilisations de mat├®riaux"
 
     def clean(self):
         if not self.reception_id:
@@ -1135,8 +1134,8 @@ class UtilisationMateriau(models.Model):
         ):
             raise ValidationError({
                 "quantite_utilisee": (
-                    "La quantité utilisée doit être "
-                    "supérieure à zéro."
+                    "La quantit├® utilis├®e doit ├¬tre "
+                    "sup├®rieure ├á z├®ro."
                 )
             })
 
@@ -1166,7 +1165,7 @@ class UtilisationMateriau(models.Model):
         if self.quantite_utilisee > disponible:
             raise ValidationError({
                 "quantite_utilisee": (
-                    f"Quantité insuffisante sur le chantier. "
+                    f"Quantit├® insuffisante sur le chantier. "
                     f"Disponible : {disponible}."
                 )
             })
@@ -1201,13 +1200,13 @@ class MateriauxRetour(models.Model):
         related_name="retours",
         null=True,
         blank=True,
-        verbose_name="Réception chantier",
+        verbose_name="R├®ception chantier",
     )
 
     quantite = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantité retournée",
+        verbose_name="Quantit├® retourn├®e",
     )
 
     date_retour = models.DateField(
@@ -1220,10 +1219,10 @@ class MateriauxRetour(models.Model):
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="retours_materiaux",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     created_at = models.DateTimeField(
@@ -1232,15 +1231,15 @@ class MateriauxRetour(models.Model):
 
     class Meta:
         ordering = ["-date_retour", "-id"]
-        verbose_name = "Retour matériau"
-        verbose_name_plural = "Retours matériaux"
+        verbose_name = "Retour mat├®riau"
+        verbose_name_plural = "Retours mat├®riaux"
 
     def clean(self):
         errors = {}
 
         if self.quantite is None or self.quantite <= 0:
             errors["quantite"] = (
-                "La quantité retournée doit être supérieure à zéro."
+                "La quantit├® retourn├®e doit ├¬tre sup├®rieure ├á z├®ro."
             )
 
         if self.sortie_id:
@@ -1263,12 +1262,12 @@ class MateriauxRetour(models.Model):
                 and self.quantite > disponible
             ):
                 errors["quantite"] = (
-                    f"Quantité retournée trop élevée. "
+                    f"Quantit├® retourn├®e trop ├®lev├®e. "
                     f"Maximum disponible : {disponible}."
                 )
 
-        # Si le retour est lié à une réception,
-        # le retour ne peut pas dépasser son reliquat.
+        # Si le retour est li├® ├á une r├®ception,
+        # le retour ne peut pas d├®passer son reliquat.
         if self.reception_id:
             if (
                 self.reception.transport_id
@@ -1278,8 +1277,8 @@ class MateriauxRetour(models.Model):
                 != self.sortie_id
             ):
                 errors["reception"] = (
-                    "La réception ne correspond pas "
-                    "à la sortie magasin."
+                    "La r├®ception ne correspond pas "
+                    "├á la sortie magasin."
                 )
 
             retours_reception = (
@@ -1343,7 +1342,7 @@ class PaiementDocker(models.Model):
         ActiviteTransport,
         on_delete=models.PROTECT,
         related_name="paiements_dockers",
-        verbose_name="Activité",
+        verbose_name="Activit├®",
     )
 
     # Projet directement accessible pour les rapports.
@@ -1368,10 +1367,10 @@ class PaiementDocker(models.Model):
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="paiements_dockers",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     date_creation = models.DateTimeField(
@@ -1388,7 +1387,7 @@ class PaiementDocker(models.Model):
 
         if self.montant is None or self.montant <= 0:
             errors["montant"] = (
-                "Le montant doit être supérieur à zéro."
+                "Le montant doit ├¬tre sup├®rieur ├á z├®ro."
             )
 
         if self.activite_id and self.projet_id:
@@ -1398,15 +1397,15 @@ class PaiementDocker(models.Model):
             ):
                 errors["projet"] = (
                     "Le projet ne correspond pas "
-                    "au projet de l'activité."
+                    "au projet de l'activit├®."
                 )
 
         if errors:
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        # Si le projet n'est pas renseigné mais que
-        # l'activité est liée à un projet, on le récupère.
+        # Si le projet n'est pas renseign├® mais que
+        # l'activit├® est li├®e ├á un projet, on le r├®cup├¿re.
         if (
             not self.projet_id
             and self.activite_id
@@ -1425,7 +1424,7 @@ class PaiementDocker(models.Model):
 
 
 # ============================================================
-# DÉPENSE GÉNÉRALE
+# D├ëPENSE G├ëN├ëRALE
 # ============================================================
 
 class Depense(models.Model):
@@ -1436,7 +1435,7 @@ class Depense(models.Model):
 
     designation = models.CharField(
         max_length=255,
-        verbose_name="Désignation",
+        verbose_name="D├®signation",
     )
 
     categorie = models.ForeignKey(
@@ -1445,7 +1444,7 @@ class Depense(models.Model):
         related_name="depenses",
         blank=True,
         null=True,
-        verbose_name="Catégorie",
+        verbose_name="Cat├®gorie",
     )
 
     vehicule = models.ForeignKey(
@@ -1454,7 +1453,7 @@ class Depense(models.Model):
         related_name="depenses",
         blank=True,
         null=True,
-        verbose_name="Véhicule",
+        verbose_name="V├®hicule",
     )
 
     projet = models.ForeignKey(
@@ -1485,10 +1484,10 @@ class Depense(models.Model):
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="depenses_materiaux",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     date_creation = models.DateTimeField(
@@ -1497,14 +1496,14 @@ class Depense(models.Model):
 
     class Meta:
         ordering = ["-date_depense", "-id"]
-        verbose_name = "Dépense"
-        verbose_name_plural = "Dépenses"
+        verbose_name = "D├®pense"
+        verbose_name_plural = "D├®penses"
 
     def clean(self):
         if self.montant is None or self.montant <= 0:
             raise ValidationError({
                 "montant": (
-                    "Le montant doit être supérieur à zéro."
+                    "Le montant doit ├¬tre sup├®rieur ├á z├®ro."
                 )
             })
 
@@ -1530,7 +1529,7 @@ class DepenseGasoil(models.Model):
         Vehicule,
         on_delete=models.PROTECT,
         related_name="depenses_gasoil",
-        verbose_name="Véhicule",
+        verbose_name="V├®hicule",
     )
 
     projet = models.ForeignKey(
@@ -1545,7 +1544,7 @@ class DepenseGasoil(models.Model):
     quantite_litre = models.DecimalField(
         max_digits=12,
         decimal_places=3,
-        verbose_name="Quantité (litres)",
+        verbose_name="Quantit├® (litres)",
     )
 
     prix_unitaire = models.DecimalField(
@@ -1564,10 +1563,10 @@ class DepenseGasoil(models.Model):
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="depenses_gasoil",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     date_creation = models.DateTimeField(
@@ -1576,8 +1575,8 @@ class DepenseGasoil(models.Model):
 
     class Meta:
         ordering = ["-date_gasoil", "-id"]
-        verbose_name = "Dépense gasoil"
-        verbose_name_plural = "Dépenses gasoil"
+        verbose_name = "D├®pense gasoil"
+        verbose_name_plural = "D├®penses gasoil"
 
     def clean(self):
         errors = {}
@@ -1587,8 +1586,8 @@ class DepenseGasoil(models.Model):
             or self.quantite_litre <= 0
         ):
             errors["quantite_litre"] = (
-                "La quantité de gasoil doit être "
-                "supérieure à zéro."
+                "La quantit├® de gasoil doit ├¬tre "
+                "sup├®rieure ├á z├®ro."
             )
 
         if (
@@ -1596,7 +1595,7 @@ class DepenseGasoil(models.Model):
             or self.prix_unitaire < 0
         ):
             errors["prix_unitaire"] = (
-                "Le prix unitaire ne peut pas être négatif."
+                "Le prix unitaire ne peut pas ├¬tre n├®gatif."
             )
 
         if errors:
@@ -1620,7 +1619,7 @@ class DepenseGasoil(models.Model):
 
 
 # ============================================================
-# RÉPARATION VÉHICULE
+# R├ëPARATION V├ëHICULE
 # ============================================================
 
 class ReparationVehicule(models.Model):
@@ -1629,7 +1628,7 @@ class ReparationVehicule(models.Model):
     CHANGEMENT = "CHANGEMENT"
 
     TYPE_REPARATION_CHOICES = [
-        (REPARATION, "Réparation"),
+        (REPARATION, "R├®paration"),
         (CHANGEMENT, "Changement"),
     ]
 
@@ -1641,10 +1640,10 @@ class ReparationVehicule(models.Model):
         Vehicule,
         on_delete=models.PROTECT,
         related_name="reparations",
-        verbose_name="Véhicule",
+        verbose_name="V├®hicule",
     )
 
-    # Ancien champ conservé.
+    # Ancien champ conserv├®.
     chauffeur = models.CharField(
         max_length=150,
         blank=True,
@@ -1672,7 +1671,7 @@ class ReparationVehicule(models.Model):
 
     designation = models.CharField(
         max_length=255,
-        verbose_name="Désignation",
+        verbose_name="D├®signation",
     )
 
     type_reparation = models.CharField(
@@ -1692,13 +1691,13 @@ class ReparationVehicule(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal("1"),
-        verbose_name="Quantité",
+        verbose_name="Quantit├®",
     )
 
     unite = models.CharField(
         max_length=50,
         blank=True,
-        verbose_name="Unité",
+        verbose_name="Unit├®",
     )
 
     prix_unitaire = models.DecimalField(
@@ -1712,31 +1711,31 @@ class ReparationVehicule(models.Model):
         max_digits=14,
         decimal_places=2,
         default=Decimal("0"),
-        verbose_name="Main d'œuvre",
+        verbose_name="Main d'┼ôuvre",
     )
 
-    # Ancien champ conservé pour compatibilité.
+    # Ancien champ conserv├® pour compatibilit├®.
     Cout = models.DecimalField(
         max_digits=14,
         decimal_places=2,
         default=Decimal("0"),
-        verbose_name="Coût historique",
+        verbose_name="Co├╗t historique",
     )
 
-    # Ancien champ conservé pour compatibilité.
+    # Ancien champ conserv├® pour compatibilit├®.
     total = models.DecimalField(
         max_digits=14,
         decimal_places=2,
         default=Decimal("0"),
         editable=False,
-        verbose_name="Total pièce historique",
+        verbose_name="Total pi├¿ce historique",
     )
 
     enregistreur = models.ForeignKey(
-        AppUser,
+        H_AppUser,
         on_delete=models.PROTECT,
         related_name="reparations_vehicules",
-        verbose_name="Enregistré par",
+        verbose_name="Enregistr├® par",
     )
 
     date_creation = models.DateTimeField(
@@ -1751,20 +1750,20 @@ class ReparationVehicule(models.Model):
         upload_to="reparations/pieces_remplacees/",
         blank=True,
         null=True,
-        verbose_name="Photo pièce remplacée",
+        verbose_name="Photo pi├¿ce remplac├®e",
     )
 
     photo_piece_remplacante = models.ImageField(
         upload_to="reparations/pieces_remplacantes/",
         blank=True,
         null=True,
-        verbose_name="Photo pièce remplacée par",
+        verbose_name="Photo pi├¿ce remplac├®e par",
     )
 
     class Meta:
         ordering = ["-date_reparation", "-id"]
-        verbose_name = "Réparation véhicule"
-        verbose_name_plural = "Réparations véhicules"
+        verbose_name = "R├®paration v├®hicule"
+        verbose_name_plural = "R├®parations v├®hicules"
 
     @property
     def montant_piece(self):
@@ -1792,7 +1791,7 @@ class ReparationVehicule(models.Model):
 
         if self.quantite is None or self.quantite <= 0:
             errors["quantite"] = (
-                "La quantité doit être supérieure à zéro."
+                "La quantit├® doit ├¬tre sup├®rieure ├á z├®ro."
             )
 
         if (
@@ -1800,7 +1799,7 @@ class ReparationVehicule(models.Model):
             or self.prix_unitaire < 0
         ):
             errors["prix_unitaire"] = (
-                "Le prix unitaire ne peut pas être négatif."
+                "Le prix unitaire ne peut pas ├¬tre n├®gatif."
             )
 
         if (
@@ -1808,12 +1807,12 @@ class ReparationVehicule(models.Model):
             or self.montant_main_oeuvre < 0
         ):
             errors["montant_main_oeuvre"] = (
-                "La main d'œuvre ne peut pas être négative."
+                "La main d'┼ôuvre ne peut pas ├¬tre n├®gative."
             )
 
         if self.Cout is not None and self.Cout < 0:
             errors["Cout"] = (
-                "Le coût ne peut pas être négatif."
+                "Le co├╗t ne peut pas ├¬tre n├®gatif."
             )
 
         if errors:
@@ -1831,3 +1830,4 @@ class ReparationVehicule(models.Model):
             f"{self.designation} - "
             f"{self.montant_total_calcule}"
         )
+

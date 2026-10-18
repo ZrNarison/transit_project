@@ -373,4 +373,162 @@ urlpatterns = [
         name="mouvement_vehicule_projet_delete",
     ),
 
+    # ============================================================
+    # AVANCE ÉQUIPE PROJET
+    # ============================================================
+
+    path(
+        "<int:projet_id>/avances-equipe/",
+        views.avance_equipe_projet_list,
+        name="avance_equipe_projet_list",
+    ),
+    path(
+        "<int:projet_id>/avances-equipe/ajouter/",
+        views.avance_equipe_projet_create,
+        name="avance_equipe_projet_create",
+    ),
+    path(
+        "<int:projet_id>/avances-equipe/<int:avance_id>/modifier/",
+        views.avance_equipe_projet_update,
+        name="avance_equipe_projet_update",
+    ),
+    path(
+        "<int:projet_id>/avances-equipe/<int:avance_id>/supprimer/",
+        views.avance_equipe_projet_delete,
+        name="avance_equipe_projet_delete",
+    ),
+
+    # =================================================
+    # MATERIAUX
+    # =================================================
+    path(
+        "<int:projet_id>/materiaux/dashboard/",
+        views.dashboard_materiaux,
+        name="dashboard_materiaux",
+    ),
+    # ============================================================
+    # ACHATS DE MATÉRIAUX
+    # ============================================================
+
+    path(
+        "<int:projet_id>/achats-materiaux/",
+        views.achat_materiau_projet_list,
+        name="achat_materiau_projet_list",
+    ),
+    path(
+        "<int:projet_id>/achats-materiaux/ajouter/",
+        views.achat_materiau_projet_create,
+        name="achat_materiau_projet_create",
+    ),
+    path(
+        "<int:projet_id>/achats-materiaux/<int:pk>/modifier/",
+        views.achat_materiau_projet_update,
+        name="achat_materiau_projet_update",
+    ),
+    path(
+        "<int:projet_id>/achats-materiaux/<int:pk>/supprimer/",
+        views.achat_materiau_projet_delete,
+        name="achat_materiau_projet_delete",
+    ),
+
+    # ============================================================
+    # RÉCEPTIONS DE MATÉRIAUX
+    # ============================================================
+
+    path(
+        "<int:projet_id>/receptions-materiaux/",
+        views.reception_materiau_projet_list,
+        name="reception_materiau_projet_list",
+    ),
+    path(
+        "projets/<int:projet_id>/receptions-materiaux/nouveau/",
+        views.reception_materiau_projet_create,
+        name="reception_materiau_projet_create",
+    ),
+    path(
+        "<int:projet_id>/receptions-materiaux/<int:pk>/modifier/",
+        views.reception_materiau_projet_update,
+        name="reception_materiau_projet_update",
+    ),
+    path(
+        "<int:projet_id>/receptions-materiaux/<int:pk>/supprimer/",
+        views.reception_materiau_projet_delete,
+        name="reception_materiau_projet_delete",
+    ),
+
+    # ============================================================
+    # DISTRIBUTIONS DE MATÉRIAUX
+    # ============================================================
+
+    path(
+        "<int:projet_id>/distributions-materiaux/",
+        views.distribution_materiau_projet_list,
+        name="distribution_materiau_projet_list",
+    ),
+    path(
+        "<int:projet_id>/distributions-materiaux/ajouter/",
+        views.distribution_materiau_projet_create,
+        name="distribution_materiau_projet_create",
+    ),
+    path(
+        "<int:projet_id>/distributions-materiaux/<int:pk>/modifier/",
+        views.distribution_materiau_projet_update,
+        name="distribution_materiau_projet_update",
+    ),
+    path(
+        "<int:projet_id>/distributions-materiaux/<int:pk>/supprimer/",
+        views.distribution_materiau_projet_delete,
+        name="distribution_materiau_projet_delete",
+    ),
+
+    # ============================================================
+    # CONSOMMATIONS DE MATÉRIAUX
+    # ============================================================
+
+    path(
+        "<int:projet_id>/consommations-materiaux/",
+        views.consommation_materiau_projet_list,
+        name="consommation_materiau_projet_list",
+    ),
+    path(
+        "<int:projet_id>/consommations-materiaux/ajouter/",
+        views.consommation_materiau_projet_create,
+        name="consommation_materiau_projet_create",
+    ),
+    path(
+        "<int:projet_id>/consommations-materiaux/<int:pk>/modifier/",
+        views.consommation_materiau_projet_update,
+        name="consommation_materiau_projet_update",
+    ),
+    path(
+        "<int:projet_id>/consommations-materiaux/<int:pk>/supprimer/",
+        views.consommation_materiau_projet_delete,
+        name="consommation_materiau_projet_delete",
+    ),
+
+    # ============================================================
+    # RETOURS DE MATÉRIAUX
+    # ============================================================
+
+    path(
+        "<int:projet_id>/retours-materiaux/",
+        views.retour_materiau_projet_list,
+        name="retour_materiau_projet_list",
+    ),
+    path(
+        "<int:projet_id>/retours-materiaux/ajouter/",
+        views.retour_materiau_projet_create,
+        name="retour_materiau_projet_create",
+    ),
+    path(
+        "<int:projet_id>/retours-materiaux/<int:pk>/modifier/",
+        views.retour_materiau_projet_update,
+        name="retour_materiau_projet_update",
+    ),
+    path(
+        "<int:projet_id>/retours-materiaux/<int:pk>/supprimer/",
+        views.retour_materiau_projet_delete,
+        name="retour_materiau_projet_delete",
+    ),
+
 ]

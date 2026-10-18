@@ -1,0 +1,261 @@
+{% extends "materiaux/base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-shopping-cart text-primary me-2"></i>
+                Achats de matériaux
+            </h3>
+
+            <p class="text-muted mb-0">
+                Projet :
+                <strong>{{ projet.titre }}</strong>
+            </p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_ajout }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>
+                Nouvel achat
+            </a>
+
+            <a href="{% url 'projet:achat_materiau_projet_list' projet_id=projet.pk %}"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-sync-alt me-1"></i>
+                Actualiser
+            </a>
+        </div>
+    </div>
+
+    <!-- MESSAGES -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- RÉSUMÉ -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-shopping-cart fa-lg text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Nombre d'achats</div>
+                        <h4 class="mb-0">{{ lignes|length }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-coins fa-lg text-success"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Montant total des achats affichés</div>
+                        <h5 class="mb-0">
+                            {% with total=0 %}
+                                {% for ligne in lignes %}
+                                    {% with achat=ligne.objet %}
+                                        {% if forloop.first %}
+                                            {{ achat.montant_total|floatformat:2 }}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endfor %}
+                            {% endwith %}
+                            <span class="text-muted small">
+                                (voir le détail ci-dessous)
+                            </span>
+                        </h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-hard-hat fa-lg text-info"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Projet concerné</div>
+                        <div class="fw-semibold">{{ projet.titre }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TABLEAU DES ACHATS -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Liste des achats
+                </h5>
+
+                <span class="badge bg-primary">
+                    {{ lignes|length }} achat(s)
+                </span>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center">N°</th>
+                            <th>Date d'achat</th>
+                            <th>Matériau</th>
+                            <th>Fournisseur</th>
+                            <th class="text-end">Quantité</th>
+                            <th>Unité</th>
+                            <th class="text-end">Prix unitaire</th>
+                            <th class="text-end">Montant total</th>
+                            <th>Enregistré par</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for ligne in lignes %}
+                            {% with achat=ligne.objet %}
+                                <tr>
+                                    <td class="text-center">
+                                        {{ forloop.counter }}
+                                    </td>
+
+                                    <td class="text-nowrap">
+                                        {{ achat.date_achat|date:"d/m/Y" }}
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            {{ achat.materiau_projet }}
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        {{ achat.fournisseur|default:"—" }}
+                                    </td>
+
+                                    <td class="text-end">
+                                        {{ achat.quantite_achetee|floatformat:2 }}
+                                    </td>
+
+                                    <td>
+                                        {{ achat.materiau_projet.unite|default:"—" }}
+                                    </td>
+
+                                    <td class="text-end text-nowrap">
+                                        {{ achat.prix_unitaire|floatformat:2 }}
+                                    </td>
+
+                                    <td class="text-end text-nowrap fw-bold">
+                                        {{ achat.montant_total|floatformat:2 }}
+                                    </td>
+
+                                    <td>
+                                        {% if achat.enregistre_par %}
+                                            {{ achat.enregistre_par }}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="text-center text-nowrap">
+                                        <a href="{{ ligne.modifier_url }}"
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Modifier l'achat"
+                                           aria-label="Modifier l'achat">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        <a href="{{ ligne.supprimer_url }}"
+                                           class="btn btn-sm btn-outline-danger"
+                                           title="Supprimer l'achat"
+                                           aria-label="Supprimer l'achat">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endwith %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center py-5">
+                                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+
+                                    <h5>Aucun achat enregistré</h5>
+
+                                    <p class="text-muted mb-3">
+                                        Aucun achat de matériau n'a encore été
+                                        enregistré pour ce projet.
+                                    </p>
+
+                                    <a href="{{ url_ajout }}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-1"></i>
+                                        Enregistrer le premier achat
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                    {% if lignes %}
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="4" class="text-end">
+                                    Total des quantités affichées :
+                                </th>
+                                <th class="text-end">
+                                    {% for ligne in lignes %}
+                                        {% with achat=ligne.objet %}
+                                            {{ achat.quantite_achetee|floatformat:2 }}{% if not forloop.last %} + {% endif %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                </th>
+                                <th colspan="5"></th>
+                            </tr>
+                        </tfoot>
+                    {% endif %}
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PIED DE PAGE -->
+    <div class="mt-3">
+        <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Les montants sont exprimés dans la devise utilisée par l'entreprise.
+        </small>
+    </div>
+
+</div>
+{% endblock %}

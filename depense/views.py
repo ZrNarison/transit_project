@@ -8,7 +8,7 @@ from django.shortcuts import (
 from django.db.models import Sum
 from django.contrib import messages
 from django.core.paginator import Paginator
-
+from django.views.decorators.http import require_POST
 from .models import Depense
 from .forms import DepenseForm
 

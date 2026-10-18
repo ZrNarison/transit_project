@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Transferts entre points de chantier</h3>
+    <a class="btn btn-primary" href="{% url 'materiaux:transfert_materiau_add' %}">Nouveau transfert</a>
+  </div>
+  <div class="alert alert-info">Un transfert déplace le reliquat d'un point à un autre. Il ne crée pas de nouvelle sortie du magasin.</div>
+  {% include "materiaux/_suivi_nav.html" %}
+  <div class="table-responsive card"><table class="table table-striped mb-0">
+    <thead class="table-dark"><tr><th>Date</th><th>Réception / lot</th><th>Projet</th><th>Départ</th><th>Destination</th><th>Quantité</th><th>Responsable</th><th>Actions</th></tr></thead>
+    <tbody>{% for t in transferts %}
+      <tr><td>{{ t.date_transfert|date:"d/m/Y" }}</td><td>{{ t.reception }}</td><td>{{ t.projet }}</td><td>{{ t.point_depart }}</td><td>{{ t.point_destination }}</td><td>{{ t.quantite }}</td><td>{{ t.responsable }}</td>
+      <td class="d-flex gap-1"><a class="btn btn-sm btn-outline-primary" href="{% url 'materiaux:transfert_materiau_edit' t.pk %}">Modifier</a>
+      <form method="post" action="{% url 'materiaux:transfert_materiau_delete' t.pk %}">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Supprimer ce transfert ?')">Supprimer</button></form></td></tr>
+    {% empty %}<tr><td colspan="8" class="text-center py-4">Aucun transfert enregistré.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</div>
+{% endblock %}

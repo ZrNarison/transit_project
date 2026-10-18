@@ -21,6 +21,8 @@
 
     </div>
 
+    {% include "materiaux/_suivi_nav.html" %}
+
     <div class="card shadow-sm">
 
         <div class="table-responsive">
@@ -33,6 +35,9 @@
                         <th>Matériau</th>
                         <th>Magasin</th>
                         <th>Quantité</th>
+                        <th>Projet</th>
+                        <th>Point de chantier</th>
+                        <th>Chef d'équipe</th>
                         <th>Destination</th>
                         <th>Date</th>
                         <th>Véhicule</th>
@@ -44,7 +49,7 @@
 
                 <tbody>
 
-                    {% for objet in objets %}
+                    {% for objet in sorties %}
 
                     <tr>
 
@@ -61,6 +66,9 @@
                             {{ objet.division.entree.materiau.unite }}
                         </td>
 
+                        <td>{{ objet.projet|default:"-" }}</td>
+                        <td>{{ objet.point_projet|default:"-" }}</td>
+                        <td>{{ objet.chef_equipe|default:"-" }}</td>
                         <td>
                             {{ objet.destination|default:"-" }}
                         </td>

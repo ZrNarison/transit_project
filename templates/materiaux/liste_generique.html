@@ -1,0 +1,55 @@
+
+{% extends "materiaux/base.html" %}
+
+{% block title %}{{ titre }}{% endblock %}
+{% block page_title %}{{ titre }}{% endblock %}
+
+{% block page_actions %}
+{% if ajout_url %}
+<a href="{% url url_namespace|add:':'|add:ajout_url %}" class="btn btn-primary">
+    <i class="fas fa-plus me-1"></i> Ajouter
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle">
+            <thead>
+                <tr>
+                    {% for colonne in colonnes %}
+                        <th>{{ colonne }}</th>
+                    {% endfor %}
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ligne in lignes %}
+                    <tr>
+                        {% for valeur in ligne.valeurs %}
+                            <td>{{ valeur }}</td>
+                        {% endfor %}
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-primary"
+                               href="{% url url_namespace|add:':'|add:ligne.modifier_url ligne.pk %}">
+                                Modifier
+                            </a>
+                            <a class="btn btn-sm btn-outline-danger"
+                               href="{% url url_namespace|add:':'|add:ligne.supprimer_url ligne.pk %}">
+                                Supprimer
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="20" class="text-center text-muted py-4">
+                            Aucun enregistrement disponible.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

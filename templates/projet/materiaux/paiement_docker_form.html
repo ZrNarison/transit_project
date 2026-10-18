@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid py-3">
+
+```
+<div class="row justify-content-center">
+
+    <div class="col-lg-7 col-xl-6">
+
+        <div class="card shadow-sm">
+
+            <!-- ==================================================
+                 EN-TÊTE
+            =================================================== -->
+
+            <div class="card-header bg-primary text-white">
+
+                <div class="d-flex justify-content-between align-items-center">
+
+                    <h5 class="mb-0">
+                        💵 {{ title }}
+                    </h5>
+
+                </div>
+
+            </div>
+
+
+            <!-- ==================================================
+                 CORPS
+            =================================================== -->
+
+            <div class="card-body">
+
+                {% if messages %}
+
+                    {% for message in messages %}
+
+                        <div
+                            class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                            role="alert"
+                        >
+
+                            {{ message }}
+
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="alert"
+                            ></button>
+
+                        </div>
+
+                    {% endfor %}
+
+                {% endif %}
+
+
+                <!-- ERREURS NON LIÉES À UN CHAMP -->
+
+                {% if form.non_field_errors %}
+
+                    <div class="alert alert-danger">
+
+                        {% for error in form.non_field_errors %}
+
+                            <div>
+                                {{ error }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- ==================================================
+                     FORMULAIRE
+                =================================================== -->
+
+                <form
+                    method="post"
+                    novalidate
+                >
+
+                    {% csrf_token %}
+
+
+                    {% for field in form %}
+
+                        <div class="mb-3">
+
+                            <label
+                                for="{{ field.id_for_label }}"
+                                class="form-label fw-bold"
+                            >
+
+                                {{ field.label }}
+
+                                {% if field.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+
+                            </label>
+
+
+                            {{ field }}
+
+
+                            {% if field.help_text %}
+
+                                <div class="form-text">
+                                    {{ field.help_text }}
+                                </div>
+
+                            {% endif %}
+
+
+                            {% for error in field.errors %}
+
+                                <div class="text-danger small mt-1">
+
+                                    ⚠️ {{ error }}
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endfor %}
+
+
+                    <!-- ==================================================
+                         BOUTONS
+                    =================================================== -->
+
+                    <div class="d-flex justify-content-between mt-4">
+
+                        <a
+                            href="{% url 'materiaux:paiements_dockers_list' %}"
+                            class="btn btn-secondary"
+                        >
+
+                            ↩️ Annuler
+
+                        </a>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+
+                            💾 Enregistrer
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

@@ -47,14 +47,8 @@ class LoginRequiredMiddleware:
         h_user_id = request.session.get("h_user_id")
         h_role = request.session.get("h_role")
 
-        # Applications réservées à Entreprise H.
-        # "avances" est retiré car les vues partagées
-        # utilisent ici la session GALAXY.
-        # "salaire" peut être partagé entre GALAXY et H.
-        # "recette" utilise la session GALAXY.
-
         h_namespaces = {
-            "materiaux",
+            # "materiaux",
             "categorie",
             "depotSoc",
             "audit",

@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-money-bill-wave me-2"></i>
+                Avances des chefs d'équipe et miniers
+            </h2>
+            <p class="text-muted mb-0">
+                Projet : <strong>{{ projet }}</strong>
+            </p>
+        </div>
+
+        <a href="{% url 'projet:avance_equipe_projet_create' projet.id %}"
+           class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            Nouvelle avance
+        </a>
+    </div>
+
+    <!-- Résumé -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Nombre d'avances</div>
+                    <h4 class="mb-0">{{ avances|length }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Total des avances affichées</div>
+                    <h4 class="mb-0 text-primary">
+                        {{ total_montant|floatformat:2|intcomma }} Ar
+                    </h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Reste à payer cumulé</div>
+                    <h4 class="mb-0 text-success">
+                        {{ total_reste_a_payer|default:0|floatformat:2|intcomma }} Ar
+                    </h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <strong>
+                <i class="fas fa-filter me-2"></i>Filtres
+            </strong>
+        </div>
+
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="id_nom" class="form-label">
+                        Chef d'équipe ou minier
+                    </label>
+                    <input type="text"
+                           name="nom"
+                           id="id_nom"
+                           class="form-control"
+                           value="{{ request.GET.nom }}"
+                           placeholder="Rechercher un bénéficiaire">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="id_date_debut" class="form-label">
+                        Date de début
+                    </label>
+                    <input type="date"
+                           name="date_debut"
+                           id="id_date_debut"
+                           class="form-control"
+                           value="{{ request.GET.date_debut }}">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="id_date_fin" class="form-label">
+                        Date de fin
+                    </label>
+                    <input type="date"
+                           name="date_fin"
+                           id="id_date_fin"
+                           class="form-control"
+                           value="{{ request.GET.date_fin }}">
+                </div>
+
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="fas fa-search"></i>
+                        Filtrer
+                    </button>
+
+                    <a href="{% url 'projet:avance_equipe_projet_list' projet.id %}"
+                       class="btn btn-outline-secondary"
+                       title="Réinitialiser">
+                        <i class="fas fa-undo"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <strong>
+                <i class="fas fa-list me-2"></i>Historique des avances
+            </strong>
+            <span class="badge bg-secondary">{{ avances|length }} ligne(s)</span>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped avance-table mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>N°</th>
+                            <th>Bénéficiaire</th>
+                            <th>Montant du contrat</th>
+                            <th>Cette avance</th>
+                            <th>Total des avances</th>
+                            <th>Reste à payer</th>
+                            <th>Date de l'avance</th>
+                            <th>Enregistré par</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for avance in avances %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+
+                            <td>
+                                {% if avance.equipe_execution %}
+                                    <div class="fw-semibold">
+                                        {% if avance.equipe_execution.personnel_execution %}
+                                            {{ avance.equipe_execution.personnel_execution.nom }}
+                                        {% elif avance.equipe_execution.personnel %}
+                                            {{ avance.equipe_execution.personnel }}
+                                        {% else %}
+                                            Bénéficiaire non renseigné
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-info text-dark">Chef d'équipe</span>
+                                {% elif avance.miniers_execution %}
+                                    <div class="fw-semibold">
+                                        {% if avance.miniers_execution.personnel_execution %}
+                                            {{ avance.miniers_execution.personnel_execution.nom }}
+                                        {% elif avance.miniers_execution.personnel %}
+                                            {{ avance.miniers_execution.personnel }}
+                                        {% else %}
+                                            Bénéficiaire non renseigné
+                                        {% endif %}
+                                    </div>
+                                    <span class="badge bg-warning text-dark">Minier</span>
+                                {% else %}
+                                    <span class="text-danger">Bénéficiaire non défini</span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ avance.situation.montant_contrat|default:0|floatformat:2|intcomma }}
+                                Ar
+                            </td>
+
+                            <td class="fw-semibold text-primary">
+                                {{ avance.montant|floatformat:2|intcomma }} Ar
+                            </td>
+
+                            <td>
+                                {{ avance.situation.total_avances|default:0|floatformat:2|intcomma }}
+                                Ar
+                            </td>
+
+                            <td>
+                                {% if avance.situation.reste_a_payer < 0 %}
+                                    <span class="text-danger fw-bold">
+                                        {{ avance.situation.reste_a_payer|floatformat:2|intcomma }} Ar
+                                    </span>
+                                    <div class="small text-danger">Avance supérieure au contrat</div>
+                                {% else %}
+                                    <span class="text-success fw-semibold">
+                                        {{ avance.situation.reste_a_payer|default:0|floatformat:2|intcomma }} Ar
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>{{ avance.date_avance|date:"d/m/Y" }}</td>
+
+                            <td>
+                                {% if avance.enregistre_par %}
+                                    {{ avance.enregistre_par }}
+                                {% else %}
+                                    <span class="text-muted">Non renseigné</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-center text-nowrap">
+                                {% if peut_gerer %}
+                                    <a href="{% url 'projet:avance_equipe_projet_update' projet.id avance.id %}"
+                                       class="btn btn-sm btn-warning"
+                                       title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#confirmationSuppression{{ avance.id }}"
+                                            title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted small">Lecture seule</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="mb-0">Aucune avance trouvée pour ce projet.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                    {% if avances %}
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="3" class="text-end">Total des avances affichées :</th>
+                            <th class="text-primary">
+                                {{ total_montant|floatformat:2|intcomma }} Ar
+                            </th>
+                            <th colspan="4"></th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales de confirmation de suppression -->
+{% for avance in avances %}
+    {% if peut_gerer %}
+    <div class="modal fade"
+         id="confirmationSuppression{{ avance.id }}"
+         tabindex="-1"
+         aria-labelledby="titreSuppression{{ avance.id }}"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="titreSuppression{{ avance.id }}">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmer la suppression
+                    </h5>
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                            aria-label="Fermer"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p>Voulez-vous vraiment supprimer cette avance ?</p>
+
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Bénéficiaire</span>
+                            <strong>
+                                {% if avance.equipe_execution %}
+                                    {% if avance.equipe_execution.personnel_execution %}
+                                        {{ avance.equipe_execution.personnel_execution.nom }}
+                                    {% elif avance.equipe_execution.personnel %}
+                                        {{ avance.equipe_execution.personnel }}
+                                    {% endif %}
+                                {% elif avance.miniers_execution %}
+                                    {% if avance.miniers_execution.personnel_execution %}
+                                        {{ avance.miniers_execution.personnel_execution.nom }}
+                                    {% elif avance.miniers_execution.personnel %}
+                                        {{ avance.miniers_execution.personnel }}
+                                    {% endif %}
+                                {% endif %}
+                            </strong>
+                        </li>
+
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Montant</span>
+                            <strong class="text-danger">
+                                {{ avance.montant|floatformat:2|intcomma }} Ar
+                            </strong>
+                        </li>
+
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Date</span>
+                            <strong>{{ avance.date_avance|date:"d/m/Y" }}</strong>
+                        </li>
+                    </ul>
+
+                    <p class="text-danger small mt-3 mb-0">
+                        Cette opération est irréversible. Le reste à payer sera recalculé
+                        après la suppression.
+                    </p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Annuler
+                    </button>
+
+                    <form method="post"
+                          action="{% url 'projet:avance_equipe_projet_delete' projet.id avance.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>
+                            Confirmer la suppression
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+<style>
+    .avance-table {
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+
+    .avance-table th,
+    .avance-table td {
+        padding: 0.65rem;
+        vertical-align: middle;
+    }
+
+    .avance-table thead th {
+        background: #f1f3f5;
+        color: #343a40;
+        font-weight: 600;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .avance-table .montant {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .avance-table .beneficiaire {
+        min-width: 150px;
+        white-space: normal;
+    }
+
+    .avance-table .actions {
+        text-align: center;
+        min-width: 90px;
+    }
+
+    .avance-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}

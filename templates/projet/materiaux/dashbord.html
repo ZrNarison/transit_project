@@ -1,0 +1,387 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-boxes-stacked me-2"></i>
+                Tableau de bord des matériaux
+            </h2>
+            <div class="text-muted">
+                Projet :
+                <strong>{{ projet|title }}</strong>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-secondary"
+                    onclick="window.print()">
+                <i class="fas fa-print me-1"></i> Imprimer
+            </button>
+        </div>
+    </div>
+
+    <!-- ACCÈS AUX OPÉRATIONS -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-sliders me-2"></i>
+                Gestion des matériaux
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+
+                <!-- ACHATS -->
+                <div class="col-12 col-sm-6 col-xl-4">
+                    <a href="{% url 'projet:achat_materiau_projet_list' projet_id=projet.pk %}"
+                       class="btn btn-outline-primary w-100 h-100 text-start p-3">
+                        <i class="fas fa-cart-shopping fa-lg mb-2"></i>
+                        <div class="fw-bold">Achats</div>
+                        <small>Consulter et enregistrer les achats</small>
+                    </a>
+                </div>
+
+                <!-- RÉCEPTIONS -->
+                <div class="col-12 col-sm-6 col-xl-4">
+                    <a href="{% url 'projet:reception_materiau_projet_list' projet_id=projet.pk %}"
+                       class="btn btn-outline-success w-100 h-100 text-start p-3">
+                        <i class="fas fa-truck-ramp-box fa-lg mb-2"></i>
+                        <div class="fw-bold">Entrées / Réceptions</div>
+                        <small>Enregistrer les quantités reçues</small>
+                    </a>
+                </div>
+
+                <!-- DISTRIBUTIONS / SORTIES -->
+                <div class="col-12 col-sm-6 col-xl-4">
+                    <a href="{% url 'projet:distribution_materiau_projet_list' projet_id=projet.pk %}"
+                       class="btn btn-outline-warning w-100 h-100 text-start p-3">
+                        <i class="fas fa-dolly fa-lg mb-2"></i>
+                        <div class="fw-bold">Sorties / Distributions</div>
+                        <small>Suivre les livraisons aux équipes et aux points</small>
+                    </a>
+                </div>
+
+                <!-- CONSOMMATIONS -->
+                <div class="col-12 col-sm-6 col-xl-4">
+                    <a href="{% url 'projet:consommation_materiau_projet_list' projet_id=projet.pk %}"
+                       class="btn btn-outline-info w-100 h-100 text-start p-3">
+                        <i class="fas fa-clipboard-check fa-lg mb-2"></i>
+                        <div class="fw-bold">Consommations</div>
+                        <small>Consulter les quantités réellement utilisées</small>
+                    </a>
+                </div>
+
+                <!-- RETOURS -->
+                <div class="col-12 col-sm-6 col-xl-4">
+                    <a href="{% url 'projet:retour_materiau_projet_list' projet_id=projet.pk %}"
+                       class="btn btn-outline-danger w-100 h-100 text-start p-3">
+                        <i class="fas fa-rotate-left fa-lg mb-2"></i>
+                        <div class="fw-bold">Retours de matériaux</div>
+                        <small>Suivre les quantités retournées</small>
+                    </a>
+                </div>
+
+                <!-- ACTUALISER -->
+                <div class="col-12 col-sm-6 col-xl-4">
+                    <a href="{% url 'projet:materiau_list' projet_id=projet.pk %}"
+                       class="btn btn-outline-dark w-100 h-100 text-start p-3">
+                        <i class="fas fa-chart-line fa-lg mb-2"></i>
+                        <div class="fw-bold">Matériau</div>
+                        <small>Matériau utilisable durant le projet</small>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- INDICATEURS -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Matériaux prévus</div>
+                    <div class="fs-3 fw-bold text-primary">
+                        {{ total_prevu|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Quantités reçues</div>
+                    <div class="fs-3 fw-bold text-success">
+                        {{ total_recu|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Quantités utilisées</div>
+                    <div class="fs-3 fw-bold text-info">
+                        {{ total_utilise|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Quantités retournées</div>
+                    <div class="fs-3 fw-bold text-danger">
+                        {{ total_retourne|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Solde calculé</div>
+                    <div class="fs-3 fw-bold {% if total_restant < 0 %}text-danger{% else %}text-dark{% endif %}">
+                        {{ total_restant|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PROGRESSION -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0">Taux d'utilisation des matériaux reçus</h6>
+                <span class="fw-bold">{{ taux_utilisation|floatformat:1 }} %</span>
+            </div>
+
+            <div class="progress" style="height: 18px;">
+                <div class="progress-bar
+                    {% if taux_progression >= 100 %}bg-success
+                    {% elif taux_progression >= 60 %}bg-info
+                    {% else %}bg-primary{% endif %}"
+                    role="progressbar"
+                    style="width: {{ taux_progression }}%;"
+                    aria-valuenow="{{ taux_progression }}"
+                    aria-valuemin="0"
+                    aria-valuemax="100">
+                    {{ taux_progression|floatformat:1 }} %
+                </div>
+            </div>
+
+            <div class="small text-muted mt-2">
+                {{ nombre_materiaux }} matériau(x) référencé(s) —
+                {{ nombre_receptions }} réception(s) enregistrée(s).
+            </div>
+        </div>
+    </div>
+
+    <!-- SITUATION PAR MATÉRIAU -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0">
+                <i class="fas fa-list-check me-2"></i>
+                Situation par matériau
+            </h5>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-dark text-white">
+                        <tr>
+                            <th>Matériau</th>
+                            <th>Unité</th>
+                            <th class="text-end">Prévu</th>
+                            <th class="text-end">Reçu</th>
+                            <th class="text-end">Utilisé</th>
+                            <th class="text-end">Retourné</th>
+                            <th class="text-end">Solde calculé</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for ligne in materiaux_projet %}
+                        <tr>
+                            <td class="fw-semibold">{{ ligne.materiau }}</td>
+                            <td>{{ ligne.unite }}</td>
+                            <td class="text-end">{{ ligne.quantite_prevue|floatformat:2 }}</td>
+                            <td class="text-end text-success">{{ ligne.quantite_recue|floatformat:2 }}</td>
+                            <td class="text-end text-info">{{ ligne.quantite_utilisee|floatformat:2 }}</td>
+                            <td class="text-end text-danger">{{ ligne.quantite_retournee|floatformat:2 }}</td>
+                            <td class="text-end fw-bold">{{ ligne.quantite_restante|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Aucun matériau prévu pour ce projet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- DERNIÈRES RÉCEPTIONS -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">
+                <i class="fas fa-truck-ramp-box me-2"></i>
+                Dernières réceptions
+            </h5>
+            <a href="{% url 'projet:reception_materiau_projet_list' projet_id=projet.pk %}"
+               class="btn btn-sm btn-outline-success">
+                Voir toutes
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Matériau</th>
+                        <th>Point / Destination</th>
+                        <th class="text-end">Quantité reçue</th>
+                        <th>Enregistré par</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reception in dernieres_receptions %}
+                    <tr>
+                        <td>{{ reception.date_reception|date:"d/m/Y" }}</td>
+                        <td>{{ reception.materiau_projet.materiau }}</td>
+                        <td>
+                            {% if reception.point %}
+                                {{ reception.point }}
+                            {% else %}
+                                <span class="badge bg-secondary">Dépôt 2</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-semibold">
+                            {{ reception.quantite_recue|floatformat:2 }}
+                            {{ reception.materiau_projet.unite }}
+                        </td>
+                        <td>{{ reception.enregistre_par|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">
+                            Aucune réception enregistrée.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- DERNIÈRES CONSOMMATIONS -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">
+                <i class="fas fa-clipboard-check me-2"></i>
+                Dernières consommations
+            </h5>
+            <a href="{% url 'projet:consommation_materiau_projet_list' projet_id=projet.pk %}"
+               class="btn btn-sm btn-outline-info">
+                Voir toutes
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Matériau</th>
+                        <th>Origine</th>
+                        <th class="text-end">Quantité utilisée</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for utilisation in dernieres_utilisations %}
+                    <tr>
+                        <td>{{ utilisation.date_consommation|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if utilisation.distribution %}
+                                {{ utilisation.distribution.materiau_projet.materiau }}
+                            {% elif utilisation.reception_directe %}
+                                {{ utilisation.reception_directe.materiau_projet.materiau }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if utilisation.distribution %}
+                                {{ utilisation.distribution.point|default:"Distribution" }}
+                            {% elif utilisation.reception_directe %}
+                                {{ utilisation.reception_directe.point|default:"Dépôt 2" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-semibold">
+                            {{ utilisation.quantite_utilisee|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-3">
+                            Aucune consommation enregistrée.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="alert alert-info mb-0">
+        <i class="fas fa-circle-info me-2"></i>
+        <strong>Important :</strong>
+        le solde présenté est un indicateur calculé à partir des quantités reçues,
+        utilisées et retournées. Vérifie les règles de gestion des retours avant
+        de l'utiliser comme stock physique exact du Dépôt 2.
+    </div>
+
+</div>
+
+<style>
+    @media print {
+        nav, .navbar, footer, .btn, button {
+            display: none !important;
+        }
+
+        body {
+            background: #fff !important;
+        }
+
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+            break-inside: avoid;
+        }
+
+        .container-fluid {
+            padding: 0 !important;
+        }
+    }
+</style>
+{% endblock %}
