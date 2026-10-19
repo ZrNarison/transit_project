@@ -1361,81 +1361,172 @@ def projet_detail(    request,    projet_id,):
         context,
     )
 
-
 # ============================================================
-# RAPPORT GLOBAL DU PROJET
+# RAPPORT FINANCIER GLOBAL DU PROJET
 # ============================================================
 @project_access_required
-def rapport_projet_global(    request,    projet_id,):
-
+def rapport_projet_global(request, projet_id):
     projet = request.projet
 
-    rapports_projet = (
-        RapportProjet.objects
-        .filter(
-            projet=projet
-        )
+    ZERO = Decimal("0.00")
+
+    # --------------------------------------------------------
+    # 1. ACHATS DE MATÉRIAUX
+    # --------------------------------------------------------
+    achats_materiaux = (
+        AchatMateriauProjet.objects
+        .filter(materiau_projet__projet=projet)
         .select_related(
-            "auteur"
+            "materiau_projet",
+            "enregistre_par",
         )
+        .order_by("-date_achat", "-id")
     )
 
-    rapports_travaux = (
-        RapportTravail.objects
-        .filter(
-            projet=projet
-        )
+    total_achats = ZERO
+
+    for achat in achats_materiaux:
+        total_achats += achat.montant_total
+
+    # --------------------------------------------------------
+    # 2. RÉMUNÉRATION PRÉVUE DU PERSONNEL D'EXÉCUTION
+    # --------------------------------------------------------
+    personnels_execution = (
+        PersonnelExecutionProjet.objects
+        .filter(projet=projet)
         .select_related(
-            "point",
-            "auteur",
+            "point_projet",
+            "materiau_projet",
         )
+        .order_by("type_class", "nom")
     )
 
-    rapports_materiaux = (
-        RapportMateriau.objects
-        .filter(
-            projet=projet
-        )
-        .select_related(
-            "point",
-            "materiau",
-            "auteur",
-        )
+    total_chefs_equipe = ZERO
+    total_miniers = ZERO
+    total_autres_personnels = ZERO
+
+    for personne in personnels_execution:
+        montant = personne.montant_total_paiement or ZERO
+
+        if personne.type_class == "CHEF_EQUIPE":
+            total_chefs_equipe += montant
+
+        elif personne.type_class == "MINIER":
+            total_miniers += montant
+
+        else:
+            total_autres_personnels += montant
+
+    total_remunerations = (
+        total_chefs_equipe
+        + total_miniers
+        + total_autres_personnels
     )
 
-    rapports_vehicules = (
-        RapportVehicule.objects
+    # --------------------------------------------------------
+    # 3. AVANCES VERSÉES AUX ÉQUIPES
+    # --------------------------------------------------------
+    avances_equipe = (
+        AvanceEquipeProjet.objects
         .filter(
-            projet=projet
+            # Les avances sont rattachées à EquipeProjet.
+            # On recherche les équipes du projet concerné.
+            # Le filtre exact dépend de la relation utilisée.
+            # Voir la correction ci-dessous si nécessaire.
+            equipe_execution__projet=projet
         )
         .select_related(
-            "vehicule",
-            "chauffeur",
+            "equipe_execution",
+            "miniers_execution",
+            "enregistre_par",
         )
+        .order_by("-date_avance", "-id")
     )
 
-    total_rapports = (
-        rapports_projet.count()
-        + rapports_travaux.count()
-        + rapports_materiaux.count()
-        + rapports_vehicules.count()
+    # Inclure aussi les avances rattachées aux équipes de miniers.
+    avances_miniers = (
+        AvanceEquipeProjet.objects
+        .filter(miniers_execution__projet=projet)
+        .select_related(
+            "equipe_execution",
+            "miniers_execution",
+            "enregistre_par",
+        )
+        .order_by("-date_avance", "-id")
+    )
+
+    # Éviter les doublons si une avance correspond à une seule équipe.
+    avances_equipe = (
+        avances_equipe | avances_miniers
+    ).distinct().order_by("-date_avance", "-id")
+
+    total_avances = (
+        avances_equipe.aggregate(
+            total=Sum("montant")
+        )["total"] or ZERO
+    )
+
+    # --------------------------------------------------------
+    # 4. SYNTHÈSE FINANCIÈRE
+    # --------------------------------------------------------
+    budget_previsionnel = projet.budget_previsionnel or ZERO
+
+    total_depenses_identifiees = (
+        total_achats
+        + total_remunerations
+    )
+
+    solde_budget = (
+        budget_previsionnel
+        - total_depenses_identifiees
+    )
+
+    depassement_budget = max(
+        ZERO,
+        -solde_budget,
+    )
+
+    taux_utilisation = (
+        total_depenses_identifiees
+        / budget_previsionnel
+        * Decimal("100")
+        if budget_previsionnel > ZERO
+        else ZERO
     )
 
     return render(
         request,
-        "projet/rapport.html",
+        "projet/rapport_financier.html",
         {
             "projet": projet,
-            "rapports_projet": rapports_projet,
-            "rapports_travaux": rapports_travaux,
-            "rapports_materiaux": rapports_materiaux,
-            "rapports_vehicules": rapports_vehicules,
-            "total_rapports": total_rapports,
+            "aujourd_hui": timezone.localdate(),
+
+            # Budget
+            "budget_previsionnel": budget_previsionnel,
+            "total_achats": total_achats,
+
+            # Rémunérations
+            "personnels_execution": personnels_execution,
+            "total_chefs_equipe": total_chefs_equipe,
+            "total_miniers": total_miniers,
+            "total_autres_personnels": total_autres_personnels,
+            "total_remunerations": total_remunerations,
+
+            # Achats et avances
+            "achats_materiaux": achats_materiaux,
+            "avances_equipe": avances_equipe,
+            "total_avances": total_avances,
+
+            # Synthèse
+            "total_depenses_identifiees": total_depenses_identifiees,
+            "solde_budget": solde_budget,
+            "depassement_budget": depassement_budget,
+            "taux_utilisation": taux_utilisation,
+
             "user": request.current_user,
             "peut_gerer": user_can_manage_projects(
                 request.current_user
             ),
-            "aujourd_hui": timezone.localdate(),
         },
     )
 
@@ -4082,136 +4173,93 @@ def materiau_create(request, projet_id):
 # ============================================================
 # MODIFIER UN MATÉRIAU
 # ============================================================
-# ============================================================
-# MODIFICATION GÉNÉRIQUE DES MOUVEMENTS DE MATÉRIAUX
-# ============================================================
+def materiau_update(request, projet_id, pk):
 
-def materiau_update(
-    request,
-    projet,
-    type_objet,
-    pk,
-):
-    """
-    Modification générique des opérations de matériaux.
+    projet = get_object_or_404(Projet,pk=projet_id,)
 
-    Règles :
-    - Le mouvement doit appartenir au queryset du projet.
-    - Seul l'enregistreur initial peut le modifier.
-    - L'enregistreur initial ne peut pas être remplacé.
-    - Le formulaire conserve le projet transmis.
-    """
+    materiau = get_object_or_404(MateriauProjet,pk=pk,projet=projet,)
 
-    # --------------------------------------------------------
-    # CONFIGURATION
-    # --------------------------------------------------------
-    config = MATERIAUX_PROJET_CRUD[type_objet]
-    form_class = config["form"]
+    # Récupérer l'utilisateur de la session GALAXY.
+    utilisateur = getattr(request, "current_user", None)
 
-    # --------------------------------------------------------
-    # RÉCUPÉRATION SÉCURISÉE DU MOUVEMENT
-    # Le queryset doit déjà être filtré sur le projet.
-    # --------------------------------------------------------
-    objet = get_object_or_404(
-        _materiaux_projet_queryset(config, projet),
-        pk=pk,
-    )
+    if utilisateur is None:
+        from users.decorators import get_current_user
+        utilisateur = get_current_user(request)
 
-    # --------------------------------------------------------
-    # VÉRIFICATION DES DROITS
-    # --------------------------------------------------------
-    if not _peut_modifier_mouvement_materiau(
-        request,
-        projet,
-        objet,
+    # Vérifier l'enregistreur initial.
+    if (
+        utilisateur is None
+        or materiau.enregistre_par_id is None
+        or materiau.enregistre_par_id != utilisateur.pk
     ):
         messages.error(
             request,
-            (
-                "Modification refusée : seul l'enregistreur "
-                "initial peut modifier cette opération."
-            ),
+            "Modification refusée : seul l'enregistreur initial peut modifier ce matériau.",
         )
-
         return redirect(
-            config["list_url"],
+            "projet:materiau_list",
             projet_id=projet.pk,
         )
 
-    # --------------------------------------------------------
-    # TRAITEMENT DU FORMULAIRE
-    # --------------------------------------------------------
     if request.method == "POST":
-        form = form_class(
+        form = MateriauProjetForm(
             request.POST,
             request.FILES,
-            instance=objet,
+            instance=materiau,
             projet=projet,
         )
 
         if form.is_valid():
             objet_modifie = form.save(commit=False)
 
-            # Conserver impérativement l'enregistreur initial.
+            objet_modifie.projet = projet
             objet_modifie.enregistre_par_id = (
-                objet.enregistre_par_id
+                materiau.enregistre_par_id
             )
 
             objet_modifie.save()
-
-            # Sauvegarder les relations ManyToMany du formulaire.
             form.save_m2m()
 
             messages.success(
                 request,
-                "Modification enregistrée avec succès.",
+                "Matériau modifié avec succès.",
             )
 
             return redirect(
-                config["list_url"],
+                "projet:materiau_list",
                 projet_id=projet.pk,
             )
-
     else:
-        # ----------------------------------------------------
-        # AFFICHAGE INITIAL DU FORMULAIRE
-        # ----------------------------------------------------
-        form = form_class(
-            instance=objet,
+        form = MateriauProjetForm(
+            instance=materiau,
             projet=projet,
         )
 
-    # --------------------------------------------------------
-    # AFFICHAGE
-    # --------------------------------------------------------
     return render(
         request,
-        "projet/materiaux_projet/crud_form.html",
+        "projet/materiaux/materiaux_form.html",
         {
             "projet": projet,
             "form": form,
-            "objet": objet,
-            "titre_page": config["titre_update"],
+            "materiau": materiau,
+            "objet": materiau,
+            "mode_modification": True,
             "mode": "update",
-            "type_objet": type_objet,
-            "url_retour": reverse(
-                config["list_url"],
-                kwargs={
-                    "projet_id": projet.pk,
-                },
-            ),
+            "titre_page": "Modifier un matériau",
+            "url_retour": redirect(
+                "projet:materiau_list",
+                projet_id=projet.pk,
+            ).url,
         },
     )
+
+
 # ============================================================
 # SUPPRIMER UN MATÉRIAU
 # ============================================================
 
 @login_required_projet
-def materiau_delete(
-    request,
-    projet_id,
-    pk,
-):
+def materiau_delete(    request,    projet_id,    pk,):
 
     # ========================================================
     # UTILISATEUR CONNECTÉ

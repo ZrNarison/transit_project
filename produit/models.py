@@ -53,8 +53,8 @@ class Produit(models.Model):
 
     photo = models.ImageField(
         upload_to="images/Produits/",
-        null=True,
-        blank=True
+        null=False,
+        blank=False
     )
 
     enregistre_par = models.ForeignKey(

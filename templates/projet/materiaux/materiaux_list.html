@@ -265,7 +265,7 @@
                                     <div class="d-inline-flex justify-content-center align-items-center gap-1">
 
                                         
-                                        {% comment %} {% if materiau.peut_modifier %} {% endcomment %}
+                                        {% comment %} {% if materiau.enregistrer_par == request.session.user_id %} {% endcomment %}
                                             <!-- MODIFIER -->
                                             <a href="{% url 'projet:materiau_update' projet_id=projet.pk pk=materiau.pk %}"
                                                class="btn btn-sm btn-outline-primary"

@@ -34,7 +34,7 @@
 </div>
 
 <!-- ================= VALIDATION ================= -->
-{% if request.session.role == "User" %}
+{% if request.session.role == "UserMica" %}
 <form method="post" action="{% url 'produit:valider_paiement' %}">
     {% csrf_token %}
     <div class="card shadow-sm mb-3">
@@ -65,7 +65,7 @@
             <thead class="table-dark text-center">
                 <tr>
                     <th>
-                        {% if request.session.role == "User" %}
+                        {% if request.session.role == "UserMica" %}
                         <input type="checkbox" id="checkAll">
                         {% endif %}
                     </th>
@@ -77,9 +77,10 @@
                     <th>Qté</th>
                     <th>%</th>
                     <th>Montant Net</th>
+                    <th>Image</th>
                     <th>Etat</th>
                     <th>Date paiement</th>
-                    {% if request.session.role == "User" %}
+                    {% if request.session.role == "UserMica" or request.session.role == "SuperViseurMica"%}
                     <th>Actions</th>
                     {% endif %}
                 </tr>
@@ -87,7 +88,7 @@
             <tbody>{% for produit in produits %}
                 <tr>
                     <td class="text-center">
-                        {% if request.session.role == "User" %}
+                        {% if request.session.role == "UserMica" %}
                             {% if not produit.paye %}
                             <input type="checkbox" name="produits" value="{{ produit.id }}" class="checkItem">
                             {% else %}
@@ -103,6 +104,7 @@
                     <td class="text-center">{{ produit.quantite|intcomma }}</td>
                     <td class="text-center">{{ produit.pourcentage }} %</td>
                     <td class="text-end fw-bold text-success">{{ produit.montant_net|floatformat:0|intcomma }}</td>
+                    <td>Photo</td>
                     <td class="text-center">
                         {% if produit.paye %}
                         <span class="badge bg-success">PAYÉ</span>
@@ -117,7 +119,7 @@
                         -
                         {% endif %}
                     </td>
-                    {% if request.session.role == "User" %}
+                    {% if request.session.role == "UserMica" %}
                     <td class="text-center">
                         {% if produit.paye %}
                             <button class="btn btn-secondary btn-sm" disabled>🔒</button>
