@@ -58,11 +58,12 @@ def _get_project_models():
 
 
 
+
 def mica_required(view_func):
+    """Autorise les utilisateurs habilités à accéder au module Mica."""
 
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-
         user_id = request.session.get("user_id")
 
         if not user_id:
@@ -86,7 +87,8 @@ def mica_required(view_func):
             )
             return redirect("users:login")
 
-        if user.role not in MICA_MANAGER_ROLES:
+        # Autoriser tous les rôles ayant accès au module Mica.
+        if user.role not in MICA_ACCESS_ROLES:
             messages.error(
                 request,
                 "Vous n'avez pas accès au module Mica."
@@ -98,6 +100,7 @@ def mica_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return wrapper
+
 # ============================================================
 # CONTRÔLE DES RÔLES DE SESSION
 # ============================================================

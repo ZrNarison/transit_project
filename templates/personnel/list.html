@@ -74,11 +74,6 @@
             <i class="fas fa-user-plus"></i>
             Ajouter un personnel
         </a>
-        {% elif role == "SuperviseurMica" or role == "UserMica" or role == "SuperviseurEntreprise" or role == "UserEntreprise" %}
-        <a href="{% url 'personnel:personnel_add' %}" class="btn btn-success">
-            <i class="fas fa-user-plus"></i>
-            Ajouter un personnel
-        </a>
         {% endif %}
     </div>
 
