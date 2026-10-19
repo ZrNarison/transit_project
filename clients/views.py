@@ -22,6 +22,31 @@ from users.decorators import (
     project_manager_required,    
 )
 
+
+from django.shortcuts import redirect
+
+
+def orientation_utilisateur(request):
+    # MCCR : session indépendante
+    if request.session.get("h_user_id"):
+        return redirect("mccr_materiaux:dashboard_mccr")
+
+    # GALAXY / Mica
+    if request.session.get("user_id"):
+        type_travail = (
+            request.session.get("typeTravail") or ""
+        ).strip().lower()
+
+        if type_travail == "mica":
+            return redirect("produit:p_produit_liste")
+
+        if type_travail in ("construction", "galaxy"):
+            return redirect("projet:projet_list")
+
+    # Utilisateur non connecté ou type inconnu :
+    # conserver l'accès à la liste des clients.
+    return redirect("clients:client_list")
+
 # =========================================================
 # LISTE
 # =========================================================
