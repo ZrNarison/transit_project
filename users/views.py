@@ -265,29 +265,57 @@ def connexion_entreprise_h(request, username, password):
 # REDIRECTION APRES CONNEXION GALAXY
 # ============================================================
 
+
+# ============================================================
+# REDIRECTION APRES CONNEXION GALAXY
+# ============================================================
+
 def redirection_apres_login(request, user):
-    roles_projet = {
-        "Admin",
-        "Superviseur",
-        "UserMica",
-        "UserEntreprise",
-        "UserProjet",
-        "ChauffeurMica",
-        "ChauffeurEntreprise",
-    }
 
-    roles_dashboard = {
-        "ChefMagasin",
-        "Magasin",
-    }
-
-    if user.role in roles_projet:
+    # --------------------------------------------------------
+    # ADMINISTRATEUR GALAXY
+    # --------------------------------------------------------
+    if user.role == "Admin":
         return redirect("projet:projet_list")
 
-    if user.role in roles_dashboard:
+    # --------------------------------------------------------
+    # SUPERVISEUR MICA ET UTILISATEURS MICA
+    # --------------------------------------------------------
+    if user.role in (
+        "SuperviseurMica",
+        "UserMica",
+        "ChauffeurMica",
+    ):
+        return redirect("produit:p_produit_liste")
+
+    # --------------------------------------------------------
+    # SUPERVISEUR ENTREPRISE ET UTILISATEURS CONSTRUCTION
+    # --------------------------------------------------------
+    if user.role in (
+        "SuperviseurEntreprise",
+        "UserEntreprise",
+        "UserProjet",
+        "ChauffeurEntreprise",
+    ):
+        return redirect("projet:projet_list")
+
+    # --------------------------------------------------------
+    # MAGASIN
+    # --------------------------------------------------------
+    if user.role in (
+        "ChefMagasin",
+        "Magasin",
+    ):
         return redirect("dashboard")
 
-    messages.error(request, "Rôle utilisateur non configuré.")
+    # --------------------------------------------------------
+    # ROLE NON CONFIGURE
+    # --------------------------------------------------------
+    messages.error(
+        request,
+        f"Le rôle « {user.role} » n'a pas de page d'accueil configurée."
+    )
+
     request.session.flush()
     return redirect("users:login")
 

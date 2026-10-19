@@ -103,67 +103,36 @@ def personnel_to_dict(personnel):
 # =========================================================
 # LISTE DU PERSONNEL
 # =========================================================
-
 def personnel_list(request):
-
-    # -----------------------------------------------------
-    # IDENTIFICATION DE LA SESSION GALAXY
-    # -----------------------------------------------------
-
+    # =====================================================
+    # 1. RÔLE DE L'UTILISATEUR CONNECTÉ
+    # =====================================================
     role = request.session.get("role")
 
-    # Compatibilité éventuelle avec une session utilisant
-    # h_role : ce rôle ne doit pas être assimilé à un rôle
-    # GALAXY sans vérifier les droits de l'utilisateur.
-    if not role and request.session.get("h_user_id"):
-        messages.warning(
-            request,
-            "Vous êtes connecté avec une session Entreprise. "
-            "La liste du personnel GALAXY nécessite une "
-            "session GALAXY autorisée."
-        )
+    # =====================================================
+    # 2. BASE DE DONNÉES AUTORISÉE SELON LE RÔLE
+    # =====================================================
+    if role == "Admin":
+        # L'administrateur voit tout le personnel
+        queryset = Personnel.objects.all()
 
-    # -----------------------------------------------------
-    # REQUETE DE BASE
-    # -----------------------------------------------------
+    elif role in ("SuperviseurMica", "UserMica"):
+        # Mica uniquement
+        queryset = Personnel.objects.filter(typeTravail="Mica")
 
-    queryset = (
-        Personnel.objects
-        .select_related("categorie")
-        .all()
-        .order_by("nom", "prenom")
-    )
-
-    # -----------------------------------------------------
-    # FILTRAGE SELON LE ROLE
-    # -----------------------------------------------------
-
-    if role == "UserMica":
-        queryset = queryset.filter(
-            typeTravail="Mica"
-        )
-
-    elif role == "UserEntreprise":
-        queryset = queryset.filter(
+    elif role in ("SuperviseurEntreprise", "UserEntreprise"):
+        # Construction uniquement
+        queryset = Personnel.objects.filter(
             typeTravail="Construction"
         )
 
-    elif role in (
-        "Admin",
-        "SuperAdmin",
-        "Superviseur",
-    ):
-        pass
-
     else:
-        # Ne pas exposer les données si la session
-        # n'a pas de rôle GALAXY autorisé.
-        queryset = queryset.none()
+        # Aucun accès implicite pour les autres rôles
+        queryset = Personnel.objects.none()
 
-    # -----------------------------------------------------
-    # RECHERCHE
-    # -----------------------------------------------------
-
+    # =====================================================
+    # 3. RECHERCHE
+    # =====================================================
     q = request.GET.get("q", "").strip()
 
     if q:
@@ -173,87 +142,86 @@ def personnel_list(request):
             | Q(telephone__icontains=q)
             | Q(fonction__icontains=q)
             | Q(lieuTravail__icontains=q)
-            | Q(typeTravail__icontains=q)
-            | Q(typeContrat__icontains=q)
-            | Q(categorie__nom__icontains=q)
         )
 
-    # -----------------------------------------------------
-    # FILTRE TYPE DE TRAVAIL
-    # -----------------------------------------------------
+    # =====================================================
+    # 4. FILTRE PAR TYPE DE TRAVAIL
+    # Seul Admin peut choisir le type
+    # =====================================================
+    type_travail = ""
 
-    type_travail = request.GET.get(
-        "typeTravail", ""
-    ).strip()
+    if role == "Admin":
+        type_travail = request.GET.get("typeTravail", "").strip()
 
-    if (
-        role in ("Admin", "SuperAdmin", "Superviseur")
-        and type_travail in ("Mica", "Construction")
-    ):
-        queryset = queryset.filter(
-            typeTravail=type_travail
-        )
+        if type_travail in ("Mica", "Construction"):
+            queryset = queryset.filter(
+                typeTravail=type_travail
+            )
+        else:
+            type_travail = ""
 
-    # -----------------------------------------------------
-    # FILTRE TYPE DE CONTRAT
-    # -----------------------------------------------------
+    elif role in ("SuperviseurMica", "UserMica"):
+        type_travail = "Mica"
 
-    type_contrat = request.GET.get(
-        "typeContrat", ""
-    ).strip()
+    elif role in ("SuperviseurEntreprise", "UserEntreprise"):
+        type_travail = "Construction"
 
-    if type_contrat in (
+    # =====================================================
+    # 5. FILTRE PAR TYPE DE CONTRAT
+    # =====================================================
+    type_contrat = request.GET.get("typeContrat", "").strip()
+
+    contrats_valides = (
         "CDI",
         "CDD",
         "Journalier",
         "Stage",
-    ):
+    )
+
+    if type_contrat in contrats_valides:
         queryset = queryset.filter(
             typeContrat=type_contrat
         )
+    else:
+        type_contrat = ""
 
-    # -----------------------------------------------------
-    # TOTAL APRES FILTRAGE, AVANT PAGINATION
-    # -----------------------------------------------------
+    # =====================================================
+    # 6. TRI ET TOTAL
+    # =====================================================
+    queryset = queryset.order_by("nom", "prenom")
 
     total_personnels = queryset.count()
 
-    # -----------------------------------------------------
-    # PAGINATION
-    # -----------------------------------------------------
+    # =====================================================
+    # 7. PAGINATION
+    # =====================================================
+    paginator = Paginator(queryset, 10)
 
-    paginator = Paginator(queryset, 12)
+    page_number = request.GET.get("page")
+    personnels = paginator.get_page(page_number)
 
-    page_obj = paginator.get_page(
-        request.GET.get("page")
-    )
+    # Conserver les filtres lors du changement de page
+    params = request.GET.copy()
+    params.pop("page", None)
+    query_params = params.urlencode()
 
-    # -----------------------------------------------------
-    # PARAMETRES DE PAGINATION
-    # -----------------------------------------------------
-
-    query_params = request.GET.copy()
-    query_params.pop("page", None)
-
-    # -----------------------------------------------------
-    # AFFICHAGE
-    # -----------------------------------------------------
+    # =====================================================
+    # 8. AFFICHAGE
+    # =====================================================
+    context = {
+        "personnels": personnels,
+        "total_personnels": total_personnels,
+        "q": q,
+        "typeTravail": type_travail,
+        "typeContrat": type_contrat,
+        "query_params": query_params,
+    }
 
     return render(
         request,
         "personnel/list.html",
-        {
-            "personnels": page_obj,
-            "page_obj": page_obj,
-            "total_personnels": total_personnels,
-            "q": q,
-            "typeTravail": type_travail,
-            "typeContrat": type_contrat,
-            "role": role,
-            "query_params": query_params.urlencode(),
-        }
+        context,
     )
-
 
 # =========================================================
 # AJOUT PERSONNEL

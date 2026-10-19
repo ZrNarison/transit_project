@@ -1,177 +1,618 @@
 {% extends "base.html" %}
 {% load humanize %}
 
-{% block title %}Liste Produits{% endblock %}
+{% block title %}Liste des produits Mica{% endblock %}
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <h2 class="text-center mb-4">Liste des produits livrés</h2>
 
-<!-- ================= FILTRE ================= -->
-<div class="card shadow-sm mb-3">
-    <div class="card-body">
-        <form method="get">
-            <div class="row g-2">
-                <div class="col-md-3">
-                    <input type="text" name="client" value="{{ client }}" class="form-control" placeholder="Client">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="source" value="{{ source }}" class="form-control" placeholder="Source">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="vehicule" value="{{ vehicule }}" class="form-control" placeholder="Véhicule">
-                </div>
-                <div class="col-md-3 d-flex gap-2">
-                    <button class="btn btn-primary w-100">🔍</button>
-                    <a href="{% url 'produit:p_produit_liste' %}" class="btn btn-secondary w-100">Reset</a>
-                    {% if request.session.role == "UserMica" %}
-                    <a href="{% url 'produit:p_produit_add' %}" class="btn btn-success w-100">+</a>
-                    {% endif %}
-                </div>
-            </div>
-        </form>
+    {% with role=request.session.role user_id=request.session.user_id %}
+
+    <!-- =====================================================
+         NOTIFICATIONS
+    ====================================================== -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm"
+             role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            {{ message }}
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Fermer"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- =====================================================
+         EN-TÊTE
+    ====================================================== -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <h2 class="mb-0">
+            <i class="fas fa-boxes me-2"></i>
+            Liste des produits livrés
+        </h2>
+
+        {% if role == "UserMica" %}
+        <a href="{% url 'produit:p_produit_add' %}"
+           class="btn btn-success">
+            <i class="fas fa-plus me-1"></i>
+            Ajouter un produit
+        </a>
+        {% endif %}
     </div>
-</div>
 
-<!-- ================= VALIDATION ================= -->
-{% if request.session.role == "UserMica" %}
-<form method="post" action="{% url 'produit:valider_paiement' %}">
-    {% csrf_token %}
+    <!-- =====================================================
+         FILTRES
+    ====================================================== -->
     <div class="card shadow-sm mb-3">
         <div class="card-body">
-            <div class="row align-items-end">
-                <div class="col-md-3">
-                    <label>Remboursement avance</label>
-                    <select name="remboursement" class="form-control" id="remboursement">
-                        <option value="AUCUN">Aucun</option>
-                        <option value="PARTIEL">Partiel</option>
-                        <option value="TOTAL">Total</option>
-                    </select>
+            <form method="get">
+                <div class="row g-2">
+
+                    <div class="col-md-3">
+                        <input type="text"
+                               name="client"
+                               value="{{ client|default:'' }}"
+                               class="form-control"
+                               placeholder="Rechercher un client">
+                    </div>
+
+                    <div class="col-md-3">
+                        <input type="text"
+                               name="source"
+                               value="{{ source|default:'' }}"
+                               class="form-control"
+                               placeholder="Rechercher une source">
+                    </div>
+
+                    <div class="col-md-3">
+                        <input type="text"
+                               name="vehicule"
+                               value="{{ vehicule|default:'' }}"
+                               class="form-control"
+                               placeholder="Rechercher un véhicule">
+                    </div>
+
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit"
+                                class="btn btn-primary"
+                                title="Rechercher">
+                            <i class="fas fa-search"></i>
+                        </button>
+
+                        <a href="{% url 'produit:p_produit_liste' %}"
+                           class="btn btn-secondary">
+                            Réinitialiser
+                        </a>
+                    </div>
+
                 </div>
-                <div class="col-md-3" id="bloc-partiel" style="display:none;">
-                    <label>Montant retour</label>
-                    <input type="number" name="montant_retour" class="form-control" value="0">
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         FORMULAIRE DE VALIDATION DES PAIEMENTS
+         Réservé au SuperviseurMica
+    ====================================================== -->
+    {% if role == "SuperviseurMica" %}
+    <form method="post"
+          action="{% url 'produit:valider_paiement' %}"
+          id="formValidationPaiement">
+
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="row align-items-end g-3">
+
+                    <div class="col-md-4">
+                        <label for="remboursement" class="form-label">
+                            Remboursement de l'avance
+                        </label>
+
+                        <select name="remboursement"
+                                id="remboursement"
+                                class="form-select">
+                            <option value="AUCUN">Aucun</option>
+                            <option value="PARTIEL">Partiel</option>
+                            <option value="TOTAL">Total</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4"
+                         id="bloc-partiel"
+                         style="display:none;">
+
+                        <label for="montant_retour" class="form-label">
+                            Montant du remboursement
+                        </label>
+
+                        <input type="number"
+                               name="montant_retour"
+                               id="montant_retour"
+                               class="form-control"
+                               min="0"
+                               step="1"
+                               value="0">
+                    </div>
+
+                    <div class="col-md-4">
+                        <button type="submit"
+                                class="btn btn-success w-100"
+                                id="btnValiderPaiement">
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            Valider le paiement
+                        </button>
+                    </div>
+
                 </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Confirmer validation paiement ?')">💰 Valider paiement</button>
+
+                <small class="text-muted d-block mt-2">
+                    Seuls les produits non payés peuvent être sélectionnés.
+                    Le serveur doit vérifier leur état avant validation.
+                </small>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- =====================================================
+         TABLEAU DES PRODUITS
+    ====================================================== -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover align-middle">
+
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th style="width:55px;">
+                                {% if role == "SuperviseurMica" %}
+                                <input type="checkbox"
+                                       id="checkAll"
+                                       title="Sélectionner tous les produits non payés">
+                                {% else %}
+                                N°
+                                {% endif %}
+                            </th>
+
+                            <th>Client</th>
+                            <th>Véhicule</th>
+                            <th>Chauffeur</th>
+                            <th>Source</th>
+                            <th>Montant unitaire</th>
+                            <th>Quantité</th>
+                            <th>Pourcentage</th>
+                            <th>Montant net</th>
+                            <th>Photo</th>
+                            <th>État</th>
+                            <th>Date de paiement</th>
+
+                            {% if role == "UserMica" or role == "SuperviseurMica" %}
+                            <th>Actions</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for produit in produits %}
+                        <tr>
+
+                            <!-- SÉLECTION -->
+                            <td class="text-center">
+                                {% if role == "SuperviseurMica" %}
+
+                                    {% if not produit.paye %}
+                                    <input type="checkbox"
+                                           name="produits"
+                                           value="{{ produit.id }}"
+                                           class="checkItem"
+                                           aria-label="Sélectionner le produit {{ produit.id }}">
+                                    {% else %}
+                                    <i class="fas fa-lock text-success"
+                                       title="Paiement déjà validé"></i>
+                                    {% endif %}
+
+                                {% else %}
+                                    {{ forloop.counter }}
+                                {% endif %}
+                            </td>
+
+                            <!-- CLIENT -->
+                            <td>
+                                {{ produit.client.nom|upper }}
+                            </td>
+
+                            <!-- VÉHICULE -->
+                            <td>
+                                {{ produit.vehicule.num_vehicule|upper }}
+                            </td>
+
+                            <!-- CHAUFFEUR -->
+                            <td>
+                                {{ produit.vehicule.chauffeur|upper }}
+                            </td>
+
+                            <!-- SOURCE -->
+                            <td>
+                                {{ produit.source|upper }}
+                            </td>
+
+                            <!-- MONTANT UNITAIRE -->
+                            <td class="text-end">
+                                {{ produit.montant|intcomma }}
+                            </td>
+
+                            <!-- QUANTITÉ -->
+                            <td class="text-end">
+                                {{ produit.quantite|intcomma }}
+                            </td>
+
+                            <!-- POURCENTAGE -->
+                            <td class="text-center">
+                                {{ produit.pourcentage }} %
+                            </td>
+
+                            <!-- MONTANT NET -->
+                            <td class="text-end fw-bold">
+                                {{ produit.montant_net|floatformat:0|intcomma }}
+                            </td>
+
+                            <!-- PHOTO -->
+                            <td class="text-center">
+                                {% if produit.photo %}
+                                <a href="{{ produit.photo.url }}"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                    <img src="{{ produit.photo.url }}"
+                                         alt="Photo du produit"
+                                         class="img-thumbnail"
+                                         style="width:70px;height:60px;object-fit:cover;">
+                                </a>
+                                {% else %}
+                                <span class="text-muted">Aucune photo</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- ÉTAT DU PAIEMENT -->
+                            <td class="text-center">
+                                {% if produit.paye %}
+                                <span class="badge bg-success">PAYÉ</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">NON PAYÉ</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- DATE DE PAIEMENT -->
+                            <td class="text-center">
+                                {% if produit.date_paiement %}
+                                {{ produit.date_paiement|date:"d/m/Y H:i" }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+
+                            <!-- ACTIONS -->
+                            {% if role == "UserMica" or role == "SuperviseurMica" %}
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-1">
+
+                                    <!-- MODIFICATION :
+                                         enregistreur uniquement, avant paiement -->
+                                    {% if not produit.paye and produit.enregistre_par_id|stringformat:"s" == user_id|stringformat:"s" %}
+                                    <a href="{% url 'produit:p_produit_edit' produit.id %}"
+                                       class="btn btn-warning btn-sm"
+                                       title="Modifier ce produit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    <!-- SUPPRESSION :
+                                         confirmation par fenêtre modale centrée -->
+                                    {% if role == "SuperviseurMica" %}
+                                    <button type="button"
+                                            class="btn btn-danger btn-sm"
+                                            title="Demander la suppression"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalSuppressionProduit"
+                                            data-produit-id="{{ produit.id }}"
+                                            data-produit-client="{{ produit.client.nom|escape }}"
+                                            data-produit-source="{{ produit.source|escape }}"
+                                            data-produit-montant="{{ produit.montant_net|floatformat:0|intcomma }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+
+                                    <!-- INDICATEUR DE DROITS -->
+                                    {% if role == "UserMica" and produit.enregistre_par_id|stringformat:"s" != user_id|stringformat:"s" %}
+                                    <span class="text-muted"
+                                          title="Seul l'enregistreur peut modifier">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    {% elif produit.paye and role == "UserMica" %}
+                                    <span class="text-muted"
+                                          title="Produit déjà payé : modification interdite">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    {% endif %}
+
+                                </div>
+                            </td>
+                            {% endif %}
+
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="{% if role == 'UserMica' or role == 'SuperviseurMica' %}13{% else %}12{% endif %}"
+                                class="text-center text-muted py-4">
+                                <i class="fas fa-inbox me-2"></i>
+                                Aucun produit trouvé.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+    {% if role == "SuperviseurMica" %}
+    </form>
+    {% endif %}
+
+    <!-- =====================================================
+         MODALE CENTRÉE DE CONFIRMATION DE SUPPRESSION
+         Formulaire POST avec protection CSRF
+    ====================================================== -->
+    {% if role == "SuperviseurMica" %}
+    <div class="modal fade"
+         id="modalSuppressionProduit"
+         tabindex="-1"
+         aria-labelledby="titreModalSuppression"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="titreModalSuppression">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmation de suppression
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                            aria-label="Fermer"></button>
+                </div>
+
+                <div class="modal-body text-center py-4">
+
+                    <i class="fas fa-trash-alt text-danger mb-3"
+                       style="font-size:3rem;"></i>
+
+                    <h5>Voulez-vous supprimer ce produit ?</h5>
+
+                    <p class="text-muted">
+                        Vérifiez les informations avant de confirmer.
+                        Cette opération peut être irréversible.
+                    </p>
+
+                    <div class="card bg-light text-start">
+                        <div class="card-body">
+
+                            <p class="mb-2">
+                                <strong>Référence :</strong>
+                                <span id="suppressionProduitId">-</span>
+                            </p>
+
+                            <p class="mb-2">
+                                <strong>Client :</strong>
+                                <span id="suppressionProduitClient">-</span>
+                            </p>
+
+                            <p class="mb-2">
+                                <strong>Source :</strong>
+                                <span id="suppressionProduitSource">-</span>
+                            </p>
+
+                            <p class="mb-0">
+                                <strong>Montant net :</strong>
+                                <span id="suppressionProduitMontant">-</span>
+                            </p>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer justify-content-center">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>
+                        Annuler
+                    </button>
+
+                    <form method="post"
+                          id="formSuppressionProduit"
+                          action="">
+                        {% csrf_token %}
+
+                        <button type="submit"
+                                class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>
+                            Confirmer la suppression
+                        </button>
+                    </form>
+
                 </div>
             </div>
         </div>
     </div>
     {% endif %}
-    <!-- ================= TABLE ================= -->
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover align-middle">
-            <thead class="table-dark text-center">
-                <tr>
-                    <th>
-                        {% if request.session.role == "UserMica" %}
-                        <input type="checkbox" id="checkAll">
-                        {% endif %}
-                    </th>
-                    <th>Client</th>
-                    <th>Véhicule</th>
-                    <th>Chauffeur</th>
-                    <th>Source</th>
-                    <th>Montant/Kg</th>
-                    <th>Qté</th>
-                    <th>%</th>
-                    <th>Montant Net</th>
-                    <th>Image</th>
-                    <th>Etat</th>
-                    <th>Date paiement</th>
-                    {% if request.session.role == "UserMica" or request.session.role == "SuperViseurMica"%}
-                    <th>Actions</th>
-                    {% endif %}
-                </tr>
-            </thead>
-            <tbody>{% for produit in produits %}
-                <tr>
-                    <td class="text-center">
-                        {% if request.session.role == "UserMica" %}
-                            {% if not produit.paye %}
-                            <input type="checkbox" name="produits" value="{{ produit.id }}" class="checkItem">
-                            {% else %}
-                            ✔
-                            {% endif %}
-                        {% endif %}
-                    </td>
-                    <td>{{ produit.client.nom|upper }}</td>
-                    <td>{{ produit.vehicule.num_vehicule|upper }}</td>
-                    <td>{{ produit.vehicule.chauffeur|upper }}</td>
-                    <td>{{ produit.source|upper }}</td>
-                    <td class="text-end">{{ produit.montant|intcomma }}</td>
-                    <td class="text-center">{{ produit.quantite|intcomma }}</td>
-                    <td class="text-center">{{ produit.pourcentage }} %</td>
-                    <td class="text-end fw-bold text-success">{{ produit.montant_net|floatformat:0|intcomma }}</td>
-                    <td>Photo</td>
-                    <td class="text-center">
-                        {% if produit.paye %}
-                        <span class="badge bg-success">PAYÉ</span>
-                        {% else %}
-                        <span class="badge bg-warning text-dark">NON PAYÉ</span>
-                        {% endif %}
-                    </td>
-                    <td class="text-center">
-                        {% if produit.date_paiement %}
-                        {{ produit.date_paiement|date:"d/m/Y H:i" }}
-                        {% else %}
-                        -
-                        {% endif %}
-                    </td>
-                    {% if request.session.role == "UserMica" %}
-                    <td class="text-center">
-                        {% if produit.paye %}
-                            <button class="btn btn-secondary btn-sm" disabled>🔒</button>
-                        {% else %}
-                            {% if produit.enregistre_par_id == request.session.user_id %}
-                                <a href="{% url 'produit:p_produit_edit' produit.id %}" class="btn btn-warning btn-sm">✏</a>
-                                <a href="{% url 'produit:p_produit_delete' produit.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Supprimer ?')">🗑</a>
-                            {% else %}
-                                <button class="btn btn-secondary btn-sm" disabled>🔒</button>
-                            {% endif %}
-                        {% endif %}
-                    </td>
-                    {% endif %}
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="12" class="text-center text-danger">Aucun produit trouvé</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% if request.session.role == "User" %}
-</form>
-{% endif %}
+
+    {% endwith %}
 </div>
 
-
-
+<!-- =====================================================
+     JAVASCRIPT
+====================================================== -->
 <script>
-    let checkAll=document.getElementById("checkAll");
-    if(checkAll){
-        checkAll.addEventListener(
-            "change",
-            function(){
-                document.querySelectorAll(".checkItem").forEach(x=>x.checked=this.checked);
-            }
-            );
+document.addEventListener("DOMContentLoaded", function () {
+
+    // -----------------------------------------------------
+    // SÉLECTION DES PRODUITS NON PAYÉS
+    // -----------------------------------------------------
+    const checkAll = document.getElementById("checkAll");
+
+    function actualiserSelection() {
+        if (!checkAll) return;
+
+        const items = Array.from(
+            document.querySelectorAll(".checkItem")
+        );
+
+        checkAll.checked =
+            items.length > 0 && items.every(item => item.checked);
+
+        checkAll.indeterminate =
+            items.some(item => item.checked) && !checkAll.checked;
+    }
+
+    if (checkAll) {
+        checkAll.addEventListener("change", function () {
+            document.querySelectorAll(".checkItem").forEach(function (item) {
+                item.checked = checkAll.checked;
+            });
+
+            actualiserSelection();
+        });
+    }
+
+    document.querySelectorAll(".checkItem").forEach(function (item) {
+        item.addEventListener("change", actualiserSelection);
+    });
+
+    // -----------------------------------------------------
+    // AFFICHAGE DU CHAMP DE REMBOURSEMENT PARTIEL
+    // -----------------------------------------------------
+    const remboursement = document.getElementById("remboursement");
+    const blocPartiel = document.getElementById("bloc-partiel");
+    const montantRetour = document.getElementById("montant_retour");
+
+    function actualiserRemboursement() {
+        if (!remboursement || !blocPartiel) return;
+
+        const partiel = remboursement.value === "PARTIEL";
+
+        blocPartiel.style.display = partiel ? "block" : "none";
+
+        if (montantRetour) {
+            montantRetour.required = partiel;
         }
-        let remboursement=document.getElementById(
-            "remboursement"
+    }
+
+    if (remboursement) {
+        remboursement.addEventListener(
+            "change",
+            actualiserRemboursement
+        );
+
+        actualiserRemboursement();
+    }
+
+    // -----------------------------------------------------
+    // CONFIRMATION DE VALIDATION DU PAIEMENT
+    // -----------------------------------------------------
+    const formPaiement = document.getElementById(
+        "formValidationPaiement"
+    );
+
+    if (formPaiement) {
+        formPaiement.addEventListener("submit", function (event) {
+            const selectionnes = document.querySelectorAll(
+                ".checkItem:checked"
             );
-            let bloc=document.getElementById(
-                "bloc-partiel"
+
+            if (selectionnes.length === 0) {
+                event.preventDefault();
+
+                alert(
+                    "Sélectionnez au moins un produit non payé."
                 );
-                if(remboursement){
-                    remboursement.addEventListener(
-                        "change",
-                        function(){
-                            bloc.style.display = this.value==="PARTIEL"?"block":"none";
-                        }
-                        );
-                    }
+
+                return;
+            }
+
+            if (!confirm(
+                "Confirmer la validation du paiement des produits sélectionnés ?"
+            )) {
+                event.preventDefault();
+            }
+        });
+    }
+
+    // -----------------------------------------------------
+    // MODALE CENTRÉE DE SUPPRESSION
+    // -----------------------------------------------------
+    const modalSuppression = document.getElementById(
+        "modalSuppressionProduit"
+    );
+
+    if (modalSuppression) {
+        modalSuppression.addEventListener(
+            "show.bs.modal",
+            function (event) {
+
+                const bouton = event.relatedTarget;
+
+                if (!bouton) return;
+
+                const produitId = bouton.dataset.produitId;
+
+                document.getElementById(
+                    "suppressionProduitId"
+                ).textContent = produitId || "-";
+
+                document.getElementById(
+                    "suppressionProduitClient"
+                ).textContent =
+                    bouton.dataset.produitClient || "-";
+
+                document.getElementById(
+                    "suppressionProduitSource"
+                ).textContent =
+                    bouton.dataset.produitSource || "-";
+
+                document.getElementById(
+                    "suppressionProduitMontant"
+                ).textContent =
+                    bouton.dataset.produitMontant || "-";
+
+                // URL de suppression Django :
+                // /produit/delete/<id>/
+                const urlModele =
+                    "{% url 'produit:p_produit_delete' 0 %}";
+
+                document.getElementById(
+                    "formSuppressionProduit"
+                ).action = urlModele.replace(
+                    "/0/",
+                    "/" + encodeURIComponent(produitId) + "/"
+                );
+            }
+        );
+    }
+
+});
 </script>
+
 {% endblock %}

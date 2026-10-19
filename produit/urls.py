@@ -41,4 +41,9 @@ urlpatterns = [
         name="valider_paiement"
     ),
 
+    path(
+        "historique/",
+        views.historique_produits,
+        name="historique_produits",
+    ),
 ]

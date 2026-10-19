@@ -11,24 +11,36 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
 from .models import H_AppUser
 
+
 # ============================================================
-# CONFIGURATION DES RÔLES
+# RÔLES AUTORISÉS À GÉRER LES PROJETS GALAXY
 # ============================================================
 
 PROJECT_MANAGER_ROLES = {
     "Admin",
-    "Superviseur",
-    "UserEntreprise",
+    "SuperviseurEntreprise",
 }
 
+
 # ============================================================
-# CONFIGURATION DES RÔLES MICA
+# ACCÈS AU MODULE MICA
+# ============================================================
+
+MICA_ACCESS_ROLES = {
+    "Admin",
+    "SuperviseurMica",
+    "UserMica",
+    "ChauffeurMica",
+}
+
+
+# ============================================================
+# RÔLES DE SUPERVISION MICA
 # ============================================================
 
 MICA_MANAGER_ROLES = {
     "Admin",
-    "Superviseur",
-    "UserMica",
+    "SuperviseurMica",
 }
 
 

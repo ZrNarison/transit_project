@@ -169,3 +169,47 @@ class PaiementProduit(models.Model):
             f"{self.produit} "
             f"({self.montant} Ar)"
         )
+
+class HistoriqueProduit(models.Model):
+    ACTION_CHOICES = [
+        ("MODIFICATION", "Modification"),
+        ("SUPPRESSION", "Suppression"),
+    ]
+
+    # ID conservé sans ForeignKey : l'historique survit
+    # à la suppression du produit.
+    produit_id_original = models.PositiveBigIntegerField(
+        db_index=True
+    )
+
+    action = models.CharField(
+        max_length=20,
+        choices=ACTION_CHOICES,
+    )
+
+    anciennes_valeurs = models.JSONField(default=dict)
+    nouvelles_valeurs = models.JSONField(default=dict, blank=True)
+
+    acteur_id = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    acteur_username = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    date_action = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date_action"]
+        verbose_name = "Historique produit"
+        verbose_name_plural = "Historiques des produits"
+
+    def __str__(self):
+        return (
+            f"Produit #{self.produit_id_original} - "
+            f"{self.get_action_display()} - "
+            f"{self.date_action:%d/%m/%Y %H:%M}"
+        )

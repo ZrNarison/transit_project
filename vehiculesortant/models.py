@@ -12,7 +12,7 @@ class VehiculeSortant(models.Model):
     remorque = models.CharField(max_length=50, blank=True, null=True)
     montant = models.DecimalField(max_digits=15,decimal_places=0,default=0)
     ticket = models.CharField(max_length=5,unique=True)
-    photo = models.ImageField(upload_to='images/vehicules_sortants/', blank=True, null=True)
+    photo = models.ImageField(upload_to='images/vehicules_sortants/', blank=False, null=True)
     created_by = models.ForeignKey(AppUser, on_delete=models.PROTECT, related_name='vehicules_sortants', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

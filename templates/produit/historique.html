@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Historique des produits Mica{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-history me-2"></i>
+                Historique des produits Mica
+            </h2>
+            <p class="text-muted mb-0">
+                Consultation des modifications et suppressions enregistrées.
+            </p>
+        </div>
+
+        <a href="{% url 'produit:p_produit_liste' %}"
+           class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la liste
+        </a>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+             role="alert">
+            {{ message }}
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Fermer"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- FILTRES -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white">
+            <i class="fas fa-filter me-2"></i>
+            Filtrer l'historique
+        </div>
+
+        <div class="card-body">
+            <form method="get">
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-md-4">
+                        <label for="produit_id" class="form-label">
+                            Identifiant du produit
+                        </label>
+                        <input type="number"
+                               min="1"
+                               id="produit_id"
+                               name="produit_id"
+                               value="{{ produit_id }}"
+                               class="form-control"
+                               placeholder="Ex. : 15">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="action" class="form-label">
+                            Type d'action
+                        </label>
+                        <select name="action"
+                                id="action"
+                                class="form-select">
+                            <option value="">Toutes les actions</option>
+                            <option value="MODIFICATION"
+                                    {% if action == "MODIFICATION" %}selected{% endif %}>
+                                Modification
+                            </option>
+                            <option value="SUPPRESSION"
+                                    {% if action == "SUPPRESSION" %}selected{% endif %}>
+                                Suppression
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>
+                            Rechercher
+                        </button>
+
+                        <a href="{% url 'produit:historique_produits' %}"
+                           class="btn btn-outline-secondary">
+                            Réinitialiser
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABLEAU -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <span>
+                <i class="fas fa-list me-2"></i>
+                Journal des opérations
+            </span>
+
+            <span class="badge bg-light text-dark">
+                {{ page_obj.paginator.count }} opération(s)
+            </span>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th>Date et heure</th>
+                            <th>Produit</th>
+                            <th>Action</th>
+                            <th>Utilisateur</th>
+                            <th>Anciennes valeurs</th>
+                            <th>Nouvelles valeurs</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for historique in historiques %}
+                        <tr>
+                            <td class="text-center text-nowrap">
+                                {{ historique.date_action|date:"d/m/Y H:i:s" }}
+                            </td>
+
+                            <td class="text-center">
+                                <span class="badge bg-secondary">
+                                    #{{ historique.produit_id_original }}
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                {% if historique.action == "SUPPRESSION" %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-trash me-1"></i>
+                                    Suppression
+                                </span>
+                                {% elif historique.action == "MODIFICATION" %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-edit me-1"></i>
+                                    Modification
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">
+                                    {{ historique.get_action_display }}
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if historique.acteur_username %}
+                                    {{ historique.acteur_username }}
+                                {% elif historique.acteur_id %}
+                                    Utilisateur #{{ historique.acteur_id }}
+                                {% else %}
+                                    <span class="text-muted">Inconnu</span>
+                                {% endif %}
+
+                                {% if historique.acteur_id %}
+                                <small class="d-block text-muted">
+                                    ID : {{ historique.acteur_id }}
+                                </small>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <details>
+                                    <summary class="text-primary">
+                                        Voir les anciennes valeurs
+                                    </summary>
+                                    <pre class="bg-light border rounded p-2 mt-2 small"
+                                         style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:350px;overflow:auto;">{{ historique.anciennes_valeurs|pprint }}</pre>
+                                </details>
+                            </td>
+
+                            <td>
+                                {% if historique.nouvelles_valeurs %}
+                                <details>
+                                    <summary class="text-primary">
+                                        Voir les nouvelles valeurs
+                                    </summary>
+                                    <pre class="bg-light border rounded p-2 mt-2 small"
+                                         style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:350px;overflow:auto;">{{ historique.nouvelles_valeurs|pprint }}</pre>
+                                </details>
+                                {% else %}
+                                <span class="text-muted">Aucune</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="6"
+                                class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-2x mb-3 d-block"></i>
+                                Aucun historique trouvé.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+            </div>
+
+            <!-- PAGINATION -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Pagination de l'historique"
+                 class="mt-4">
+                <ul class="pagination justify-content-center flex-wrap">
+
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?produit_id={{ produit_id|urlencode }}&action={{ action|urlencode }}&page=1">
+                            Première
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?produit_id={{ produit_id|urlencode }}&action={{ action|urlencode }}&page={{ page_obj.previous_page_number }}">
+                            Précédente
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            Page {{ page_obj.number }}
+                            / {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?produit_id={{ produit_id|urlencode }}&action={{ action|urlencode }}&page={{ page_obj.next_page_number }}">
+                            Suivante
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?produit_id={{ produit_id|urlencode }}&action={{ action|urlencode }}&page={{ page_obj.paginator.num_pages }}">
+                            Dernière
+                        </a>
+                    </li>
+                    {% endif %}
+
+                </ul>
+            </nav>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

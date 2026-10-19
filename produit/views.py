@@ -20,6 +20,12 @@ from retours.models import Retour
 from depot.models import Distribution
 from audit.utils import enregistrer_action
 from logs.utils import enregistrer_log
+from django.http import HttpResponseForbidden
+from django.contrib.auth.decorators import login_required
+from .models import HistoriqueProduit
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect
+
 
 
 
@@ -136,90 +142,181 @@ def produit_add(request):
 # MODIFICATION
 # =========================
 
+# =========================
+# MODIFICATION AVEC HISTORIQUE
+# =========================
+
+@transaction.atomic
 def produit_edit(request, pk):
     produit = get_object_or_404(
-        Produit,
-        pk=pk
+        Produit.objects.select_for_update(),
+        pk=pk,
     )
 
-    ancienne = str(produit)
+    utilisateur = utilisateur_session(request)
+    role = utilisateur["role"]
+    user_id = utilisateur["id"]
+
+    # Seul l'enregistreur peut modifier son produit.
+    # Le produit doit encore être impayé.
+    if (
+        not user_id
+        or str(produit.enregistre_par_id) != str(user_id)
+        or produit.paye
+        or role not in ("UserMica", "SuperviseurMica")
+    ):
+        messages.error(
+            request,
+            "Modification refusée : vous n'êtes pas autorisé "
+            "à modifier ce produit ou il est déjà payé.",
+        )
+        return redirect("produit:p_produit_liste")
+
+    anciennes_valeurs = instantane_produit(produit)
+
     form = ProduitForm(
         request.POST or None,
         request.FILES or None,
-        instance=produit
+        instance=produit,
     )
 
     if request.method == "POST" and form.is_valid():
-        produit = form.save()
+        # Enregistrer les nouvelles valeurs.
+        produit_modifie = form.save()
+
+        nouvelles_valeurs = instantane_produit(produit_modifie)
+
+        # L'historique est créé uniquement après validation
+        # du formulaire, dans la même transaction.
+        HistoriqueProduit.objects.create(
+            produit_id_original=produit_modifie.pk,
+            action="MODIFICATION",
+            anciennes_valeurs=anciennes_valeurs,
+            nouvelles_valeurs=nouvelles_valeurs,
+            acteur_id=int(user_id),
+            acteur_username=utilisateur["username"],
+        )
 
         enregistrer_action(
             request,
             "UPDATE",
             "Produit",
-            produit.id,
-            ancienne=ancienne,
-            nouvelle=str(produit),
-            description="Modification d'un produit"
+            produit_modifie.pk,
+            ancienne=anciennes_valeurs,
+            nouvelle=nouvelles_valeurs,
+            description="Modification validée avec historique",
         )
+
         messages.success(
             request,
-            "Produit modifié."
+            "Produit modifié. L'historique a été enregistré.",
         )
-
-
-        return redirect(
-            "produit:p_produit_liste"
-        )
+        return redirect("produit:p_produit_liste")
 
     return render(
         request,
         "produit/form.html",
         {
             "form": form,
-            "action": "Modifier"
-        }
+            "action": "Modifier",
+            "produit": produit,
+        },
     )
 
 
 # =========================
-# SUPPRESSION
+# SUPPRESSION AVEC HISTORIQUE
 # =========================
+@transaction.atomic
 def produit_delete(request, pk):
+    # La suppression doit obligatoirement venir du formulaire POST.
+    if request.method != "POST":
+        messages.error(
+            request,
+            "Suppression refusée : veuillez confirmer la demande "
+            "depuis la liste des produits.",
+        )
+        return redirect("produit:p_produit_liste")
+
     produit = get_object_or_404(
-        Produit,
-        pk=pk
+        Produit.objects.select_for_update(),
+        pk=pk,
     )
 
-    if request.method == "POST":
+    utilisateur = utilisateur_session(request)
+    role = utilisateur["role"]
+    user_id = utilisateur["id"]
 
-        enregistrer_action(
+    # Vérifier les droits de l'utilisateur.
+    est_enregistreur = (
+        user_id is not None
+        and str(produit.enregistre_par_id) == str(user_id)
+    )
+
+    # Le SuperviseurMica peut supprimer.
+    # Le UserMica peut supprimer uniquement son propre produit impayé.
+    autorise = (
+        role == "SuperviseurMica"
+        or (
+            role == "UserMica"
+            and est_enregistreur
+            and not produit.paye
+        )
+    )
+
+    if not autorise:
+        messages.error(
             request,
-            "DELETE",
-            "Produit",
-            produit.id,
-            ancienne=str(produit),
-            description="Suppression d'un produit"
+            "Suppression refusée : vous ne disposez pas "
+            "des droits nécessaires.",
         )
+        return redirect("produit:p_produit_liste")
 
-        produit.delete()
-
-        messages.success(
+    # Protection supplémentaire : un produit payé ne peut pas être supprimé.
+    if produit.paye:
+        messages.error(
             request,
-            "Produit supprimé."
+            "Suppression impossible : le paiement de ce produit "
+            "a déjà été validé.",
         )
+        return redirect("produit:p_produit_liste")
 
+    # Sauvegarder toutes les valeurs avant suppression.
+    anciennes_valeurs = instantane_produit(produit)
 
-        return redirect(
-            "produit:p_produit_liste"
-        )
+    # Conserver une trace indépendante du produit supprimé.
+    HistoriqueProduit.objects.create(
+        produit_id_original=produit.pk,
+        action="SUPPRESSION",
+        anciennes_valeurs=anciennes_valeurs,
+        nouvelles_valeurs={},
+        acteur_id=int(user_id) if user_id else None,
+        acteur_username=utilisateur["username"],
+    )
 
-    return render(
+    # Enregistrer la suppression dans le journal existant.
+    enregistrer_action(
         request,
-        "produit/delete.html",
-        {
-            "produit": produit
-        }
+        "DELETE",
+        "Produit",
+        produit.pk,
+        ancienne=anciennes_valeurs,
+        description="Suppression validée avec historique",
     )
+
+    # Supprimer le produit après sauvegarde de l'historique.
+    produit.delete()
+
+    messages.success(
+        request,
+        f"Le produit n° {pk} a été supprimé avec succès. "
+        "Son historique est conservé.",
+    )
+
+    # Retour à la liste avec notification.
+    return redirect("produit:p_produit_liste")
+
+
 
 #====================
 # VALIDATION PAIEMENT
@@ -537,4 +634,91 @@ def valider_paiement(request):
 
     return redirect(
         "produit:p_produit_liste"
+    )
+
+
+
+
+def instantane_produit(produit):
+    """
+    Capture les valeurs du produit en JSON,
+    y compris les clés étrangères, le paiement et la photo.
+    """
+    valeurs = {}
+
+    for champ in produit._meta.concrete_fields:
+        nom = champ.name
+        valeur = getattr(produit, champ.attname)
+
+        if valeur is None:
+            valeurs[nom] = None
+        elif hasattr(valeur, "isoformat"):
+            valeurs[nom] = valeur.isoformat()
+        elif champ.is_relation:
+            valeurs[nom] = str(valeur)
+        else:
+            valeurs[nom] = str(valeur)
+
+    return valeurs
+
+
+def utilisateur_session(request):
+    return {
+        "id": request.session.get("user_id"),
+        "username": request.session.get("username", ""),
+        "role": request.session.get("role", ""),
+    }
+
+
+
+def historique_produits(request):
+    utilisateur = utilisateur_session(request)
+    role = utilisateur["role"]
+
+    # Accès réservé à l'administration Mica.
+    if role not in ("Admin", "SuperviseurMica"):
+        messages.error(
+            request,
+            "Vous n'êtes pas autorisé à consulter cet historique.",
+        )
+        return redirect("produit:p_produit_liste")
+
+    historiques = HistoriqueProduit.objects.all()
+
+    # Filtrer par identifiant du produit.
+    produit_id = request.GET.get("produit_id", "").strip()
+
+    if produit_id.isdigit():
+        historiques = historiques.filter(
+            produit_id_original=int(produit_id)
+        )
+    elif produit_id:
+        messages.warning(
+            request,
+            "L'identifiant du produit doit être numérique.",
+        )
+        produit_id = ""
+
+    # Filtrer par action.
+    action = request.GET.get("action", "").strip()
+
+    if action in ("MODIFICATION", "SUPPRESSION"):
+        historiques = historiques.filter(action=action)
+    else:
+        action = ""
+
+    # Pagination.
+    paginator = Paginator(historiques, 25)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(
+        request,
+        "produit/historique.html",
+        {
+            "historiques": page_obj,
+            "page_obj": page_obj,
+            "produit_id": produit_id,
+            "action": action,
+            "role": role,
+        },
     )
