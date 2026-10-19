@@ -1,11 +1,10 @@
-
 {% extends "materiaux/base.html" %}
 
 {% block materiaux_title %}Liste des matériaux{% endblock %}
 {% block page_title %}Catalogue des matériaux{% endblock %}
 
 {% block page_actions %}
-<a href="{% url url_namespace|add:':materiau_add' %}"
+<a href="{% url 'materiaux:materiaux_add' %}"
    class="btn btn-primary">
     <i class="fas fa-plus me-1"></i> Nouveau matériau
 </a>
@@ -14,6 +13,7 @@
 {% block materiaux_content %}
 <div class="card materiaux-card">
     <div class="card-body">
+
         <div class="table-responsive">
             <table class="table table-hover table-striped materiaux-table">
                 <thead>
@@ -23,33 +23,47 @@
                         <th>Stock entrepôt</th>
                         <th>Stock magasin</th>
                         <th>Stock total</th>
-                        <th>Actions</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {% for materiau in materiaux %}
                     <tr>
                         <td>{{ materiau.libelle }}</td>
                         <td>{{ materiau.unite }}</td>
-                        <td>{{ materiau.stock_entrepot }}</td>
-                        <td>{{ materiau.stock_magasin }}</td>
-                        <td>{{ materiau.stock_total }}</td>
+                        <td>{{ materiau.stock_entrepot|default_if_none:0 }}</td>
+                        <td>{{ materiau.stock_magasin|default_if_none:0 }}</td>
                         <td>
-                            <div class="materiaux-actions">
+                            <strong>
+                                {{ materiau.stock_total|default_if_none:0 }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            <div class="materiaux-actions d-flex justify-content-center gap-2 flex-wrap">
+
                                 <a class="btn btn-sm btn-warning"
-                                   href="{% url url_namespace|add:':materiau_edit' materiau.pk %}">
+                                   href="{% url 'materiaux:materiaux_edit' materiau.pk %}">
+                                    <i class="fas fa-edit me-1"></i>
                                     Modifier
                                 </a>
+
                                 <a class="btn btn-sm btn-danger"
-                                   href="{% url url_namespace|add:':materiau_delete' materiau.pk %}">
+                                   href="{% url 'materiaux:materiaux_delete' materiau.pk %}">
+                                    <i class="fas fa-trash me-1"></i>
                                     Supprimer
                                 </a>
+
                             </div>
                         </td>
                     </tr>
+
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">
+                        <td colspan="6"
+                            class="text-center text-muted py-4">
+                            <i class="fas fa-box-open fa-2x mb-2 d-block"></i>
                             Aucun matériau enregistré.
                         </td>
                     </tr>
@@ -57,6 +71,7 @@
                 </tbody>
             </table>
         </div>
+
     </div>
 </div>
 {% endblock %}

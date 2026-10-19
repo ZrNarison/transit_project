@@ -1831,3 +1831,236 @@ class ReparationVehicule(models.Model):
             f"{self.montant_total_calcule}"
         )
 
+# ============================================================
+# MODÈLES INDÉPENDANTS POUR LE STOCK MCCR
+# Les modèles historiques GALAXY restent inchangés.
+# ============================================================
+
+class MateriauMCCR(models.Model):
+    nom = models.CharField(
+        max_length=100,
+        verbose_name="Nom du matériau",
+    )
+
+    unite = models.CharField(
+        max_length=50,
+        verbose_name="Unité",
+    )
+
+    actif = models.BooleanField(
+        default=True,
+        verbose_name="Actif",
+    )
+
+    enregistreur = models.ForeignKey(
+        H_AppUser,
+        on_delete=models.PROTECT,
+        related_name="materiaux_mccr_enregistres",
+        verbose_name="Enregistré par",
+    )
+
+    date_creation = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["nom"]
+        verbose_name = "Matériau MCCR"
+        verbose_name_plural = "Matériaux MCCR"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["nom"],
+                name="unique_nom_materiau_mccr",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.nom} ({self.unite})"
+
+    @property
+    def total_entrees(self):
+        return (
+            self.mouvements.filter(
+                type_mouvement=MouvementMateriauMCCR.TypeMouvement.ENTREE
+            ).aggregate(
+                total=Sum("quantite")
+            )["total"]
+            or Decimal("0.00")
+        )
+
+    @property
+    def total_sorties(self):
+        return (
+            self.mouvements.filter(
+                type_mouvement=MouvementMateriauMCCR.TypeMouvement.SORTIE
+            ).aggregate(
+                total=Sum("quantite")
+            )["total"]
+            or Decimal("0.00")
+        )
+
+    @property
+    def total_retours(self):
+        return (
+            self.mouvements.filter(
+                type_mouvement=MouvementMateriauMCCR.TypeMouvement.RETOUR
+            ).aggregate(
+                total=Sum("quantite")
+            )["total"]
+            or Decimal("0.00")
+        )
+
+    @property
+    def stock_actuel(self):
+        """
+        Stock MCCR :
+        entrées + retours - sorties.
+        """
+        return (
+            self.total_entrees
+            + self.total_retours
+            - self.total_sorties
+        )
+
+
+# ============================================================
+# MOUVEMENTS DE MATÉRIAUX MCCR
+# ENTRÉE / SORTIE / RETOUR
+# ============================================================
+
+class MouvementMateriauMCCR(models.Model):
+
+    class TypeMouvement(models.TextChoices):
+        ENTREE = "ENTREE", "Entrée"
+        SORTIE = "SORTIE", "Sortie"
+        RETOUR = "RETOUR", "Retour"
+
+    materiau = models.ForeignKey(
+        MateriauMCCR,
+        on_delete=models.PROTECT,
+        related_name="mouvements",
+        verbose_name="Matériau",
+    )
+
+    type_mouvement = models.CharField(
+        max_length=10,
+        choices=TypeMouvement.choices,
+        verbose_name="Type de mouvement",
+    )
+
+    quantite = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="Quantité",
+    )
+
+    motif = models.CharField(
+        max_length=255,
+        verbose_name="Motif",
+    )
+
+    date_mouvement = models.DateField(
+        verbose_name="Date du mouvement",
+    )
+
+    observation = models.TextField(
+        blank=True,
+        verbose_name="Observation",
+    )
+
+    enregistreur = models.ForeignKey(
+        H_AppUser,
+        on_delete=models.PROTECT,
+        related_name="mouvements_materiaux_mccr_enregistres",
+        verbose_name="Enregistré par",
+    )
+
+    date_creation = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-date_mouvement", "-id"]
+        verbose_name = "Mouvement de matériau MCCR"
+        verbose_name_plural = "Mouvements de matériaux MCCR"
+
+    def __str__(self):
+        return (
+            f"{self.get_type_mouvement_display()} — "
+            f"{self.materiau.nom} : "
+            f"{self.quantite} {self.materiau.unite}"
+        )
+
+    def clean(self):
+        super().clean()
+
+        erreurs = {}
+
+        if self.quantite is None or self.quantite <= 0:
+            erreurs["quantite"] = (
+                "La quantité doit être supérieure à zéro."
+            )
+
+        if self.motif is not None:
+            self.motif = self.motif.strip()
+
+        if not self.motif:
+            erreurs["motif"] = "Le motif est obligatoire."
+
+        if erreurs:
+            raise ValidationError(erreurs)
+
+        if not self.materiau_id or not self.type_mouvement:
+            return
+
+        # Le contrôle du stock disponible concerne les sorties.
+        if self.type_mouvement != self.TypeMouvement.SORTIE:
+            return
+
+        mouvements = MouvementMateriauMCCR.objects.filter(
+            materiau_id=self.materiau_id,
+        )
+
+        # En modification, ne pas compter le mouvement lui-même.
+        if self.pk:
+            mouvements = mouvements.exclude(pk=self.pk)
+
+        totaux = mouvements.values(
+            "type_mouvement"
+        ).annotate(
+            total=Sum("quantite")
+        )
+
+        par_type = {
+            ligne["type_mouvement"]: (
+                ligne["total"] or Decimal("0.00")
+            )
+            for ligne in totaux
+        }
+
+        stock_disponible = (
+            par_type.get(
+                self.TypeMouvement.ENTREE,
+                Decimal("0.00"),
+            )
+            + par_type.get(
+                self.TypeMouvement.RETOUR,
+                Decimal("0.00"),
+            )
+            - par_type.get(
+                self.TypeMouvement.SORTIE,
+                Decimal("0.00"),
+            )
+        )
+
+        if self.quantite > stock_disponible:
+            raise ValidationError({
+                "quantite": (
+                    f"Stock insuffisant : {stock_disponible} "
+                    f"{self.materiau.unite} disponible(s)."
+                )
+            })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)

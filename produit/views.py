@@ -670,13 +670,13 @@ def utilisateur_session(request):
     }
 
 
-
+@transaction.atomic
 def historique_produits(request):
     utilisateur = utilisateur_session(request)
     role = utilisateur["role"]
 
     # Accès réservé à l'administration Mica.
-    if role not in ("Admin", "SuperviseurMica"):
+    if role not in ("Admin", "SuperviseurMica","UserMica"):
         messages.error(
             request,
             "Vous n'êtes pas autorisé à consulter cet historique.",

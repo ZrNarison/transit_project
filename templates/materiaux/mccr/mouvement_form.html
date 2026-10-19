@@ -1,0 +1,69 @@
+
+{% extends "materiaux/base.html" %}
+
+{% block materiaux_title %}{{ titre }}{% endblock %}
+{% block page_title %}{{ titre }}{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'mccr_materiaux:mouvements_list' %}"
+   class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-1"></i> Retour à l'historique
+</a>
+{% endblock %}
+
+{% block materiaux_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card materiaux-card">
+            <div class="card-header">
+                Informations du mouvement de stock
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Une entrée augmente le stock, une sortie le diminue,
+                    et un retour augmente le stock selon les règles MCCR.
+                    Une sortie supérieure au stock disponible doit être refusée.
+                </div>
+
+                <form method="post" class="materiaux-form">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        {% for field in form %}
+                        <div class="{% if field.name == 'observation' %}col-12{% else %}col-md-6{% endif %} mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> {{ bouton }}
+                        </button>
+                        <a href="{% url 'mccr_materiaux:mouvements_list' %}"
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+
+{% extends "materiaux/base.html" %}
+
+{% block materiaux_title %}Mouvements de stock MCCR{% endblock %}
+{% block page_title %}Entrées, sorties et retours{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'mccr_materiaux:dashboard_mccr' %}"
+       class="btn btn-outline-secondary">
+        <i class="fas fa-chart-line me-1"></i> Dashboard
+    </a>
+    <a href="{% url 'mccr_materiaux:mouvement_create' %}"
+       class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Nouveau mouvement
+    </a>
+</div>
+{% endblock %}
+
+{% block materiaux_content %}
+<div class="card materiaux-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <label for="q" class="form-label">Recherche</label>
+                <input id="q" type="search" name="q"
+                       value="{{ recherche }}"
+                       class="form-control"
+                       placeholder="Matériau, motif ou observation">
+            </div>
+            <div class="col-md-3">
+                <label for="type" class="form-label">Type de mouvement</label>
+                <select id="type" name="type" class="form-select">
+                    <option value="">Tous les types</option>
+                    <option value="ENTREE" {% if type_selectionne == "ENTREE" %}selected{% endif %}>Entrée</option>
+                    <option value="SORTIE" {% if type_selectionne == "SORTIE" %}selected{% endif %}>Sortie</option>
+                    <option value="RETOUR" {% if type_selectionne == "RETOUR" %}selected{% endif %}>Retour</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="fas fa-search me-1"></i> Filtrer
+                </button>
+                <a href="{% url 'mccr_materiaux:mouvements_list' %}"
+                   class="btn btn-outline-secondary">Effacer</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card materiaux-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Historique des mouvements</span>
+        <span class="badge bg-secondary">{{ mouvements|length }} résultat(s)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover materiaux-table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Matériau</th>
+                        <th>Type</th>
+                        <th>Quantité</th>
+                        <th>Motif</th>
+                        <th>Enregistré par</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mouvement in mouvements %}
+                    <tr>
+                        <td>{{ mouvement.date_mouvement|date:"d/m/Y" }}</td>
+                        <td class="fw-semibold">{{ mouvement.materiau.nom }}</td>
+                        <td>
+                            {% if mouvement.type_mouvement == "ENTREE" %}
+                                <span class="badge bg-success">Entrée</span>
+                            {% elif mouvement.type_mouvement == "SORTIE" %}
+                                <span class="badge bg-danger">Sortie</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">Retour</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ mouvement.quantite|floatformat:2 }} {{ mouvement.materiau.unite }}</td>
+                        <td>
+                            {{ mouvement.motif }}
+                            {% if mouvement.observation %}
+                                <div class="small text-muted">{{ mouvement.observation }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ mouvement.enregistreur|default:"—" }}</td>
+                        <td>
+                            <div class="materiaux-actions justify-content-end">
+                                <a href="{% url 'mccr_materiaux:mouvement_update' mouvement.pk %}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'mccr_materiaux:mouvement_delete' mouvement.pk %}"
+                                   class="btn btn-sm btn-outline-danger"
+                                   title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            Aucun mouvement trouvé.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

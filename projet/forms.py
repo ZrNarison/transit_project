@@ -4,10 +4,9 @@ from django.utils import timezone
 from decimal import Decimal
 from django.db import transaction
 from personnel.models import Personnel
-from materiaux.models import Materiaux, Vehicule
 from django.core.exceptions import ValidationError
 from .models import (Projet,EquipeProjet,PointProjet,EnginProjet,RapportProjet,
-    RapportTravail,
+    RapportTravail,MouvementMateriauProjet,
     RapportMateriau,
     VehiculeProjet,
     RapportVehicule,
@@ -3305,13 +3304,6 @@ class ChefEquipeProjetForm(forms.ModelForm):
             instance.save()
 
         return instance
-# ============================================================
-# MATERIAU
-# ============================================================
-
-# ============================================================
-# FORMULAIRES — MATÉRIAUX DE CHANTIER GALAXY
-# ============================================================
 
 class FormulaireMateriauProjet(forms.ModelForm):
     """Planification des matériaux nécessaires au projet."""
@@ -5425,5 +5417,160 @@ class EquipeMateriauProjetForm(forms.ModelForm):
                     "La date ne peut pas dépasser "
                     "la fin du projet.",
                 )
+
+        return cleaned_data
+
+
+
+# ============================================================
+# FORMULAIRE UNIQUE DES MOUVEMENTS DE MATÉRIAUX
+# ============================================================
+
+class MouvementMateriauProjetForm(forms.ModelForm):
+
+    class Meta:
+        model = MouvementMateriauProjet
+        fields = [
+            "type_mouvement",
+            "materiau_projet",
+            "point_depart",
+            "point_arrivee",
+            "vehicule_transport",
+            "date_mouvement",
+            "quantite",
+            "observation",
+        ]
+
+        widgets = {
+            "type_mouvement": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "materiau_projet": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "point_depart": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "point_arrivee": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "vehicule_transport": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "date_mouvement": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "quantite": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                }
+            ),
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                }
+            ),
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.projet = projet
+
+        self.fields["type_mouvement"].label = "Type de mouvement"
+        self.fields["materiau_projet"].label = "Matériau"
+        self.fields["point_depart"].label = "Point d'origine"
+        self.fields["point_arrivee"].label = "Point de destination"
+        self.fields["vehicule_transport"].label = "Véhicule / Engin de transport"
+        self.fields["date_mouvement"].label = "Date"
+        self.fields["quantite"].label = "Quantité"
+        self.fields["observation"].label = "Observation"
+
+        self.fields["point_depart"].required = False
+        self.fields["point_arrivee"].required = False
+        self.fields["vehicule_transport"].required = False
+        self.fields["observation"].required = False
+
+        # Valeurs proposées par défaut : aucun véhicule.
+        self.fields["vehicule_transport"].queryset = (
+            VehiculeProjet.objects.none()
+        )
+        self.fields["vehicule_transport"].empty_label = (
+            "Aucun véhicule / engin"
+        )
+
+        if projet is not None:
+            self.fields["materiau_projet"].queryset = (
+                MateriauProjet.objects
+                .filter(projet=projet)
+                .order_by("materiau", "id")
+            )
+
+            self.fields["point_depart"].queryset = (
+                PointProjet.objects
+                .filter(projet=projet)
+                .order_by("id")
+            )
+
+            self.fields["point_arrivee"].queryset = (
+                PointProjet.objects
+                .filter(projet=projet)
+                .order_by("id")
+            )
+
+            self.fields["vehicule_transport"].queryset = (
+                VehiculeProjet.objects
+                .filter(projet=projet, actif=True)
+                .order_by("vehicule", "id")
+            )
+
+        self.fields["point_depart"].empty_label = "Aucun (entrée)"
+        self.fields["point_arrivee"].empty_label = "Sélectionner un point"
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        mouvement = self.instance
+
+        mouvement.materiau_projet = cleaned_data.get("materiau_projet")
+        mouvement.type_mouvement = cleaned_data.get("type_mouvement")
+        mouvement.point_depart = cleaned_data.get("point_depart")
+        mouvement.point_arrivee = cleaned_data.get("point_arrivee")
+        mouvement.vehicule_transport = cleaned_data.get("vehicule_transport")
+        mouvement.date_mouvement = cleaned_data.get("date_mouvement")
+        mouvement.quantite = cleaned_data.get("quantite")
+        mouvement.observation = cleaned_data.get("observation", "")
+
+        materiau = cleaned_data.get("materiau_projet")
+        vehicule = cleaned_data.get("vehicule_transport")
+
+        if self.projet and materiau:
+            if materiau.projet_id != self.projet.pk:
+                self.add_error(
+                    "materiau_projet",
+                    "Ce matériau n'appartient pas à ce projet.",
+                )
+
+        if self.projet and vehicule:
+            if vehicule.projet_id != self.projet.pk:
+                self.add_error(
+                    "vehicule_transport",
+                    "Ce véhicule ou engin n'appartient pas à ce projet.",
+                )
+
+        try:
+            mouvement.clean()
+        except forms.ValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                for field, errors in exc.message_dict.items():
+                    for error in errors:
+                        self.add_error(field, error)
+            else:
+                self.add_error(None, exc)
 
         return cleaned_data

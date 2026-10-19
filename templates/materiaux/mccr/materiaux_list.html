@@ -1,0 +1,111 @@
+
+{% extends "materiaux/base.html" %}
+
+{% block materiaux_title %}Matériaux MCCR{% endblock %}
+{% block page_title %}Gestion des matériaux MCCR{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'mccr_materiaux:dashboard_mccr' %}"
+       class="btn btn-outline-secondary">
+        <i class="fas fa-chart-line me-1"></i> Dashboard
+    </a>
+    <a href="{% url 'mccr_materiaux:materiau_create' %}"
+       class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Ajouter un matériau
+    </a>
+</div>
+{% endblock %}
+
+{% block materiaux_content %}
+<div class="card materiaux-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <label for="q" class="form-label">Recherche</label>
+                <input id="q" type="search" name="q"
+                       value="{{ recherche }}"
+                       class="form-control"
+                       placeholder="Nom ou unité du matériau">
+            </div>
+            <div class="col-md-3">
+                <label for="statut" class="form-label">État</label>
+                <select id="statut" name="statut" class="form-select">
+                    <option value="">Tous</option>
+                    <option value="actif" {% if statut == "actif" %}selected{% endif %}>Actifs</option>
+                    <option value="inactif" {% if statut == "inactif" %}selected{% endif %}>Inactifs</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-primary flex-grow-1" type="submit">
+                    <i class="fas fa-search me-1"></i> Filtrer
+                </button>
+                <a href="{% url 'mccr_materiaux:materiaux_list' %}"
+                   class="btn btn-outline-secondary">Effacer</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card materiaux-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Liste des matériaux</span>
+        <span class="badge bg-secondary">{{ materiaux|length }} résultat(s)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover materiaux-table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Nom</th>
+                        <th>Unité</th>
+                        <th>Stock actuel</th>
+                        <th>État</th>
+                        <th>Enregistré par</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for materiau in materiaux %}
+                    <tr>
+                        <td>{{ materiau.pk }}</td>
+                        <td class="fw-semibold">{{ materiau.nom }}</td>
+                        <td>{{ materiau.unite }}</td>
+                        <td>{{ materiau.stock_actuel|default_if_none:0|floatformat:2 }}</td>
+                        <td>
+                            {% if materiau.actif %}
+                                <span class="badge bg-success">Actif</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ materiau.enregistreur|default:"—" }}</td>
+                        <td>
+                            <div class="materiaux-actions justify-content-end">
+                                <a href="{% url 'mccr_materiaux:materiau_update' materiau.pk %}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'mccr_materiaux:materiau_delete' materiau.pk %}"
+                                   class="btn btn-sm btn-outline-danger"
+                                   title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            Aucun matériau trouvé.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

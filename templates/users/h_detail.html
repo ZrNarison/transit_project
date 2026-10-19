@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+
+
+    <h3 class="mb-4">
+        Informations de l'utilisateur
+    </h3>
+
+
+
+    <div class="card shadow-sm">
+
+
+        <div class="card-body">
+
+
+            <div class="row">
+
+
+
+                <!-- INFORMATIONS UTILISATEUR -->
+
+                <div class="col-md-8">
+
+
+                    <p>
+                        <strong>Personnel :</strong>
+
+                        {% if user.personnel %}
+
+                            {{ user.personnel.nom|upper }}
+                            {{ user.personnel.prenom|title }}
+
+                        {% else %}
+
+                            Non affecté
+
+                        {% endif %}
+
+                    </p>
+
+
+
+                    <p>
+                        <strong>Fonction :</strong>
+
+                        {% if user.personnel %}
+
+                            {{ user.personnel.fonction|title }}
+
+                        {% else %}
+
+                            -
+
+                        {% endif %}
+
+                    </p>
+
+
+
+                    <p>
+                        <strong>Rôle :</strong>
+
+                        {{ user.get_role_display }}
+
+                    </p>
+
+
+
+
+                    <p>
+                        <strong>Nom utilisateur :</strong>
+
+                        {{ user.username }}
+
+                    </p>
+
+
+
+
+                    <p>
+                        <strong>Email :</strong>
+
+                        {{ user.email|default:"-" }}
+
+                    </p>
+
+
+
+
+                    <p>
+                        <strong>Date création :</strong>
+
+                        {{ user.date_creation|date:"d/m/Y H:i" }}
+
+                    </p>
+
+
+
+                </div>
+
+
+
+
+
+                <!-- PHOTO -->
+
+                <div class="col-md-4 text-center">
+
+
+                    {% if user.photo %}
+
+
+                        <img src="{{ user.photo.url }}"
+                             alt="{{ user.username }}"
+                             class="img-thumbnail shadow"
+                             style="width:160px;height:160px;object-fit:cover;">
+
+
+                    {% else %}
+
+
+                        <div class="text-muted">
+
+                            Pas de photo
+
+                        </div>
+
+
+                    {% endif %}
+
+
+
+                </div>
+
+
+
+            </div>
+
+
+        </div>
+
+
+
+
+
+        <!-- ACTIONS -->
+
+
+        <div class="card-footer">
+            {% if request.session.role == "Admin" %}
+            <a href="{% url 'users:users_edit' user.id %}"
+               class="btn btn-warning">
+
+                ✏ Modifier
+
+            </a>
+
+
+
+
+            <a href="{% url 'users:users_delete' user.id %}" class="btn btn-danger">🗑 Supprimer</a>
+            {% endif %}
+            <a href="javascript:history.back();" class="btn btn-secondary">
+                ↩ Retour
+            </a>
+        </div>
+
+
+
+    </div>
+
+
+
+</div>
+
+
+{% endblock %}

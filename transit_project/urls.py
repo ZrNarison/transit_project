@@ -31,6 +31,8 @@ urlpatterns = [
     path("avanceclient/",include("avanceclient.urls")),
     path( "rapportsoc/", include( ("rapportsoc.urls", "rapportsoc"), namespace="rapportsoc" ) ),
     path("materiaux/",include("materiaux.urls")),
+    path("mccr/materiaux/",include("materiaux.urls_mccr"),
+),
 ]
 
 if settings.DEBUG:

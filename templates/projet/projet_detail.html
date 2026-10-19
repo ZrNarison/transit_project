@@ -516,17 +516,13 @@
                     </a>
                 {% endif %}
                 {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                    <a href="{% url 'projet:dashboard_materiaux' projet.id %}"
-                        class="btn btn-primary">
-                            <i class="fas fa-chart-line"></i>
-                            Matériaux
-                        </a>
+                    <a href="{% url 'projet:materiau_list' projet.id %}" class="btn btn-outline-dark"><i class="fas fa-boxes-stacked me-1"></i>Matériaux</a>
                 {% endif %}
 
                 <!-- AVANCEMENT -->
 
                 {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
-                    <a href="{% url 'projet:materiau_list' projet.id %}" class="btn btn-outline-dark"><i class="fas fa-boxes-stacked me-1"></i>Matériaux</a>
+                    
                     <a href="{% url 'projet:rapport_projet_list' projet.id %}" class="btn btn-outline-info"><i class="fas fa-chart-line me-1"></i>Avancement</a>
 
                 {% endif %}

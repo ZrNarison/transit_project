@@ -4199,3 +4199,181 @@ class RapportVehicule(models.Model):
 
         if errors:
             raise ValidationError(errors)
+
+
+
+# ============================================================
+# MOUVEMENTS UNIFIÉS DES MATÉRIAUX D'UN PROJET GALAXY
+# ============================================================
+
+class MouvementMateriauProjet(models.Model):
+
+    class TypeMouvement(models.TextChoices):
+        ENTREE = "ENTREE", "Entrée"
+        SORTIE = "SORTIE", "Sortie"
+        RETOUR = "RETOUR", "Retour"
+
+    materiau_projet = models.ForeignKey(
+        "MateriauProjet",
+        on_delete=models.PROTECT,
+        related_name="mouvements_unifies",
+        verbose_name="Matériau",
+    )
+    vehicule_transport = models.ForeignKey(
+        "VehiculeProjet",
+        on_delete=models.PROTECT,
+        related_name="mouvements_materiaux",
+        null=True,
+        blank=True,
+        verbose_name="Véhicule / Engin de transport",
+    )
+
+    type_mouvement = models.CharField(
+        max_length=10,
+        choices=TypeMouvement.choices,
+        verbose_name="Type de mouvement",
+    )
+
+    point_depart = models.ForeignKey(
+        "PointProjet",
+        on_delete=models.PROTECT,
+        related_name="mouvements_materiaux_depart",
+        null=True,
+        blank=True,
+        verbose_name="Point d'origine",
+    )
+
+    point_arrivee = models.ForeignKey(
+        "PointProjet",
+        on_delete=models.PROTECT,
+        related_name="mouvements_materiaux_arrivee",
+        null=True,
+        blank=True,
+        verbose_name="Point de destination",
+    )
+
+    date_mouvement = models.DateField(
+        default=timezone.localdate,
+        verbose_name="Date du mouvement",
+    )
+
+    quantite = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        verbose_name="Quantité",
+    )
+
+    observation = models.TextField(
+        blank=True,
+        verbose_name="Observation",
+    )
+
+    enregistre_par = models.ForeignKey(
+        "users.AppUser",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="mouvements_materiaux_projet",
+        verbose_name="Enregistré par",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date_mouvement", "-id"]
+        verbose_name = "Mouvement de matériau"
+        verbose_name_plural = "Mouvements des matériaux"
+
+    def __str__(self):
+        return (
+            f"{self.get_type_mouvement_display()} — "
+            f"{self.materiau_projet.materiau} — "
+            f"{self.quantite} {self.materiau_projet.unite}"
+        )
+
+    def clean(self):
+        errors = {}
+
+        if not self.materiau_projet_id:
+            errors["materiau_projet"] = (
+                "Sélectionnez un matériau du projet."
+            )
+
+        if self.materiau_projet_id:
+            projet_id = self.materiau_projet.projet_id
+
+            if self.point_depart_id:
+                if self.point_depart.projet_id != projet_id:
+                    errors["point_depart"] = (
+                        "Le point d'origine doit appartenir "
+                        "au même projet que le matériau."
+                    )
+
+            if self.point_arrivee_id:
+                if self.point_arrivee.projet_id != projet_id:
+                    errors["point_arrivee"] = (
+                        "Le point de destination doit appartenir "
+                        "au même projet que le matériau."
+                    )
+
+        if self.type_mouvement == self.TypeMouvement.ENTREE:
+            if self.point_depart_id:
+                errors["point_depart"] = (
+                    "Pour une entrée, laissez l'origine vide."
+                )
+
+            if not self.point_arrivee_id:
+                errors["point_arrivee"] = (
+                    "Indiquez le point qui reçoit le matériau."
+                )
+
+        elif self.type_mouvement == self.TypeMouvement.SORTIE:
+            if not self.point_depart_id:
+                errors["point_depart"] = (
+                    "Indiquez le point d'où sort le matériau."
+                )
+
+            if (
+                self.point_depart_id
+                and self.point_arrivee_id
+                and self.point_depart_id == self.point_arrivee_id
+            ):
+                errors["point_arrivee"] = (
+                    "L'origine et la destination doivent être différentes."
+                )
+
+        elif self.type_mouvement == self.TypeMouvement.RETOUR:
+            if not self.point_depart_id:
+                errors["point_depart"] = (
+                    "Indiquez le point d'où revient le matériau."
+                )
+
+            if not self.point_arrivee_id:
+                errors["point_arrivee"] = (
+                    "Indiquez le point qui reçoit le retour."
+                )
+
+            if (
+                self.point_depart_id
+                and self.point_arrivee_id
+                and self.point_depart_id == self.point_arrivee_id
+            ):
+                errors["point_arrivee"] = (
+                    "L'origine et la destination doivent être différentes."
+                )
+            # ----------------------------------------------------
+            # VÉHICULE / ENGIN DE TRANSPORT
+            # ----------------------------------------------------
+            if self.vehicule_transport_id and self.materiau_projet_id:
+                if (
+                    self.vehicule_transport.projet_id
+                    != self.materiau_projet.projet_id
+                ):
+                    errors["vehicule_transport"] = (
+                        "Le véhicule ou l'engin doit être affecté "
+                        "au même projet que le matériau."
+                    )
+
+        if errors:
+            raise ValidationError(errors)

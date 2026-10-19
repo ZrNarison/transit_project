@@ -1,23 +1,23 @@
+
 {% extends "base.html" %}
 
 {% block content %}
 
 <div class="container-fluid mt-4">
 
-    <div class="d-flex justify-content-between mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
 
         <h3 class="fw-bold">
             Sorties matériaux
         </h3>
-        {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur"  %}
-        <a
-            href="{% url 'materiaux:sortie_add' %}"
-            class="btn btn-danger">
 
+        {% if fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "ChefMagasin" or fonction_projet == "Magasin" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
+        <a href="{% url 'materiaux:sortie_add' %}"
+           class="btn btn-danger">
             <i class="fas fa-plus me-1"></i>
             Nouvelle sortie
-
         </a>
+        {% endif %}
 
     </div>
 
@@ -30,7 +30,6 @@
             <table class="table table-hover mb-0">
 
                 <thead class="table-dark">
-
                     <tr>
                         <th>Matériau</th>
                         <th>Magasin</th>
@@ -44,7 +43,6 @@
                         <th>Enregistreur</th>
                         <th>Action</th>
                     </tr>
-
                 </thead>
 
                 <tbody>
@@ -67,52 +65,44 @@
                         </td>
 
                         <td>{{ objet.projet|default:"-" }}</td>
+
                         <td>{{ objet.point_projet|default:"-" }}</td>
+
                         <td>{{ objet.chef_equipe|default:"-" }}</td>
-                        <td>
-                            {{ objet.destination|default:"-" }}
-                        </td>
+
+                        <td>{{ objet.destination|default:"-" }}</td>
 
                         <td>
                             {{ objet.date_sortie|date:"d/m/Y" }}
                         </td>
 
-                        <td>
-                            {{ objet.vehicule|default:"-" }}
-                        </td>
+                        <td>{{ objet.vehicule|default:"-" }}</td>
 
                         <td>
                             {{ objet.enregistreur.username|default:"-" }}
                         </td>
 
-                        <td>
+                        <td class="text-nowrap">
 
                             <!-- MODIFIER -->
-                            <a
-                                href="{% url 'materiaux:sortie_edit' objet.id %}"
-                                class="btn btn-sm btn-outline-warning"
-                                title="Modifier">
-
+                            <a href="{% url 'materiaux:sortie_edit' objet.id %}"
+                               class="btn btn-sm btn-outline-warning"
+                               title="Modifier">
                                 <i class="fas fa-edit"></i>
-
                             </a>
 
                             <!-- SUPPRIMER -->
-                            <form
-                                method="post"
-                                action="{% url 'materiaux:sortie_delete' objet.id %}"
-                                class="d-inline">
+                            <form method="post"
+                                  action="{% url 'materiaux:sortie_delete' objet.id %}"
+                                  class="d-inline">
 
                                 {% csrf_token %}
 
-                                <button
-                                    type="submit"
-                                    class="btn btn-sm btn-outline-danger"
-                                    title="Supprimer"
-                                    onclick="return confirm('Supprimer cette sortie ?');">
-
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger"
+                                        title="Supprimer"
+                                        onclick="return confirm('Supprimer cette sortie ?');">
                                     <i class="fas fa-trash"></i>
-
                                 </button>
 
                             </form>
@@ -124,15 +114,10 @@
                     {% empty %}
 
                     <tr>
-
-                        <td
-                            colspan="8"
+                        <td colspan="11"
                             class="text-center text-muted py-4">
-
                             Aucune sortie enregistrée.
-
                         </td>
-
                     </tr>
 
                     {% endfor %}

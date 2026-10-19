@@ -1,0 +1,69 @@
+
+{% extends "materiaux/base.html" %}
+
+{% block materiaux_title %}{{ titre }}{% endblock %}
+{% block page_title %}{{ titre }}{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'mccr_materiaux:materiaux_list' %}"
+   class="btn btn-outline-secondary">
+    <i class="fas fa-arrow-left me-1"></i> Retour à la liste
+</a>
+{% endblock %}
+
+{% block materiaux_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card materiaux-card">
+            <div class="card-header">
+                Informations du matériau
+            </div>
+            <div class="card-body">
+                <form method="post" class="materiaux-form">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                    <div class="mb-3">
+                        {% if field.field.widget.input_type == "checkbox" %}
+                            <div class="form-check">
+                                {{ field }}
+                                <label class="form-check-label" for="{{ field.id_for_label }}">
+                                    {{ field.label }}
+                                </label>
+                            </div>
+                        {% else %}
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                        {% endif %}
+
+                        {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+
+                        {% for error in field.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> {{ bouton }}
+                        </button>
+                        <a href="{% url 'mccr_materiaux:materiaux_list' %}"
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

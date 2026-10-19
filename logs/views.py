@@ -1,31 +1,20 @@
 from django.shortcuts import render
-from django.core.paginator import Paginator
+
 from .models import Log, H_Log
+from users.decorators import login_required_projet, h_role_required
 
 
-
+# ============================================================
+# LOGS SYSTÈME GALAXY
+# ============================================================
+@login_required_projet
 def logs_list(request):
+    logs = Log.objects.order_by("-date_log")
 
-    logs = (
-        Log.objects
-        .order_by(
-            "-date_log"
-        )
-    )
-
-
-    level = request.GET.get(
-        "level",
-        ""
-    )
-
+    level = request.GET.get("level", "").strip()
 
     if level:
-
-        logs = logs.filter(
-            level=level
-        )
-
+        logs = logs.filter(level=level)
 
     return render(
         request,
@@ -33,32 +22,21 @@ def logs_list(request):
         {
             "logs": logs,
             "level": level,
-        }
+        },
     )
 
 
+# ============================================================
+# LOGS SYSTÈME MCCR
+# ============================================================
+@h_role_required("Dir", "Compta")
 def h_logs_list(request):
+    logs = H_Log.objects.order_by("-date_log")
 
-    logs = (
-        Log.objects
-        .order_by(
-            "-date_log"
-        )
-    )
-
-
-    level = request.GET.get(
-        "level",
-        ""
-    )
-
+    level = request.GET.get("level", "").strip()
 
     if level:
-
-        logs = logs.filter(
-            level=level
-        )
-
+        logs = logs.filter(level=level)
 
     return render(
         request,
@@ -66,5 +44,5 @@ def h_logs_list(request):
         {
             "logs": logs,
             "level": level,
-        }
+        },
     )

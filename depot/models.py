@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Sum
 from personnel.models import Personnel
 from transentrant.models import Transentrant
+from users.models import AppUser
 
 class Depot(models.Model):
 
@@ -65,10 +66,18 @@ class Depot(models.Model):
         blank=True
     )
 
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )
 
+    enregistre_par = models.ForeignKey(
+        AppUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="depots_crees",
+    )
 
     class Meta:
         ordering = [

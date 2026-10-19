@@ -1,6 +1,12 @@
 from functools import wraps
 from decimal import Decimal
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
 
+from users.models import AppUser
+from .models import MouvementMateriauProjet
+from .forms import MouvementMateriauProjetForm
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from django.db.models import  Sum, F, ExpressionWrapper, DecimalField
@@ -13,7 +19,6 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from users.models import AppUser
 from personnel.models import Personnel
-from materiaux.models import Materiaux, Vehicule
 from django.urls import path, reverse, reverse_lazy
 from .forms import (ProjetForm,EquipeProjetForm,ChefEquipeProjetForm,MinierProjetForm,MateriauProjetForm,PointProjetForm,RapportProjetForm,
     RapportTravailForm,RapportMateriauForm,VehiculeProjetForm,EnginProjetForm,
@@ -21,16 +26,15 @@ from .forms import (ProjetForm,EquipeProjetForm,ChefEquipeProjetForm,MinierProje
     ActiviteTransportProjetForm,
     MouvementVehiculeProjetForm,
     AchatMateriauProjetForm,
-    ReceptionMateriauProjetForm,
+    ReceptionMateriauProjetForm,MouvementMateriauProjetForm,
     DistributionMateriauProjetForm,
     ConsommationMateriauProjetForm,
     RetourMateriauProjetForm)
-
 from .models import (
     Projet,MateriauProjet,EquipeProjet,PointProjet,RapportProjet,RapportTravail,    RapportMateriau,
     VehiculeProjet,EnginProjet,    MouvementVehiculeProjet,    RapportVehicule,    ActiviteTransportProjet,
     PersonnelExecutionProjet,    MouvementPersonnelProjet,    EquipageProjet,    AvanceEquipeProjet,
-    EquipeMateriauProjet,    VehiculeLourdsProjet,)
+    EquipeMateriauProjet,    VehiculeLourdsProjet,MouvementMateriauProjet)
 from users.decorators import (get_current_user,project_access_required,user_can_manage_projects,user_has_project_access,    get_current_personnel,user_can_manage_materiaux,
     login_required_projet,    project_manager_required,    )
 from materiaux.models import (
@@ -3893,7 +3897,7 @@ def materiau_list(request, projet_id):
         return redirect("projet:projet_list")
 
     # ========================================================
-    # MATÉRIAUX DU PROJET
+    # MATÉRIAUX DU PROJET — DÉPÔT 2
     # ========================================================
     materiaux = list(
         MateriauProjet.objects
@@ -3924,8 +3928,8 @@ def materiau_list(request, projet_id):
         total_quantite_prevue += quantite_prevue
 
         # ----------------------------------------------------
-        # 2. ENTRÉES AU MAGASIN DU CHANTIER (DÉPÔT 2)
-        # point=None signifie réception au dépôt.
+        # 2. QUANTITÉ REÇUE AU MAGASIN DU CHANTIER
+        # DÉPÔT 2 : point=None signifie réception au dépôt.
         # ----------------------------------------------------
         quantite_recue_magasin = (
             ReceptionMateriauProjet.objects
@@ -3970,7 +3974,8 @@ def materiau_list(request, projet_id):
         )
 
         # ----------------------------------------------------
-        # 5. STOCK ACTUEL DU MAGASIN (DÉPÔT 2)
+        # 5. STOCK ACTUEL DU MAGASIN — DÉPÔT 2
+        # Stock = reçu - distribué + retourné
         # ----------------------------------------------------
         stock_magasin = (
             quantite_recue_magasin
@@ -4000,6 +4005,27 @@ def materiau_list(request, projet_id):
     )
 
     # ========================================================
+    # DROITS D'AJOUT DE MATÉRIAUX
+    # Admin, ChefMagasin, Magasin, UserEntreprise
+    # ========================================================
+    roles_ajout_materiau = {
+        "Admin",
+        "ChefMagasin",
+        "Magasin",
+        "UserEntreprise",
+    }
+
+    role_utilisateur = getattr(
+        current_user,
+        "role",
+        "",
+    )
+
+    peut_ajouter_materiau = (
+        role_utilisateur in roles_ajout_materiau
+    )
+
+    # ========================================================
     # CONTEXTE
     # ========================================================
     context = {
@@ -4020,7 +4046,7 @@ def materiau_list(request, projet_id):
         ),
 
         "peut_gerer": peut_gerer,
-        "peut_ajouter_materiau": peut_gerer,
+        "peut_ajouter_materiau": peut_ajouter_materiau,
     }
 
     return render(
@@ -4028,6 +4054,9 @@ def materiau_list(request, projet_id):
         "projet/materiaux/materiaux_list.html",
         context,
     )
+
+
+
 # ============================================================
 # AJOUTER UN MATÉRIAU AU PROJET
 # ============================================================
@@ -4036,7 +4065,7 @@ def materiau_create(request, projet_id):
     current_user = get_current_user(request)
 
     # ========================================================
-    # VÉRIFICATION DE L'UTILISATEUR CONNECTÉ
+    # 1. VÉRIFICATION DE L'UTILISATEUR CONNECTÉ
     # ========================================================
     if not current_user:
         messages.error(
@@ -4047,20 +4076,17 @@ def materiau_create(request, projet_id):
         return redirect("users:login")
 
     # ========================================================
-    # RÉCUPÉRATION DU PROJET
+    # 2. RÉCUPÉRATION DU PROJET
     # ========================================================
     projet = get_object_or_404(
         Projet,
-        pk=projet_id
+        pk=projet_id,
     )
 
     # ========================================================
-    # VÉRIFICATION DE L'ACCÈS AU PROJET
+    # 3. VÉRIFICATION DE L'ACCÈS AU PROJET
     # ========================================================
-    if not user_has_project_access(
-        current_user,
-        projet
-    ):
+    if not user_has_project_access(current_user, projet):
         messages.error(
             request,
             "Votre accès à ce projet n'est pas actif."
@@ -4068,14 +4094,30 @@ def materiau_create(request, projet_id):
         return redirect("projet:projet_list")
 
     # ========================================================
-    # VÉRIFICATION DES AUTORISATIONS
+    # 4. VÉRIFICATION DES DROITS D'AJOUT
+    # Rôles autorisés :
+    # Admin, ChefMagasin, Magasin, UserEntreprise
     # ========================================================
+    roles_autorises_ajout = {
+        "Admin",
+        "ChefMagasin",
+        "Magasin",
+        "UserEntreprise",
+    }
+
+    role_utilisateur = getattr(current_user, "role", "")
+
     peut_gerer = user_can_manage_materiaux(
         current_user,
-        projet
+        projet,
     )
 
-    if not peut_gerer:
+    peut_ajouter = (
+        role_utilisateur in roles_autorises_ajout
+        or peut_gerer
+    )
+
+    if not peut_ajouter:
         messages.error(
             request,
             "Vous n'avez pas l'autorisation d'ajouter "
@@ -4083,28 +4125,26 @@ def materiau_create(request, projet_id):
         )
         return redirect(
             "projet:materiau_list",
-            projet_id=projet.id
+            projet_id=projet.id,
         )
 
     # ========================================================
-    # TRAITEMENT DU FORMULAIRE
+    # 5. TRAITEMENT DU FORMULAIRE
     # ========================================================
     if request.method == "POST":
         form = MateriauProjetForm(
             request.POST,
-            projet=projet
+            projet=projet,
         )
 
         if form.is_valid():
-
-            # Création sans sauvegarde immédiate.
             materiau_projet = form.save(commit=False)
 
             # Le projet est imposé côté serveur.
             materiau_projet.projet = projet
 
             # ================================================
-            # ENREGISTREMENT AUTOMATIQUE DE L'UTILISATEUR
+            # ENREGISTREMENT DE L'UTILISATEUR CONNECTÉ
             # ================================================
             from users.models import AppUser
 
@@ -4118,57 +4158,59 @@ def materiau_create(request, projet_id):
             else:
                 materiau_projet.enregistre_par = current_user
 
-                try:
-                    materiau_projet.save()
-
-                except Exception:
-                    # Ne pas masquer l'erreur technique :
-                    # elle sera propagée pour identifier
-                    # précisément la cause du problème.
-                    raise
+                # Enregistrer le matériau.
+                materiau_projet.save()
 
                 messages.success(
                     request,
                     f"Le matériau « {materiau_projet.materiau} » "
-                    "a été ajouté au projet avec succès."
+                    "a été ajouté au projet."
                 )
 
                 return redirect(
                     "projet:materiau_list",
-                    projet_id=projet.id
+                    projet_id=projet.id,
                 )
+        else:
+            messages.error(
+                request,
+                "Veuillez corriger les erreurs du formulaire."
+            )
 
     else:
+        # Affichage initial du formulaire.
         form = MateriauProjetForm(
-            projet=projet
+            projet=projet,
         )
 
     # ========================================================
-    # CONTEXTE
+    # 6. CONTEXTE DU TEMPLATE
     # ========================================================
     context = {
         "projet": projet,
         "form": form,
-        "titre": "Ajouter un matériau",
-        "mode": "create",
+        "titre": "Ajouter un matériau au projet",
+        "mode": "creation",
         "user": current_user,
         "current_user": current_user,
         "personnel": getattr(
             current_user,
             "personnel",
-            None
+            None,
         ),
         "peut_gerer": peut_gerer,
+        "peut_ajouter": peut_ajouter,
     }
 
     # ========================================================
-    # AFFICHAGE
+    # 7. AFFICHAGE DU FORMULAIRE
     # ========================================================
     return render(
         request,
         "projet/materiaux/materiaux_form.html",
-        context
+        context,
     )
+
 
 # ============================================================
 # MODIFIER UN MATÉRIAU
@@ -4258,28 +4300,27 @@ def materiau_update(request, projet_id, pk):
 # SUPPRIMER UN MATÉRIAU
 # ============================================================
 
+
 @login_required_projet
-def materiau_delete(    request,    projet_id,    pk,):
+def materiau_delete(request, projet_id, pk):
+    from django.contrib import messages
+    from django.shortcuts import get_object_or_404, redirect, render
 
     # ========================================================
-    # UTILISATEUR CONNECTÉ
+    # 1. UTILISATEUR CONNECTÉ
     # ========================================================
 
     current_user = get_current_user(request)
 
     if not current_user:
-
         messages.error(
             request,
             "Utilisateur connecté introuvable.",
         )
-
-        return redirect(
-            "users:login"
-        )
+        return redirect("users:login")
 
     # ========================================================
-    # PROJET
+    # 2. PROJET
     # ========================================================
 
     projet = get_object_or_404(
@@ -4288,69 +4329,98 @@ def materiau_delete(    request,    projet_id,    pk,):
     )
 
     # ========================================================
-    # VÉRIFICATION ACCÈS PROJET
+    # 3. VÉRIFICATION DE L'ACCÈS AU PROJET
     # ========================================================
 
-    if not user_has_project_access(
-        current_user,
-        projet,
-    ):
-
+    if not user_has_project_access(current_user, projet):
         messages.error(
             request,
             "Votre accès à ce projet n'est pas actif.",
         )
-
-        return redirect(
-            "projet:projet_list"
-        )
+        return redirect("projet:projet_list")
 
     # ========================================================
-    # PERMISSION MATÉRIAU
+    # 4. RÉCUPÉRER LE MATÉRIAU DU PROJET
     # ========================================================
 
-    peut_gerer = user_can_manage_materiaux(
-        current_user,
-        projet,
+    materiau_projet = get_object_or_404(
+        MateriauProjet.objects.select_related("projet"),
+        pk=pk,
+        projet=projet,
+    )
+
+    # ========================================================
+    # 5. IDENTIFIER L'ENREGISTREUR DU MATÉRIAU
+    # ========================================================
+
+    # Plusieurs noms possibles sont pris en charge.
+    # Le premier champ existant dans le modèle est utilisé.
+    champs_enregistreur = (
+        "enregistre_par",
+        "enregistreur",
+        "cree_par",
+        "created_by",
+    )
+
+    champ_trouve = next(
+        (
+            nom
+            for nom in champs_enregistreur
+            if any(
+                champ.name == nom
+                for champ in MateriauProjet._meta.fields
+            )
+        ),
+        None,
+    )
+
+    enregistreur_id = None
+
+    if champ_trouve:
+        champ = MateriauProjet._meta.get_field(champ_trouve)
+
+        if champ.is_relation:
+            enregistreur_id = getattr(
+                materiau_projet,
+                f"{champ_trouve}_id",
+                None,
+            )
+
+    # L'utilisateur est le créateur du matériau.
+    est_enregistreur = (
+        enregistreur_id is not None
+        and str(enregistreur_id) == str(current_user.pk)
+    )
+
+    # ========================================================
+    # 6. AUTORISATION
+    # ========================================================
+
+    # Les utilisateurs déjà autorisés par la règle métier
+    # conservent leurs droits.
+    # Le créateur peut également supprimer son propre matériau.
+    peut_gerer = (
+        user_can_manage_materiaux(current_user, projet)
+        or est_enregistreur
     )
 
     if not peut_gerer:
-
         messages.error(
             request,
             "Vous n'avez pas l'autorisation de supprimer "
-            "un matériau de ce projet.",
+            "ce matériau de ce projet.",
         )
-
         return redirect(
             "projet:materiau_list",
             projet_id=projet.id,
         )
 
     # ========================================================
-    # MATÉRIAU DU PROJET
-    #
-    # `materiau` est un CharField.
-    # Aucun select_related("materiau").
-    # ========================================================
-
-    materiau_projet = get_object_or_404(
-        MateriauProjet.objects.select_related(
-            "projet",
-        ),
-        pk=pk,
-        projet=projet,
-    )
-
-    # ========================================================
-    # SUPPRESSION
+    # 7. SUPPRESSION
     # ========================================================
 
     if request.method == "POST":
-
-        nom_materiau = str(
-            materiau_projet.materiau
-        )
+        nom_materiau = str(materiau_projet.materiau)
 
         materiau_projet.delete()
 
@@ -4366,22 +4436,15 @@ def materiau_delete(    request,    projet_id,    pk,):
         )
 
     # ========================================================
-    # CONFIRMATION DE SUPPRESSION
+    # 8. CONFIRMATION
     # ========================================================
 
     context = {
         "projet": projet,
         "materiau_projet": materiau_projet,
-
         "user": current_user,
         "current_user": current_user,
-
-        "personnel": getattr(
-            current_user,
-            "personnel",
-            None,
-        ),
-
+        "personnel": getattr(current_user, "personnel", None),
         "peut_gerer": peut_gerer,
     }
 
@@ -4390,7 +4453,6 @@ def materiau_delete(    request,    projet_id,    pk,):
         "projet/materiau/delete.html",
         context,
     )
-
 
 # ============================================================
 # CRUD MINIER PROJET
@@ -6427,13 +6489,21 @@ def avance_equipe_projet_delete(request, projet_id, avance_id):
 
 
 # ======================================================
-# MATERIAUX
+# MATÉRIAUX — TABLEAU DE BORD DU PROJET
 # ======================================================
 @project_access_required
 def dashboard_materiaux(request, projet_id):
+    from decimal import Decimal
+
+    from django.db.models import Q, Sum
+    from django.shortcuts import render
 
     projet = request.projet
     ZERO = Decimal("0.00")
+
+    # ======================================================
+    # 1. MATÉRIAUX ET MOUVEMENTS DU PROJET
+    # ======================================================
 
     materiaux = (
         MateriauProjet.objects
@@ -6441,9 +6511,25 @@ def dashboard_materiaux(request, projet_id):
         .order_by("materiau", "id")
     )
 
-    materiaux_projet = []
+    mouvements = (
+        MouvementMateriauProjet.objects
+        .filter(materiau_projet__projet=projet)
+        .select_related(
+            "materiau_projet",
+            "point_depart",
+            "point_arrivee",
+            "enregistre_par",
+        )
+        .order_by("-date_mouvement", "-id")
+    )
 
-    # Totaux généraux
+    # ======================================================
+    # 2. CALCUL DES STOCKS
+    # ======================================================
+
+    materiaux_projet = []
+    stocks = []
+
     total_prevu = ZERO
     total_recu = ZERO
     total_entree_depot = ZERO
@@ -6455,180 +6541,175 @@ def dashboard_materiaux(request, projet_id):
     total_restant_equipes = ZERO
     total_solde_global = ZERO
 
-    # =========================================================
-    # CALCUL DES QUANTITÉS PAR MATÉRIAU
-    # =========================================================
+    # Dictionnaire permettant de regrouper les mouvements
+    # par point sans générer toutes les combinaisons possibles.
+    stocks_par_point = {}
 
     for materiau in materiaux:
-
         quantite_prevue = materiau.quantite_prevue or ZERO
 
-        # -----------------------------------------------------
-        # 1. RÉCEPTIONS AU DÉPÔT 2
-        # -----------------------------------------------------
-
-        receptions_depot = ReceptionMateriauProjet.objects.filter(
-            materiau_projet=materiau,
-            point__isnull=True,
+        mouvements_materiau = mouvements.filter(
+            materiau_projet=materiau
         )
 
-        quantite_entree_depot = (
-            receptions_depot.aggregate(
-                total=Sum("quantite_recue")
-            )["total"] or ZERO
+        # --------------------------------------------------
+        # Entrées enregistrées
+        # --------------------------------------------------
+
+        quantite_recue = (
+            mouvements_materiau
+            .filter(type_mouvement="ENTREE")
+            .aggregate(total=Sum("quantite"))["total"]
+            or ZERO
         )
 
-        # -----------------------------------------------------
-        # 2. LIVRAISONS DIRECTES AUX POINTS DU PROJET
-        # -----------------------------------------------------
-
-        receptions_directes = ReceptionMateriauProjet.objects.filter(
-            materiau_projet=materiau,
-            point__isnull=False,
-        )
-
-        quantite_livree_directement = (
-            receptions_directes.aggregate(
-                total=Sum("quantite_recue")
-            )["total"] or ZERO
-        )
-
-        # -----------------------------------------------------
-        # 3. DISTRIBUTIONS DU DÉPÔT 2
-        # -----------------------------------------------------
-
-        distributions = DistributionMateriauProjet.objects.filter(
-            materiau_projet=materiau,
-        )
-
-        quantite_sortie_depot = (
-            distributions.aggregate(
-                total=Sum("quantite")
-            )["total"] or ZERO
-        )
-
-        # -----------------------------------------------------
-        # 4. CONSOMMATIONS
-        # -----------------------------------------------------
-
-        consommations = ConsommationMateriauProjet.objects.filter(
-            Q(distribution__materiau_projet=materiau)
-            | Q(reception_directe__materiau_projet=materiau)
-        )
+        # --------------------------------------------------
+        # Quantité consommée/sortie du projet :
+        # sortie sans point d'arrivée
+        # --------------------------------------------------
 
         quantite_utilisee = (
-            consommations.aggregate(
-                total=Sum("quantite_utilisee")
-            )["total"] or ZERO
+            mouvements_materiau
+            .filter(
+                type_mouvement="SORTIE",
+                point_arrivee__isnull=True,
+            )
+            .aggregate(total=Sum("quantite"))["total"]
+            or ZERO
         )
 
-        # -----------------------------------------------------
-        # 5. RETOURS
-        # -----------------------------------------------------
-
-        retours = RetourMateriauProjet.objects.filter(
-            Q(distribution__materiau_projet=materiau)
-            | Q(reception_directe__materiau_projet=materiau)
-        )
+        # --------------------------------------------------
+        # Retours enregistrés
+        # --------------------------------------------------
 
         quantite_retournee = (
-            retours.aggregate(
-                total=Sum("quantite")
-            )["total"] or ZERO
+            mouvements_materiau
+            .filter(type_mouvement="RETOUR")
+            .aggregate(total=Sum("quantite"))["total"]
+            or ZERO
         )
 
-        # -----------------------------------------------------
-        # 6. QUANTITÉ TOTALE REÇUE POUR LE PROJET
-        # -----------------------------------------------------
-
-        quantite_recue_totale = (
-            quantite_entree_depot
-            + quantite_livree_directement
+        # Total des opérations de sortie, transferts compris
+        quantite_sortie = (
+            mouvements_materiau
+            .filter(type_mouvement="SORTIE")
+            .aggregate(total=Sum("quantite"))["total"]
+            or ZERO
         )
 
-        # -----------------------------------------------------
-        # 7. STOCK DU DÉPÔT 2
+        # --------------------------------------------------
+        # STOCK PAR POINT
         #
-        # Hypothèse : tous les retours sont remis au Dépôt 2.
-        # -----------------------------------------------------
+        # On ne retient que les points concernés par au moins
+        # un mouvement de ce matériau.
+        # --------------------------------------------------
 
-        stock_depot = (
-            quantite_entree_depot
-            - quantite_sortie_depot
-            + quantite_retournee
-        )
+        points_concernes = {}
 
-        # -----------------------------------------------------
-        # 8. QUANTITÉ FOURNIE AUX ÉQUIPES
-        # -----------------------------------------------------
+        for mouvement in mouvements_materiau:
+            point_depart = mouvement.point_depart
+            point_arrivee = mouvement.point_arrivee
 
-        quantite_fournie_equipes = (
-            quantite_sortie_depot
-            + quantite_livree_directement
-        )
+            if point_depart is not None:
+                points_concernes[point_depart.pk] = point_depart
 
-        restant_equipes = (
-            quantite_fournie_equipes
-            - quantite_utilisee
-            - quantite_retournee
-        )
+            if point_arrivee is not None:
+                points_concernes[point_arrivee.pk] = point_arrivee
 
-        # -----------------------------------------------------
-        # 9. SOLDE GLOBAL DU PROJET
-        #
-        # Les transferts internes ne sont pas des consommations.
-        # -----------------------------------------------------
+        stock_materiau_total = ZERO
 
-        solde_global = (
-            quantite_recue_totale
-            - quantite_utilisee
-        )
+        for point_id, point in points_concernes.items():
 
-        # -----------------------------------------------------
-        # 10. DONNÉES POUR LE TEMPLATE
-        # -----------------------------------------------------
+            entrees_point = (
+                mouvements_materiau
+                .filter(point_arrivee_id=point_id)
+                .aggregate(total=Sum("quantite"))["total"]
+                or ZERO
+            )
+
+            sorties_point = (
+                mouvements_materiau
+                .filter(point_depart_id=point_id)
+                .aggregate(total=Sum("quantite"))["total"]
+                or ZERO
+            )
+
+            stock_point = entrees_point - sorties_point
+
+            # Ne pas afficher les stocks nuls des points
+            # simplement traversés ou concernés par un retour.
+            if stock_point != ZERO:
+                stocks_par_point[(materiau.pk, point_id)] = {
+                    "materiau": materiau.materiau,
+                    "materiau_projet": materiau,
+                    "point": point,
+                    "unite": materiau.unite,
+                    "stock": stock_point,
+                }
+
+            stock_materiau_total += stock_point
+
+        # --------------------------------------------------
+        # SOLDE GLOBAL
+        # --------------------------------------------------
+
+        solde_global = stock_materiau_total
+
+        # Compatibilité avec les anciennes colonnes
+        quantite_entree_depot = quantite_recue
+        quantite_livree_directement = ZERO
+        stock_depot = ZERO
+        restant_equipes = stock_materiau_total
 
         materiaux_projet.append({
             "materiau": materiau.materiau,
             "unite": materiau.unite,
-
             "quantite_prevue": quantite_prevue,
-            "quantite_recue": quantite_recue_totale,
-
+            "quantite_recue": quantite_recue,
             "quantite_entree_depot": quantite_entree_depot,
             "quantite_livree_directement": quantite_livree_directement,
-            "quantite_sortie_depot": quantite_sortie_depot,
-
+            "quantite_sortie_depot": quantite_sortie,
             "quantite_utilisee": quantite_utilisee,
             "quantite_retournee": quantite_retournee,
-
-            # Conservé pour le template existant
             "quantite_restante": solde_global,
-
-            # Indicateurs distincts
             "stock_depot": stock_depot,
             "restant_equipes": restant_equipes,
             "solde_global": solde_global,
         })
 
-        # -----------------------------------------------------
-        # 11. CUMUL DES TOTAUX
-        # -----------------------------------------------------
+        # --------------------------------------------------
+        # TOTAUX
+        # --------------------------------------------------
 
         total_prevu += quantite_prevue
-        total_recu += quantite_recue_totale
+        total_recu += quantite_recue
         total_entree_depot += quantite_entree_depot
         total_livraison_directe += quantite_livree_directement
-        total_sorti_depot += quantite_sortie_depot
+        total_sorti_depot += quantite_sortie
         total_utilise += quantite_utilisee
         total_retourne += quantite_retournee
         total_stock_depot += stock_depot
         total_restant_equipes += restant_equipes
         total_solde_global += solde_global
 
-    # =========================================================
-    # DERNIÈRES RÉCEPTIONS
-    # =========================================================
+    # Ordre stable : matériau, puis point
+    stocks = sorted(
+        stocks_par_point.values(),
+        key=lambda ligne: (
+            str(ligne["materiau"]).casefold(),
+            ligne["point"].pk,
+        ),
+    )
+
+    # ======================================================
+    # 3. DERNIERS MOUVEMENTS
+    # ======================================================
+
+    derniers_mouvements = mouvements[:10]
+
+    # ======================================================
+    # 4. ANCIENNES LISTES CONSERVÉES
+    # ======================================================
 
     dernieres_receptions = (
         ReceptionMateriauProjet.objects
@@ -6641,10 +6722,6 @@ def dashboard_materiaux(request, projet_id):
         .order_by("-date_reception", "-id")[:10]
     )
 
-    # =========================================================
-    # DERNIÈRES DISTRIBUTIONS
-    # =========================================================
-
     dernieres_distributions = (
         DistributionMateriauProjet.objects
         .filter(materiau_projet__projet=projet)
@@ -6656,10 +6733,6 @@ def dashboard_materiaux(request, projet_id):
         )
         .order_by("-date_distribution", "-id")[:10]
     )
-
-    # =========================================================
-    # DERNIÈRES CONSOMMATIONS
-    # =========================================================
 
     dernieres_utilisations = (
         ConsommationMateriauProjet.objects
@@ -6677,10 +6750,6 @@ def dashboard_materiaux(request, projet_id):
         .order_by("-date_consommation", "-id")[:10]
     )
 
-    # =========================================================
-    # DERNIERS RETOURS
-    # =========================================================
-
     derniers_retours = (
         RetourMateriauProjet.objects
         .filter(
@@ -6697,36 +6766,27 @@ def dashboard_materiaux(request, projet_id):
         .order_by("-date_retour", "-id")[:10]
     )
 
-    # =========================================================
-    # NOMBRE D'OPÉRATIONS
-    # =========================================================
+    # ======================================================
+    # 5. NOMBRE D'OPÉRATIONS
+    # ======================================================
 
     nombre_materiaux = materiaux.count()
 
-    nombre_receptions = (
-        ReceptionMateriauProjet.objects
-        .filter(materiau_projet__projet=projet)
-        .count()
-    )
+    nombre_receptions = mouvements.filter(
+        type_mouvement="ENTREE"
+    ).count()
 
-    nombre_distributions = (
-        DistributionMateriauProjet.objects
-        .filter(materiau_projet__projet=projet)
-        .count()
-    )
+    nombre_distributions = mouvements.filter(
+        type_mouvement="SORTIE"
+    ).count()
 
-    nombre_retours = (
-        RetourMateriauProjet.objects
-        .filter(
-            Q(distribution__materiau_projet__projet=projet)
-            | Q(reception_directe__materiau_projet__projet=projet)
-        )
-        .count()
-    )
+    nombre_retours = mouvements.filter(
+        type_mouvement="RETOUR"
+    ).count()
 
-    # =========================================================
-    # TAUX D'UTILISATION
-    # =========================================================
+    # ======================================================
+    # 6. TAUX D'UTILISATION
+    # ======================================================
 
     taux_utilisation = (
         total_utilise / total_recu * Decimal("100")
@@ -6739,14 +6799,15 @@ def dashboard_materiaux(request, projet_id):
         Decimal("100"),
     )
 
-    # =========================================================
-    # AFFICHAGE DU TABLEAU DE BORD
-    # =========================================================
+    # ======================================================
+    # 7. CONTEXTE DU TEMPLATE
+    # ======================================================
 
     context = {
         "projet": projet,
-
         "materiaux_projet": materiaux_projet,
+        "stocks": stocks,
+        "derniers_mouvements": derniers_mouvements,
 
         "total_prevu": total_prevu,
         "total_recu": total_recu,
@@ -6758,8 +6819,6 @@ def dashboard_materiaux(request, projet_id):
         "total_stock_depot": total_stock_depot,
         "total_restant_equipes": total_restant_equipes,
         "total_solde_global": total_solde_global,
-
-        # Compatibilité avec le template existant
         "total_restant": total_solde_global,
 
         "nombre_materiaux": nombre_materiaux,
@@ -7575,4 +7634,385 @@ def retour_materiau_projet_delete(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
     return _materiaux_projet_delete(
         request, projet, "retour", pk
+    )
+
+
+
+
+
+# ============================================================
+# MOUVEMENTS UNIFIÉS DES MATÉRIAUX DU PROJET
+# ============================================================
+def calculer_stock_point(projet, materiau, point):
+    mouvements = MouvementMateriauProjet.objects.filter(
+        materiau_projet__projet=projet,
+        materiau_projet=materiau,
+    )
+
+    entrees = mouvements.filter(
+        point_arrivee=point
+    ).aggregate(
+        total=Sum("quantite")
+    )["total"] or Decimal("0.00")
+
+    sorties = mouvements.filter(
+        point_depart=point
+    ).aggregate(
+        total=Sum("quantite")
+    )["total"] or Decimal("0.00")
+
+    return entrees - sorties
+
+
+
+@project_access_required
+def mouvements_materiaux_projet(request, projet_id):
+    from decimal import Decimal
+
+    from django.shortcuts import render
+
+    projet = request.projet
+    ZERO = Decimal("0")
+
+    # ======================================================
+    # 1. RÉCUPÉRER LES MOUVEMENTS DU PROJET
+    # ======================================================
+
+    mouvements = (
+        MouvementMateriauProjet.objects
+        .filter(materiau_projet__projet=projet)
+        .select_related(
+            "materiau_projet",
+            "point_depart",
+            "point_arrivee",
+            "enregistre_par",
+        )
+        .order_by("-date_mouvement", "-id")
+    )
+
+    # ======================================================
+    # 2. VÉRIFIER SI LA PÉRIODE DU PROJET EST ACTIVE
+    # ======================================================
+
+    periode_projet_active = (
+        projet.est_actif
+        and not projet.periode_terminee
+    )
+
+    # ======================================================
+    # 3. IDENTIFIER L'UTILISATEUR CONNECTÉ
+    # ======================================================
+
+    utilisateur_courant = getattr(
+        request,
+        "current_user",
+        None,
+    )
+
+    if utilisateur_courant is None:
+        utilisateur_id = request.session.get("user_id")
+
+        if utilisateur_id:
+            utilisateur_courant = AppUser.objects.filter(
+                pk=utilisateur_id
+            ).first()
+
+    # ======================================================
+    # 4. DROITS DE MODIFICATION ET DE SUPPRESSION
+    # ======================================================
+
+    for mouvement in mouvements:
+        mouvement.peut_modifier = (
+            periode_projet_active
+            and utilisateur_courant is not None
+            and mouvement.enregistre_par_id is not None
+            and mouvement.enregistre_par_id
+            == utilisateur_courant.pk
+        )
+
+    # ======================================================
+    # 5. RÉCUPÉRER LES MATÉRIAUX DU PROJET
+    # ======================================================
+
+    materiaux = (
+        MateriauProjet.objects
+        .filter(projet=projet)
+        .order_by("materiau", "id")
+    )
+
+    # ======================================================
+    # 6. CALCULER LES STOCKS PAR MATÉRIAU ET PAR POINT
+    # ======================================================
+
+    stocks = []
+
+    points_utilises = {}
+
+    # Ne retenir que les points réellement associés
+    # aux mouvements du projet.
+    for mouvement in mouvements:
+        if mouvement.point_depart_id:
+            points_utilises[mouvement.point_depart_id] = (
+                mouvement.point_depart
+            )
+
+        if mouvement.point_arrivee_id:
+            points_utilises[mouvement.point_arrivee_id] = (
+                mouvement.point_arrivee
+            )
+
+    # Trier les points par identifiant.
+    points = sorted(
+        points_utilises.values(),
+        key=lambda point: point.pk,
+    )
+
+    for materiau in materiaux:
+        for point in points:
+
+            stock = calculer_stock_point(
+                projet,
+                materiau,
+                point,
+            )
+
+            # Ne pas afficher les stocks nuls.
+            # Les stocks négatifs restent visibles pour
+            # permettre de repérer une anomalie.
+            if stock is None or stock == ZERO:
+                continue
+
+            stocks.append({
+                "materiau": materiau.materiau,
+                "materiau_projet": materiau,
+                "unite": materiau.unite,
+                "point": point,
+                "stock": stock,
+            })
+
+    # ======================================================
+    # 7. ENVOYER LES DONNÉES AU TEMPLATE
+    # ======================================================
+
+    return render(
+        request,
+        "projet/materiaux/mouvements.html",
+        {
+            "projet": projet,
+            "mouvements": mouvements,
+            "stocks": stocks,
+            "periode_projet_active": periode_projet_active,
+        },
+    )
+
+
+@project_access_required
+def mouvement_materiau_projet_create(request, projet_id):
+    projet = request.projet
+
+    if request.method == "POST":
+        form = MouvementMateriauProjetForm(
+            request.POST,
+            projet=projet,
+        )
+
+        if form.is_valid():
+            mouvement = form.save(commit=False)
+
+            utilisateur = getattr(
+                request, "current_user", None
+            )
+
+            if utilisateur is None:
+                utilisateur_id = request.session.get("user_id")
+                if utilisateur_id:
+                    from users.models import AppUser
+                    utilisateur = AppUser.objects.filter(
+                        pk=utilisateur_id
+                    ).first()
+
+            mouvement.enregistre_par = utilisateur
+
+            try:
+                with transaction.atomic():
+                    if mouvement.point_depart_id:
+                        stock = calculer_stock_point(
+                            projet,
+                            mouvement.materiau_projet,
+                            mouvement.point_depart,
+                        )
+
+                        if mouvement.quantite > stock:
+                            form.add_error(
+                                "quantite",
+                                (
+                                    f"Stock insuffisant au point "
+                                    f"{mouvement.point_depart}. "
+                                    f"Disponible : {stock} "
+                                    f"{mouvement.materiau_projet.unite}."
+                                ),
+                            )
+                            raise ValidationError(
+                                "Stock insuffisant."
+                            )
+
+                    mouvement.full_clean()
+                    mouvement.save()
+
+                messages.success(
+                    request,
+                    "Mouvement de matériau enregistré avec succès.",
+                )
+                return redirect(
+                    "projet:mouvements_materiaux_projet",
+                    projet_id=projet.pk,
+                )
+
+            except ValidationError as exc:
+                if not form.errors:
+                    if hasattr(exc, "message_dict"):
+                        for field, errors in exc.message_dict.items():
+                            for error in errors:
+                                form.add_error(field, error)
+                    else:
+                        form.add_error(None, exc)
+
+    else:
+        form = MouvementMateriauProjetForm(projet=projet)
+
+    return render(
+        request,
+        "projet/materiaux/mouvement_form.html",
+        {
+            "projet": projet,
+            "form": form,
+            "titre": "Nouveau mouvement de matériau",
+            "bouton": "Enregistrer le mouvement",
+        },
+    )
+
+
+
+def _utilisateur_mouvement_courant(request):
+    utilisateur = getattr(request, "current_user", None)
+
+    if utilisateur is not None:
+        return utilisateur
+
+    utilisateur_id = request.session.get("user_id")
+    if not utilisateur_id:
+        return None
+
+    return AppUser.objects.filter(pk=utilisateur_id).first()
+
+
+def _mouvement_modifiable(request, projet, mouvement):
+    utilisateur = _utilisateur_mouvement_courant(request)
+
+    return bool(
+        projet.est_actif
+        and not projet.periode_terminee
+        and utilisateur is not None
+        and mouvement.enregistre_par_id is not None
+        and mouvement.enregistre_par_id == utilisateur.pk
+    )
+
+
+@project_access_required
+@require_http_methods(["GET", "POST"])
+def mouvement_materiau_projet_update(
+    request, projet_id, mouvement_id
+):
+    projet = request.projet
+
+    mouvement = get_object_or_404(
+        MouvementMateriauProjet,
+        pk=mouvement_id,
+        materiau_projet__projet=projet,
+    )
+
+    if not _mouvement_modifiable(request, projet, mouvement):
+        messages.error(
+            request,
+            "Modification interdite : seul l'enregistreur peut "
+            "modifier ce mouvement pendant la période active du projet."
+        )
+        return redirect(
+            "projet:mouvements_materiaux_projet",
+            projet_id=projet.pk,
+        )
+
+    if request.method == "POST":
+        form = MouvementMateriauProjetForm(
+            request.POST,
+            instance=mouvement,
+        )
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Le mouvement de matériau a été modifié."
+            )
+            return redirect(
+                "projet:mouvements_materiaux_projet",
+                projet_id=projet.pk,
+            )
+    else:
+        form = MouvementMateriauProjetForm(instance=mouvement)
+
+    return render(
+        request,
+        "projet/materiaux/mouvement_form.html",
+        {
+            "projet": projet,
+            "mouvement": mouvement,
+            "form": form,
+            "titre_page": "Modifier le mouvement",
+        },
+    )
+
+
+@project_access_required
+@require_http_methods(["GET", "POST"])
+def mouvement_materiau_projet_delete(
+    request, projet_id, mouvement_id
+):
+    projet = request.projet
+
+    mouvement = get_object_or_404(
+        MouvementMateriauProjet,
+        pk=mouvement_id,
+        materiau_projet__projet=projet,
+    )
+
+    if not _mouvement_modifiable(request, projet, mouvement):
+        messages.error(
+            request,
+            "Suppression interdite : seul l'enregistreur peut "
+            "supprimer ce mouvement pendant la période active du projet."
+        )
+        return redirect(
+            "projet:mouvements_materiaux_projet",
+            projet_id=projet.pk,
+        )
+
+    if request.method == "POST":
+        mouvement.delete()
+        messages.success(
+            request,
+            "Le mouvement de matériau a été supprimé."
+        )
+        return redirect(
+            "projet:mouvements_materiaux_projet",
+            projet_id=projet.pk,
+        )
+
+    return render(
+        request,
+        "projet/materiaux/mouvement_confirm_delete.html",
+        {
+            "projet": projet,
+            "mouvement": mouvement,
+        },
     )

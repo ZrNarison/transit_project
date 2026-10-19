@@ -1,0 +1,83 @@
+
+from django import forms
+
+from .models import MateriauMCCR, MouvementMateriauMCCR
+
+
+class MateriauxMCCRForm(forms.ModelForm):
+    class Meta:
+        model = MateriauMCCR
+        fields = ["nom", "unite", "actif"]
+
+        widgets = {
+            "nom": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nom du matériau",
+            }),
+            "unite": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ex. kg, m³, sac",
+            }),
+            "actif": forms.CheckboxInput(attrs={
+                "class": "form-check-input",
+            }),
+        }
+
+
+class MouvementMateriauMCCRForm(forms.ModelForm):
+    class Meta:
+        model = MouvementMateriauMCCR
+
+        fields = [
+            "materiau",
+            "type_mouvement",
+            "quantite",
+            "motif",
+            "date_mouvement",
+            "observation",
+        ]
+
+        widgets = {
+            "materiau": forms.Select(attrs={
+                "class": "form-select",
+            }),
+            "type_mouvement": forms.Select(attrs={
+                "class": "form-select",
+            }),
+            "quantite": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0.01",
+                "step": "0.01",
+            }),
+            "motif": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Motif du mouvement",
+            }),
+            "date_mouvement": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date",
+            }),
+            "observation": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        materiaux = MateriauMCCR.objects.filter(
+            actif=True
+        ).order_by("nom")
+
+        # Autoriser aussi la modification d'un mouvement
+        # dont le matériau a été désactivé.
+        if self.instance and self.instance.pk:
+            materiaux = (
+                materiaux
+                | MateriauMCCR.objects.filter(
+                    pk=self.instance.materiau_id
+                )
+            ).distinct()
+
+        self.fields["materiau"].queryset = materiaux

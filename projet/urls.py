@@ -531,4 +531,27 @@ urlpatterns = [
         name="retour_materiau_projet_delete",
     ),
 
+    path(
+        "<int:projet_id>/materiaux/mouvements/",
+        views.mouvements_materiaux_projet,
+        name="mouvements_materiaux_projet",
+    ),
+    path(
+        "<int:projet_id>/materiaux/mouvements/nouveau/",
+        views.mouvement_materiau_projet_create,
+        name="mouvement_materiau_projet_create",
+    ),
+
+    path(
+        "projets/<int:projet_id>/materiaux/mouvements/<int:mouvement_id>/modifier/",
+        views.mouvement_materiau_projet_update,
+        name="mouvement_materiau_projet_update",
+    ),
+    path(
+        "projets/<int:projet_id>/materiaux/mouvements/<int:mouvement_id>/supprimer/",
+        views.mouvement_materiau_projet_delete,
+        name="mouvement_materiau_projet_delete",
+    ),
+
+
 ]

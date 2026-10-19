@@ -1,3 +1,4 @@
+
 from django.shortcuts import redirect
 from django.urls import resolve, Resolver404, reverse
 
@@ -41,7 +42,7 @@ class LoginRequiredMiddleware:
             return self.get_response(request)
 
         # =====================================================
-        # SESSION ENTREPRISE H
+        # SESSION ENTREPRISE H / MCCR
         # =====================================================
 
         h_user_id = request.session.get("h_user_id")
@@ -49,6 +50,7 @@ class LoginRequiredMiddleware:
 
         h_namespaces = {
             "materiaux",
+            "mccr_materiaux",  # Matériaux MCCR
             "categorie",
             "depotSoc",
             "audit",
@@ -62,16 +64,12 @@ class LoginRequiredMiddleware:
         is_h_route = (
             namespace in h_namespaces
             or view_name.startswith("users:h_")
-            or view_name.startswith(
-                "personnel:h_personnel_"
-            )
-            or view_name.startswith(
-                "salaire:h_salaire_"
-            )
+            or view_name.startswith("personnel:h_personnel_")
+            or view_name.startswith("salaire:h_salaire_")
         )
 
         # =====================================================
-        # CONTRÔLE SESSION ENTREPRISE H
+        # CONTRÔLE SESSION ENTREPRISE H / MCCR
         # =====================================================
 
         if is_h_route:

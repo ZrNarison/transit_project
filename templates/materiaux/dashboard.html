@@ -5,85 +5,153 @@
 {% block page_title %}Tableau de bord des matériaux{% endblock %}
 
 {% block content %}
+
 <div class="row g-3 mb-4">
+
     {% for label, value in stats %}
     <div class="col-md-3">
-        <div class="card p-3">
+        <div class="card p-3 h-100 d-flex flex-column align-items-start">
             <div class="text-muted">{{ label }}</div>
             <h3 class="mb-0">{{ value }}</h3>
         </div>
     </div>
     {% endfor %}
 
+    <!-- MATÉRIAUX -->
     <div class="col-md-3">
-        <div class="card p-3">
+        <div class="card p-3 h-100 d-flex flex-column align-items-start">
             <div class="text-muted">Matériaux</div>
-            <h3>{{ nb_materiaux|default:0 }}</h3>
+            <h3 class="mb-0">{{ nb_materiaux|default:0 }}</h3>
+
+            <a href="{% url 'materiaux:materiaux_list' %}"
+               class="btn btn-primary btn-sm mt-3">
+                <i class="fas fa-boxes-stacked me-1"></i>
+                Gérer les matériaux
+            </a>
         </div>
     </div>
+
+    <!-- ENTRÉES -->
     <div class="col-md-3">
-        <div class="card p-3">
+        <div class="card p-3 h-100 d-flex flex-column align-items-start">
             <div class="text-muted">Entrées</div>
-            <h3>{{ nb_entrees|default:0 }}</h3>
+            <h3 class="mb-0">{{ nb_entrees|default:0 }}</h3>
+
+            <a href="{% url 'materiaux:entrees_list' %}"
+               class="btn btn-success btn-sm mt-3">
+                <i class="fas fa-arrow-down me-1"></i>
+                Gérer les entrées
+            </a>
         </div>
     </div>
+
+    <!-- SORTIES -->
     <div class="col-md-3">
-        <div class="card p-3">
+        <div class="card p-3 h-100 d-flex flex-column align-items-start">
             <div class="text-muted">Sorties</div>
-            <h3>{{ nb_sorties|default:0 }}</h3>
+            <h3 class="mb-0">{{ nb_sorties|default:0 }}</h3>
+
+            <a href="{% url 'materiaux:sorties_list' %}"
+               class="btn btn-warning btn-sm mt-3">
+                <i class="fas fa-arrow-up me-1"></i>
+                Gérer les sorties
+            </a>
         </div>
     </div>
+
+    <!-- VÉHICULES -->
     <div class="col-md-3">
-        <div class="card p-3">
+        <div class="card p-3 h-100 d-flex flex-column align-items-start">
             <div class="text-muted">Véhicules</div>
-            <h3>{{ nb_vehicules|default:0 }}</h3>
+            <h3 class="mb-0">{{ nb_vehicules|default:0 }}</h3>
+
+            <a href="{% url 'materiaux:vehicules_list' %}"
+               class="btn btn-info btn-sm mt-3">
+                <i class="fas fa-truck me-1"></i>
+                Gérer les véhicules
+            </a>
         </div>
     </div>
+
 </div>
 
+<!-- DERNIÈRES ENTRÉES ET SORTIES -->
 <div class="row g-3">
+
+    <!-- DERNIÈRES ENTRÉES -->
     <div class="col-lg-6">
-        <div class="card p-3">
-            <h5>Dernières entrées</h5>
+        <div class="card p-3 h-100">
+            <h5>
+                <i class="fas fa-arrow-down text-success me-2"></i>
+                Dernières entrées
+            </h5>
+
             <div class="table-responsive">
-                <table class="table table-sm table-striped">
-                    <thead><tr><th>Date</th><th>Matériau</th><th>Quantité</th></tr></thead>
+                <table class="table table-sm table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Matériau</th>
+                            <th>Quantité</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                    {% for entree in dernières_entrees %}
+                        {% for entree in dernieres_entrees %}
                         <tr>
                             <td>{{ entree.date_entree|date:"d/m/Y" }}</td>
                             <td>{{ entree.materiau.libelle }}</td>
                             <td>{{ entree.entree }}</td>
                         </tr>
-                    {% empty %}
-                        <tr><td colspan="3" class="text-center">Aucune entrée.</td></tr>
-                    {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                Aucune entrée.
+                            </td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <!-- DERNIÈRES SORTIES -->
     <div class="col-lg-6">
-        <div class="card p-3">
-            <h5>Dernières sorties</h5>
+        <div class="card p-3 h-100">
+            <h5>
+                <i class="fas fa-arrow-up text-danger me-2"></i>
+                Dernières sorties
+            </h5>
+
             <div class="table-responsive">
-                <table class="table table-sm table-striped">
-                    <thead><tr><th>Date</th><th>Matériau</th><th>Quantité</th></tr></thead>
+                <table class="table table-sm table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Matériau</th>
+                            <th>Quantité</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                    {% for sortie in dernieres_sorties %}
+                        {% for sortie in dernieres_sorties %}
                         <tr>
                             <td>{{ sortie.date_sortie|date:"d/m/Y" }}</td>
                             <td>{{ sortie.division.entree.materiau.libelle }}</td>
                             <td>{{ sortie.quantite }}</td>
                         </tr>
-                    {% empty %}
-                        <tr><td colspan="3" class="text-center">Aucune sortie.</td></tr>
-                    {% endfor %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                Aucune sortie.
+                            </td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
 </div>
+
 {% endblock %}
