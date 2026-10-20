@@ -129,6 +129,7 @@ def _crud_delete(request, model, pk, list_url_name, label):
     return render(request, "materiaux/confirm_delete.html", {"objet": obj, "object": obj, "titre": f"Supprimer {label.lower()}"})
 
 
+
 @mccr_required
 def dashboard(request):
     context = {

@@ -24,6 +24,7 @@ class MateriauxMCCRForm(forms.ModelForm):
         }
 
 
+
 class MouvementMateriauMCCRForm(forms.ModelForm):
     class Meta:
         model = MouvementMateriauMCCR
@@ -32,6 +33,7 @@ class MouvementMateriauMCCRForm(forms.ModelForm):
             "materiau",
             "type_mouvement",
             "quantite",
+            "prix_unitaire",
             "motif",
             "date_mouvement",
             "observation",
@@ -48,6 +50,12 @@ class MouvementMateriauMCCRForm(forms.ModelForm):
                 "class": "form-control",
                 "min": "0.01",
                 "step": "0.01",
+            }),
+            "prix_unitaire": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "step": "0.01",
+                "placeholder": "Prix unitaire en Ariary",
             }),
             "motif": forms.TextInput(attrs={
                 "class": "form-control",
@@ -70,8 +78,8 @@ class MouvementMateriauMCCRForm(forms.ModelForm):
             actif=True
         ).order_by("nom")
 
-        # Autoriser aussi la modification d'un mouvement
-        # dont le matériau a été désactivé.
+        # Autoriser la modification d'un mouvement
+        # même si son matériau a été désactivé.
         if self.instance and self.instance.pk:
             materiaux = (
                 materiaux

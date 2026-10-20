@@ -1,175 +1,158 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div class="container-fluid py-4">
 
-    <!-- ======================================================
-         EN-TÊTE GALAXY
-    ======================================================= -->
+    <!-- EN-TÊTE -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h2 class="fw-bold mb-1">
                 <i class="fas fa-boxes-stacked me-2"></i>
-                Matériaux du projet
+                Tableau de bord des matériaux
             </h2>
-
             <div class="text-muted">
-                Projet : <strong>{{ projet|title }}</strong>
+                Projet : <strong>{{ projet }}</strong>
             </div>
         </div>
 
-        <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-2 no-print">
             <a href="{% url 'projet:projet_detail' projet_id=projet.pk %}"
                class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-1"></i>
-                Retour au projet
+                <i class="fas fa-arrow-left me-1"></i> Retour au projet
             </a>
 
             <a href="{% url 'projet:materiau_list' projet_id=projet.pk %}"
                class="btn btn-outline-primary">
-                <i class="fas fa-boxes-stacked me-1"></i>
-                Matériaux
+                <i class="fas fa-boxes me-1"></i> Matériaux
             </a>
 
             <a href="{% url 'projet:mouvements_materiaux_projet' projet_id=projet.pk %}"
                class="btn btn-outline-dark">
-                <i class="fas fa-clock me-1"></i>
-                Historique
+                <i class="fas fa-exchange-alt me-1"></i> Mouvements
             </a>
 
             <a href="{% url 'projet:mouvement_materiau_projet_create' projet_id=projet.pk %}"
                class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i>
-                Nouveau mouvement
+                <i class="fas fa-plus me-1"></i> Nouveau mouvement
             </a>
 
             <button type="button"
-                    class="btn btn-outline-secondary"
+                    class="btn btn-success"
                     onclick="window.print()">
-                <i class="fas fa-print me-1"></i>
-                Imprimer
+                <i class="fas fa-print me-1"></i> Imprimer
             </button>
         </div>
     </div>
 
-    <!-- ======================================================
-         MESSAGES DJANGO
-    ======================================================= -->
+    <!-- MESSAGES -->
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show no-print"
                  role="alert">
                 {{ message }}
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="alert"
-                        aria-label="Fermer"></button>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="alert" aria-label="Fermer"></button>
             </div>
         {% endfor %}
     {% endif %}
 
-    <!-- ======================================================
-         INDICATEURS DU PROJET
-    ======================================================= -->
+    <!-- INDICATEURS -->
     <div class="row g-3 mb-4">
 
-        <div class="col-6 col-xl-4">
+        <div class="col-12 col-sm-6 col-xl-2">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted small">
-                        Matériaux référencés
-                    </div>
-
-                    <div class="fs-3 fw-bold">
-                        {{ nombre_materiaux|default:0 }}
-                    </div>
-
-                    <a href="{% url 'projet:materiau_list' projet_id=projet.pk %}"
-                       class="small">
-                        Voir les matériaux
-                    </a>
+                    <div class="text-muted small">Matériaux</div>
+                    <div class="fs-3 fw-bold">{{ nombre_materiaux|default:0 }}</div>
+                    <i class="fas fa-boxes text-primary"></i>
                 </div>
             </div>
         </div>
 
-        <div class="col-6 col-xl-4">
+        <div class="col-12 col-sm-6 col-xl-2">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted small">
-                        Quantités prévues
-                    </div>
-
-                    <div class="fs-3 fw-bold text-primary">
-                        {{ total_prevu|default_if_none:0|floatformat:2 }}
-                    </div>
+                    <div class="text-muted small">Quantité prévue</div>
+                    <div class="fs-4 fw-bold">{{ total_prevu|default:0|floatformat:2 }}</div>
+                    <div class="small text-muted">Toutes unités confondues</div>
                 </div>
             </div>
         </div>
 
-        <div class="col-6 col-xl-4">
+        <div class="col-12 col-sm-6 col-xl-2">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted small">
-                        Entrées / réceptions
-                    </div>
-
-                    <div class="fs-3 fw-bold text-success">
-                        {{ total_recu|default_if_none:0|floatformat:2 }}
-                    </div>
-
-                    <div class="small text-muted">
-                        {{ nombre_receptions|default:0 }} entrée(s)
-                    </div>
+                    <div class="text-muted small">Quantité reçue</div>
+                    <div class="fs-4 fw-bold text-success">{{ total_recu|default:0|floatformat:2 }}</div>
+                    <div class="small text-muted">Entrées enregistrées</div>
                 </div>
             </div>
         </div>
 
-        <div class="col-6 col-xl-4">
+        <div class="col-12 col-sm-6 col-xl-2">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted small">
-                        Quantités utilisées
-                    </div>
-
-                    <div class="fs-3 fw-bold text-info">
-                        {{ total_utilise|default_if_none:0|floatformat:2 }}
-                    </div>
+                    <div class="text-muted small">Quantité sortie</div>
+                    <div class="fs-4 fw-bold text-danger">{{ total_utilise|default:0|floatformat:2 }}</div>
+                    <div class="small text-muted">Toutes les sorties</div>
                 </div>
             </div>
         </div>
 
-        <div class="col-6 col-xl-4">
+        <div class="col-12 col-sm-6 col-xl-2">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted small">
-                        Retours cumulés
-                    </div>
+                    <div class="text-muted small">Quantité retournée</div>
+                    <div class="fs-4 fw-bold text-warning">{{ total_retourne|default:0|floatformat:2 }}</div>
+                    <div class="small text-muted">Retours enregistrés</div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="fs-3 fw-bold text-danger">
-                        {{ total_retourne|default_if_none:0|floatformat:2 }}
-                    </div>
+        <div class="col-12 col-sm-6 col-xl-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Stock restant valorisé</div>
+                    <div class="fs-4 fw-bold text-primary">{{ total_restant|default:0|floatformat:2 }}</div>
+                    <div class="small text-muted">Entrées − sorties</div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="small text-muted">
-                        {{ nombre_retours|default:0 }} retour(s)
+    </div>
+
+    <!-- RÉSUMÉ FINANCIER -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Montant total des entrées</div>
+                    <div class="fs-4 fw-bold text-success">
+                        {{ total_montant_entrees|default:0|floatformat:2 }} Ar
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-6 col-xl-4">
+        <div class="col-12 col-md-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
-                    <div class="text-muted small">
-                        Solde calculé du projet
+                    <div class="text-muted small">Montant total utilisé — toutes sorties</div>
+                    <div class="fs-4 fw-bold text-danger">
+                        {{ total_montant_utilise|default:0|floatformat:2 }} Ar
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="fs-3 fw-bold
-                        {% if total_restant < 0 %}
-                            text-danger
-                        {% else %}
-                            text-dark
-                        {% endif %}">
-                        {{ total_restant|default_if_none:0|floatformat:2 }}
+        <div class="col-12 col-md-4">
+            <div class="card border-primary shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Valeur du stock restant</div>
+                    <div class="fs-4 fw-bold text-primary">
+                        {{ total_valeur_stock|default:0|floatformat:2 }} Ar
                     </div>
                 </div>
             </div>
@@ -177,272 +160,177 @@
 
     </div>
 
-    <!-- ======================================================
-         PROGRESSION D'UTILISATION
-    ======================================================= -->
+    <!-- TAUX D'UTILISATION -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-
-            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-                <span class="fw-semibold">
-                    Taux d'utilisation
-                </span>
-
-                <span class="fw-bold">
-                    {{ taux_utilisation|default_if_none:0|floatformat:1 }} %
-                </span>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Taux de sortie des matériaux
+                </h5>
+                <span class="fw-bold">{{ taux_utilisation|default:0|floatformat:1 }} %</span>
             </div>
 
-            <div class="progress" style="height: 16px;">
+            <div class="progress" style="height:14px;">
                 <div class="progress-bar
-                    {% if taux_progression >= 100 %}
-                        bg-success
-                    {% elif taux_progression >= 60 %}
-                        bg-info
-                    {% else %}
-                        bg-primary
-                    {% endif %}"
+                    {% if taux_utilisation >= 90 %}bg-danger
+                    {% elif taux_utilisation >= 60 %}bg-warning
+                    {% else %}bg-success{% endif %}"
                     role="progressbar"
+                    style="width:{{ taux_progression|default:0 }}%;"
                     aria-valuenow="{{ taux_progression|default:0 }}"
                     aria-valuemin="0"
-                    aria-valuemax="100"
-                    style="width:{% if taux_progression > 100 %}100{% elif taux_progression < 0 %}0{% else %}{{ taux_progression|default:0 }}{% endif %}%;">
+                    aria-valuemax="100">
                 </div>
             </div>
 
             <div class="small text-muted mt-2">
-                Calculé à partir des quantités utilisées et des entrées enregistrées.
+                Quantité totale sortie divisée par quantité totale reçue.
             </div>
-
         </div>
     </div>
 
-    <!-- ======================================================
-         STOCK PAR MATÉRIAU
-    ======================================================= -->
+    <!-- SITUATION DES MATÉRIAUX -->
     <div class="card border-0 shadow-sm mb-4">
-
-        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
-            <h5 class="fw-bold mb-0">
-                <i class="fas fa-warehouse me-2"></i>
-                Stock par matériau
-            </h5>
-
-            <a href="{% url 'projet:materiau_list' projet_id=projet.pk %}"
-               class="btn btn-sm btn-outline-primary">
-                <i class="fas fa-list me-1"></i>
-                Tous les matériaux
-            </a>
-        </div>
 
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover table-striped align-middle mb-0">
-
-                    <thead class="table-light">
+                    <thead class="table-dark text-center text-white">
                         <tr>
                             <th>Matériau</th>
                             <th>Unité</th>
                             <th class="text-end">Prévu</th>
                             <th class="text-end">Reçu</th>
-                            <th class="text-end">Utilisé</th>
+                            <th class="text-end">Sorti</th>
                             <th class="text-end">Retourné</th>
-                            <th class="text-end">Restant</th>
+                            <th class="text-end">Stock calculé</th>
+                            <th class="text-end">Prix moyen (Ar)</th>
+                            <th class="text-end">Montant reçu (Ar)</th>
+                            <th class="text-end">Montant utilisé (Ar)</th>
+                            <th class="text-end">Valeur du stock (Ar)</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        {% for ligne in materiaux_projet %}
+                        {% for materiau in materiaux_stats %}
                             <tr>
-                                <td class="fw-semibold">
-                                    {{ ligne.materiau }}
-                                </td>
-
-                                <td>
-                                    {{ ligne.unite }}
-                                </td>
-
-                                <td class="text-end">
-                                    {{ ligne.quantite_prevue|default_if_none:0|floatformat:2 }}
-                                </td>
-
-                                <td class="text-end text-success">
-                                    {{ ligne.quantite_recue|default_if_none:0|floatformat:2 }}
-                                </td>
-
-                                <td class="text-end text-info">
-                                    {{ ligne.quantite_utilisee|default_if_none:0|floatformat:2 }}
-                                </td>
-
-                                <td class="text-end text-danger">
-                                    {{ ligne.quantite_retournee|default_if_none:0|floatformat:2 }}
-                                </td>
-
-                                <td class="text-end fw-bold
-                                    {% if ligne.quantite_restante < 0 %}
-                                        text-danger
-                                    {% else %}
-                                        text-success
-                                    {% endif %}">
-                                    {{ ligne.quantite_restante|default_if_none:0|floatformat:2 }}
-                                </td>
+                                <td><strong>{{ materiau.materiau }}</strong></td>
+                                <td>{{ materiau.unite|default:"—" }}</td>
+                                <td class="text-end">{{ materiau.quantite_prevue|default:0|floatformat:2 }}</td>
+                                <td class="text-end text-success">{{ materiau.quantite_recue|default:0|floatformat:2 }}</td>
+                                <td class="text-end text-danger">{{ materiau.quantite_utilisee|default:0|floatformat:2 }}</td>
+                                <td class="text-end text-warning">{{ materiau.quantite_retournee|default:0|floatformat:2 }}</td>
+                                <td class="text-end fw-bold">{{ materiau.quantite_restante|default:0|floatformat:2 }}</td>
+                                <td class="text-end">{{ materiau.prix_unitaire_moyen|default:0|floatformat:2 }}</td>
+                                <td class="text-end">{{ materiau.montant_recu|default:0|floatformat:2 }}</td>
+                                <td class="text-end text-danger">{{ materiau.montant_utilise|default:0|floatformat:2 }}</td>
+                                <td class="text-end fw-bold text-primary">{{ materiau.montant_restant|default:0|floatformat:2 }}</td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="7"
-                                    class="text-center text-muted py-4">
-                                    <i class="fas fa-box-open fa-2x mb-2 d-block"></i>
-                                    Aucun matériau référencé pour ce projet.
-
-                                    <div class="mt-2">
-                                        <a href="{% url 'projet:materiau_list' projet_id=projet.pk %}">
-                                            Ajouter ou consulter les matériaux
-                                        </a>
-                                    </div>
+                                <td colspan="11" class="text-center text-muted py-4">
+                                    <i class="fas fa-box-open fa-2x mb-2"></i>
+                                    <div>Aucun matériau enregistré pour ce projet.</div>
                                 </td>
                             </tr>
                         {% endfor %}
                     </tbody>
 
-                    {% if materiaux_projet %}
-                    <tfoot class="table-light fw-bold">
-                        <tr>
-                            <td colspan="2">Total indicatif</td>
-                            <td class="text-end">
-                                {{ total_prevu|default_if_none:0|floatformat:2 }}
-                            </td>
-                            <td class="text-end text-success">
-                                {{ total_recu|default_if_none:0|floatformat:2 }}
-                            </td>
-                            <td class="text-end text-info">
-                                {{ total_utilise|default_if_none:0|floatformat:2 }}
-                            </td>
-                            <td class="text-end text-danger">
-                                {{ total_retourne|default_if_none:0|floatformat:2 }}
-                            </td>
-                            <td class="text-end">
-                                {{ total_restant|default_if_none:0|floatformat:2 }}
-                            </td>
-                        </tr>
-                    </tfoot>
+                    {% if materiaux_stats %}
+                        <tfoot class="table-light fw-bold">
+                            <tr>
+                                <td colspan="2">TOTAL</td>
+                                <td class="text-end">{{ total_prevu|default:0|floatformat:2 }}</td>
+                                <td class="text-end text-success">{{ total_recu|default:0|floatformat:2 }}</td>
+                                <td class="text-end text-danger">{{ total_utilise|default:0|floatformat:2 }}</td>
+                                <td class="text-end text-warning">{{ total_retourne|default:0|floatformat:2 }}</td>
+                                <td class="text-end">{{ total_restant|default:0|floatformat:2 }}</td>
+                                <td class="text-end">—</td>
+                                <td class="text-end">{{ total_montant_entrees|default:0|floatformat:2 }}</td>
+                                <td class="text-end">{{ total_montant_utilise|default:0|floatformat:2 }}</td>
+                                <td class="text-end text-primary">{{ total_valeur_stock|default:0|floatformat:2 }}</td>
+                            </tr>
+                        </tfoot>
                     {% endif %}
-
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- ======================================================
-         STOCK PAR POINT DU PROJET
-    ======================================================= -->
+    <!-- STOCK PAR POINT -->
     <div class="card border-0 shadow-sm mb-4">
-
-        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
+        <div class="card-header bg-white py-3">
             <h5 class="fw-bold mb-0">
-                <i class="fas fa-location-dot me-2"></i>
-                Stock par point du projet
+                <i class="fas fa-warehouse me-2"></i>
+                Stock disponible par point
+            </h5>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-dark text-center text-white">
+                        <tr>
+                            <th>Matériau</th>
+                            <th>Point de stockage</th>
+                            <th>Unité</th>
+                            <th class="text-end">Quantité disponible</th>
+                            <th class="text-end">Prix moyen (Ar)</th>
+                            <th class="text-end">Valeur du stock (Ar)</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for stock in stocks_par_point %}
+                            <tr>
+                                <td>{{ stock.materiau }}</td>
+                                <td>{{ stock.point }}</td>
+                                <td>{{ stock.unite|default:"—" }}</td>
+                                <td class="text-end fw-bold">{{ stock.quantite|default:0|floatformat:2 }}</td>
+                                <td class="text-end">{{ stock.prix_unitaire_moyen|default:0|floatformat:2 }}</td>
+                                <td class="text-end fw-bold text-primary">{{ stock.montant_stock|default:0|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    Aucun stock par point disponible.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- DERNIERS MOUVEMENTS -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="fw-bold mb-0">
+                <i class="fas fa-history me-2"></i>
+                Derniers mouvements de matériaux
             </h5>
 
             <a href="{% url 'projet:mouvements_materiaux_projet' projet_id=projet.pk %}"
-               class="btn btn-sm btn-outline-primary">
-                <i class="fas fa-clock me-1"></i>
-                Historique des mouvements
+               class="btn btn-sm btn-outline-primary no-print">
+                Voir tous les mouvements
+                <i class="fas fa-arrow-right ms-1"></i>
             </a>
         </div>
 
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover table-striped align-middle mb-0">
-
-                    <thead class="table-light">
-                        <tr>
-                            <th>Matériau</th>
-                            <th>Point</th>
-                            <th>Unité</th>
-                            <th class="text-end">Stock disponible</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for ligne in stocks %}
-                            <tr>
-                                <td class="fw-semibold">
-                                    {{ ligne.materiau }}
-                                </td>
-
-                                <td>
-                                    {{ ligne.point|default:"—" }}
-                                </td>
-
-                                <td>
-                                    {{ ligne.unite }}
-                                </td>
-
-                                <td class="text-end fw-bold
-                                    {% if ligne.stock < 0 %}
-                                        text-danger
-                                    {% elif ligne.stock == 0 %}
-                                        text-muted
-                                    {% else %}
-                                        text-success
-                                    {% endif %}">
-                                    {{ ligne.stock|default_if_none:0|floatformat:2 }}
-                                    {{ ligne.unite }}
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="4"
-                                    class="text-center text-muted py-4">
-                                    <i class="fas fa-warehouse fa-2x mb-2 d-block"></i>
-                                    Aucun stock par point à afficher.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- ======================================================
-         DERNIERS MOUVEMENTS
-    ======================================================= -->
-    <div class="card border-0 shadow-sm mb-4">
-
-        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2 py-3">
-            <h5 class="fw-bold mb-0">
-                <i class="fas fa-clock me-2"></i>
-                Derniers mouvements
-            </h5>
-
-            <div class="d-flex flex-wrap gap-2">
-                <a href="{% url 'projet:mouvements_materiaux_projet' projet_id=projet.pk %}"
-                   class="btn btn-sm btn-outline-primary">
-                    Historique complet
-                </a>
-
-                <a href="{% url 'projet:mouvement_materiau_projet_create' projet_id=projet.pk %}"
-                   class="btn btn-sm btn-primary">
-                    <i class="fas fa-plus me-1"></i>
-                    Ajouter
-                </a>
-            </div>
-        </div>
-
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-
-                    <thead class="table-light">
+                    <thead class="table-dark text-center text-white">
                         <tr>
                             <th>Date</th>
                             <th>Matériau</th>
                             <th>Type</th>
-                            <th>Départ</th>
-                            <th>Arrivée</th>
+                            <th>Point de départ</th>
+                            <th>Point d'arrivée</th>
                             <th class="text-end">Quantité</th>
+                            <th class="text-end">Montant estimé (Ar)</th>
                             <th>Enregistré par</th>
                         </tr>
                     </thead>
@@ -450,70 +338,39 @@
                     <tbody>
                         {% for mouvement in derniers_mouvements %}
                             <tr>
-                                <td class="text-nowrap">
-                                    {{ mouvement.date_mouvement|date:"d/m/Y" }}
-                                </td>
-
-                                <td class="fw-semibold">
-                                    {{ mouvement.materiau_projet.materiau }}
-                                </td>
-
+                                <td>{{ mouvement.date_mouvement|date:"d/m/Y" }}</td>
+                                <td>{{ mouvement.materiau_projet }}</td>
                                 <td>
                                     {% if mouvement.type_mouvement == "ENTREE" %}
-                                        <span class="badge bg-success">
-                                            Entrée
-                                        </span>
+                                        <span class="badge bg-success">Entrée</span>
                                     {% elif mouvement.type_mouvement == "SORTIE" %}
-                                        <span class="badge bg-danger">
-                                            Sortie
-                                        </span>
+                                        <span class="badge bg-danger">Sortie</span>
                                     {% elif mouvement.type_mouvement == "RETOUR" %}
-                                        <span class="badge bg-info text-dark">
-                                            Retour
-                                        </span>
+                                        <span class="badge bg-warning text-dark">Retour</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">
-                                            {{ mouvement.get_type_mouvement_display }}
-                                        </span>
+                                        <span class="badge bg-secondary">{{ mouvement.type_mouvement }}</span>
                                     {% endif %}
                                 </td>
-
+                                <td>{{ mouvement.point_depart|default:"—" }}</td>
+                                <td>{{ mouvement.point_arrivee|default:"—" }}</td>
+                                <td class="text-end">{{ mouvement.quantite|default:0|floatformat:2 }}</td>
+                                <td class="text-end">{{ mouvement.montant_mouvement|default:0|floatformat:2 }}</td>
                                 <td>
-                                    {{ mouvement.point_depart|default:"—" }}
-                                </td>
-
-                                <td>
-                                    {{ mouvement.point_arrivee|default:"—" }}
-                                </td>
-
-                                <td class="text-end fw-bold text-nowrap">
-                                    {{ mouvement.quantite|floatformat:2 }}
-                                    {{ mouvement.materiau_projet.unite }}
-                                </td>
-
-                                <td>
-                                    {{ mouvement.enregistre_par|default:"—" }}
+                                    {% if mouvement.enregistre_par %}
+                                        {{ mouvement.enregistre_par }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="7"
-                                    class="text-center text-muted py-4">
-                                    <i class="fas fa-exchange-alt fa-2x mb-2 d-block"></i>
-                                    Aucun mouvement enregistré.
-
-                                    <div class="mt-2">
-                                        <a href="{% url 'projet:mouvement_materiau_projet_create' projet_id=projet.pk %}"
-                                           class="btn btn-sm btn-primary">
-                                            <i class="fas fa-plus me-1"></i>
-                                            Enregistrer le premier mouvement
-                                        </a>
-                                    </div>
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    Aucun mouvement enregistré pour ce projet.
                                 </td>
                             </tr>
                         {% endfor %}
                     </tbody>
-
                 </table>
             </div>
         </div>
@@ -521,21 +378,23 @@
 
 </div>
 
-<!-- ======================================================
-     STYLE D'IMPRESSION
-======================================================= -->
 <style>
     @media print {
-        nav,
-        .navbar,
-        .btn,
-        a.btn,
-        .alert-dismissible .btn-close {
-            display: none !important;
+        @page {
+            size: landscape;
+            margin: 10mm;
         }
 
         body {
             background: #fff !important;
+            font-size: 10px !important;
+        }
+
+        .no-print,
+        .btn,
+        nav,
+        footer {
+            display: none !important;
         }
 
         .container-fluid {
@@ -545,14 +404,10 @@
         }
 
         .card {
-            border: 1px solid #ddd !important;
             box-shadow: none !important;
+            border: 1px solid #ddd !important;
             break-inside: avoid;
             margin-bottom: 12px !important;
-        }
-
-        .card-header {
-            background: #f8f9fa !important;
         }
 
         .table-responsive {
@@ -561,16 +416,30 @@
 
         table {
             width: 100% !important;
-            font-size: 10px !important;
+            font-size: 8px !important;
+            border-collapse: collapse !important;
         }
 
-        h2 {
-            font-size: 20px !important;
+        th,
+        td {
+            padding: 4px !important;
+            border: 1px solid #ccc !important;
+            color: #000 !important;
         }
 
-        .progress {
-            border: 1px solid #aaa;
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            break-inside: avoid;
+        }
+
+        .progress-bar {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
         }
     }
 </style>
+
 {% endblock %}

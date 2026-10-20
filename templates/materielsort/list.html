@@ -152,7 +152,7 @@
 
             <table class="table table-bordered table-striped table-hover align-middle">
 
-                <thead class="table-dark">
+                <thead class="table-dark text-center text-white">
 
                     <tr>
 
@@ -273,28 +273,36 @@
                                 {% if request.session.role == "UserEntreprise" or request.session.role == "Superviseur" %}
 
                                     <!-- MODIFIER -->
+                                    {% if peut_gerer %}
+                                        <a
+                                            href="{% url 'materielsort:materielsort_edit' s.id %}"
+                                            class="btn btn-warning btn-sm"
+                                            title="Modifier"
+                                        >
+                                            ✏
+                                        </a>
 
-                                    <a
-                                        href="{% url 'materielsort:materielsort_edit' s.id %}"
-                                        class="btn btn-warning btn-sm"
-                                        title="Modifier"
-                                    >
-                                        ✏
-                                    </a>
 
+                                        <!-- SUPPRIMER -->
 
-                                    <!-- SUPPRIMER -->
-
-                                    <button
-                                        type="button"
-                                        class="btn btn-danger btn-sm"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#delete{{ s.id }}"
-                                        title="Supprimer"
-                                    >
-                                        🗑
-                                    </button>
-
+                                        <button
+                                            type="button"
+                                            class="btn btn-danger btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#delete{{ s.id }}"
+                                            title="Supprimer"
+                                        >
+                                            🗑
+                                        </button>
+                                    {% elif %}
+                                        <button
+                                            class="btn btn-secondary btn-sm"
+                                            disabled
+                                            title="Vous n'avez pas l'autorisation"
+                                        >
+                                            🔒
+                                        </button>
+                                    {% endif %}
 
                                     <!-- ================================================= -->
                                     <!-- MODAL SUPPRESSION -->

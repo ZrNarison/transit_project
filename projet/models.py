@@ -4205,7 +4205,6 @@ class RapportVehicule(models.Model):
 # ============================================================
 # MOUVEMENTS UNIFIÉS DES MATÉRIAUX D'UN PROJET GALAXY
 # ============================================================
-
 class MouvementMateriauProjet(models.Model):
 
     class TypeMouvement(models.TextChoices):
@@ -4219,6 +4218,7 @@ class MouvementMateriauProjet(models.Model):
         related_name="mouvements_unifies",
         verbose_name="Matériau",
     )
+
     vehicule_transport = models.ForeignKey(
         "VehiculeProjet",
         on_delete=models.PROTECT,
@@ -4260,8 +4260,24 @@ class MouvementMateriauProjet(models.Model):
     quantite = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal("0.01"))],
+        validators=[
+            MinValueValidator(Decimal("0.01")),
+        ],
         verbose_name="Quantité",
+    )
+
+    # Prix obligatoire uniquement pour une entrée.
+    # Pour une sortie ou un retour, la valeur est NULL.
+    prix_unitaire = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[
+            MinValueValidator(Decimal("0.01")),
+        ],
+        null=True,
+        blank=True,
+        verbose_name="Prix unitaire",
+        help_text="À renseigner uniquement pour une entrée.",
     )
 
     observation = models.TextField(
@@ -4278,7 +4294,9 @@ class MouvementMateriauProjet(models.Model):
         verbose_name="Enregistré par",
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
     class Meta:
         ordering = ["-date_mouvement", "-id"]
@@ -4289,16 +4307,69 @@ class MouvementMateriauProjet(models.Model):
         return (
             f"{self.get_type_mouvement_display()} — "
             f"{self.materiau_projet.materiau} — "
-            f"{self.quantite} {self.materiau_projet.unite}"
+            f"{self.quantite} "
+            f"{self.materiau_projet.unite}"
         )
 
+    @property
+    def montant(self):
+        """
+        Montant direct du mouvement.
+        Seules les entrées possèdent un prix unitaire enregistré.
+        La valorisation des sorties et retours utilise le prix
+        moyen calculé dans le tableau de bord.
+        """
+        quantite = self.quantite or Decimal("0.00")
+        prix = self.prix_unitaire or Decimal("0.00")
+
+        return quantite * prix
+
     def clean(self):
+        super().clean()
+
         errors = {}
 
+        # --------------------------------------------------
+        # 1. VÉRIFICATION DU MATÉRIAU
+        # --------------------------------------------------
         if not self.materiau_projet_id:
             errors["materiau_projet"] = (
                 "Sélectionnez un matériau du projet."
             )
+
+        # --------------------------------------------------
+        # 2. VÉRIFICATION DE LA QUANTITÉ
+        # --------------------------------------------------
+        if (
+            self.quantite is not None
+            and self.quantite <= Decimal("0.00")
+        ):
+            errors["quantite"] = (
+                "La quantité doit être supérieure à zéro."
+            )
+
+        # --------------------------------------------------
+        # 3. PRIX UNITAIRE : ENTRÉE UNIQUEMENT
+        # --------------------------------------------------
+        if self.type_mouvement == self.TypeMouvement.ENTREE:
+            if (
+                self.prix_unitaire is None
+                or self.prix_unitaire <= Decimal("0.00")
+            ):
+                errors["prix_unitaire"] = (
+                    "Le prix unitaire est obligatoire pour une entrée."
+                )
+        elif self.type_mouvement in (
+            self.TypeMouvement.SORTIE,
+            self.TypeMouvement.RETOUR,
+        ):
+            # Aucune saisie de prix pour les sorties et les retours.
+            self.prix_unitaire = None
+
+        # --------------------------------------------------
+        # 4. VÉRIFICATION DU PROJET ET DES POINTS
+        # --------------------------------------------------
+        projet_id = None
 
         if self.materiau_projet_id:
             projet_id = self.materiau_projet.projet_id
@@ -4317,10 +4388,24 @@ class MouvementMateriauProjet(models.Model):
                         "au même projet que le matériau."
                     )
 
+        # --------------------------------------------------
+        # 5. VÉRIFICATION DU VÉHICULE
+        # --------------------------------------------------
+        if self.vehicule_transport_id and projet_id is not None:
+            if self.vehicule_transport.projet_id != projet_id:
+                errors["vehicule_transport"] = (
+                    "Le véhicule ou l'engin doit être affecté "
+                    "au même projet que le matériau."
+                )
+
+        # --------------------------------------------------
+        # 6. RÈGLES PROPRES À CHAQUE MOUVEMENT
+        # --------------------------------------------------
         if self.type_mouvement == self.TypeMouvement.ENTREE:
+
             if self.point_depart_id:
                 errors["point_depart"] = (
-                    "Pour une entrée, laissez l'origine vide."
+                    "Pour une entrée, laissez le point d'origine vide."
                 )
 
             if not self.point_arrivee_id:
@@ -4329,9 +4414,15 @@ class MouvementMateriauProjet(models.Model):
                 )
 
         elif self.type_mouvement == self.TypeMouvement.SORTIE:
+
             if not self.point_depart_id:
                 errors["point_depart"] = (
                     "Indiquez le point d'où sort le matériau."
+                )
+
+            if not self.point_arrivee_id:
+                errors["point_arrivee"] = (
+                    "Indiquez le point de destination du matériau."
                 )
 
             if (
@@ -4344,6 +4435,7 @@ class MouvementMateriauProjet(models.Model):
                 )
 
         elif self.type_mouvement == self.TypeMouvement.RETOUR:
+
             if not self.point_depart_id:
                 errors["point_depart"] = (
                     "Indiquez le point d'où revient le matériau."
@@ -4362,18 +4454,11 @@ class MouvementMateriauProjet(models.Model):
                 errors["point_arrivee"] = (
                     "L'origine et la destination doivent être différentes."
                 )
-            # ----------------------------------------------------
-            # VÉHICULE / ENGIN DE TRANSPORT
-            # ----------------------------------------------------
-            if self.vehicule_transport_id and self.materiau_projet_id:
-                if (
-                    self.vehicule_transport.projet_id
-                    != self.materiau_projet.projet_id
-                ):
-                    errors["vehicule_transport"] = (
-                        "Le véhicule ou l'engin doit être affecté "
-                        "au même projet que le matériau."
-                    )
+
+        elif self.type_mouvement:
+            errors["type_mouvement"] = (
+                "Le type de mouvement sélectionné est invalide."
+            )
 
         if errors:
             raise ValidationError(errors)

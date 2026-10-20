@@ -1,9 +1,10 @@
 ﻿from decimal import Decimal
-
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
-
+from decimal import Decimal
+from django.core.validators import MinValueValidator
 from users.models import AppUser, H_AppUser
 
 # ============================================================
@@ -1927,7 +1928,6 @@ class MateriauMCCR(models.Model):
 # MOUVEMENTS DE MATÉRIAUX MCCR
 # ENTRÉE / SORTIE / RETOUR
 # ============================================================
-
 class MouvementMateriauMCCR(models.Model):
 
     class TypeMouvement(models.TextChoices):
@@ -1936,10 +1936,10 @@ class MouvementMateriauMCCR(models.Model):
         RETOUR = "RETOUR", "Retour"
 
     materiau = models.ForeignKey(
-        MateriauMCCR,
+        "MateriauMCCR",
         on_delete=models.PROTECT,
         related_name="mouvements",
-        verbose_name="Matériau",
+        verbose_name="Matériau MCCR",
     )
 
     type_mouvement = models.CharField(
@@ -1951,11 +1951,22 @@ class MouvementMateriauMCCR(models.Model):
     quantite = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
         verbose_name="Quantité",
+    )
+
+    prix_unitaire = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        verbose_name="Prix unitaire (Ar)",
     )
 
     motif = models.CharField(
         max_length=255,
+        blank=True,
+        default="",
         verbose_name="Motif",
     )
 
@@ -1965,102 +1976,50 @@ class MouvementMateriauMCCR(models.Model):
 
     observation = models.TextField(
         blank=True,
+        default="",
         verbose_name="Observation",
     )
 
-    enregistreur = models.ForeignKey(
-        H_AppUser,
-        on_delete=models.PROTECT,
-        related_name="mouvements_materiaux_mccr_enregistres",
-        verbose_name="Enregistré par",
+    created_at = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="Date de création",
     )
 
-    date_creation = models.DateTimeField(
-        auto_now_add=True,
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Dernière modification",
     )
 
     class Meta:
         ordering = ["-date_mouvement", "-id"]
         verbose_name = "Mouvement de matériau MCCR"
-        verbose_name_plural = "Mouvements de matériaux MCCR"
+        verbose_name_plural = "Mouvements des matériaux MCCR"
 
     def __str__(self):
         return (
             f"{self.get_type_mouvement_display()} — "
-            f"{self.materiau.nom} : "
-            f"{self.quantite} {self.materiau.unite}"
+            f"{self.materiau} — "
+            f"{self.quantite}"
         )
+
+    @property
+    def montant(self):
+        quantite = self.quantite or Decimal("0.00")
+        prix = self.prix_unitaire or Decimal("0.00")
+        return quantite * prix
 
     def clean(self):
         super().clean()
+        errors = {}
 
-        erreurs = {}
+        if self.quantite is not None and self.quantite <= Decimal("0.00"):
+            errors["quantite"] = "La quantité doit être supérieure à zéro."
 
-        if self.quantite is None or self.quantite <= 0:
-            erreurs["quantite"] = (
-                "La quantité doit être supérieure à zéro."
-            )
+        if self.prix_unitaire is not None and self.prix_unitaire < Decimal("0.00"):
+            errors["prix_unitaire"] = "Le prix unitaire ne peut pas être négatif."
 
-        if self.motif is not None:
-            self.motif = self.motif.strip()
+        if self.type_mouvement not in self.TypeMouvement.values:
+            errors["type_mouvement"] = "Le type de mouvement est invalide."
 
-        if not self.motif:
-            erreurs["motif"] = "Le motif est obligatoire."
-
-        if erreurs:
-            raise ValidationError(erreurs)
-
-        if not self.materiau_id or not self.type_mouvement:
-            return
-
-        # Le contrôle du stock disponible concerne les sorties.
-        if self.type_mouvement != self.TypeMouvement.SORTIE:
-            return
-
-        mouvements = MouvementMateriauMCCR.objects.filter(
-            materiau_id=self.materiau_id,
-        )
-
-        # En modification, ne pas compter le mouvement lui-même.
-        if self.pk:
-            mouvements = mouvements.exclude(pk=self.pk)
-
-        totaux = mouvements.values(
-            "type_mouvement"
-        ).annotate(
-            total=Sum("quantite")
-        )
-
-        par_type = {
-            ligne["type_mouvement"]: (
-                ligne["total"] or Decimal("0.00")
-            )
-            for ligne in totaux
-        }
-
-        stock_disponible = (
-            par_type.get(
-                self.TypeMouvement.ENTREE,
-                Decimal("0.00"),
-            )
-            + par_type.get(
-                self.TypeMouvement.RETOUR,
-                Decimal("0.00"),
-            )
-            - par_type.get(
-                self.TypeMouvement.SORTIE,
-                Decimal("0.00"),
-            )
-        )
-
-        if self.quantite > stock_disponible:
-            raise ValidationError({
-                "quantite": (
-                    f"Stock insuffisant : {stock_disponible} "
-                    f"{self.materiau.unite} disponible(s)."
-                )
-            })
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
+        if errors:
+            raise ValidationError(errors)

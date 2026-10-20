@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block title %}{{ titre }}{% endblock %}
@@ -6,6 +5,9 @@
 {% block content %}
 <div class="container-fluid py-4">
 
+    <!-- =====================================================
+         EN-TÊTE
+    ====================================================== -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div>
             <h3 class="fw-bold mb-1">
@@ -15,9 +17,9 @@
                 Projet : {{ projet|title }}
             </div>
         </div>
-        
+
         <a href="{% url 'projet:mouvements_materiaux_projet' projet_id=projet.pk %}"
-            class="btn btn-outline-primary">
+           class="btn btn-outline-primary">
             <i class="fas fa-list me-1"></i>
             Mouvements des matériaux
         </a>
@@ -29,12 +31,18 @@
         </a>
     </div>
 
+    <!-- =====================================================
+         FORMULAIRE
+    ====================================================== -->
     <div class="row justify-content-center">
         <div class="col-lg-9">
 
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-white py-3">
-                    <strong>Informations du mouvement de stock</strong>
+                    <strong>
+                        <i class="fas fa-exchange-alt me-2"></i>
+                        Informations du mouvement de stock
+                    </strong>
                 </div>
 
                 <div class="card-body p-4">
@@ -42,38 +50,88 @@
                     <form method="post">
                         {% csrf_token %}
 
+                        <!-- Erreurs générales -->
                         {% if form.non_field_errors %}
                             <div class="alert alert-danger">
-                                {{ form.non_field_errors }}
+                                {% for error in form.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
                             </div>
                         {% endif %}
 
                         <div class="row g-3">
+
                             {% for field in form %}
-                                <div class="{% if field.name == 'observation' %}col-12{% else %}col-md-6{% endif %}">
-                                    <label for="{{ field.id_for_label }}"
-                                           class="form-label fw-semibold">
-                                        {{ field.label }}
-                                    </label>
 
-                                    {{ field }}
+                                {% if field.name == "prix_unitaire" %}
 
-                                    {% if field.help_text %}
+                                    <!-- Prix unitaire : entrée uniquement -->
+                                    <div class="col-md-6"
+                                         id="bloc-prix-unitaire"
+                                         style="display: none;">
+
+                                        <label for="{{ field.id_for_label }}"
+                                               class="form-label fw-semibold">
+                                            {{ field.label }}
+                                            <span class="text-danger">*</span>
+                                        </label>
+
+                                        <div class="input-group">
+                                            {{ field }}
+                                            <span class="input-group-text">Ar</span>
+                                        </div>
+
                                         <div class="form-text">
-                                            {{ field.help_text }}
+                                            Prix d'achat unitaire applicable
+                                            uniquement aux entrées de matériaux.
                                         </div>
-                                    {% endif %}
 
-                                    {% for error in field.errors %}
-                                        <div class="text-danger small mt-1">
-                                            {{ error }}
-                                        </div>
-                                    {% endfor %}
-                                </div>
+                                        {% for error in field.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% else %}
+
+                                    <!-- Autres champs du formulaire -->
+                                    <div class="{% if field.name == 'observation' %}col-12{% else %}col-md-6{% endif %}">
+
+                                        <label for="{{ field.id_for_label }}"
+                                               class="form-label fw-semibold">
+                                            {{ field.label }}
+
+                                            {% if field.field.required %}
+                                                <span class="text-danger">*</span>
+                                            {% endif %}
+                                        </label>
+
+                                        {{ field }}
+
+                                        {% if field.help_text %}
+                                            <div class="form-text">
+                                                {{ field.help_text }}
+                                            </div>
+                                        {% endif %}
+
+                                        {% for error in field.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
                             {% endfor %}
-                        </div>
 
+                        </div>
+                        <!-- Boutons -->
                         <div class="d-flex flex-wrap gap-2 mt-4">
+
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-1"></i>
                                 {{ bouton }}
@@ -81,9 +139,12 @@
 
                             <a href="{% url 'projet:mouvements_materiaux_projet' projet.id %}"
                                class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>
                                 Annuler
                             </a>
+
                         </div>
+
                     </form>
 
                 </div>
@@ -93,4 +154,45 @@
     </div>
 
 </div>
+
+<!-- =========================================================
+     AFFICHAGE DYNAMIQUE DU PRIX UNITAIRE
+========================================================== -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const typeMouvement = document.getElementById(
+        "{{ form.type_mouvement.id_for_label }}"
+    );
+
+    const blocPrix = document.getElementById("bloc-prix-unitaire");
+
+    const prixUnitaire = document.getElementById(
+        "{{ form.prix_unitaire.id_for_label }}"
+    );
+
+    if (!typeMouvement || !blocPrix || !prixUnitaire) {
+        return;
+    }
+
+    function actualiserPrixUnitaire() {
+        const estEntree = typeMouvement.value === "ENTREE";
+
+        blocPrix.style.display = estEntree ? "" : "none";
+
+        // Le prix est obligatoire dans le navigateur pour une entrée.
+        prixUnitaire.required = estEntree;
+
+        // Pour une sortie ou un retour, aucun prix n'est envoyé.
+        if (!estEntree) {
+            prixUnitaire.value = "";
+        }
+    }
+
+    typeMouvement.addEventListener("change", actualiserPrixUnitaire);
+
+    // Initialisation à l'ouverture du formulaire.
+    actualiserPrixUnitaire();
+});
+</script>
+
 {% endblock %}

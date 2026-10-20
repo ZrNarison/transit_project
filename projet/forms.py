@@ -5425,11 +5425,11 @@ class EquipeMateriauProjetForm(forms.ModelForm):
 # ============================================================
 # FORMULAIRE UNIQUE DES MOUVEMENTS DE MATÉRIAUX
 # ============================================================
-
 class MouvementMateriauProjetForm(forms.ModelForm):
 
     class Meta:
         model = MouvementMateriauProjet
+
         fields = [
             "type_mouvement",
             "materiau_projet",
@@ -5438,6 +5438,7 @@ class MouvementMateriauProjetForm(forms.ModelForm):
             "vehicule_transport",
             "date_mouvement",
             "quantite",
+            "prix_unitaire",
             "observation",
         ]
 
@@ -5468,40 +5469,72 @@ class MouvementMateriauProjetForm(forms.ModelForm):
                     "class": "form-control",
                     "min": "0.01",
                     "step": "0.01",
+                    "placeholder": "Saisir la quantité",
+                }
+            ),
+            "prix_unitaire": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                    "placeholder": "Prix unitaire en Ariary",
                 }
             ),
             "observation": forms.Textarea(
                 attrs={
                     "class": "form-control",
                     "rows": 3,
+                    "placeholder": "Observation facultative",
                 }
             ),
         }
 
     def __init__(self, *args, projet=None, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.projet = projet
 
+        # Libellés
         self.fields["type_mouvement"].label = "Type de mouvement"
         self.fields["materiau_projet"].label = "Matériau"
         self.fields["point_depart"].label = "Point d'origine"
         self.fields["point_arrivee"].label = "Point de destination"
-        self.fields["vehicule_transport"].label = "Véhicule / Engin de transport"
-        self.fields["date_mouvement"].label = "Date"
+        self.fields["vehicule_transport"].label = (
+            "Véhicule / Engin de transport"
+        )
+        self.fields["date_mouvement"].label = "Date du mouvement"
         self.fields["quantite"].label = "Quantité"
+        self.fields["prix_unitaire"].label = "Prix unitaire (Ar)"
         self.fields["observation"].label = "Observation"
 
-        self.fields["point_depart"].required = False
-        self.fields["point_arrivee"].required = False
-        self.fields["vehicule_transport"].required = False
-        self.fields["observation"].required = False
+        # Champs facultatifs
+        for champ in (
+            "point_depart",
+            "point_arrivee",
+            "vehicule_transport",
+            "observation",
+            "prix_unitaire",
+        ):
+            self.fields[champ].required = False
 
-        # Valeurs proposées par défaut : aucun véhicule.
+        # Querysets limités au projet
+        self.fields["materiau_projet"].queryset = (
+            MateriauProjet.objects.none()
+        )
+        self.fields["point_depart"].queryset = PointProjet.objects.none()
+        self.fields["point_arrivee"].queryset = PointProjet.objects.none()
         self.fields["vehicule_transport"].queryset = (
             VehiculeProjet.objects.none()
         )
+
         self.fields["vehicule_transport"].empty_label = (
             "Aucun véhicule / engin"
+        )
+        self.fields["point_depart"].empty_label = (
+            "Sélectionner le point d'origine"
+        )
+        self.fields["point_arrivee"].empty_label = (
+            "Sélectionner le point de destination"
         )
 
         if projet is not None:
@@ -5529,26 +5562,53 @@ class MouvementMateriauProjetForm(forms.ModelForm):
                 .order_by("vehicule", "id")
             )
 
-        self.fields["point_depart"].empty_label = "Aucun (entrée)"
-        self.fields["point_arrivee"].empty_label = "Sélectionner un point"
-
     def clean(self):
         cleaned_data = super().clean()
 
-        mouvement = self.instance
-
-        mouvement.materiau_projet = cleaned_data.get("materiau_projet")
-        mouvement.type_mouvement = cleaned_data.get("type_mouvement")
-        mouvement.point_depart = cleaned_data.get("point_depart")
-        mouvement.point_arrivee = cleaned_data.get("point_arrivee")
-        mouvement.vehicule_transport = cleaned_data.get("vehicule_transport")
-        mouvement.date_mouvement = cleaned_data.get("date_mouvement")
-        mouvement.quantite = cleaned_data.get("quantite")
-        mouvement.observation = cleaned_data.get("observation", "")
-
         materiau = cleaned_data.get("materiau_projet")
+        type_mouvement = cleaned_data.get("type_mouvement")
+        point_depart = cleaned_data.get("point_depart")
+        point_arrivee = cleaned_data.get("point_arrivee")
         vehicule = cleaned_data.get("vehicule_transport")
+        quantite = cleaned_data.get("quantite")
+        prix_unitaire = cleaned_data.get("prix_unitaire")
 
+        entree = (
+            type_mouvement
+            == MouvementMateriauProjet.TypeMouvement.ENTREE
+        )
+        sortie = (
+            type_mouvement
+            == MouvementMateriauProjet.TypeMouvement.SORTIE
+        )
+        retour = (
+            type_mouvement
+            == MouvementMateriauProjet.TypeMouvement.RETOUR
+        )
+
+        # Prix : obligatoire uniquement pour une entrée
+        if entree:
+            if prix_unitaire is None:
+                self.add_error(
+                    "prix_unitaire",
+                    "Le prix unitaire est obligatoire pour une entrée.",
+                )
+            elif prix_unitaire <= 0:
+                self.add_error(
+                    "prix_unitaire",
+                    "Le prix unitaire doit être supérieur à zéro.",
+                )
+        elif sortie or retour:
+            cleaned_data["prix_unitaire"] = None
+
+        # Quantité
+        if quantite is not None and quantite <= 0:
+            self.add_error(
+                "quantite",
+                "La quantité doit être supérieure à zéro.",
+            )
+
+        # Matériau appartenant au projet
         if self.projet and materiau:
             if materiau.projet_id != self.projet.pk:
                 self.add_error(
@@ -5556,6 +5616,22 @@ class MouvementMateriauProjetForm(forms.ModelForm):
                     "Ce matériau n'appartient pas à ce projet.",
                 )
 
+        # Points appartenant au projet
+        if self.projet and point_depart:
+            if point_depart.projet_id != self.projet.pk:
+                self.add_error(
+                    "point_depart",
+                    "Ce point d'origine n'appartient pas à ce projet.",
+                )
+
+        if self.projet and point_arrivee:
+            if point_arrivee.projet_id != self.projet.pk:
+                self.add_error(
+                    "point_arrivee",
+                    "Ce point de destination n'appartient pas à ce projet.",
+                )
+
+        # Véhicule appartenant au projet
         if self.projet and vehicule:
             if vehicule.projet_id != self.projet.pk:
                 self.add_error(
@@ -5563,14 +5639,70 @@ class MouvementMateriauProjetForm(forms.ModelForm):
                     "Ce véhicule ou engin n'appartient pas à ce projet.",
                 )
 
-        try:
-            mouvement.clean()
-        except forms.ValidationError as exc:
-            if hasattr(exc, "message_dict"):
-                for field, errors in exc.message_dict.items():
-                    for error in errors:
-                        self.add_error(field, error)
-            else:
-                self.add_error(None, exc)
+        # Règles de circulation des matériaux
+        if entree:
+            if point_depart:
+                self.add_error(
+                    "point_depart",
+                    "Pour une entrée, laissez le point d'origine vide.",
+                )
+
+            if not point_arrivee:
+                self.add_error(
+                    "point_arrivee",
+                    "Indiquez le point qui reçoit le matériau.",
+                )
+
+        elif sortie:
+            if not point_depart:
+                self.add_error(
+                    "point_depart",
+                    "Indiquez le point d'où sort le matériau.",
+                )
+
+            if not point_arrivee:
+                self.add_error(
+                    "point_arrivee",
+                    "Indiquez le point de destination du matériau.",
+                )
+
+            if (
+                point_depart
+                and point_arrivee
+                and point_depart.pk == point_arrivee.pk
+            ):
+                self.add_error(
+                    "point_arrivee",
+                    "L'origine et la destination doivent être différentes.",
+                )
+
+        elif retour:
+            if not point_depart:
+                self.add_error(
+                    "point_depart",
+                    "Indiquez le point d'où revient le matériau.",
+                )
+
+            if not point_arrivee:
+                self.add_error(
+                    "point_arrivee",
+                    "Indiquez le point qui reçoit le retour.",
+                )
+
+            if (
+                point_depart
+                and point_arrivee
+                and point_depart.pk == point_arrivee.pk
+            ):
+                self.add_error(
+                    "point_arrivee",
+                    "L'origine et la destination doivent être différentes.",
+                )
+
+        elif type_mouvement:
+            self.add_error(
+                "type_mouvement",
+                "Le type de mouvement sélectionné est invalide.",
+            )
 
         return cleaned_data

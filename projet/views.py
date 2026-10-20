@@ -6495,17 +6495,17 @@ def avance_equipe_projet_delete(request, projet_id, avance_id):
 def dashboard_materiaux(request, projet_id):
     from decimal import Decimal
 
-    from django.db.models import Q, Sum
+    from django.db.models import Q
     from django.shortcuts import render
 
     projet = request.projet
     ZERO = Decimal("0.00")
 
-    # ======================================================
+    # ==========================================================
     # 1. MATÉRIAUX ET MOUVEMENTS DU PROJET
-    # ======================================================
+    # ==========================================================
 
-    materiaux = (
+    materiaux = list(
         MateriauProjet.objects
         .filter(projet=projet)
         .order_by("materiau", "id")
@@ -6523,201 +6523,276 @@ def dashboard_materiaux(request, projet_id):
         .order_by("-date_mouvement", "-id")
     )
 
-    # ======================================================
-    # 2. CALCUL DES STOCKS
-    # ======================================================
+    mouvements_par_materiau = {}
 
-    materiaux_projet = []
-    stocks = []
+    for mouvement in mouvements:
+        mouvements_par_materiau.setdefault(
+            mouvement.materiau_projet_id, []
+        ).append(mouvement)
+
+    materiaux_stats = []
+    stocks_par_point_dict = {}
+
+    # ==========================================================
+    # 2. TOTAUX GÉNÉRAUX
+    # ==========================================================
 
     total_prevu = ZERO
     total_recu = ZERO
-    total_entree_depot = ZERO
-    total_livraison_directe = ZERO
     total_sorti_depot = ZERO
     total_utilise = ZERO
     total_retourne = ZERO
-    total_stock_depot = ZERO
-    total_restant_equipes = ZERO
     total_solde_global = ZERO
 
-    # Dictionnaire permettant de regrouper les mouvements
-    # par point sans générer toutes les combinaisons possibles.
-    stocks_par_point = {}
+    total_montant_prevu = ZERO
+    total_montant_entrees = ZERO
+    total_montant_sorties = ZERO
+    total_montant_utilise = ZERO
+    total_montant_retourne = ZERO
+    total_valeur_stock = ZERO
+
+    # ==========================================================
+    # 3. CALCUL PAR MATÉRIAU
+    # ==========================================================
 
     for materiau in materiaux:
+        mouvements_materiau = mouvements_par_materiau.get(
+            materiau.pk, []
+        )
+
         quantite_prevue = materiau.quantite_prevue or ZERO
 
-        mouvements_materiau = mouvements.filter(
-            materiau_projet=materiau
+        entrees = [
+            m for m in mouvements_materiau
+            if m.type_mouvement == "ENTREE"
+        ]
+
+        sorties = [
+            m for m in mouvements_materiau
+            if m.type_mouvement == "SORTIE"
+        ]
+
+        retours = [
+            m for m in mouvements_materiau
+            if m.type_mouvement == "RETOUR"
+        ]
+
+        # ------------------------------------------------------
+        # ENTRÉES ET PRIX MOYEN PONDÉRÉ
+        # ------------------------------------------------------
+
+        quantite_recue = sum(
+            (m.quantite or ZERO for m in entrees),
+            ZERO,
         )
 
-        # --------------------------------------------------
-        # Entrées enregistrées
-        # --------------------------------------------------
-
-        quantite_recue = (
-            mouvements_materiau
-            .filter(type_mouvement="ENTREE")
-            .aggregate(total=Sum("quantite"))["total"]
-            or ZERO
+        montant_entrees = sum(
+            (
+                (m.quantite or ZERO)
+                * (m.prix_unitaire or ZERO)
+                for m in entrees
+            ),
+            ZERO,
         )
 
-        # --------------------------------------------------
-        # Quantité consommée/sortie du projet :
-        # sortie sans point d'arrivée
-        # --------------------------------------------------
-
-        quantite_utilisee = (
-            mouvements_materiau
-            .filter(
-                type_mouvement="SORTIE",
-                point_arrivee__isnull=True,
-            )
-            .aggregate(total=Sum("quantite"))["total"]
-            or ZERO
+        prix_moyen = (
+            montant_entrees / quantite_recue
+            if quantite_recue > ZERO
+            else ZERO
         )
 
-        # --------------------------------------------------
-        # Retours enregistrés
-        # --------------------------------------------------
+        # ------------------------------------------------------
+        # SORTIES ET RETOURS
+        # ------------------------------------------------------
 
-        quantite_retournee = (
-            mouvements_materiau
-            .filter(type_mouvement="RETOUR")
-            .aggregate(total=Sum("quantite"))["total"]
-            or ZERO
+        quantite_sortie = sum(
+            (m.quantite or ZERO for m in sorties),
+            ZERO,
         )
 
-        # Total des opérations de sortie, transferts compris
-        quantite_sortie = (
-            mouvements_materiau
-            .filter(type_mouvement="SORTIE")
-            .aggregate(total=Sum("quantite"))["total"]
-            or ZERO
+        quantite_retournee = sum(
+            (m.quantite or ZERO for m in retours),
+            ZERO,
         )
 
-        # --------------------------------------------------
-        # STOCK PAR POINT
-        #
-        # On ne retient que les points concernés par au moins
-        # un mouvement de ce matériau.
-        # --------------------------------------------------
+        # Toutes les sorties comptent dans le montant utilisé.
+        quantite_utilisee = quantite_sortie
+
+        montant_sorties = quantite_sortie * prix_moyen
+        montant_utilise = quantite_sortie * prix_moyen
+        montant_retourne = quantite_retournee * prix_moyen
+
+        # ------------------------------------------------------
+        # STOCK PHYSIQUE PAR POINT
+        # ------------------------------------------------------
 
         points_concernes = {}
 
         for mouvement in mouvements_materiau:
-            point_depart = mouvement.point_depart
-            point_arrivee = mouvement.point_arrivee
+            if mouvement.point_depart_id:
+                points_concernes[mouvement.point_depart_id] = (
+                    mouvement.point_depart
+                )
 
-            if point_depart is not None:
-                points_concernes[point_depart.pk] = point_depart
-
-            if point_arrivee is not None:
-                points_concernes[point_arrivee.pk] = point_arrivee
+            if mouvement.point_arrivee_id:
+                points_concernes[mouvement.point_arrivee_id] = (
+                    mouvement.point_arrivee
+                )
 
         stock_materiau_total = ZERO
 
         for point_id, point in points_concernes.items():
-
-            entrees_point = (
-                mouvements_materiau
-                .filter(point_arrivee_id=point_id)
-                .aggregate(total=Sum("quantite"))["total"]
-                or ZERO
+            quantite_entree_point = sum(
+                (
+                    m.quantite or ZERO
+                    for m in mouvements_materiau
+                    if m.point_arrivee_id == point_id
+                ),
+                ZERO,
             )
 
-            sorties_point = (
-                mouvements_materiau
-                .filter(point_depart_id=point_id)
-                .aggregate(total=Sum("quantite"))["total"]
-                or ZERO
+            quantite_sortie_point = sum(
+                (
+                    m.quantite or ZERO
+                    for m in mouvements_materiau
+                    if m.point_depart_id == point_id
+                ),
+                ZERO,
             )
 
-            stock_point = entrees_point - sorties_point
+            stock_point = (
+                quantite_entree_point - quantite_sortie_point
+            )
 
-            # Ne pas afficher les stocks nuls des points
-            # simplement traversés ou concernés par un retour.
+            stock_materiau_total += stock_point
+
             if stock_point != ZERO:
-                stocks_par_point[(materiau.pk, point_id)] = {
+                stocks_par_point_dict[
+                    (materiau.pk, point_id)
+                ] = {
                     "materiau": materiau.materiau,
                     "materiau_projet": materiau,
                     "point": point,
                     "unite": materiau.unite,
                     "stock": stock_point,
+                    "quantite": stock_point,
+                    "prix_unitaire_moyen": prix_moyen,
+                    "montant_stock": stock_point * prix_moyen,
                 }
 
-            stock_materiau_total += stock_point
+        # ------------------------------------------------------
+        # VALORISATION FINANCIÈRE SELON TES FORMULES
+        # ------------------------------------------------------
 
-        # --------------------------------------------------
-        # SOLDE GLOBAL
-        # --------------------------------------------------
+        montant_prevu = quantite_prevue * prix_moyen
 
-        solde_global = stock_materiau_total
+        # Formule demandée :
+        # (quantité entrée - quantité sortie) × prix moyen.
+        quantite_stock_valorisee = quantite_recue - quantite_sortie
 
-        # Compatibilité avec les anciennes colonnes
-        quantite_entree_depot = quantite_recue
-        quantite_livree_directement = ZERO
-        stock_depot = ZERO
-        restant_equipes = stock_materiau_total
+        montant_restant = (
+            quantite_stock_valorisee * prix_moyen
+        )
 
-        materiaux_projet.append({
+        # ------------------------------------------------------
+        # MONTANT DE CHAQUE MOUVEMENT POUR LE TABLEAU HISTORIQUE
+        # ------------------------------------------------------
+
+        for mouvement in mouvements_materiau:
+            if mouvement.type_mouvement == "ENTREE":
+                mouvement.montant_mouvement = (
+                    (mouvement.quantite or ZERO)
+                    * (mouvement.prix_unitaire or ZERO)
+                )
+            else:
+                mouvement.montant_mouvement = (
+                    (mouvement.quantite or ZERO) * prix_moyen
+                )
+
+            mouvement.prix_moyen_materiau = prix_moyen
+
+        # ------------------------------------------------------
+        # LIGNE DU TABLEAU DES MATÉRIAUX
+        # ------------------------------------------------------
+
+        ligne = {
             "materiau": materiau.materiau,
+            "materiau_projet": materiau,
             "unite": materiau.unite,
+
             "quantite_prevue": quantite_prevue,
             "quantite_recue": quantite_recue,
-            "quantite_entree_depot": quantite_entree_depot,
-            "quantite_livree_directement": quantite_livree_directement,
             "quantite_sortie_depot": quantite_sortie,
             "quantite_utilisee": quantite_utilisee,
             "quantite_retournee": quantite_retournee,
-            "quantite_restante": solde_global,
-            "stock_depot": stock_depot,
-            "restant_equipes": restant_equipes,
-            "solde_global": solde_global,
-        })
 
-        # --------------------------------------------------
+            "quantite_restante": quantite_stock_valorisee,
+            "stock_materiau_total": stock_materiau_total,
+            "solde_global": stock_materiau_total,
+
+            "prix_unitaire_moyen": prix_moyen,
+
+            "montant_prevu": montant_prevu,
+            "montant_recu": montant_entrees,
+            "montant_sortie": montant_sorties,
+            "montant_utilise": montant_utilise,
+            "montant_retourne": montant_retourne,
+            "montant_restant": montant_restant,
+
+            # Compatibilité avec les anciens champs du template.
+            "quantite_entree_depot": quantite_recue,
+            "quantite_livree_directement": ZERO,
+            "stock_depot": ZERO,
+            "restant_equipes": stock_materiau_total,
+        }
+
+        materiaux_stats.append(ligne)
+
+        # ------------------------------------------------------
         # TOTAUX
-        # --------------------------------------------------
+        # ------------------------------------------------------
 
         total_prevu += quantite_prevue
         total_recu += quantite_recue
-        total_entree_depot += quantite_entree_depot
-        total_livraison_directe += quantite_livree_directement
         total_sorti_depot += quantite_sortie
         total_utilise += quantite_utilisee
         total_retourne += quantite_retournee
-        total_stock_depot += stock_depot
-        total_restant_equipes += restant_equipes
-        total_solde_global += solde_global
+        total_solde_global += stock_materiau_total
 
-    # Ordre stable : matériau, puis point
-    stocks = sorted(
-        stocks_par_point.values(),
+        total_montant_prevu += montant_prevu
+        total_montant_entrees += montant_entrees
+        total_montant_sorties += montant_sorties
+        total_montant_utilise += montant_utilise
+        total_montant_retourne += montant_retourne
+        total_valeur_stock += montant_restant
+
+    # ==========================================================
+    # 4. STOCK PAR POINT
+    # ==========================================================
+
+    stocks_par_point = sorted(
+        stocks_par_point_dict.values(),
         key=lambda ligne: (
             str(ligne["materiau"]).casefold(),
-            ligne["point"].pk,
+            str(ligne["point"]).casefold(),
         ),
     )
 
-    # ======================================================
-    # 3. DERNIERS MOUVEMENTS
-    # ======================================================
+    # ==========================================================
+    # 5. DERNIERS MOUVEMENTS
+    # ==========================================================
 
-    derniers_mouvements = mouvements[:10]
+    derniers_mouvements = list(mouvements[:10])
 
-    # ======================================================
-    # 4. ANCIENNES LISTES CONSERVÉES
-    # ======================================================
+    # ==========================================================
+    # 6. HISTORIQUES EXISTANTS
+    # ==========================================================
 
     dernieres_receptions = (
         ReceptionMateriauProjet.objects
         .filter(materiau_projet__projet=projet)
         .select_related(
-            "materiau_projet",
-            "point",
-            "enregistre_par",
+            "materiau_projet", "point", "enregistre_par"
         )
         .order_by("-date_reception", "-id")[:10]
     )
@@ -6766,11 +6841,11 @@ def dashboard_materiaux(request, projet_id):
         .order_by("-date_retour", "-id")[:10]
     )
 
-    # ======================================================
-    # 5. NOMBRE D'OPÉRATIONS
-    # ======================================================
+    # ==========================================================
+    # 7. COMPTEURS ET INDICATEURS
+    # ==========================================================
 
-    nombre_materiaux = materiaux.count()
+    nombre_materiaux = len(materiaux)
 
     nombre_receptions = mouvements.filter(
         type_mouvement="ENTREE"
@@ -6784,10 +6859,6 @@ def dashboard_materiaux(request, projet_id):
         type_mouvement="RETOUR"
     ).count()
 
-    # ======================================================
-    # 6. TAUX D'UTILISATION
-    # ======================================================
-
     taux_utilisation = (
         total_utilise / total_recu * Decimal("100")
         if total_recu > ZERO
@@ -6799,27 +6870,44 @@ def dashboard_materiaux(request, projet_id):
         Decimal("100"),
     )
 
-    # ======================================================
-    # 7. CONTEXTE DU TEMPLATE
-    # ======================================================
+    # ==========================================================
+    # 8. CONTEXTE
+    # ==========================================================
 
     context = {
         "projet": projet,
-        "materiaux_projet": materiaux_projet,
-        "stocks": stocks,
+
+        "materiaux_stats": materiaux_stats,
+        "materiaux_projet": materiaux_stats,
+        "stocks_par_point": stocks_par_point,
+        "stocks": stocks_par_point,
         "derniers_mouvements": derniers_mouvements,
 
         "total_prevu": total_prevu,
         "total_recu": total_recu,
-        "total_entree_depot": total_entree_depot,
-        "total_livraison_directe": total_livraison_directe,
+        "total_entree_depot": total_recu,
+        "total_livraison_directe": ZERO,
         "total_sorti_depot": total_sorti_depot,
         "total_utilise": total_utilise,
         "total_retourne": total_retourne,
-        "total_stock_depot": total_stock_depot,
-        "total_restant_equipes": total_restant_equipes,
+        "total_stock_depot": ZERO,
+        "total_restant_equipes": total_solde_global,
         "total_solde_global": total_solde_global,
-        "total_restant": total_solde_global,
+        "total_restant": sum(
+            (
+                ligne["quantite_recue"]
+                - ligne["quantite_sortie_depot"]
+                for ligne in materiaux_stats
+            ),
+            ZERO,
+        ),
+
+        "total_montant_prevu": total_montant_prevu,
+        "total_montant_entrees": total_montant_entrees,
+        "total_montant_sorties": total_montant_sorties,
+        "total_montant_utilise": total_montant_utilise,
+        "total_montant_retourne": total_montant_retourne,
+        "total_valeur_stock": total_valeur_stock,
 
         "nombre_materiaux": nombre_materiaux,
         "nombre_receptions": nombre_receptions,

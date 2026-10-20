@@ -247,7 +247,7 @@
                         <ul class="dropdown-menu shadow">
 
                             <!-- MAGASIN -->                        
-                                {% if request.session.role == "" or  request.session.role == "Admin" or request.session.role == "Superviseur"  %}
+                                {% if request.session.role == "UserEntreprise" or  request.session.role == "Admin" or request.session.role == "Superviseur"  %}
                                 <li><a class="dropdown-item" href="{% url 'materiels:materiels_list' %}">🛠️ Stock matériel</a></li>
                                 <li><a class="dropdown-item" href="{% url 'materielEntre:materielEntre_list' %}">📥 Entrée matériel</a></li>
                                 <li><a class="dropdown-item" href="{% url 'materielsort:materielsort_list' %}">📤 Sortie matériel</a></li>

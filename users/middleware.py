@@ -50,7 +50,13 @@ class LoginRequiredMiddleware:
 
         h_namespaces = {
             "materiaux",
-            "mccr_materiaux",  # Matériaux MCCR
+            # "materiels",
+            # "materielEntre",
+            # "materielSort",
+            "depotSoc",
+            "salaire",
+            # "avances",
+            "mccr_materiaux", 
             "categorie",
             "depotSoc",
             "audit",
@@ -66,6 +72,10 @@ class LoginRequiredMiddleware:
             or view_name.startswith("users:h_")
             or view_name.startswith("personnel:h_personnel_")
             or view_name.startswith("salaire:h_salaire_")
+            or view_name.startswith("depotSoc:h_depot_soc_")
+            or view_name.startswith("materiels:h_salaire_")
+            or view_name.startswith("materielEntre:h_materielEntre_")
+            or view_name.startswith("materielsort:h_materielsort_")
         )
 
         # =====================================================
