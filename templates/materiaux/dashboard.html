@@ -1,155 +1,343 @@
 
 {% extends "materiaux/base.html" %}
 
-{% block title %}Tableau de bord matériaux{% endblock %}
-{% block page_title %}Tableau de bord des matériaux{% endblock %}
+{% block materiaux_content %}
 
-{% block content %}
+<div class="container-fluid py-4">
 
-<div class="row g-3 mb-4">
-
-    {% for label, value in stats %}
-    <div class="col-md-3">
-        <div class="card p-3 h-100 d-flex flex-column align-items-start">
-            <div class="text-muted">{{ label }}</div>
-            <h3 class="mb-0">{{ value }}</h3>
+    <!-- =====================================================
+         EN-TÊTE DU DASHBOARD MCCR
+    ====================================================== -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="fas fa-warehouse me-2"></i>
+                Tableau de bord MCCR
+            </h2>
+            <p class="text-muted mb-0">
+                Gestion des matériaux, des mouvements et des montants financiers.
+            </p>
         </div>
-    </div>
-    {% endfor %}
 
-    <!-- MATÉRIAUX -->
-    <div class="col-md-3">
-        <div class="card p-3 h-100 d-flex flex-column align-items-start">
-            <div class="text-muted">Matériaux</div>
-            <h3 class="mb-0">{{ nb_materiaux|default:0 }}</h3>
-
+        <div class="d-flex flex-wrap gap-2">
             <a href="{% url 'materiaux:materiaux_list' %}"
-               class="btn btn-primary btn-sm mt-3">
-                <i class="fas fa-boxes-stacked me-1"></i>
-                Gérer les matériaux
+               class="btn btn-primary">
+                <i class="fas fa-boxes me-1"></i>
+                Matériaux
+            </a>
+
+            <a href="{% url 'materiaux:mouvements_mccr_list' %}"
+               class="btn btn-outline-primary">
+                <i class="fas fa-exchange-alt me-1"></i>
+                Mouvements
             </a>
         </div>
     </div>
 
-    <!-- ENTRÉES -->
-    <div class="col-md-3">
-        <div class="card p-3 h-100 d-flex flex-column align-items-start">
-            <div class="text-muted">Entrées</div>
-            <h3 class="mb-0">{{ nb_entrees|default:0 }}</h3>
+    <!-- =====================================================
+         STATISTIQUES DES MATÉRIAUX
+    ====================================================== -->
+    <h5 class="fw-bold mb-3">
+        <i class="fas fa-boxes-stacked me-2"></i>
+        État des matériaux
+    </h5>
 
-            <a href="{% url 'materiaux:entrees_list' %}"
-               class="btn btn-success btn-sm mt-3">
-                <i class="fas fa-arrow-down me-1"></i>
-                Gérer les entrées
-            </a>
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-boxes fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Total matériaux</div>
+                        <h3 class="fw-bold mb-0">
+                            {{ nombre_materiaux|default:0 }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Matériaux actifs</div>
+                        <h3 class="fw-bold mb-0">
+                            {{ nombre_materiaux_actifs|default:0 }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="rounded-circle bg-secondary bg-opacity-10 p-3 me-3">
+                        <i class="fas fa-ban fa-2x text-secondary"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Matériaux inactifs</div>
+                        <h3 class="fw-bold mb-0">
+                            {{ nombre_materiaux_inactifs|default:0 }}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- SORTIES -->
-    <div class="col-md-3">
-        <div class="card p-3 h-100 d-flex flex-column align-items-start">
-            <div class="text-muted">Sorties</div>
-            <h3 class="mb-0">{{ nb_sorties|default:0 }}</h3>
+    <!-- =====================================================
+         STATISTIQUES DES MOUVEMENTS
+    ====================================================== -->
+    <h5 class="fw-bold mb-3">
+        <i class="fas fa-chart-column me-2"></i>
+        Mouvements de matériaux
+    </h5>
 
-            <a href="{% url 'materiaux:sorties_list' %}"
-               class="btn btn-warning btn-sm mt-3">
-                <i class="fas fa-arrow-up me-1"></i>
-                Gérer les sorties
-            </a>
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Nombre de mouvements</span>
+                        <i class="fas fa-exchange-alt text-primary fa-lg"></i>
+                    </div>
+                    <h3 class="fw-bold mt-2 mb-0">
+                        {{ nombre_mouvements|default:0 }}
+                    </h3>
+                </div>
+            </div>
         </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Quantité entrée</span>
+                        <i class="fas fa-arrow-down text-success fa-lg"></i>
+                    </div>
+                    <h3 class="fw-bold text-success mt-2 mb-0">
+                        {{ total_entrees|default:0|floatformat:2 }}
+                    </h3>
+                    <small class="text-muted">Entrées en stock</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Quantité sortie</span>
+                        <i class="fas fa-arrow-up text-danger fa-lg"></i>
+                    </div>
+                    <h3 class="fw-bold text-danger mt-2 mb-0">
+                        {{ total_sorties|default:0|floatformat:2 }}
+                    </h3>
+                    <small class="text-muted">Sorties de stock</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">Quantité retournée</span>
+                        <i class="fas fa-undo text-info fa-lg"></i>
+                    </div>
+                    <h3 class="fw-bold text-info mt-2 mb-0">
+                        {{ total_retours|default:0|floatformat:2 }}
+                    </h3>
+                    <small class="text-muted">Retours enregistrés</small>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- VÉHICULES -->
-    <div class="col-md-3">
-        <div class="card p-3 h-100 d-flex flex-column align-items-start">
-            <div class="text-muted">Véhicules</div>
-            <h3 class="mb-0">{{ nb_vehicules|default:0 }}</h3>
+    <!-- =====================================================
+         RÉSUMÉ FINANCIER
+    ====================================================== -->
+    <h5 class="fw-bold mb-3">
+        <i class="fas fa-money-bill-wave me-2"></i>
+        Résumé financier
+    </h5>
 
-            <a href="{% url 'materiaux:vehicules_list' %}"
-               class="btn btn-info btn-sm mt-3">
-                <i class="fas fa-truck me-1"></i>
-                Gérer les véhicules
-            </a>
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm border-start border-4 border-success h-100">
+                <div class="card-body">
+                    <div class="text-muted small">
+                        <i class="fas fa-cart-plus me-1"></i>
+                        Total des achats
+                    </div>
+                    <h4 class="fw-bold text-success mt-2 mb-0">
+                        {{ montant_achats|default:0|floatformat:2 }} Ar
+                    </h4>
+                    <small class="text-muted">
+                        Quantité entrée × prix d'achat
+                    </small>
+                </div>
+            </div>
         </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm border-start border-4 border-primary h-100">
+                <div class="card-body">
+                    <div class="text-muted small">
+                        <i class="fas fa-cash-register me-1"></i>
+                        Total des ventes
+                    </div>
+                    <h4 class="fw-bold text-primary mt-2 mb-0">
+                        {{ montant_ventes|default:0|floatformat:2 }} Ar
+                    </h4>
+                    <small class="text-muted">
+                        Quantité sortie × prix de vente
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm border-start border-4 border-info h-100">
+                <div class="card-body">
+                    <div class="text-muted small">
+                        <i class="fas fa-undo me-1"></i>
+                        Valeur des retours
+                    </div>
+                    <h4 class="fw-bold text-info mt-2 mb-0">
+                        {{ montant_retours|default:0|floatformat:2 }} Ar
+                    </h4>
+                    <small class="text-muted">
+                        Quantité retournée × prix unitaire
+                    </small>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-</div>
+    <!-- =====================================================
+         DERNIERS MOUVEMENTS
+    ====================================================== -->
+    <div class="card border-0 shadow-sm">
 
-<!-- DERNIÈRES ENTRÉES ET SORTIES -->
-<div class="row g-3">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Dix derniers mouvements
+                </h5>
 
-    <!-- DERNIÈRES ENTRÉES -->
-    <div class="col-lg-6">
-        <div class="card p-3 h-100">
-            <h5>
-                <i class="fas fa-arrow-down text-success me-2"></i>
-                Dernières entrées
-            </h5>
+                <a href="{% url 'materiaux:mouvements_mccr_list' %}"
+                   class="btn btn-sm btn-outline-primary">
+                    Voir tous les mouvements
+                    <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
 
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-sm table-striped align-middle">
-                    <thead>
+                <table class="table table-hover table-striped align-middle mb-0">
+
+                    <thead class="table-light">
                         <tr>
-                            <th>Date</th>
+                            <th class="text-nowrap">Date</th>
                             <th>Matériau</th>
-                            <th>Quantité</th>
+                            <th>Type</th>
+                            <th class="text-end">Quantité</th>
+                            <th class="text-end">Prix unitaire</th>
+                            <th class="text-end">Montant</th>
+                            <th>Motif</th>
                         </tr>
                     </thead>
+
                     <tbody>
-                        {% for entree in dernieres_entrees %}
-                        <tr>
-                            <td>{{ entree.date_entree|date:"d/m/Y" }}</td>
-                            <td>{{ entree.materiau.libelle }}</td>
-                            <td>{{ entree.entree }}</td>
-                        </tr>
+                        {% for mouvement in derniers_mouvements %}
+                            <tr>
+                                <td class="text-nowrap">
+                                    {{ mouvement.date_mouvement|date:"d/m/Y" }}
+                                </td>
+
+                                <td>
+                                    <span class="fw-semibold">
+                                        {{ mouvement.materiau.nom|default:mouvement.materiau }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {% if mouvement.type_mouvement == "ENTREE" %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-arrow-down me-1"></i>
+                                            Entrée
+                                        </span>
+                                    {% elif mouvement.type_mouvement == "SORTIE" %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-arrow-up me-1"></i>
+                                            Sortie
+                                        </span>
+                                    {% elif mouvement.type_mouvement == "RETOUR" %}
+                                        <span class="badge bg-info text-dark">
+                                            <i class="fas fa-undo me-1"></i>
+                                            Retour
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            {{ mouvement.type_mouvement }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    {{ mouvement.quantite|floatformat:2 }}
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    {{ mouvement.prix_unitaire|floatformat:2 }} Ar
+                                </td>
+
+                                <td class="text-end text-nowrap fw-semibold">
+                                    {{ mouvement.montant_mouvement|default_if_none:0|floatformat:2 }} Ar
+                                </td>
+
+                                <td>
+                                    {{ mouvement.motif|default:"—" }}
+                                </td>
+                            </tr>
                         {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center text-muted">
-                                Aucune entrée.
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted mb-0">
+                                        Aucun mouvement de matériau enregistré.
+                                    </p>
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
+
                 </table>
             </div>
         </div>
-    </div>
 
-    <!-- DERNIÈRES SORTIES -->
-    <div class="col-lg-6">
-        <div class="card p-3 h-100">
-            <h5>
-                <i class="fas fa-arrow-up text-danger me-2"></i>
-                Dernières sorties
-            </h5>
-
-            <div class="table-responsive">
-                <table class="table table-sm table-striped align-middle">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Matériau</th>
-                            <th>Quantité</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for sortie in dernieres_sorties %}
-                        <tr>
-                            <td>{{ sortie.date_sortie|date:"d/m/Y" }}</td>
-                            <td>{{ sortie.division.entree.materiau.libelle }}</td>
-                            <td>{{ sortie.quantite }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center text-muted">
-                                Aucune sortie.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="card-footer bg-white text-muted small">
+            <i class="fas fa-info-circle me-1"></i>
+            Les montants sont calculés à partir du prix unitaire enregistré
+            pour chaque mouvement.
         </div>
+
     </div>
 
 </div>

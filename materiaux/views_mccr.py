@@ -7,7 +7,10 @@ from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+from decimal import Decimal
 
+from django.db.models import Sum, Q, F, ExpressionWrapper, DecimalField
+from django.shortcuts import render
 from users.models import H_AppUser
 
 from .forms_mccr import MateriauxMCCRForm, MouvementMateriauMCCRForm
@@ -99,11 +102,20 @@ def valeur_type(type_mouvement):
 @mccr_required
 def dashboard_mccr(request):
     materiaux = MateriauMCCR.objects.all().order_by("nom")
-    mouvements = MouvementMateriauMCCR.objects.select_related(
-        "materiau",
-        "enregistreur",
-    ).order_by("-date_mouvement", "-pk")
 
+    # Le modèle MouvementMateriauMCCR ne possède pas
+    # de relation "enregistreur".
+    mouvements = (
+        MouvementMateriauMCCR.objects
+        .select_related("materiau")
+        .order_by("-date_mouvement", "-pk")
+    )
+
+    ZERO = Decimal("0.00")
+
+    # ---------------------------------------------------------
+    # 1. TOTAUX DES QUANTITÉS
+    # ---------------------------------------------------------
     resume = mouvements.aggregate(
         total_entrees=Sum(
             "quantite",
@@ -119,16 +131,84 @@ def dashboard_mccr(request):
         ),
     )
 
+    total_entrees = resume["total_entrees"] or ZERO
+    total_sorties = resume["total_sorties"] or ZERO
+    total_retours = resume["total_retours"] or ZERO
+
+    # ---------------------------------------------------------
+    # 2. TOTAUX FINANCIERS
+    # Chaque mouvement a son propre prix unitaire.
+    # Entrée = prix d'achat ; sortie = prix de vente.
+    # ---------------------------------------------------------
+    expression_montant = ExpressionWrapper(
+        F("quantite") * F("prix_unitaire"),
+        output_field=DecimalField(
+            max_digits=24,
+            decimal_places=2,
+        ),
+    )
+
+    montants = mouvements.aggregate(
+        montant_achats=Sum(
+            expression_montant,
+            filter=Q(type_mouvement="ENTREE"),
+        ),
+        montant_ventes=Sum(
+            expression_montant,
+            filter=Q(type_mouvement="SORTIE"),
+        ),
+        montant_retours=Sum(
+            expression_montant,
+            filter=Q(type_mouvement="RETOUR"),
+        ),
+    )
+
+    montant_achats = montants["montant_achats"] or ZERO
+    montant_ventes = montants["montant_ventes"] or ZERO
+    montant_retours = montants["montant_retours"] or ZERO
+
+    # ---------------------------------------------------------
+    # 3. MONTANTS CALCULÉS POUR L'AFFICHAGE
+    # ---------------------------------------------------------
+    derniers_mouvements = list(mouvements[:10])
+
+    for mouvement in derniers_mouvements:
+        quantite = mouvement.quantite or ZERO
+        prix = mouvement.prix_unitaire or ZERO
+
+        mouvement.montant_mouvement = quantite * prix
+
+        if mouvement.type_mouvement == "ENTREE":
+            mouvement.libelle_prix = "Prix d'achat"
+        elif mouvement.type_mouvement == "SORTIE":
+            mouvement.libelle_prix = "Prix de vente"
+        else:
+            mouvement.libelle_prix = "Prix du retour"
+
+    # ---------------------------------------------------------
+    # 4. CONTEXTE DU DASHBOARD
+    # ---------------------------------------------------------
     contexte = {
         "nombre_materiaux": materiaux.count(),
-        "nombre_materiaux_actifs": materiaux.filter(actif=True).count(),
-        "nombre_materiaux_inactifs": materiaux.filter(actif=False).count(),
+        "nombre_materiaux_actifs": materiaux.filter(
+            actif=True
+        ).count(),
+        "nombre_materiaux_inactifs": materiaux.filter(
+            actif=False
+        ).count(),
+
         "nombre_mouvements": mouvements.count(),
-        "total_entrees": resume["total_entrees"] or 0,
-        "total_sorties": resume["total_sorties"] or 0,
-        "total_retours": resume["total_retours"] or 0,
+
+        "total_entrees": total_entrees,
+        "total_sorties": total_sorties,
+        "total_retours": total_retours,
+
+        "montant_achats": montant_achats,
+        "montant_ventes": montant_ventes,
+        "montant_retours": montant_retours,
+
         "materiaux": materiaux,
-        "derniers_mouvements": mouvements[:10],
+        "derniers_mouvements": derniers_mouvements,
     }
 
     return render(
@@ -136,7 +216,6 @@ def dashboard_mccr(request):
         "materiaux/mccr/dashboard.html",
         contexte,
     )
-
 
 # ============================================================
 # LISTE DES MATÉRIAUX

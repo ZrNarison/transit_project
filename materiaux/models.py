@@ -1931,9 +1931,9 @@ class MateriauMCCR(models.Model):
 class MouvementMateriauMCCR(models.Model):
 
     class TypeMouvement(models.TextChoices):
-        ENTREE = "ENTREE", "Entrée"
-        SORTIE = "SORTIE", "Sortie"
-        RETOUR = "RETOUR", "Retour"
+        ENTREE = "ENTREE", "Entrée — Prix d'achat"
+        SORTIE = "SORTIE", "Sortie — Prix de vente"
+        RETOUR = "RETOUR", "Retour — Prix unitaire"
 
     materiau = models.ForeignKey(
         "MateriauMCCR",
@@ -1961,6 +1961,11 @@ class MouvementMateriauMCCR(models.Model):
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Prix unitaire (Ar)",
+        help_text=(
+            "Entrée : prix d'achat. "
+            "Sortie : prix de vente. "
+            "Retour : prix unitaire du mouvement."
+        ),
     )
 
     motif = models.CharField(
@@ -2012,14 +2017,30 @@ class MouvementMateriauMCCR(models.Model):
         super().clean()
         errors = {}
 
-        if self.quantite is not None and self.quantite <= Decimal("0.00"):
-            errors["quantite"] = "La quantité doit être supérieure à zéro."
+        # Quantité obligatoire et strictement positive
+        if (
+            self.quantite is None
+            or self.quantite <= Decimal("0.00")
+        ):
+            errors["quantite"] = (
+                "La quantité doit être supérieure à zéro."
+            )
 
-        if self.prix_unitaire is not None and self.prix_unitaire < Decimal("0.00"):
-            errors["prix_unitaire"] = "Le prix unitaire ne peut pas être négatif."
+        # Prix obligatoire et strictement positif
+        if (
+            self.prix_unitaire is None
+            or self.prix_unitaire <= Decimal("0.00")
+        ):
+            errors["prix_unitaire"] = (
+                "Le prix unitaire doit être supérieur à zéro "
+                "pour chaque mouvement."
+            )
 
+        # Vérification du type de mouvement
         if self.type_mouvement not in self.TypeMouvement.values:
-            errors["type_mouvement"] = "Le type de mouvement est invalide."
+            errors["type_mouvement"] = (
+                "Le type de mouvement est invalide."
+            )
 
         if errors:
             raise ValidationError(errors)
