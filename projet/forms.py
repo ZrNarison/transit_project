@@ -160,8 +160,6 @@ class ProjetForm(forms.ModelForm):
 # ============================================================
 # EQUIPE PROJET
 # ============================================================
-
-
 class EquipeProjetForm(forms.ModelForm):
 
     class Meta:

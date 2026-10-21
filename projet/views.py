@@ -1566,15 +1566,8 @@ def equipe_create(request, projet_id):
 # ============================================================
 # MODIFIER UNE AFFECTATION
 # ============================================================
-
-
 @project_manager_required
-def equipe_update(
-    request,
-    projet_id,
-    equipe_id,
-):
-
+def equipe_update(request, projet_id, equipe_id):
     projet = get_object_or_404(
         Projet,
         pk=projet_id,
@@ -1587,25 +1580,14 @@ def equipe_update(
     )
 
     if request.method == "POST":
-
         form = EquipeProjetForm(
             request.POST,
             instance=affectation,
             projet=projet,
         )
 
-        form.instance.projet = projet
-
-        form = EquipeProjetForm(
-            form,
-            projet=projet,
-            affectation=affectation,
-        )
-
         if form.is_valid():
-
             affectation_modifiee = form.save(commit=False)
-
             affectation_modifiee.projet = projet
             affectation_modifiee.save()
 
@@ -1614,7 +1596,7 @@ def equipe_update(
                 (
                     f"L'affectation de "
                     f"{affectation_modifiee.personnel} "
-                    f"a Ã©tÃ© modifiÃ©e avec succÃ¨s."
+                    "a été modifiée avec succès."
                 ),
             )
 
@@ -1624,16 +1606,9 @@ def equipe_update(
             )
 
     else:
-
         form = EquipeProjetForm(
             instance=affectation,
             projet=projet,
-        )
-
-        form = EquipeProjetForm(
-            form,
-            projet=projet,
-            affectation=affectation,
         )
 
     return render(
@@ -1646,7 +1621,9 @@ def equipe_update(
             "mode": "modification",
             "titre_page": "Modifier l'affectation",
             "user": request.current_user,
-            "peut_gerer": user_can_manage_projects(request.current_user),
+            "peut_gerer": user_can_manage_projects(
+                request.current_user
+            ),
         },
     )
 
