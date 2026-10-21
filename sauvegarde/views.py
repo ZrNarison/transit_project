@@ -59,7 +59,17 @@ def _fernet():
         raise ImproperlyConfigured(
             "TRANSIT_BACKUP_KEY doit contenir une clé Fernet valide."
         ) from exc
+def _index_url_name(request):
+    """Retourne la page de sauvegarde correspondant à l'entreprise."""
+    match = getattr(request, "resolver_match", None)
 
+    if match and (match.url_name or "").startswith("h_"):
+        return "sauvegarde:h_index"
+
+    if request.session.get("h_user_id") and not request.session.get("user_id"):
+        return "sauvegarde:h_index"
+
+    return "sauvegarde:index"
 
 def _project_fingerprint():
     secret = str(getattr(settings, "SECRET_KEY", ""))
@@ -715,7 +725,7 @@ def exporter(request):
             request,
             f"Exportation impossible : {exc}",
         )
-        return redirect("sauvegarde:index")
+        return redirect(_index_url_name(request))
 
 
 @never_cache
@@ -730,14 +740,14 @@ def valider_import(request):
 
     if uploaded is None:
         messages.error(request, "Choisissez une archive à vérifier.")
-        return redirect("sauvegarde:index")
+        return redirect(_index_url_name(request))
 
     if uploaded.size <= 0 or uploaded.size > MAX_UPLOAD_BYTES:
         messages.error(
             request,
             "Le fichier est vide ou dépasse la limite de 100 Mo.",
         )
-        return redirect("sauvegarde:index")
+        return redirect(_index_url_name(request))
 
     try:
         encrypted = uploaded.read(MAX_UPLOAD_BYTES + 1)
@@ -823,7 +833,7 @@ def valider_import(request):
             "Consultez le journal serveur.",
         )
 
-    return redirect("sauvegarde:index")
+    return redirect(_index_url_name(request))
 
 
 @never_cache
@@ -842,7 +852,7 @@ def importer(request):
             "Aucune archive validée en attente. "
             "Importez et validez un fichier.",
         )
-        return redirect("sauvegarde:index")
+        return redirect(_index_url_name(request))
 
     try:
         uuid.UUID(token)
@@ -936,4 +946,4 @@ def importer(request):
     finally:
         _clear_staged_import(request)
 
-    return redirect("sauvegarde:index")
+    return redirect(_index_url_name(request))

@@ -61,16 +61,27 @@
             max-width: 100%;
         }
 
-        /* ==========================================
-           NAVBAR
-           ========================================== */
+        .navbar.sticky-top {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            width: 100%;
+            max-width: 100%;
+            align-self: flex-start;
+        }
 
-        .navbar {
+        /* Conserver le comportement normal des autres navbars */
+        .navbar:not(.sticky-top) {
             position: relative;
             z-index: 1030;
             width: 100%;
             max-width: 100%;
         }
+
+        .navbar .container-fluid {
+            min-width: 0;
+        }
+
 
         .navbar .container-fluid {
             min-width: 0;

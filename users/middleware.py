@@ -68,6 +68,7 @@ class LoginRequiredMiddleware:
             "depotSoc:h_depot_soc_",
             "audit:h_",
             "logs:h_",
+            "sauvegarde:h_",
             "materiels:h_materiels_",
             "materielEntre:h_materielEntre_",
             "materielsort:h_materielsort_",

@@ -92,20 +92,53 @@
                             </li>
                         </ul>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="bddDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-database me-1"></i> BDD
+                        </a>
+
+                        <ul class="dropdown-menu shadow" aria-labelledby="bddDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'sauvegarde:index' %}">
+                                    <i class="fas fa-shield-alt me-2 text-success"></i>
+                                    Sauvegarde et restauration
+                                </a>
+                            </li>
+
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+
+                            <li>
+                                <form method="post" action="{% url 'sauvegarde:exporter' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-file-export me-2"></i>
+                                        Exporter la BDD
+                                    </button>
+                                </form>
+                            </li>
+
+                            <li>
+                                <a
+                                    class="dropdown-item"
+                                    href="{% url 'sauvegarde:index' %}#importer"
+                                >
+                                    <i class="fas fa-file-import me-2"></i>
+                                    Importer une sauvegarde
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
-                           href="#"
-                           role="button"
-                           data-bs-toggle="dropdown"
-                           aria-expanded="false">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <!-- PHOTO -->
                             {% if request.session.h_photo %}
-                                <img src="{{ request.session.h_photo }}"                                     width="35" height="35" class="rounded-circle border border-light" style="object-fit: cover" alt="Photo utilisateur"> {% else %}
-                                <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center"
-                                      style="width:35px;
-                                             height:35px">👤</span>                            {% endif %}
+                                <img src="{{ request.session.h_photo }}" width="35" height="35" class="rounded-circle border border-light" style="object-fit: cover" alt="Photo utilisateur"> 
+                            {% else %}
+                                <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center" style="width:35px; height:35px">👤</span>                            {% endif %}
                             <span>{{ request.session.username|title }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
@@ -309,12 +342,15 @@
                                 <ul class="dropdown-menu shadow">
                                     <!-- MAGASIN -->
                                     {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                                        <li><a class="dropdown-item"
-   href="{% url 'materiels:materiels_list' %}">🛠️ Stock matériel</a></li>
-                                        <li><a class="dropdown-item"
-   href="{% url 'materielEntre:materielEntre_list' %}">📥 Entrée matériel</a></li>
-                                        <li><a class="dropdown-item"
-   href="{% url 'materielsort:materielsort_list' %}">📤 Sortie matériel</a></li>
+                                        <li>
+                                            <a class="dropdown-item"   href="{% url 'materiels:materiels_list' %}">🛠️ Stock matériel</a>
+                                        </li>                                        
+                                        <li>
+                                            <a class="dropdown-item"   href="{% url 'materielEntre:materielEntre_list' %}">📥 Entrée matériel</a>
+                                        </li>                                        
+                                        <li>
+                                            <a class="dropdown-item"   href="{% url 'materielsort:materielsort_list' %}">📤 Sortie matériel</a>
+                                        </li>
                                     {% endif %}
                                 </ul>
                             {% endif %}
@@ -322,7 +358,7 @@
                     {% endif %}
                     <!-- =================================================VÉHICULES=================================================-->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle"                           href="#"                           role="button"                           data-bs-toggle="dropdown"                           aria-expanded="false">🚛 Véhicules</a>
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">🚛 Véhicules</a>
                         <ul class="dropdown-menu shadow">
                             <!-- MICA -->
                             {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "SuperviseurMica" %}
@@ -348,7 +384,7 @@
                     </li>
                     <!-- =================================================RAPPORTS================================================= -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle"                           href="#"                           role="button"                           data-bs-toggle="dropdown"                           aria-expanded="false">📊 Rapports</a>
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">📊 Rapports</a>
                         <ul class="dropdown-menu shadow">
                             <!-- MICA -->
                             {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
@@ -382,14 +418,7 @@
                         </ul>
                     </li>
                     <li class="nav-item dropdown">
-                        <a
-                            class="nav-link dropdown-toggle"
-                            href="#"
-                            id="bddDropdown"
-                            role="button"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false"
-                        >
+                        <a class="nav-link dropdown-toggle" href="#" id="bddDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-database me-1"></i> BDD
                         </a>
 
@@ -439,16 +468,9 @@
                            aria-expanded="false">
                             <!-- PHOTO -->
                             {% if request.session.photo %}
-                                <img src="{{ request.session.photo }}"
-                                     width="35"
-                                     height="35"
-                                     class="rounded-circle border border-light"
-                                     style="object-fit: cover"
-                                     alt="Photo utilisateur">
+                                <img src="{{ request.session.photo }}" width="35" height="35" class="rounded-circle border border-light" style="object-fit: cover" alt="Photo utilisateur">
                             {% else %}
-                                <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center"
-                                      style="width:35px;
-                                             height:35px">👤</span>
+                                <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center" style="width:35px; height:35px">👤</span>
                             {% endif %}
                             <!-- NOM -->
                             <span>{{ request.session.username|title }}</span>
