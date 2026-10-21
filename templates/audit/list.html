@@ -1,322 +1,257 @@
-{% extends "base.html" %}
+ {% extends "base.html" %}
+
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid mt-4 mb-4">
     <div class="card shadow">
-        <div class="card-header bg-primary text-white">
+        <div class="card-header bg-primary text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h4 class="mb-0">📋 Historique des actions</h4>
+            <span class="badge bg-light text-primary">
+                {{ page_obj.paginator.count }} enregistrement(s)
+            </span>
         </div>
+
         <div class="card-body">
+
+            <!-- FILTRES -->
             <form method="get" class="row g-3 mb-4">
                 <div class="col-md-4">
-                    <label class="form-label">Table</label>
-                    <input type="text" name="table" class="form-control" placeholder="Ex: Depot, Client..." value="{{ table }}">
+                    <label for="audit-table" class="form-label">Table</label>
+                    <input
+                        type="text"
+                        id="audit-table"
+                        name="table"
+                        class="form-control"
+                        placeholder="Ex. : Depot, Client..."
+                        value="{{ table }}"
+                    >
                 </div>
+
                 <div class="col-md-4">
-                    <label class="form-label">Action</label>
-                    <select name="action" class="form-control" >
+                    <label for="audit-action" class="form-label">Action</label>
+                    <select id="audit-action" name="action" class="form-select">
                         <option value="">Toutes les actions</option>
 
-
                         <option value="CREATE"
-                        {% if action == "CREATE" %}
-                            selected
-                        {% endif %}
-                        >
+                            {% if action == "CREATE" %}selected{% endif %}>
                             Création
                         </option>
 
-
-
                         <option value="UPDATE"
-                        {% if action == "UPDATE" %}
-                            selected
-                        {% endif %}
-                        >
+                            {% if action == "UPDATE" %}selected{% endif %}>
                             Modification
                         </option>
 
-
-
                         <option value="DELETE"
-                        {% if action == "DELETE" %}
-                            selected
-                        {% endif %}
-                        >
+                            {% if action == "DELETE" %}selected{% endif %}>
                             Suppression
                         </option>
 
-
-
                         <option value="LOGIN"
-                        {% if action == "LOGIN" %}
-                            selected
-                        {% endif %}
-                        >
+                            {% if action == "LOGIN" %}selected{% endif %}>
                             Connexion
                         </option>
 
-
-
                         <option value="LOGOUT"
-                        {% if action == "LOGOUT" %}
-                            selected
-                        {% endif %}
-                        >
+                            {% if action == "LOGOUT" %}selected{% endif %}>
                             Déconnexion
                         </option>
                     </select>
                 </div>
 
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">🔍</button>
+                    <button type="submit" class="btn btn-primary w-100">
+                        🔍 Filtrer
+                    </button>
                 </div>
 
                 <div class="col-md-2 d-flex align-items-end">
-
-
                     <a
                         href="{% url 'audit:audit_list' %}"
                         class="btn btn-secondary w-100"
                     >
-                        Reset
+                        Réinitialiser
                     </a>
-
-
                 </div>
-
-
             </form>
 
-
-
-
-
-            <!-- TABLEAU AUDIT -->
-
-
-            <div class="table-responsive">
-
-
-                <table class="table table-bordered table-hover">
-
-
-                    <thead class="table-dark">
-
-                        <tr>
-
-                            <th>
-                                Date
-                            </th>
-
-
-                            <th>
-                                Utilisateur
-                            </th>
-
-
-                            <th>
-                                Action
-                            </th>
-
-
-                            <th>
-                                Table
-                            </th>
-
-
-                            <th>
-                                Objet ID
-                            </th>
-
-
-                            <th>
-                                Description
-                            </th>
-
-
-                        </tr>
-
-
-                    </thead>
-
-
-
-                    <tbody>
-
-
-
-                    {% for log in audits %}
-
-
-
-                        <tr>
-
-
-                            <td>
-
-                                {{ log.date_action|date:"d/m/Y H:i:s" }}
-
-                            </td>
-
-
-
-                            <td>
-
-
-                                {% if log.utilisateur %}
-
-                                    {{ log.utilisateur.username }}
-
-                                {% else %}
-
-                                    Système
-
-                                {% endif %}
-
-
-                            </td>
-
-
-
-
-                            <td>
-
-
-                                {% if log.action == "CREATE" %}
-
-
-                                    <span class="badge bg-success">
-                                        Création
-                                    </span>
-
-
-
-                                {% elif log.action == "UPDATE" %}
-
-
-                                    <span class="badge bg-warning text-dark">
-                                        Modification
-                                    </span>
-
-
-
-                                {% elif log.action == "DELETE" %}
-
-
-                                    <span class="badge bg-danger">
-                                        Suppression
-                                    </span>
-
-
-
-                                {% elif log.action == "LOGIN" %}
-
-
-                                    <span class="badge bg-primary">
-                                        Connexion
-                                    </span>
-
-
-
-                                {% elif log.action == "LOGOUT" %}
-
-
-                                    <span class="badge bg-secondary">
-                                        Déconnexion
-                                    </span>
-
-
-
-                                {% else %}
-
-
-                                    <span class="badge bg-info">
-                                        {{ log.action }}
-                                    </span>
-
-
-
-                                {% endif %}
-
-
-                            </td>
-
-
-
-
-
-                            <td>
-
-                                {{ log.table }}
-
-                            </td>
-
-
-
-
-
-                            <td>
-
-                                {{ log.objet_id|default:"-" }}
-
-                            </td>
-
-
-
-
-
-                            <td>
-
-                                {{ log.description|default:"-" }}
-
-                            </td>
-
-
-
-                        </tr>
-
-
-
-                    {% empty %}
-
-
-
-                        <tr>
-
-                            <td colspan="6" class="text-center">
-
-                                Aucun historique trouvé.
-
-                            </td>
-
-
-                        </tr>
-
-
-
-                    {% endfor %}
-
-
-
-
-                    </tbody>
-
-
-
-                </table>
-
-
+            <!-- INFORMATIONS DE PAGINATION -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div class="text-muted small">
+                    {% if page_obj.paginator.count %}
+                        Affichage de
+                        <strong>{{ page_obj.start_index }}</strong>
+                        à
+                        <strong>{{ page_obj.end_index }}</strong>
+                        sur
+                        <strong>{{ page_obj.paginator.count }}</strong>
+                        enregistrement(s)
+                    {% else %}
+                        Aucun enregistrement
+                    {% endif %}
+                </div>
+
+                <div class="text-muted small">
+                    Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+                </div>
             </div>
 
+            <!-- TABLEAU AUDIT -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover table-striped align-middle">
+                    <thead class="table-dark text-white">
+                        <tr>
+                            <th>Date</th>
+                            <th>Utilisateur</th>
+                            <th>Action</th>
+                            <th>Table</th>
+                            <th>Objet ID</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
 
+                    <tbody>
+                        {% for log in audits %}
+                            <tr>
+                                <td class="text-nowrap">
+                                    {{ log.date_action|date:"d/m/Y H:i:s" }}
+                                </td>
+
+                                <td>
+                                    {% if log.utilisateur %}
+                                        {{ log.utilisateur.username }}
+                                    {% else %}
+                                        <span class="text-muted">Système</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-nowrap">
+                                    {% if log.action == "CREATE" %}
+                                        <span class="badge bg-success">Création</span>
+                                    {% elif log.action == "UPDATE" %}
+                                        <span class="badge bg-warning text-dark">Modification</span>
+                                    {% elif log.action == "DELETE" %}
+                                        <span class="badge bg-danger">Suppression</span>
+                                    {% elif log.action == "LOGIN" %}
+                                        <span class="badge bg-primary">Connexion</span>
+                                    {% elif log.action == "LOGOUT" %}
+                                        <span class="badge bg-secondary">Déconnexion</span>
+                                    {% else %}
+                                        <span class="badge bg-info text-dark">
+                                            {{ log.action }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>{{ log.table|default:"-" }}</td>
+
+                                <td>{{ log.objet_id|default:"-" }}</td>
+
+                                <td class="text-break">
+                                    {{ log.description|default:"-" }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox me-2"></i>
+                                    Aucun historique trouvé.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAGINATION -->
+            {% if page_obj.paginator.num_pages > 1 %}
+                <nav aria-label="Pagination de l'audit" class="mt-4">
+                    <ul class="pagination justify-content-center flex-wrap">
+
+                        <!-- PREMIÈRE PAGE -->
+                        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                            {% if page_obj.has_previous %}
+                                <a
+                                    class="page-link"
+                                    href="?page=1&amp;action={{ action|urlencode }}&amp;table={{ table|urlencode }}"
+                                    aria-label="Première page"
+                                >
+                                    Première
+                                </a>
+                            {% else %}
+                                <span class="page-link">Première</span>
+                            {% endif %}
+                        </li>
+
+                        <!-- PAGE PRÉCÉDENTE -->
+                        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                            {% if page_obj.has_previous %}
+                                <a
+                                    class="page-link"
+                                    href="?page={{ page_obj.previous_page_number }}&amp;action={{ action|urlencode }}&amp;table={{ table|urlencode }}"
+                                    aria-label="Page précédente"
+                                >
+                                    &laquo; Précédente
+                                </a>
+                            {% else %}
+                                <span class="page-link">&laquo; Précédente</span>
+                            {% endif %}
+                        </li>
+
+                        <!-- NUMÉROS DE PAGE -->
+                        {% for numero in page_obj.paginator.page_range %}
+                            {% if numero >= page_obj.number|add:"-2" and numero <= page_obj.number|add:"2" %}
+                                <li class="page-item {% if numero == page_obj.number %}active{% endif %}">
+                                    {% if numero == page_obj.number %}
+                                        <span class="page-link" aria-current="page">
+                                            {{ numero }}
+                                        </span>
+                                    {% else %}
+                                        <a
+                                            class="page-link"
+                                            href="?page={{ numero }}&amp;action={{ action|urlencode }}&amp;table={{ table|urlencode }}"
+                                        >
+                                            {{ numero }}
+                                        </a>
+                                    {% endif %}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- PAGE SUIVANTE -->
+                        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                            {% if page_obj.has_next %}
+                                <a
+                                    class="page-link"
+                                    href="?page={{ page_obj.next_page_number }}&amp;action={{ action|urlencode }}&amp;table={{ table|urlencode }}"
+                                    aria-label="Page suivante"
+                                >
+                                    Suivante &raquo;
+                                </a>
+                            {% else %}
+                                <span class="page-link">Suivante &raquo;</span>
+                            {% endif %}
+                        </li>
+
+                        <!-- DERNIÈRE PAGE -->
+                        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                            {% if page_obj.has_next %}
+                                <a
+                                    class="page-link"
+                                    href="?page={{ page_obj.paginator.num_pages }}&amp;action={{ action|urlencode }}&amp;table={{ table|urlencode }}"
+                                    aria-label="Dernière page"
+                                >
+                                    Dernière
+                                </a>
+                            {% else %}
+                                <span class="page-link">Dernière</span>
+                            {% endif %}
+                        </li>
+
+                    </ul>
+                </nav>
+            {% endif %}
 
         </div>
-
-
     </div>
-
-
 </div>
-
-
 {% endblock %}

@@ -1,211 +1,236 @@
-{% extends "base.html" %}
+ {% extends "base.html" %}
+
 {% block content %}
+<div class="container-fluid mt-4 mb-4">
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h4 class="mb-0">🖥️ Logs système</h4>
+            <span class="badge bg-light text-dark">
+                {{ page_obj.paginator.count }} log(s)
+            </span>
+        </div>
 
+        <div class="card-body">
 
-<div class="container mt-4">
+            <!-- FILTRE PAR NIVEAU -->
+            <form method="get" class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label for="log-level" class="form-label">Niveau du log</label>
+                    <select
+                        id="log-level"
+                        name="level"
+                        class="form-select"
+                    >
+                        <option value="">Tous les niveaux</option>
 
+                        <option value="INFO"
+                            {% if level == "INFO" %}selected{% endif %}>
+                            INFO
+                        </option>
 
-<div class="card shadow">
+                        <option value="WARNING"
+                            {% if level == "WARNING" %}selected{% endif %}>
+                            WARNING
+                        </option>
 
+                        <option value="ERROR"
+                            {% if level == "ERROR" %}selected{% endif %}>
+                            ERROR
+                        </option>
 
-<div class="card-header bg-dark text-white">
+                        <option value="CRITICAL"
+                            {% if level == "CRITICAL" %}selected{% endif %}>
+                            CRITICAL
+                        </option>
+                    </select>
+                </div>
 
-<h4>
-🖥️ Logs système
-</h4>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i>
+                        Filtrer
+                    </button>
+                </div>
 
+                <div class="col-md-2 d-flex align-items-end">
+                    <a
+                        href="{% url 'logs:logs_list' %}"
+                        class="btn btn-secondary w-100"
+                    >
+                        Réinitialiser
+                    </a>
+                </div>
+            </form>
+
+            <!-- INFORMATIONS DE PAGINATION -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <div class="text-muted small">
+                    {% if page_obj.paginator.count %}
+                        Affichage de
+                        <strong>{{ page_obj.start_index }}</strong>
+                        à
+                        <strong>{{ page_obj.end_index }}</strong>
+                        sur
+                        <strong>{{ page_obj.paginator.count }}</strong>
+                        log(s)
+                    {% else %}
+                        Aucun log disponible
+                    {% endif %}
+                </div>
+
+                <div class="text-muted small">
+                    Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+                </div>
+            </div>
+
+            <!-- TABLEAU DES LOGS -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover table-striped align-middle">
+                    <thead class="table-dark  text-white">
+                        <tr>
+                            <th>Date</th>
+                            <th>Niveau</th>
+                            <th>Module</th>
+                            <th>Message</th>
+                            <th>Adresse IP</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for log in logs %}
+                            <tr>
+                                <td class="text-nowrap">
+                                    {{ log.date_log|date:"d/m/Y H:i:s" }}
+                                </td>
+
+                                <td class="text-nowrap">
+                                    {% if log.level == "ERROR" %}
+                                        <span class="badge bg-danger">Erreur</span>
+                                    {% elif log.level == "CRITICAL" %}
+                                        <span class="badge bg-danger">Critique</span>
+                                    {% elif log.level == "WARNING" %}
+                                        <span class="badge bg-warning text-dark">Attention</span>
+                                    {% elif log.level == "INFO" %}
+                                        <span class="badge bg-info text-dark">Info</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            {{ log.level }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>{{ log.module|default:"-" }}</td>
+
+                                <td class="text-break">
+                                    {{ log.message|default:"-" }}
+                                </td>
+
+                                <td class="text-nowrap">
+                                    {{ log.ip_address|default:"-" }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox me-2"></i>
+                                    Aucun log trouvé.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAGINATION -->
+            {% if page_obj.paginator.num_pages > 1 %}
+                <nav aria-label="Pagination des logs système" class="mt-4">
+                    <ul class="pagination justify-content-center flex-wrap">
+
+                        <!-- PREMIÈRE PAGE -->
+                        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                            {% if page_obj.has_previous %}
+                                <a
+                                    class="page-link"
+                                    href="?page=1&amp;level={{ level|urlencode }}"
+                                    aria-label="Première page"
+                                >
+                                    Première
+                                </a>
+                            {% else %}
+                                <span class="page-link">Première</span>
+                            {% endif %}
+                        </li>
+
+                        <!-- PAGE PRÉCÉDENTE -->
+                        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                            {% if page_obj.has_previous %}
+                                <a
+                                    class="page-link"
+                                    href="?page={{ page_obj.previous_page_number }}&amp;level={{ level|urlencode }}"
+                                    aria-label="Page précédente"
+                                >
+                                    &laquo; Précédente
+                                </a>
+                            {% else %}
+                                <span class="page-link">&laquo; Précédente</span>
+                            {% endif %}
+                        </li>
+
+                        <!-- NUMÉROS DE PAGE -->
+                        {% for numero in page_obj.paginator.page_range %}
+                            {% if numero >= page_obj.number|add:"-2" and numero <= page_obj.number|add:"2" %}
+                                <li class="page-item {% if numero == page_obj.number %}active{% endif %}">
+                                    {% if numero == page_obj.number %}
+                                        <span class="page-link" aria-current="page">
+                                            {{ numero }}
+                                        </span>
+                                    {% else %}
+                                        <a
+                                            class="page-link"
+                                            href="?page={{ numero }}&amp;level={{ level|urlencode }}"
+                                        >
+                                            {{ numero }}
+                                        </a>
+                                    {% endif %}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        <!-- PAGE SUIVANTE -->
+                        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                            {% if page_obj.has_next %}
+                                <a
+                                    class="page-link"
+                                    href="?page={{ page_obj.next_page_number }}&amp;level={{ level|urlencode }}"
+                                    aria-label="Page suivante"
+                                >
+                                    Suivante &raquo;
+                                </a>
+                            {% else %}
+                                <span class="page-link">Suivante &raquo;</span>
+                            {% endif %}
+                        </li>
+
+                        <!-- DERNIÈRE PAGE -->
+                        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                            {% if page_obj.has_next %}
+                                <a
+                                    class="page-link"
+                                    href="?page={{ page_obj.paginator.num_pages }}&amp;level={{ level|urlencode }}"
+                                    aria-label="Dernière page"
+                                >
+                                    Dernière
+                                </a>
+                            {% else %}
+                                <span class="page-link">Dernière</span>
+                            {% endif %}
+                        </li>
+
+                    </ul>
+                </nav>
+            {% endif %}
+
+        </div>
+    </div>
 </div>
-
-
-
-<div class="card-body">
-
-
-
-<form method="get" class="row mb-3">
-
-
-<div class="col-md-4">
-
-
-<select
-name="level"
-class="form-control"
->
-
-
-<option value="">
-Tous niveaux
-</option>
-
-
-<option value="INFO"
-{% if level == "INFO" %}selected{% endif %}
->
-INFO
-</option>
-
-
-<option value="WARNING"
-{% if level == "WARNING" %}selected{% endif %}
->
-WARNING
-</option>
-
-
-<option value="ERROR"
-{% if level == "ERROR" %}selected{% endif %}
->
-ERROR
-</option>
-
-
-<option value="CRITICAL"
-{% if level == "CRITICAL" %}selected{% endif %}
->
-CRITICAL
-</option>
-
-
-</select>
-
-
-</div>
-
-
-
-<div class="col-md-2">
-
-<button class="btn btn-primary">
-Filtrer
-</button>
-
-</div>
-
-
-</form>
-
-
-
-
-
-<table class="table table-bordered">
-
-
-<thead class="table-dark">
-
-<tr>
-
-<th>Date</th>
-
-<th>Niveau</th>
-
-<th>Module</th>
-
-<th>Message</th>
-
-<th>IP</th>
-
-</tr>
-
-</thead>
-
-
-
-<tbody>
-
-
-{% for log in logs %}
-
-
-<tr>
-
-
-<td>
-{{ log.date_log|date:"d/m/Y H:i:s" }}
-</td>
-
-
-
-<td>
-
-{% if log.level == "ERROR" %}
-
-<span class="badge bg-danger">
-Erreur
-</span>
-
-
-{% elif log.level == "WARNING" %}
-
-<span class="badge bg-warning text-dark">
-Attention
-</span>
-
-
-{% else %}
-
-<span class="badge bg-info">
-Info
-</span>
-
-
-{% endif %}
-
-</td>
-
-
-
-<td>
-{{ log.module }}
-</td>
-
-
-
-<td>
-{{ log.message }}
-</td>
-
-
-
-<td>
-{{ log.ip_address|default:"-" }}
-</td>
-
-
-</tr>
-
-
-{% empty %}
-
-
-<tr>
-
-<td colspan="5" class="text-center">
-
-Aucun log trouvé.
-
-</td>
-
-</tr>
-
-
-{% endfor %}
-
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
 {% endblock %}
