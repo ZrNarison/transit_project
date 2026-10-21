@@ -45,7 +45,7 @@ def audit_list(request):
 # ============================================================
 # AUDIT MCCR
 # ============================================================
-@h_role_required("Dir", "Compta")
+@h_role_required("Admin", "Dir", "Compta")
 def h_audit_list(request):
     audits = H_Audit.objects.order_by("-date_action", "-pk")
 

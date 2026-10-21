@@ -40,7 +40,7 @@ def logs_list(request):
 # ============================================================
 # LOGS SYSTÈME MCCR
 # ============================================================
-@h_role_required("Dir", "Compta")
+@h_role_required("Admin", "Dir", "Compta")
 def h_logs_list(request):
     logs = H_Log.objects.order_by("-date_log", "-pk")
 
