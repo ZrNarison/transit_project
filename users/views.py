@@ -9,10 +9,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
-from audit.utils import enregistrer_action
-from logs.utils import enregistrer_log
 from users.decorators import h_role_required
-
+from audit.utils import enregistrer_action, h_enregistrer_action
+from logs.utils import enregistrer_log, h_enregistrer_log
 from .forms import H_UserForm, UserForm
 from .models import AppUser, H_AppUser
 
@@ -31,15 +30,27 @@ H_ADMIN_PASSWORD = "ELPhBert"
 # OUTILS COMMUNS
 # ============================================================
 
-
 def _journaliser(message, level="INFO", module="AUTH", request=None):
-    """Enregistre un événement dans le journal applicatif."""
-    enregistrer_log(
+    """Enregistre l'événement dans le journal de la bonne entreprise."""
+    est_mccr = (
+        request is not None
+        and request.session.get("h_user_id") is not None
+    )
+
+    fonction_log = h_enregistrer_log if est_mccr else enregistrer_log
+
+    return fonction_log(
         message=message,
         level=level,
         module=module,
-        ip_address=(request.META.get("REMOTE_ADDR") if request is not None else None),
+        ip_address=(
+            request.META.get("REMOTE_ADDR")
+            if request is not None
+            else None
+        ),
     )
+
+
 
 
 def _photo_url(user):
@@ -315,7 +326,6 @@ def redirection_apres_login(request, user):
 # CONNEXION UNIQUE GALAXY / ENTREPRISE H
 # ============================================================
 
-
 @never_cache
 @require_http_methods(["GET", "POST"])
 def users_login(request):
@@ -336,15 +346,17 @@ def users_login(request):
         return render(request, "users/login.html")
 
     # --------------------------------------------------------
-    # ENTREPRISE H
+    # MCCR (anciennement Entreprise H)
     # --------------------------------------------------------
     if entreprise == "H":
-        user = H_AppUser.objects.filter(username__iexact=username).first()
+        user = H_AppUser.objects.filter(
+            username__iexact=username
+        ).first()
 
         if user is None or not check_password(password, user.password):
             messages.error(
                 request,
-                "Identifiants incorrects pour Entreprise H.",
+                "Identifiants incorrects pour MCCR.",
             )
             return render(request, "users/login.html")
 
@@ -355,8 +367,18 @@ def users_login(request):
         request.session["h_photo"] = _photo_url(user)
         request.session.set_expiry(0)
 
+        # Audit MCCR
+        h_enregistrer_action(
+            request,
+            "LOGIN",
+            "Utilisateur",
+            user.pk,
+            description="Connexion MCCR",
+        )
+
+        # Journal MCCR
         _journaliser(
-            f"Connexion Entreprise H : {user.username}",
+            f"Connexion MCCR : {user.username}",
             request=request,
         )
 
@@ -366,7 +388,10 @@ def users_login(request):
     # GALAXY
     # --------------------------------------------------------
     if entreprise != "entreprise":
-        messages.error(request, "Entreprise sélectionnée invalide.")
+        messages.error(
+            request,
+            "Entreprise sélectionnée invalide.",
+        )
         return render(request, "users/login.html")
 
     user = (
@@ -390,6 +415,16 @@ def users_login(request):
     request.session["typeTravail"] = _personnel_type(user)
     request.session.set_expiry(0)
 
+    # Audit GALAXY
+    enregistrer_action(
+        request,
+        "LOGIN",
+        "Utilisateur",
+        user.pk,
+        description="Connexion GALAXY",
+    )
+
+    # Journal GALAXY
     _journaliser(
         f"Connexion GALAXY : {user.username}",
         request=request,
@@ -397,12 +432,9 @@ def users_login(request):
 
     return redirection_apres_login(request, user)
 
-
 # ============================================================
 # DECONNEXION GALAXY
 # ============================================================
-
-
 @never_cache
 @require_http_methods(["GET", "POST"])
 def users_logout(request):
@@ -410,45 +442,62 @@ def users_logout(request):
     username = request.session.get("username", "Utilisateur")
 
     if user_id:
+        # Audit GALAXY
         enregistrer_action(
             request,
             "LOGOUT",
             "Utilisateur",
             user_id,
-            description="Déconnexion utilisateur",
+            description="Déconnexion GALAXY",
         )
 
+        # Journal GALAXY
         _journaliser(
-            f"Déconnexion utilisateur : {username}",
+            f"Déconnexion GALAXY : {username}",
             request=request,
         )
 
     request.session.flush()
-    messages.success(request, "Vous avez été déconnecté avec succès.")
+
+    messages.success(
+        request,
+        "Vous avez été déconnecté de GALAXY avec succès.",
+    )
     return redirect("users:login")
 
 
 # ============================================================
-# DECONNEXION ENTREPRISE H
+# DECONNEXION MCCR (ANCIENNEMENT ENTREPRISE H)
 # ============================================================
-
-
 @never_cache
 @require_http_methods(["GET", "POST"])
 def h_logout(request):
-    username = request.session.get("h_username", "Utilisateur H")
+    username = request.session.get("h_username", "Utilisateur MCCR")
     h_user_id = request.session.get("h_user_id")
 
     if h_user_id:
+        # Audit MCCR
+        h_enregistrer_action(
+            request,
+            "LOGOUT",
+            "Utilisateur",
+            h_user_id,
+            description="Déconnexion MCCR",
+        )
+
+        # Journal MCCR
         _journaliser(
-            f"Déconnexion Entreprise H : {username}",
+            f"Déconnexion MCCR : {username}",
             request=request,
         )
 
     request.session.flush()
-    messages.success(request, "Vous êtes déconnecté d'Entreprise H.")
-    return redirect("users:login")
 
+    messages.success(
+        request,
+        "Vous êtes déconnecté de MCCR.",
+    )
+    return redirect("users:login")
 
 # ============================================================
 # LIMITES DES COMPTES GALAXY

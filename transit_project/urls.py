@@ -1,14 +1,11 @@
-from django.conf import settings
+﻿from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
     path("", include("clients.urls")),
-    path(
-        "projets/",
-        include("projet.urls"),
-    ),
+    path("projets/", include("projet.urls")),
     path("avances/", include("avances.urls")),
     path("entretien/", include("entretien.urls")),
     path("personnel/", include("personnel.urls")),
@@ -20,16 +17,14 @@ urlpatterns = [
     path("materielEntre/", include("materielEntre.urls")),
     path(
         "vehicule/sortant/",
-        include(
-            ("vehiculesortant.urls", "vehiculesortant"), namespace="vehiculesortant"
-        ),
+        include(("vehiculesortant.urls", "vehiculesortant"),
+                namespace="vehiculesortant"),
     ),
     path("depense/", include(("depense.urls", "depense"), namespace="depense")),
     path(
         "depotEntreprise/",
-        include(
-            ("depotEntreprise.urls", "depotEntreprise"), namespace="depotEntreprise"
-        ),
+        include(("depotEntreprise.urls", "depotEntreprise"),
+                namespace="depotEntreprise"),
     ),
     path("depot/", include(("depot.urls", "depot"), namespace="depot")),
     path(
@@ -39,7 +34,10 @@ urlpatterns = [
     path("recette/", include(("recette.urls", "recette"), namespace="recette")),
     path("salaire/", include(("salaire.urls", "salaire"), namespace="salaire")),
     path("users/", include(("users.urls", "users"), namespace="users")),
-    path("categorie/", include(("categorie.urls", "categorie"), namespace="categorie")),
+    path(
+        "categorie/",
+        include(("categorie.urls", "categorie"), namespace="categorie"),
+    ),
     path("retours/", include(("retours.urls", "retours"), namespace="retours")),
     path("audit/", include("audit.urls")),
     path("logs/", include("logs.urls")),
@@ -49,16 +47,19 @@ urlpatterns = [
         "rapportsoc/",
         include(("rapportsoc.urls", "rapportsoc"), namespace="rapportsoc"),
     ),
-    path(
-        "mccr/materiaux/",
-        include("materiaux.urls_mccr"),
-    ),
+
+    # Matériaux MCCR
+    path("mccr/materiaux/", include("materiaux.urls_mccr")),
+
     # Matériaux GALAXY
-    path(
-        "materiaux/",
-        include("materiaux.urls"),
-    ),
+    path("materiaux/", include("materiaux.urls")),
+
+    # Sauvegarde et restauration sécurisées
+    path("sauvegarde/", include("sauvegarde.urls")),
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT,
+    )

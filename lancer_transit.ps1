@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 # ============================================================
 # CONFIGURATION
 # ============================================================
-$Projet = "D:\Dev\DJANGO\transit_project"
+$Projet = "D:\transit_project"
 $PythonVenv = Join-Path $Projet ".venv\Scripts\python.exe"
 $ManagePy = Join-Path $Projet "manage.py"
 

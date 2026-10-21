@@ -135,17 +135,20 @@
                                    href="{% url 'users:h_change_photo' request.session.h_user_id %}">📷 Changer photo</a>
                             </li>
                             <!-- NOM UTILISATEUR -->
-                            <li><a class="dropdown-item"
-   href="{% url 'users:h_change_username' request.session.h_user_id %}">✏️ Modifier utilisateur</a></li>
+                            <li>
+                                <a class="dropdown-item"   href="{% url 'users:h_change_username' request.session.h_user_id %}">✏️ Modifier utilisateur</a>
+                            </li>
                             <!-- MOT DE PASSE -->
-                            <li><a class="dropdown-item"
-   href="{% url 'users:h_change_password' request.session.h_user_id %}">🔑 Modifier mot de passe</a></li>
+                            <li>
+                                <a class="dropdown-item"   href="{% url 'users:h_change_password' request.session.h_user_id %}">🔑 Modifier mot de passe</a>
+                            </li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
                             <!-- DÉCONNEXION -->
-                            <li><a class="dropdown-item text-danger"
-   href="{% url 'users:logout' %}">🚪 Déconnexion</a></li>
+                            <li>
+                                <a class="dropdown-item text-danger"   href="{% url 'users:logout' %}">🚪 Déconnexion</a>
+                            </li>
                         </ul>
                     </li>
                 </ul>
@@ -157,27 +160,10 @@
         <div class="container-fluid px-4">
             <!-- =====================================================LOGO / ACCUEIL===================================================== -->
             {% if request.session.role == "ChefMagasin" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHAUFFEUR" or request.session.role == "UserEntreprise" or request.session.role == "Magasin" %}
-                <a class="navbar-brand fw-bold d-flex align-items-center" href="#"><img src="{% static 'images/Ga.png' %}"
-     width="35"
-     height="35"
-     class="me-2 rounded"
-     style="object-fit: cover"
-     alt="Logo">ERP</a>
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="#"><img src="{% static 'images/Ga.png' %}" width="35" height="35" class="me-2 rounded" style="object-fit: cover" alt="Logo">ERP</a>
             {% elif request.session.role == "SuperviseurMica" or request.session.role == "UserMica" %}
-                <a class="navbar-brand fw-bold d-flex align-items-center" href="#"><img src="{% static 'images/Elong.png' %}"
-     width="35"
-     height="35"
-     class="me-2 rounded"
-     style="object-fit: cover"
-     alt="Logo">ERP</a>
-            {% endif %}
-            <button class="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarTransit"
-                    aria-controls="navbarTransit"
-                    aria-expanded="false"
-                    aria-label="Toggle navigation">
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="#"><img src="{% static 'images/Elong.png' %}" width="35" height="35" class="me-2 rounded" style="object-fit: cover"     alt="Logo">ERP</a>            {% endif %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTransit" aria-controls="navbarTransit" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarTransit">
@@ -193,13 +179,15 @@
                             <ul class="dropdown-menu shadow">
                                 <!-- PROJET -->
                                 {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" or fonction_projet == "INGENIEUR" or fonction_projet == "CHAUFFEUR" or fonction_projet == "CHEF_CHANTIER" %}
-                                    <li><a class="dropdown-item"
-   href="{% url 'projet:projet_list' %}">🏗️ Projet</a></li>
+                                    <li>
+                                        <a class="dropdown-item"   href="{% url 'projet:projet_list' %}">🏗️ Projet</a>
+                                    </li>
                                 {% endif %}
                                 <!-- PRODUIT -->
                                 {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "SuperviseurMica" %}
-                                    <li><a class="dropdown-item"
-   href="{% url 'produit:p_produit_liste' %}">📦 Mica</a></li>
+                                    <li>
+                                        <a class="dropdown-item"   href="{% url 'produit:p_produit_liste' %}">📦 Mica</a>
+                                    </li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -214,19 +202,23 @@
                                 <ul class="dropdown-menu shadow">
                                     <!-- CLIENTS -->
                                     {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "SuperviseurMica" %}
-                                        <li><a class="dropdown-item"
-   href="{% url 'clients:client_list' %}">👤 Clients</a></li>
+                                        <li>
+                                            <a class="dropdown-item"   href="{% url 'clients:client_list' %}">👤 Clients</a>
+                                        </li>
                                     {% endif %}
                                     <!-- PERSONNEL -->
-                                    <li><a class="dropdown-item"
-   href="{% url 'personnel:personnel_list' %}">👷 Personnel / Entreprise</a></li>
+                                    <li>
+                                        <a class="dropdown-item"   href="{% url 'personnel:personnel_list' %}">👷 Personnel / Entreprise</a>
+                                    </li>
                                     <!-- CLASSEMENT -->
                                     {% if request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                                        <li><a class="dropdown-item"
-   href="{% url 'categorie:categorie_liste' %}">🗂️ Classement</a></li>
+                                        <li>
+                                            <a class="dropdown-item"   href="{% url 'categorie:categorie_liste' %}">🗂️ Classement</a>
+                                        </li>
                                         <!-- UTILISATEURS -->
-                                        <li><a class="dropdown-item"
-   href="{% url 'users:users_list' %}">👥 Utilisateurs</a></li>
+                                        <li>
+                                            <a class="dropdown-item"   href="{% url 'users:users_list' %}">👥 Utilisateurs</a>
+                                        </li>
                                     {% endif %}
                                 </ul>
                             </li>
@@ -244,20 +236,25 @@
                                 <ul class="dropdown-menu shadow">
                                     <!-- AVANCES ENTREPRISE -->
                                     {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
-                                        <li><a class="dropdown-item"
-   href="{% url 'avances:avance_list' %}">💵 Avances</a></li>
+                                        <li>
+                                            <a class="dropdown-item"   href="{% url 'avances:avance_list' %}">💵 Avances</a>
+                                        </li>
                                     {% elif request.session.role == "Dir" or request.session.role == "Compta" %}
-                                        <li><a class="dropdown-item" href="#">💵 Avances</a></li>
+                                        <li>
+                                            <a class="dropdown-item" href="#">💵 Avances</a>
+                                        </li>
                                     {% endif %}
                                     <!-- AVANCES CLIENT MICA -->
                                     {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "SuperviseurMica" %}
-                                        <li><a class="dropdown-item"
-   href="{% url 'avanceclient:list' %}">💵 Avances Client</a></li>
+                                        <li>
+                                            <a class="dropdown-item"   href="{% url 'avanceclient:list' %}">💵 Avances Client</a>
+                                        </li>
                                     {% endif %}
                                     <!-- FINANCE MAGASIN -->
                                     {% if request.session.role == "MAGASIN" or request.session.role == "CHEF_MAGASIN" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
-                                        <li><a class="dropdown-item"
-   href="{% url 'materiaux:paiements_dockers_list' %}">👷 Dockers</a></li>
+                                        <li>
+                                            <a class="dropdown-item"   href="{% url 'materiaux:paiements_dockers_list' %}">👷 Dockers</a>
+                                        </li>
                                         <li><a class="dropdown-item"
    href="{% url 'materiaux:depenses_list' %}">💸 Dépenses</a></li>
                                         <li><a class="dropdown-item"
@@ -325,24 +322,25 @@
                     {% endif %}
                     <!-- =================================================VÉHICULES=================================================-->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle"
-                           href="#"
-                           role="button"
-                           data-bs-toggle="dropdown"
-                           aria-expanded="false">🚛 Véhicules</a>
+                        <a class="nav-link dropdown-toggle"                           href="#"                           role="button"                           data-bs-toggle="dropdown"                           aria-expanded="false">🚛 Véhicules</a>
                         <ul class="dropdown-menu shadow">
                             <!-- MICA -->
                             {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "SuperviseurMica" %}
-                                <li><a class="dropdown-item"
-   href="{% url 'transentrant:t_transentrant_liste' %}">🚚 Entrant</a></li>
-                                <li><a class="dropdown-item"
-   href="{% url 'vehiculesortant:vehicule_sortant_list' %}">🚚 Sortant</a></li>
-                                <li><a class="dropdown-item" href="{% url 'entretien:list' %}">🏢 Société Camion</a></li>
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'transentrant:t_transentrant_liste' %}">🚚 Entrant</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'vehiculesortant:vehicule_sortant_list' %}">🚚 Sortant</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'entretien:list' %}">🏢 Société Camion</a>
+                                </li>
                             {% endif %}
                             <!-- ENTREPRISE -->
                             {% if request.session.role == "UserEntreprise" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHAUFFEUR" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                                <li><a class="dropdown-item"
-   href="{% url 'materiaux:reparations_list' %}">🔧 Entretien / Réparation</a></li>
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'materiaux:reparations_list' %}">🔧 Entretien / Réparation</a>
+                                </li>
                             {% elif fonction_projet == "CHAUFFEUR" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHEF_MAGASIN" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                                 <li><a class="dropdown-item" href="{% url 'projet:projet_list' %}">🚛 Transport</a></li>
                             {% endif %}
@@ -350,34 +348,82 @@
                     </li>
                     <!-- =================================================RAPPORTS================================================= -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle"
-                           href="#"
-                           role="button"
-                           data-bs-toggle="dropdown"
-                           aria-expanded="false">📊 Rapports</a>
+                        <a class="nav-link dropdown-toggle"                           href="#"                           role="button"                           data-bs-toggle="dropdown"                           aria-expanded="false">📊 Rapports</a>
                         <ul class="dropdown-menu shadow">
                             <!-- MICA -->
                             {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                                <li><a class="dropdown-item"
-   href="{% url 'rapports:rapport_list' %}">📊 Rapport Mica</a></li>
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'rapports:rapport_list' %}">📊 Rapport Mica</a>
+                                </li>
                                 <!-- ENTREPRISE -->
                             {% endif %}
                             {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "SuperviseurMica" %}
-                                <li><a class="dropdown-item"
-   href="{% url 'produit:historique_produits' %}">📊Historique</a></li>
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'produit:historique_produits' %}">📊Historique</a>
+                                </li>
                             {% endif %}
                             {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                                <li><a class="dropdown-item"
-   href="{% url 'rapportsoc:rapport_tresorerie' %}">📊 Rapport Entreprise</a></li>
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'rapportsoc:rapport_tresorerie' %}">📊 Rapport Entreprise</a>
+                                </li>
                             {% endif %}
                             <!-- ADMIN / SUPERVISEUR -->
                             {% if request.session.role == "Admin" or request.session.role == "Superviseur" %}
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item" href="{% url 'audit:audit_list' %}">📋 Audit</a></li>
-                                <li><a class="dropdown-item" href="{% url 'logs:logs_list' %}">🖥️ Logs système</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'audit:audit_list' %}">📋 Audit</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'logs:logs_list' %}">🖥️ Logs système</a>
+                                </li>
                             {% endif %}
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a
+                            class="nav-link dropdown-toggle"
+                            href="#"
+                            id="bddDropdown"
+                            role="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                        >
+                            <i class="fas fa-database me-1"></i> BDD
+                        </a>
+
+                        <ul class="dropdown-menu shadow" aria-labelledby="bddDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'sauvegarde:index' %}">
+                                    <i class="fas fa-shield-alt me-2 text-success"></i>
+                                    Sauvegarde et restauration
+                                </a>
+                            </li>
+
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+
+                            <li>
+                                <form method="post" action="{% url 'sauvegarde:exporter' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-file-export me-2"></i>
+                                        Exporter la BDD
+                                    </button>
+                                </form>
+                            </li>
+
+                            <li>
+                                <a
+                                    class="dropdown-item"
+                                    href="{% url 'sauvegarde:index' %}#importer"
+                                >
+                                    <i class="fas fa-file-import me-2"></i>
+                                    Importer une sauvegarde
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 </ul>

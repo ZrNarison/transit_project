@@ -376,9 +376,7 @@ def chef_equipe_create(
             messages.success(
                 request,
                 (
-                    f"Le chef d'Ã©quipe "
-                    f"Â« {chef.nom} Â» a Ã©tÃ© enregistrÃ© "
-                    f"pour le projet Â« {projet.titre} Â»."
+                    f"Le chef d'équipe  {chef.nom} a été dans le  {projet.titre}."
                 ),
             )
 
@@ -460,9 +458,7 @@ def chef_equipe_update(
             messages.success(
                 request,
                 (
-                    f"Le chef d'Ã©quipe "
-                    f"Â« {chef_modifie.nom} Â» "
-                    f"a Ã©tÃ© modifiÃ© avec succÃ¨s."
+                    f"La modification de {chef_modifie.nom} comme chef d'équipe a été avec succé."
                 ),
             )
 
