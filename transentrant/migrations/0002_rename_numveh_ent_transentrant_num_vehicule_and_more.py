@@ -6,31 +6,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('transentrant', '0001_initial'),
+        ("transentrant", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='transentrant',
-            old_name='NumVeh_Ent',
-            new_name='num_vehicule',
+            model_name="transentrant",
+            old_name="NumVeh_Ent",
+            new_name="num_vehicule",
         ),
         migrations.RenameField(
-            model_name='transentrant',
-            old_name='NumPermis_Ent',
-            new_name='permis',
+            model_name="transentrant",
+            old_name="NumPermis_Ent",
+            new_name="permis",
         ),
         migrations.RemoveField(
-            model_name='transentrant',
-            name='Chauf_Ent',
+            model_name="transentrant",
+            name="Chauf_Ent",
         ),
         migrations.RemoveField(
-            model_name='transentrant',
-            name='adresse',
+            model_name="transentrant",
+            name="adresse",
         ),
         migrations.AddField(
-            model_name='transentrant',
-            name='chauffeur',
+            model_name="transentrant",
+            name="chauffeur",
             field=models.CharField(default=1, max_length=100),
             preserve_default=False,
         ),

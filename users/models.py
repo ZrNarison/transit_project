@@ -1,6 +1,6 @@
 from django.db import models
 
-from personnel.models import Personnel, H_Personnel
+from personnel.models import H_Personnel, Personnel
 
 
 # ============================================================

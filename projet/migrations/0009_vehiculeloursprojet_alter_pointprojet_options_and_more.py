@@ -6,31 +6,48 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projet', '0008_remove_pointprojet_responsable'),
+        ("projet", "0008_remove_pointprojet_responsable"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='VehiculeLoursProjet',
+            name="VehiculeLoursProjet",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('conducteur', models.CharField(max_length=255, verbose_name='No du conducteur')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "conducteur",
+                    models.CharField(max_length=255, verbose_name="No du conducteur"),
+                ),
             ],
         ),
         migrations.AlterModelOptions(
-            name='pointprojet',
-            options={'ordering': ['projet', 'nom'], 'verbose_name': 'Point de chantier', 'verbose_name_plural': 'Points de chantier'},
+            name="pointprojet",
+            options={
+                "ordering": ["projet", "nom"],
+                "verbose_name": "Point de chantier",
+                "verbose_name_plural": "Points de chantier",
+            },
         ),
         migrations.RemoveConstraint(
-            model_name='pointprojet',
-            name='unique_code_point_projet',
+            model_name="pointprojet",
+            name="unique_code_point_projet",
         ),
         migrations.AddConstraint(
-            model_name='pointprojet',
-            constraint=models.UniqueConstraint(fields=('projet', 'nom'), name='unique_code_point_projet'),
+            model_name="pointprojet",
+            constraint=models.UniqueConstraint(
+                fields=("projet", "nom"), name="unique_code_point_projet"
+            ),
         ),
         migrations.RemoveField(
-            model_name='pointprojet',
-            name='code',
+            model_name="pointprojet",
+            name="code",
         ),
     ]

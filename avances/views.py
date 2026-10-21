@@ -1,34 +1,25 @@
-from django.shortcuts import (
-    render,
-    redirect,
-    get_object_or_404
-)
-
+from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from django.contrib import messages
-from salaire.views import recalculer_situation_personnel
-from .forms import AvanceForm
-from .models import Avance
-from django.shortcuts import render
-
-from personnel.models import Personnel
-from users.models import AppUser
+from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.utils import enregistrer_action
+from personnel.models import Personnel
+from salaire.views import recalculer_situation_personnel
+from users.models import AppUser
 
+from .forms import AvanceForm
+from .models import Avance
 
 # =========================================================
 # OUTIL : QUERYSET PERSONNEL SELON LE RÔLE
 # =========================================================
 
+
 def get_personnel_queryset_for_role(role):
 
     queryset = (
-        Personnel.objects
-        .select_related("categorie")
-        .all()
-        .order_by("nom", "prenom")
+        Personnel.objects.select_related("categorie").all().order_by("nom", "prenom")
     )
 
     # -----------------------------------------------------
@@ -37,9 +28,7 @@ def get_personnel_queryset_for_role(role):
 
     if role == "UserMica":
 
-        return queryset.filter(
-            typeTravail="Mica"
-        )
+        return queryset.filter(typeTravail="Mica")
 
     # -----------------------------------------------------
     # USER ENTREPRISE
@@ -47,19 +36,13 @@ def get_personnel_queryset_for_role(role):
 
     elif role == "UserEntreprise":
 
-        return queryset.filter(
-            typeTravail="Construction"
-        )
+        return queryset.filter(typeTravail="Construction")
 
     # -----------------------------------------------------
     # ADMIN / SUPERADMIN / SUPERVISEUR
     # -----------------------------------------------------
 
-    elif role in [
-        "Admin",
-        "SuperAdmin",
-        "Superviseur"
-    ]:
+    elif role in ["Admin", "SuperAdmin", "Superviseur"]:
 
         return queryset
 
@@ -74,15 +57,11 @@ def get_personnel_queryset_for_role(role):
 # OUTIL : QUERYSET AVANCE SELON LE RÔLE
 # =========================================================
 
+
 def get_avance_queryset_for_role(role):
 
     queryset = (
-        Avance.objects
-        .select_related(
-            "personnel",
-            "distribution",
-            "enregistre_par"
-        )
+        Avance.objects.select_related("personnel", "distribution", "enregistre_par")
         .all()
         .order_by("-dateAv")
     )
@@ -93,9 +72,7 @@ def get_avance_queryset_for_role(role):
 
     if role == "UserMica":
 
-        return queryset.filter(
-            personnel__typeTravail="Mica"
-        )
+        return queryset.filter(personnel__typeTravail="Mica")
 
     # -----------------------------------------------------
     # USER ENTREPRISE
@@ -103,19 +80,13 @@ def get_avance_queryset_for_role(role):
 
     elif role == "UserEntreprise":
 
-        return queryset.filter(
-            personnel__typeTravail="Construction"
-        )
+        return queryset.filter(personnel__typeTravail="Construction")
 
     # -----------------------------------------------------
     # ADMIN / SUPERADMIN / SUPERVISEUR
     # -----------------------------------------------------
 
-    elif role in [
-        "Admin",
-        "SuperAdmin",
-        "Superviseur"
-    ]:
+    elif role in ["Admin", "SuperAdmin", "Superviseur"]:
 
         return queryset
 
@@ -129,6 +100,7 @@ def get_avance_queryset_for_role(role):
 # =========================================================
 # AJOUT
 # =========================================================
+
 
 def avance_add(request):
 
@@ -144,10 +116,7 @@ def avance_add(request):
 
     if not request.session.get("user_id"):
 
-        messages.error(
-            request,
-            "Votre session a expiré. Veuillez vous reconnecter."
-        )
+        messages.error(request, "Votre session a expiré. Veuillez vous reconnecter.")
 
         return redirect("users:login")
 
@@ -157,16 +126,11 @@ def avance_add(request):
 
     if request.method == "POST":
 
-        form = AvanceForm(
-            request.POST,
-            role=role
-        )
+        form = AvanceForm(request.POST, role=role)
 
         if form.is_valid():
 
-            avance = form.save(
-                commit=False
-            )
+            avance = form.save(commit=False)
 
             # -------------------------------------------------
             # SÉCURITÉ : VÉRIFIER LE PERSONNEL
@@ -174,41 +138,29 @@ def avance_add(request):
 
             personnel = avance.personnel
 
-            personnel_queryset = (
-                get_personnel_queryset_for_role(role)
-            )
+            personnel_queryset = get_personnel_queryset_for_role(role)
 
-            if not personnel_queryset.filter(
-                id=personnel.id
-            ).exists():
+            if not personnel_queryset.filter(id=personnel.id).exists():
 
                 messages.error(
                     request,
                     "Vous n'êtes pas autorisé à enregistrer "
-                    "une avance pour ce personnel."
+                    "une avance pour ce personnel.",
                 )
 
-                return redirect(
-                    "avances:avance_list"
-                )
+                return redirect("avances:avance_list")
 
             # -------------------------------------------------
             # UTILISATEUR CONNECTÉ
             # -------------------------------------------------
 
-            user_id = request.session.get(
-                "user_id"
-            )
+            user_id = request.session.get("user_id")
 
             if user_id:
 
                 try:
 
-                    avance.enregistre_par = (
-                        AppUser.objects.get(
-                            id=user_id
-                        )
-                    )
+                    avance.enregistre_par = AppUser.objects.get(id=user_id)
 
                 except AppUser.DoesNotExist:
 
@@ -221,9 +173,7 @@ def avance_add(request):
             avance.save()
 
             if avance.personnel:
-                recalculer_situation_personnel(
-                    avance.personnel
-    )
+                recalculer_situation_personnel(avance.personnel)
 
             # -------------------------------------------------
             # AUDIT
@@ -235,32 +185,21 @@ def avance_add(request):
                 "Avance",
                 avance.id,
                 nouvelle={
-                    "personnel": str(
-                        avance.personnel
-                    ),
-                    "montant": str(
-                        avance.montantAv
-                    ),
+                    "personnel": str(avance.personnel),
+                    "montant": str(avance.montantAv),
                     "motif": avance.motifAv,
-                    "type": avance.typeAv
+                    "type": avance.typeAv,
                 },
-                description=(
-                    "Création d'une avance personnel"
-                )
+                description=("Création d'une avance personnel"),
             )
 
             # -------------------------------------------------
             # MESSAGE
             # -------------------------------------------------
 
-            messages.success(
-                request,
-                "Avance enregistrée avec succès."
-            )
+            messages.success(request, "Avance enregistrée avec succès.")
 
-            return redirect(
-                "avances:avance_list"
-            )
+            return redirect("avances:avance_list")
 
     # -----------------------------------------------------
     # GET
@@ -268,28 +207,19 @@ def avance_add(request):
 
     else:
 
-        form = AvanceForm(
-            role=role
-        )
+        form = AvanceForm(role=role)
 
     # -----------------------------------------------------
     # AFFICHAGE
     # -----------------------------------------------------
 
-    return render(
-        request,
-        "avances/form.html",
-        {
-            "form": form,
-            "role": role
-        }
-    )
-
+    return render(request, "avances/form.html", {"form": form, "role": role})
 
 
 # =========================================================
 # LISTE DES AVANCES
 # =========================================================
+
 
 def avance_list(request):
 
@@ -309,20 +239,11 @@ def avance_list(request):
     # RÉCUPÉRATION DES FILTRES
     # -----------------------------------------------------
 
-    recherche = request.GET.get(
-        "personnel",
-        ""
-    ).strip()
+    recherche = request.GET.get("personnel", "").strip()
 
-    date_debut = request.GET.get(
-        "date_debut",
-        ""
-    ).strip()
+    date_debut = request.GET.get("date_debut", "").strip()
 
-    date_fin = request.GET.get(
-        "date_fin",
-        ""
-    ).strip()
+    date_fin = request.GET.get("date_fin", "").strip()
 
     # -----------------------------------------------------
     # RECHERCHE PAR NOM OU PRÉNOM
@@ -340,9 +261,7 @@ def avance_list(request):
     # -----------------------------------------------------
 
     if date_debut:
-        avances = avances.filter(
-            dateAv__gte=date_debut
-        )
+        avances = avances.filter(dateAv__gte=date_debut)
 
     # -----------------------------------------------------
     # FILTRE PAR DATE DE FIN
@@ -350,31 +269,21 @@ def avance_list(request):
     # -----------------------------------------------------
 
     if date_fin:
-        avances = avances.filter(
-            dateAv__lte=date_fin
-        )
+        avances = avances.filter(dateAv__lte=date_fin)
 
     # -----------------------------------------------------
     # TRI CHRONOLOGIQUE INVERSÉ
     # -----------------------------------------------------
 
-    avances = avances.order_by(
-        "-dateAv",
-        "-id"
-    )
+    avances = avances.order_by("-dateAv", "-id")
 
     # -----------------------------------------------------
     # PAGINATION
     # -----------------------------------------------------
 
-    paginator = Paginator(
-        avances,
-        12
-    )
+    paginator = Paginator(avances, 12)
 
-    page_obj = paginator.get_page(
-        request.GET.get("page")
-    )
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     # -----------------------------------------------------
     # PARAMÈTRES DE PAGINATION
@@ -400,12 +309,14 @@ def avance_list(request):
             "date_fin": date_fin,
             "role": role,
             "query_params": query_params.urlencode(),
-        }
+        },
     )
+
 
 # =========================================================
 # DETAIL
 # =========================================================
+
 
 def avance_detail(request, id):
 
@@ -413,18 +324,13 @@ def avance_detail(request, id):
     # RÔLE
     # -----------------------------------------------------
 
-    role = request.session.get(
-        "role"
-    )
+    role = request.session.get("role")
 
     # -----------------------------------------------------
     # SÉCURITÉ
     # -----------------------------------------------------
 
-    avance = get_object_or_404(
-        get_avance_queryset_for_role(role),
-        id=id
-    )
+    avance = get_object_or_404(get_avance_queryset_for_role(role), id=id)
 
     # -----------------------------------------------------
     # AUDIT
@@ -435,28 +341,20 @@ def avance_detail(request, id):
         "VIEW",
         "Avance",
         id,
-        description=(
-            "Consultation détail avance personnel"
-        )
+        description=("Consultation détail avance personnel"),
     )
 
     # -----------------------------------------------------
     # AFFICHAGE
     # -----------------------------------------------------
 
-    return render(
-        request,
-        "avances/detail.html",
-        {
-            "avance": avance,
-            "role": role
-        }
-    )
+    return render(request, "avances/detail.html", {"avance": avance, "role": role})
 
 
 # =========================================================
 # MODIFICATION
 # =========================================================
+
 
 def avance_edit(request, id):
 
@@ -464,58 +362,39 @@ def avance_edit(request, id):
     # RÔLE
     # -----------------------------------------------------
 
-    role = request.session.get(
-        "role"
-    )
+    role = request.session.get("role")
 
     # -----------------------------------------------------
     # AVANCE AUTORISÉE POUR CE RÔLE
     # -----------------------------------------------------
 
-    avance = get_object_or_404(
-        get_avance_queryset_for_role(role),
-        id=id
-    )
+    avance = get_object_or_404(get_avance_queryset_for_role(role), id=id)
 
     # -----------------------------------------------------
     # UTILISATEUR CONNECTÉ
     # -----------------------------------------------------
 
-    user_id = request.session.get(
-        "user_id"
-    )
+    user_id = request.session.get("user_id")
 
     # -----------------------------------------------------
     # VÉRIFICATION PROPRIÉTAIRE
     # -----------------------------------------------------
 
-    if (
-        not user_id
-        or avance.enregistre_par_id != int(user_id)
-    ):
+    if not user_id or avance.enregistre_par_id != int(user_id):
 
-        messages.error(
-            request,
-            "Vous ne pouvez pas modifier cette avance."
-        )
+        messages.error(request, "Vous ne pouvez pas modifier cette avance.")
 
-        return redirect(
-            "avances:avance_list"
-        )
+        return redirect("avances:avance_list")
 
     # -----------------------------------------------------
     # ANCIENNES VALEURS
     # -----------------------------------------------------
 
     ancienne = {
-        "personnel": str(
-            avance.personnel
-        ),
-        "montant": str(
-            avance.montantAv
-        ),
+        "personnel": str(avance.personnel),
+        "montant": str(avance.montantAv),
         "motif": avance.motifAv,
-        "type": avance.typeAv
+        "type": avance.typeAv,
     }
 
     # -----------------------------------------------------
@@ -524,11 +403,7 @@ def avance_edit(request, id):
 
     if request.method == "POST":
 
-        form = AvanceForm(
-            request.POST,
-            instance=avance,
-            role=role
-        )
+        form = AvanceForm(request.POST, instance=avance, role=role)
 
         if form.is_valid():
 
@@ -536,27 +411,17 @@ def avance_edit(request, id):
             # VÉRIFICATION PERSONNEL
             # ---------------------------------------------
 
-            personnel = form.cleaned_data.get(
-                "personnel"
-            )
+            personnel = form.cleaned_data.get("personnel")
 
-            personnel_queryset = (
-                get_personnel_queryset_for_role(role)
-            )
+            personnel_queryset = get_personnel_queryset_for_role(role)
 
-            if not personnel_queryset.filter(
-                id=personnel.id
-            ).exists():
+            if not personnel_queryset.filter(id=personnel.id).exists():
 
                 messages.error(
-                    request,
-                    "Vous n'êtes pas autorisé à sélectionner "
-                    "ce personnel."
+                    request, "Vous n'êtes pas autorisé à sélectionner " "ce personnel."
                 )
 
-                return redirect(
-                    "avances:avance_list"
-                )
+                return redirect("avances:avance_list")
 
             # ---------------------------------------------
             # ENREGISTRER
@@ -569,14 +434,10 @@ def avance_edit(request, id):
             # ---------------------------------------------
 
             nouvelle = {
-                "personnel": str(
-                    avance_modifiee.personnel
-                ),
-                "montant": str(
-                    avance_modifiee.montantAv
-                ),
+                "personnel": str(avance_modifiee.personnel),
+                "montant": str(avance_modifiee.montantAv),
                 "motif": avance_modifiee.motifAv,
-                "type": avance_modifiee.typeAv
+                "type": avance_modifiee.typeAv,
             }
 
             # ---------------------------------------------
@@ -590,23 +451,16 @@ def avance_edit(request, id):
                 id,
                 ancienne=ancienne,
                 nouvelle=nouvelle,
-                description=(
-                    "Modification d'une avance personnel"
-                )
+                description=("Modification d'une avance personnel"),
             )
 
             # ---------------------------------------------
             # MESSAGE
             # ---------------------------------------------
 
-            messages.success(
-                request,
-                "Avance modifiée avec succès."
-            )
+            messages.success(request, "Avance modifiée avec succès.")
 
-            return redirect(
-                "avances:avance_list"
-            )
+            return redirect("avances:avance_list")
 
     # -----------------------------------------------------
     # GET
@@ -614,23 +468,14 @@ def avance_edit(request, id):
 
     else:
 
-        form = AvanceForm(
-            instance=avance,
-            role=role
-        )
+        form = AvanceForm(instance=avance, role=role)
 
     # -----------------------------------------------------
     # AFFICHAGE
     # -----------------------------------------------------
 
     return render(
-        request,
-        "avances/form.html",
-        {
-            "form": form,
-            "role": role,
-            "avance": avance
-        }
+        request, "avances/form.html", {"form": form, "role": role, "avance": avance}
     )
 
 
@@ -638,64 +483,46 @@ def avance_edit(request, id):
 # SUPPRESSION
 # =========================================================
 
+
 def avance_delete(request, id):
 
     # -----------------------------------------------------
     # RÔLE
     # -----------------------------------------------------
 
-    role = request.session.get(
-        "role"
-    )
+    role = request.session.get("role")
 
     # -----------------------------------------------------
     # AVANCE AUTORISÉE POUR CE RÔLE
     # -----------------------------------------------------
 
-    avance = get_object_or_404(
-        get_avance_queryset_for_role(role),
-        id=id
-    )
+    avance = get_object_or_404(get_avance_queryset_for_role(role), id=id)
 
     # -----------------------------------------------------
     # UTILISATEUR CONNECTÉ
     # -----------------------------------------------------
 
-    user_id = request.session.get(
-        "user_id"
-    )
+    user_id = request.session.get("user_id")
 
     # -----------------------------------------------------
     # VÉRIFICATION PROPRIÉTAIRE
     # -----------------------------------------------------
 
-    if (
-        not user_id
-        or avance.enregistre_par_id != int(user_id)
-    ):
+    if not user_id or avance.enregistre_par_id != int(user_id):
 
-        messages.error(
-            request,
-            "Vous ne pouvez pas supprimer cette avance."
-        )
+        messages.error(request, "Vous ne pouvez pas supprimer cette avance.")
 
-        return redirect(
-            "avances:avance_list"
-        )
+        return redirect("avances:avance_list")
 
     # -----------------------------------------------------
     # ANCIENNES VALEURS
     # -----------------------------------------------------
 
     ancienne = {
-        "personnel": str(
-            avance.personnel
-        ),
-        "montant": str(
-            avance.montantAv
-        ),
+        "personnel": str(avance.personnel),
+        "montant": str(avance.montantAv),
         "motif": avance.motifAv,
-        "type": avance.typeAv
+        "type": avance.typeAv,
     }
 
     # -----------------------------------------------------
@@ -710,24 +537,15 @@ def avance_delete(request, id):
             "Avance",
             id,
             ancienne=ancienne,
-            description=(
-                "Suppression d'une avance personnel"
-            )
+            description=("Suppression d'une avance personnel"),
         )
 
         avance.delete()
 
-        messages.success(
-            request,
-            "Avance supprimée avec succès."
-        )
+        messages.success(request, "Avance supprimée avec succès.")
 
     # -----------------------------------------------------
     # RETOUR
     # -----------------------------------------------------
 
-    return redirect(
-        "avances:avance_list"
-    )
-
-
+    return redirect("avances:avance_list")

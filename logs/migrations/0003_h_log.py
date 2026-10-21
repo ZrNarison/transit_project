@@ -6,19 +6,39 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('logs', '0002_log_delete_historiqueaction'),
+        ("logs", "0002_log_delete_historiqueaction"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='H_Log',
+            name="H_Log",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('level', models.CharField(choices=[('INFO', 'Information'), ('WARNING', 'Avertissement'), ('ERROR', 'Erreur'), ('CRITICAL', 'Critique')], default='INFO', max_length=20)),
-                ('message', models.TextField()),
-                ('module', models.CharField(blank=True, max_length=100)),
-                ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
-                ('date_log', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "level",
+                    models.CharField(
+                        choices=[
+                            ("INFO", "Information"),
+                            ("WARNING", "Avertissement"),
+                            ("ERROR", "Erreur"),
+                            ("CRITICAL", "Critique"),
+                        ],
+                        default="INFO",
+                        max_length=20,
+                    ),
+                ),
+                ("message", models.TextField()),
+                ("module", models.CharField(blank=True, max_length=100)),
+                ("ip_address", models.GenericIPAddressField(blank=True, null=True)),
+                ("date_log", models.DateTimeField(auto_now_add=True)),
             ],
         ),
     ]

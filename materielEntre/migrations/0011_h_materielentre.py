@@ -7,26 +7,44 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materielEntre', '0010_alter_materielentre_dateentre'),
-        ('materielsort', '0004_h_materielsort'),
+        ("materielEntre", "0010_alter_materielentre_dateentre"),
+        ("materielsort", "0004_h_materielsort"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='H_MaterielEntre',
+            name="H_MaterielEntre",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('Nb_Entre', models.DecimalField(decimal_places=0, max_digits=10)),
-                ('responsable_entree', models.CharField(blank=True, max_length=100, null=True)),
-                ('observation', models.TextField(blank=True, null=True)),
-                ('dateEntre', models.DateField()),
-                ('dateEnregistreur', models.DateTimeField(auto_now_add=True)),
-                ('id_MaterielSort', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='entrees', to='materielsort.h_materielsort')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("Nb_Entre", models.DecimalField(decimal_places=0, max_digits=10)),
+                (
+                    "responsable_entree",
+                    models.CharField(blank=True, max_length=100, null=True),
+                ),
+                ("observation", models.TextField(blank=True, null=True)),
+                ("dateEntre", models.DateField()),
+                ("dateEnregistreur", models.DateTimeField(auto_now_add=True)),
+                (
+                    "id_MaterielSort",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="entrees",
+                        to="materielsort.h_materielsort",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Entrée de matériel',
-                'verbose_name_plural': 'Entrées de matériel',
-                'ordering': ['-dateEntre', '-id'],
+                "verbose_name": "Entrée de matériel",
+                "verbose_name_plural": "Entrées de matériel",
+                "ordering": ["-dateEntre", "-id"],
             },
         ),
     ]

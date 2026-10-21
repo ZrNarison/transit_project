@@ -8,28 +8,46 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materiels', '0007_h_materiels'),
-        ('materielsort', '0003_materielsort_dateenregistreur_and_more'),
+        ("materiels", "0007_h_materiels"),
+        ("materielsort", "0003_materielsort_dateenregistreur_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='H_MaterielSort',
+            name="H_MaterielSort",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('demandeur', models.CharField(max_length=100)),
-                ('responsable_sortie', models.CharField(max_length=100)),
-                ('Nb_MatSort', models.DecimalField(decimal_places=0, max_digits=10)),
-                ('observation', models.TextField(blank=True, null=True)),
-                ('avec_remise', models.BooleanField(default=False)),
-                ('dateSortie', models.DateField(default=django.utils.timezone.localdate)),
-                ('dateEnregistreur', models.DateTimeField(auto_now_add=True)),
-                ('id_Materiel', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sorties', to='materiels.h_materiels')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("demandeur", models.CharField(max_length=100)),
+                ("responsable_sortie", models.CharField(max_length=100)),
+                ("Nb_MatSort", models.DecimalField(decimal_places=0, max_digits=10)),
+                ("observation", models.TextField(blank=True, null=True)),
+                ("avec_remise", models.BooleanField(default=False)),
+                (
+                    "dateSortie",
+                    models.DateField(default=django.utils.timezone.localdate),
+                ),
+                ("dateEnregistreur", models.DateTimeField(auto_now_add=True)),
+                (
+                    "id_Materiel",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sorties",
+                        to="materiels.h_materiels",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Sortie de matériel',
-                'verbose_name_plural': 'Sorties de matériel',
-                'ordering': ['-dateSortie'],
+                "verbose_name": "Sortie de matériel",
+                "verbose_name_plural": "Sorties de matériel",
+                "ordering": ["-dateSortie"],
             },
         ),
     ]

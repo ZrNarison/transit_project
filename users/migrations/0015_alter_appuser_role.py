@@ -6,13 +6,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0014_alter_appuser_date_creation_alter_appuser_email_and_more'),
+        ("users", "0014_alter_appuser_date_creation_alter_appuser_email_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='appuser',
-            name='role',
-            field=models.CharField(choices=[('Admin', 'Administrateur'), ('ChauffeurEntreprise', 'Chauffeur Entreprise'), ('ChauffeurMica', 'Chauffeur Mica'), ('ChefMagasin', 'Chef Magasiné'), ('Magasin', 'Magasiné'), ('SuperviseurMica', 'Superviseur Mica'), ('SuperviseurEntreprise', 'Superviseur Entreprise'), ('UserMica', 'Comptable Mica'), ('UserEntreprise', 'Comptable Entreprise'), ('UserProjet', 'Utilisateur Projet')], default='UserMica', max_length=50, verbose_name='Rôle'),
+            model_name="appuser",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("Admin", "Administrateur"),
+                    ("ChauffeurEntreprise", "Chauffeur Entreprise"),
+                    ("ChauffeurMica", "Chauffeur Mica"),
+                    ("ChefMagasin", "Chef Magasiné"),
+                    ("Magasin", "Magasiné"),
+                    ("SuperviseurMica", "Superviseur Mica"),
+                    ("SuperviseurEntreprise", "Superviseur Entreprise"),
+                    ("UserMica", "Comptable Mica"),
+                    ("UserEntreprise", "Comptable Entreprise"),
+                    ("UserProjet", "Utilisateur Projet"),
+                ],
+                default="UserMica",
+                max_length=50,
+                verbose_name="Rôle",
+            ),
         ),
     ]

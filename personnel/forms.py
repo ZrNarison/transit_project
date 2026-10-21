@@ -1,7 +1,8 @@
 from django import forms
 
-from .models import Personnel, H_Personnel
 from categorie.models import Categorie
+
+from .models import H_Personnel, Personnel
 
 
 class PersonnelForm(forms.ModelForm):
@@ -26,21 +27,18 @@ class PersonnelForm(forms.ModelForm):
         ]
 
         widgets = {
-
             "nom": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Nom",
                 }
             ),
-
             "prenom": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Prénom",
                 }
             ),
-
             "adresse": forms.Textarea(
                 attrs={
                     "class": "form-control",
@@ -49,7 +47,6 @@ class PersonnelForm(forms.ModelForm):
                     "style": "resize:none;",
                 }
             ),
-
             "telephone": forms.TextInput(
                 attrs={
                     "class": "form-control",
@@ -59,26 +56,22 @@ class PersonnelForm(forms.ModelForm):
                     "inputmode": "numeric",
                 }
             ),
-
             "fonction": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Fonction",
                 }
             ),
-
             "typeTravail": forms.Select(
                 attrs={
                     "class": "form-control",
                 }
             ),
-
             "typeContrat": forms.Select(
                 attrs={
                     "class": "form-control",
                 }
             ),
-
             "psalaire": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -87,34 +80,29 @@ class PersonnelForm(forms.ModelForm):
                     "placeholder": "Salaire",
                 }
             ),
-
             "debutContrat": forms.DateInput(
                 attrs={
                     "class": "form-control",
                     "type": "date",
                 }
             ),
-
             "finContrat": forms.DateInput(
                 attrs={
                     "class": "form-control",
                     "type": "date",
                 }
             ),
-
             "lieuTravail": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Lieu de travail",
                 }
             ),
-
             "categorie": forms.Select(
                 attrs={
                     "class": "form-control",
                 }
             ),
-
             "photo": forms.ClearableFileInput(
                 attrs={
                     "class": "form-control",
@@ -125,11 +113,7 @@ class PersonnelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["categorie"].queryset = (
-            Categorie.objects
-            .all()
-            .order_by("nom")
-        )
+        self.fields["categorie"].queryset = Categorie.objects.all().order_by("nom")
 
         # Champs facultatifs
         self.fields["prenom"].required = False
@@ -140,10 +124,7 @@ class PersonnelForm(forms.ModelForm):
 
         # Classe Bootstrap pour tous les champs
         for field in self.fields.values():
-            field.widget.attrs.setdefault(
-                "class",
-                "form-control"
-            )
+            field.widget.attrs.setdefault("class", "form-control")
 
     def clean_nom(self):
         nom = self.cleaned_data.get("nom")
@@ -193,8 +174,6 @@ class PersonnelForm(forms.ModelForm):
             )
 
         return cleaned_data
-    
-
 
 
 class H_PersonnelForm(forms.ModelForm):
@@ -216,54 +195,73 @@ class H_PersonnelForm(forms.ModelForm):
         ]
 
         widgets = {
-            "nom": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Nom",
-            }),
-            "prenom": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Prénom",
-            }),
-            "adresse": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 2,
-                "placeholder": "Adresse",
-                "style": "resize:none;",
-            }),
-            "telephone": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Téléphone",
-                "maxlength": "10",
-            }),
-            "cin": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Numéro CIN",
-                "maxlength": "10",
-                "title": "Le numéro CIN doit contenir exactement 10 caractères."
-            }),
-            "salaire": forms.NumberInput(attrs={
-                "class": "form-control",
-                "step": "0.01",
-                "min": "0",
-                "placeholder": "Salaire",
-            }),
-            "typeContrat": forms.Select(attrs={
-                "class": "form-select",
-            }),
-            "debutContrat": forms.DateInput(attrs={
-                "class": "form-control",
-                "type": "date",
-            }),
-            "finContrat": forms.DateInput(attrs={
-                "class": "form-control",
-                "type": "date",
-            }),
-            "categorie": forms.Select(attrs={
-                "class": "form-select",
-            }),
+            "nom": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom",
+                }
+            ),
+            "prenom": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Prénom",
+                }
+            ),
+            "adresse": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 2,
+                    "placeholder": "Adresse",
+                    "style": "resize:none;",
+                }
+            ),
+            "telephone": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Téléphone",
+                    "maxlength": "10",
+                }
+            ),
+            "cin": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Numéro CIN",
+                    "maxlength": "10",
+                    "title": "Le numéro CIN doit contenir exactement 10 caractères.",
+                }
+            ),
+            "salaire": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Salaire",
+                }
+            ),
+            "typeContrat": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+            "debutContrat": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "finContrat": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "categorie": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
         }
 
-        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -283,7 +281,6 @@ class H_PersonnelForm(forms.ModelForm):
                 "form-control",
             )
 
-
     def clean_nom(self):
         nom = self.cleaned_data.get("nom")
         return nom.strip().upper() if nom else nom
@@ -291,14 +288,12 @@ class H_PersonnelForm(forms.ModelForm):
     def clean_prenom(self):
         prenom = self.cleaned_data.get("prenom")
         return prenom.strip().title() if prenom else prenom
-    
+
     def clean_cin(self):
         cin = self.cleaned_data.get("cin", "").strip()
 
         if len(cin) < 6 or cin[5] not in ("1", "2"):
-            raise forms.ValidationError(
-                "Le 6e chiffre du CIN doit être 1 ou 2."
-            )
+            raise forms.ValidationError("Le 6e chiffre du CIN doit être 1 ou 2.")
 
         return cin
 
@@ -324,9 +319,7 @@ class H_PersonnelForm(forms.ModelForm):
         salaire = self.cleaned_data.get("salaire")
 
         if salaire is not None and salaire < 0:
-            raise forms.ValidationError(
-                "Le salaire ne peut pas être négatif."
-            )
+            raise forms.ValidationError("Le salaire ne peut pas être négatif.")
 
         return salaire
 
@@ -340,7 +333,7 @@ class H_PersonnelForm(forms.ModelForm):
             self.add_error(
                 "finContrat",
                 "La fin du contrat doit être postérieure "
-                "ou égale à la date de début."
+                "ou égale à la date de début.",
             )
 
         return cleaned_data

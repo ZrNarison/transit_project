@@ -8,35 +8,43 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('personnel', '0003_alter_personnel_photo'),
-        ('users', '0001_initial'),
+        ("personnel", "0003_alter_personnel_photo"),
+        ("users", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='appuser',
-            name='date_creation',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="appuser",
+            name="date_creation",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='appuser',
-            name='personnel',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='compte', to='personnel.personnel'),
+            model_name="appuser",
+            name="personnel",
+            field=models.OneToOneField(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="compte",
+                to="personnel.personnel",
+            ),
         ),
         migrations.AlterField(
-            model_name='appuser',
-            name='email',
+            model_name="appuser",
+            name="email",
             field=models.EmailField(max_length=100, unique=True),
         ),
         migrations.AlterField(
-            model_name='appuser',
-            name='password',
+            model_name="appuser",
+            name="password",
             field=models.CharField(max_length=255),
         ),
         migrations.AlterField(
-            model_name='appuser',
-            name='username',
+            model_name="appuser",
+            name="username",
             field=models.CharField(max_length=100, unique=True),
         ),
     ]

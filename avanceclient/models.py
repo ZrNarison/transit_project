@@ -15,60 +15,38 @@ class AvanceClient(models.Model):
     ]
 
     client = models.ForeignKey(
-        Client,
-        on_delete=models.CASCADE,
-        related_name="avances_client"
+        Client, on_delete=models.CASCADE, related_name="avances_client"
     )
 
-    montant = models.DecimalField(
-        max_digits=15,
-        decimal_places=0
-    )
+    montant = models.DecimalField(max_digits=15, decimal_places=0)
 
     # Montant utilisé pour payer les produits
     montant_utilise = models.DecimalField(
-        max_digits=15,
-        decimal_places=0,
-        default=Decimal("0")
+        max_digits=15, decimal_places=0, default=Decimal("0")
     )
 
     # Montant remboursé au client
     montant_retour = models.DecimalField(
-        max_digits=15,
-        decimal_places=0,
-        default=Decimal("0")
+        max_digits=15, decimal_places=0, default=Decimal("0")
     )
 
-    type_avance = models.CharField(
-        max_length=20,
-        choices=TYPE_AVANCE,
-        default="ESPECE"
-    )
+    type_avance = models.CharField(max_length=20, choices=TYPE_AVANCE, default="ESPECE")
 
-    motif = models.CharField(
-        max_length=255,
-        default="Avance client"
-    )
+    motif = models.CharField(max_length=255, default="Avance client")
 
-    date = models.DateTimeField(
-        auto_now_add=True
-    )
+    date = models.DateTimeField(auto_now_add=True)
 
     enregistrer_par = models.ForeignKey(
         AppUser,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="avances_client_enregistrees"
+        related_name="avances_client_enregistrees",
     )
 
     @property
     def reste(self):
-        return (
-            self.montant
-            - self.montant_utilise
-            - self.montant_retour
-        )
+        return self.montant - self.montant_utilise - self.montant_retour
 
     @property
     def est_soldee(self):
@@ -90,25 +68,16 @@ class AvanceClient(models.Model):
 class UtilisationAvanceClient(models.Model):
 
     avance = models.ForeignKey(
-        AvanceClient,
-        on_delete=models.CASCADE,
-        related_name="utilisations"
+        AvanceClient, on_delete=models.CASCADE, related_name="utilisations"
     )
 
     produit = models.ForeignKey(
-        "produit.Produit",
-        on_delete=models.CASCADE,
-        related_name="utilisations_avance"
+        "produit.Produit", on_delete=models.CASCADE, related_name="utilisations_avance"
     )
 
-    montant = models.DecimalField(
-        max_digits=15,
-        decimal_places=0
-    )
+    montant = models.DecimalField(max_digits=15, decimal_places=0)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["created_at", "id"]

@@ -6,18 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('depense', '0006_alter_depense_description_alter_depense_distribution_and_more'),
+        (
+            "depense",
+            "0006_alter_depense_description_alter_depense_distribution_and_more",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='depense',
-            name='description',
+            model_name="depense",
+            name="description",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='depense',
-            name='montant',
+            model_name="depense",
+            name="montant",
             field=models.DecimalField(decimal_places=0, max_digits=12),
         ),
     ]

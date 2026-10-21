@@ -10,25 +10,42 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('users', '0008_alter_appuser_id'),
+        ("users", "0008_alter_appuser_id"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='DepenseSoc',
+            name="DepenseSoc",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('titre', models.CharField(max_length=50)),
-                ('montant', models.DecimalField(decimal_places=0, max_digits=12)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('date', models.DateField(default=django.utils.timezone.now)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('enregistre_par', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='depenses_soc_enregistrees', to='users.appuser')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("titre", models.CharField(max_length=50)),
+                ("montant", models.DecimalField(decimal_places=0, max_digits=12)),
+                ("description", models.TextField(blank=True, null=True)),
+                ("date", models.DateField(default=django.utils.timezone.now)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "enregistre_par",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="depenses_soc_enregistrees",
+                        to="users.appuser",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Dépensesoc',
-                'verbose_name_plural': 'Dépensessoc',
-                'ordering': ['-date', '-created_at'],
+                "verbose_name": "Dépensesoc",
+                "verbose_name_plural": "Dépensessoc",
+                "ordering": ["-date", "-created_at"],
             },
         ),
     ]

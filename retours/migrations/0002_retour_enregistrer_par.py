@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('retours', '0001_initial'),
-        ('users', '0005_remove_appuser_categorieuser_appuser_role_and_more'),
+        ("retours", "0001_initial"),
+        ("users", "0005_remove_appuser_categorieuser_appuser_role_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='retour',
-            name='enregistrer_par',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='retours_enregistres', to='users.appuser'),
+            model_name="retour",
+            name="enregistrer_par",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="retours_enregistres",
+                to="users.appuser",
+            ),
         ),
     ]

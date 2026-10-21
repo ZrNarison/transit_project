@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('transentrant', '0007_alter_transentrant_created_by_and_more'),
+        ("transentrant", "0007_alter_transentrant_created_by_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transentrant',
-            name='telephone',
+            model_name="transentrant",
+            name="telephone",
             field=models.CharField(max_length=10),
         ),
     ]

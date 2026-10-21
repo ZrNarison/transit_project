@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('produit', '0012_produit_enregistre_par'),
-        ('users', '0006_alter_appuser_email_alter_appuser_personnel_and_more'),
+        ("produit", "0012_produit_enregistre_par"),
+        ("users", "0006_alter_appuser_email_alter_appuser_personnel_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='produit',
-            name='enregistre_par',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='produits_crees', to='users.appuser'),
+            model_name="produit",
+            name="enregistre_par",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="produits_crees",
+                to="users.appuser",
+            ),
         ),
     ]

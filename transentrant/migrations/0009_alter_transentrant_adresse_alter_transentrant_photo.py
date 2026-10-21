@@ -6,18 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('transentrant', '0008_alter_transentrant_telephone'),
+        ("transentrant", "0008_alter_transentrant_telephone"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transentrant',
-            name='adresse',
+            model_name="transentrant",
+            name="adresse",
             field=models.TextField(blank=True),
         ),
         migrations.AlterField(
-            model_name='transentrant',
-            name='photo',
-            field=models.ImageField(blank=True, null=True, upload_to='images/transentrants/'),
+            model_name="transentrant",
+            name="photo",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="images/transentrants/"
+            ),
         ),
     ]

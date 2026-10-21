@@ -7,24 +7,34 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Materiels',
+            name="Materiels",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=100)),
-                ('typeMat', models.CharField(max_length=100)),
-                ('catMat', models.CharField(max_length=100)),
-                ('stock_initial', models.DecimalField(decimal_places=0, default=0, max_digits=10)),
-                ('dateDepot', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nom", models.CharField(max_length=100)),
+                ("typeMat", models.CharField(max_length=100)),
+                ("catMat", models.CharField(max_length=100)),
+                (
+                    "stock_initial",
+                    models.DecimalField(decimal_places=0, default=0, max_digits=10),
+                ),
+                ("dateDepot", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'verbose_name': 'Matériel',
-                'verbose_name_plural': 'Matériels',
-                'ordering': ['nom'],
+                "verbose_name": "Matériel",
+                "verbose_name_plural": "Matériels",
+                "ordering": ["nom"],
             },
         ),
     ]

@@ -9,74 +9,194 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('users', '0010_alter_appuser_role'),
+        ("users", "0010_alter_appuser_role"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Materiaux',
+            name="Materiaux",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('libelle', models.CharField(max_length=100)),
-                ('unite', models.CharField(max_length=50)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("libelle", models.CharField(max_length=100)),
+                ("unite", models.CharField(max_length=50)),
             ],
             options={
-                'verbose_name': 'Matériau',
-                'verbose_name_plural': 'Matériaux',
-                'ordering': ['libelle'],
+                "verbose_name": "Matériau",
+                "verbose_name_plural": "Matériaux",
+                "ordering": ["libelle"],
             },
         ),
         migrations.CreateModel(
-            name='MateriauxEntree',
+            name="MateriauxEntree",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('entree', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='Quantité entrée')),
-                ('date_entree', models.DateField(verbose_name="Date d'entrée")),
-                ('destination', models.CharField(blank=True, max_length=100, verbose_name='Provenance')),
-                ('vehicule', models.CharField(blank=True, max_length=100, verbose_name='Véhicule')),
-                ('date_creation', models.DateTimeField(auto_now_add=True)),
-                ('enregistreur', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='materiaux_entrees', to='users.appuser', verbose_name='Enregistreur')),
-                ('materiau', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='entrees', to='materiaux.materiaux', verbose_name='Matériau')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "entree",
+                    models.DecimalField(
+                        decimal_places=2, max_digits=12, verbose_name="Quantité entrée"
+                    ),
+                ),
+                ("date_entree", models.DateField(verbose_name="Date d'entrée")),
+                (
+                    "destination",
+                    models.CharField(
+                        blank=True, max_length=100, verbose_name="Provenance"
+                    ),
+                ),
+                (
+                    "vehicule",
+                    models.CharField(
+                        blank=True, max_length=100, verbose_name="Véhicule"
+                    ),
+                ),
+                ("date_creation", models.DateTimeField(auto_now_add=True)),
+                (
+                    "enregistreur",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="materiaux_entrees",
+                        to="users.appuser",
+                        verbose_name="Enregistreur",
+                    ),
+                ),
+                (
+                    "materiau",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="entrees",
+                        to="materiaux.materiaux",
+                        verbose_name="Matériau",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Entrée entrepôt',
-                'verbose_name_plural': 'Entrées entrepôt',
-                'ordering': ['-date_entree', '-id'],
+                "verbose_name": "Entrée entrepôt",
+                "verbose_name_plural": "Entrées entrepôt",
+                "ordering": ["-date_entree", "-id"],
             },
         ),
         migrations.CreateModel(
-            name='MateriauxDivision',
+            name="MateriauxDivision",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('destination', models.CharField(max_length=100, verbose_name='Magasin / Chantier')),
-                ('quantite', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='Quantité divisée')),
-                ('date_division', models.DateField(verbose_name='Date de division')),
-                ('date_creation', models.DateTimeField(auto_now_add=True)),
-                ('enregistreur', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='materiaux_divisions', to='users.appuser', verbose_name='Enregistreur')),
-                ('entree', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='divisions', to='materiaux.materiauxentree', verbose_name='Entrée entrepôt')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "destination",
+                    models.CharField(max_length=100, verbose_name="Magasin / Chantier"),
+                ),
+                (
+                    "quantite",
+                    models.DecimalField(
+                        decimal_places=2, max_digits=12, verbose_name="Quantité divisée"
+                    ),
+                ),
+                ("date_division", models.DateField(verbose_name="Date de division")),
+                ("date_creation", models.DateTimeField(auto_now_add=True)),
+                (
+                    "enregistreur",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="materiaux_divisions",
+                        to="users.appuser",
+                        verbose_name="Enregistreur",
+                    ),
+                ),
+                (
+                    "entree",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="divisions",
+                        to="materiaux.materiauxentree",
+                        verbose_name="Entrée entrepôt",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Division matériau',
-                'verbose_name_plural': 'Divisions matériaux',
-                'ordering': ['-date_division', '-id'],
+                "verbose_name": "Division matériau",
+                "verbose_name_plural": "Divisions matériaux",
+                "ordering": ["-date_division", "-id"],
             },
         ),
         migrations.CreateModel(
-            name='MateriauxOut',
+            name="MateriauxOut",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('quantite', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='Quantité sortie')),
-                ('date_sortie', models.DateField(verbose_name='Date de sortie')),
-                ('destination', models.CharField(blank=True, max_length=100, verbose_name='Destination / Utilisation')),
-                ('vehicule', models.CharField(blank=True, max_length=100, verbose_name='Véhicule')),
-                ('date_creation', models.DateTimeField(auto_now_add=True)),
-                ('division', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='sorties', to='materiaux.materiauxdivision', verbose_name='Stock magasin')),
-                ('enregistreur', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='materiaux_sorties', to='users.appuser', verbose_name='Enregistreur')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "quantite",
+                    models.DecimalField(
+                        decimal_places=2, max_digits=12, verbose_name="Quantité sortie"
+                    ),
+                ),
+                ("date_sortie", models.DateField(verbose_name="Date de sortie")),
+                (
+                    "destination",
+                    models.CharField(
+                        blank=True,
+                        max_length=100,
+                        verbose_name="Destination / Utilisation",
+                    ),
+                ),
+                (
+                    "vehicule",
+                    models.CharField(
+                        blank=True, max_length=100, verbose_name="Véhicule"
+                    ),
+                ),
+                ("date_creation", models.DateTimeField(auto_now_add=True)),
+                (
+                    "division",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="sorties",
+                        to="materiaux.materiauxdivision",
+                        verbose_name="Stock magasin",
+                    ),
+                ),
+                (
+                    "enregistreur",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="materiaux_sorties",
+                        to="users.appuser",
+                        verbose_name="Enregistreur",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Sortie matériau',
-                'verbose_name_plural': 'Sorties matériaux',
-                'ordering': ['-date_sortie', '-id'],
+                "verbose_name": "Sortie matériau",
+                "verbose_name_plural": "Sorties matériaux",
+                "ordering": ["-date_sortie", "-id"],
             },
         ),
     ]

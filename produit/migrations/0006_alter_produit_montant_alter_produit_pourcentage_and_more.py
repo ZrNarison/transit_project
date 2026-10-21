@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('produit', '0005_alter_produit_type_produit'),
+        ("produit", "0005_alter_produit_type_produit"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='produit',
-            name='montant',
+            model_name="produit",
+            name="montant",
             field=models.DecimalField(decimal_places=0, max_digits=4),
         ),
         migrations.AlterField(
-            model_name='produit',
-            name='pourcentage',
+            model_name="produit",
+            name="pourcentage",
             field=models.DecimalField(decimal_places=0, max_digits=2),
         ),
         migrations.AlterField(
-            model_name='produit',
-            name='quantite',
+            model_name="produit",
+            name="quantite",
             field=models.DecimalField(decimal_places=0, max_digits=10),
         ),
     ]

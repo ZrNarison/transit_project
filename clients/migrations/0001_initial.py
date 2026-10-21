@@ -7,23 +7,33 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Client',
+            name="Client",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=100)),
-                ('prenom', models.CharField(blank=True, max_length=100)),
-                ('date_naissance', models.DateField(blank=True, null=True)),
-                ('lieu_naissance', models.CharField(blank=True, max_length=150)),
-                ('nom_pere', models.CharField(blank=True, max_length=150)),
-                ('nom_mere', models.CharField(blank=True, max_length=150)),
-                ('adresse', models.TextField(blank=True)),
-                ('telephone', models.CharField(max_length=20)),
-                ('photo', models.ImageField(blank=True, null=True, upload_to='clients/')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nom", models.CharField(max_length=100)),
+                ("prenom", models.CharField(blank=True, max_length=100)),
+                ("date_naissance", models.DateField(blank=True, null=True)),
+                ("lieu_naissance", models.CharField(blank=True, max_length=150)),
+                ("nom_pere", models.CharField(blank=True, max_length=150)),
+                ("nom_mere", models.CharField(blank=True, max_length=150)),
+                ("adresse", models.TextField(blank=True)),
+                ("telephone", models.CharField(max_length=20)),
+                (
+                    "photo",
+                    models.ImageField(blank=True, null=True, upload_to="clients/"),
+                ),
             ],
         ),
     ]

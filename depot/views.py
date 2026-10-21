@@ -5,15 +5,15 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Sum
 from django.forms import inlineformset_factory
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .models import Depot, Distribution
-from .forms import DepotForm, DistributionForm
+from audit.utils import enregistrer_action
 from personnel.models import Personnel
 from users.models import AppUser
-from audit.utils import enregistrer_action
 
+from .forms import DepotForm, DistributionForm
+from .models import Depot, Distribution
 
 # ============================================================
 # FORMSET DES DISTRIBUTIONS
@@ -31,6 +31,7 @@ DistributionFormSet = inlineformset_factory(
 # ============================================================
 # UTILITAIRES
 # ============================================================
+
 
 def get_depot_user(request):
     """
@@ -70,9 +71,8 @@ def depot_montant_distributions(depot):
     """
     Calcule le total des distributions d'un dépôt.
     """
-    return (
-        depot.distributions.aggregate(total=Sum("montant"))["total"]
-        or Decimal("0.00")
+    return depot.distributions.aggregate(total=Sum("montant"))["total"] or Decimal(
+        "0.00"
     )
 
 
@@ -84,24 +84,14 @@ def depot_donnees_audit(depot):
         "nom": depot.nom,
         "montantG": str(depot.montantG),
         "montant": str(depot.montant),
-        "personnel_1": (
-            str(depot.personnel_1_id)
-            if depot.personnel_1_id
-            else None
-        ),
-        "personnel_2": (
-            str(depot.personnel_2_id)
-            if depot.personnel_2_id
-            else None
-        ),
+        "personnel_1": (str(depot.personnel_1_id) if depot.personnel_1_id else None),
+        "personnel_2": (str(depot.personnel_2_id) if depot.personnel_2_id else None),
         "part_1": depot.part_1,
         "part_2": depot.part_2,
         "date": str(depot.date),
         "description": depot.description,
         "enregistre_par": (
-            str(depot.enregistre_par_id)
-            if depot.enregistre_par_id
-            else None
+            str(depot.enregistre_par_id) if depot.enregistre_par_id else None
         ),
     }
 
@@ -109,6 +99,7 @@ def depot_donnees_audit(depot):
 # ============================================================
 # LISTE DES DÉPÔTS
 # ============================================================
+
 
 def depot_list(request):
     """
@@ -119,8 +110,7 @@ def depot_list(request):
     user = get_depot_user(request)
 
     depots = (
-        Depot.objects
-        .select_related(
+        Depot.objects.select_related(
             "personnel_1",
             "personnel_2",
             "enregistre_par",
@@ -136,9 +126,7 @@ def depot_list(request):
     date_fin = request.GET.get("date_fin", "").strip()
 
     if personnel:
-        depots = depots.filter(
-            distributions__distributeur_id=personnel
-        ).distinct()
+        depots = depots.filter(distributions__distributeur_id=personnel).distinct()
 
     if date_debut:
         depots = depots.filter(date__gte=date_debut)
@@ -147,17 +135,11 @@ def depot_list(request):
         depots = depots.filter(date__lte=date_fin)
 
     # Calculs des totaux sur l'ensemble filtré, avant pagination.
-    total_montant = (
-        depots.aggregate(total=Sum("montantG"))["total"]
-        or Decimal("0.00")
-    )
+    total_montant = depots.aggregate(total=Sum("montantG"))["total"] or Decimal("0.00")
 
-    total_personnel = (
-        Distribution.objects
-        .filter(depot__in=depots)
-        .aggregate(total=Sum("montant"))["total"]
-        or Decimal("0.00")
-    )
+    total_personnel = Distribution.objects.filter(depot__in=depots).aggregate(
+        total=Sum("montant")
+    )["total"] or Decimal("0.00")
 
     depots = depot_droits_contexte(list(depots), user)
 
@@ -183,14 +165,14 @@ def depot_list(request):
 # IMPRESSION DES DÉPÔTS
 # ============================================================
 
+
 def depot_print(request):
     """
     Prépare l'impression des dépôts en conservant les filtres
     par personnel et par période.
     """
     depots = (
-        Depot.objects
-        .select_related(
+        Depot.objects.select_related(
             "personnel_1",
             "personnel_2",
             "enregistre_par",
@@ -206,9 +188,7 @@ def depot_print(request):
     date_fin = request.GET.get("date_fin", "").strip()
 
     if personnel:
-        depots = depots.filter(
-            distributions__distributeur_id=personnel
-        ).distinct()
+        depots = depots.filter(distributions__distributeur_id=personnel).distinct()
 
     if date_debut:
         depots = depots.filter(date__gte=date_debut)
@@ -216,17 +196,11 @@ def depot_print(request):
     if date_fin:
         depots = depots.filter(date__lte=date_fin)
 
-    total_montant = (
-        depots.aggregate(total=Sum("montantG"))["total"]
-        or Decimal("0.00")
-    )
+    total_montant = depots.aggregate(total=Sum("montantG"))["total"] or Decimal("0.00")
 
-    total_distribution = (
-        Distribution.objects
-        .filter(depot__in=depots)
-        .aggregate(total=Sum("montant"))["total"]
-        or Decimal("0.00")
-    )
+    total_distribution = Distribution.objects.filter(depot__in=depots).aggregate(
+        total=Sum("montant")
+    )["total"] or Decimal("0.00")
 
     context = {
         "depots": depots,
@@ -243,6 +217,7 @@ def depot_print(request):
 # ============================================================
 # AJOUT D'UN DÉPÔT
 # ============================================================
+
 
 def depot_add(request):
     """
@@ -317,8 +292,7 @@ def depot_add(request):
                 except Exception:
                     messages.error(
                         request,
-                        "Une erreur est survenue lors de "
-                        "l'enregistrement du dépôt.",
+                        "Une erreur est survenue lors de " "l'enregistrement du dépôt.",
                     )
                     raise
 
@@ -343,6 +317,7 @@ def depot_add(request):
 # ============================================================
 # MODIFICATION D'UN DÉPÔT
 # ============================================================
+
 
 def depot_edit(request, pk):
     """
@@ -403,9 +378,7 @@ def depot_edit(request, pk):
 
                     # Les distributions existantes marquées pour
                     # suppression ne doivent pas compter dans le total.
-                    ids_a_supprimer = {
-                        obj.pk for obj in formset.deleted_objects
-                    }
+                    ids_a_supprimer = {obj.pk for obj in formset.deleted_objects}
 
                     total_distributions += sum(
                         (
@@ -413,11 +386,7 @@ def depot_edit(request, pk):
                             for distribution in depot_modifie.distributions.all()
                             if distribution.pk not in ids_a_supprimer
                             and distribution.pk
-                            not in {
-                                obj.pk
-                                for obj in distributions_a_sauver
-                                if obj.pk
-                            }
+                            not in {obj.pk for obj in distributions_a_sauver if obj.pk}
                         ),
                         Decimal("0.00"),
                     )
@@ -458,8 +427,7 @@ def depot_edit(request, pk):
             except Exception:
                 messages.error(
                     request,
-                    "Une erreur est survenue lors de la modification "
-                    "du dépôt.",
+                    "Une erreur est survenue lors de la modification " "du dépôt.",
                 )
                 raise
 
@@ -486,6 +454,7 @@ def depot_edit(request, pk):
 # SUPPRESSION D'UN DÉPÔT
 # ============================================================
 
+
 @require_POST
 def depot_delete(request, id):
     depot = get_object_or_404(Depot, pk=id)
@@ -495,10 +464,7 @@ def depot_delete(request, id):
 
     # Vérifier que seul le créateur peut supprimer son dépôt
     if not user_id or depot.enregistre_par_id != user_id:
-        messages.error(
-            request,
-            "Vous n'êtes pas autorisé à supprimer ce dépôt."
-        )
+        messages.error(request, "Vous n'êtes pas autorisé à supprimer ce dépôt.")
         return redirect("depot:depot_list")
 
     depot.delete()

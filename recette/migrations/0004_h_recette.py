@@ -6,19 +6,38 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('recette', '0003_alter_recette_montant'),
+        ("recette", "0003_alter_recette_montant"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='H_Recette',
+            name="H_Recette",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('montant', models.DecimalField(decimal_places=2, max_digits=50)),
-                ('type_virement', models.CharField(choices=[('Banque', 'Virement bancaire'), ('Cheque', 'Chèque'), ('Espece', 'Espèces'), ('Mobile', 'Mobile money')], max_length=100)),
-                ('date', models.DateField()),
-                ('source', models.CharField(max_length=100)),
-                ('date_enregistrement', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("montant", models.DecimalField(decimal_places=2, max_digits=50)),
+                (
+                    "type_virement",
+                    models.CharField(
+                        choices=[
+                            ("Banque", "Virement bancaire"),
+                            ("Cheque", "Chèque"),
+                            ("Espece", "Espèces"),
+                            ("Mobile", "Mobile money"),
+                        ],
+                        max_length=100,
+                    ),
+                ),
+                ("date", models.DateField()),
+                ("source", models.CharField(max_length=100)),
+                ("date_enregistrement", models.DateTimeField(auto_now_add=True)),
             ],
         ),
     ]

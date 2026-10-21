@@ -1,15 +1,11 @@
-from django.shortcuts import (
-    render,
-    redirect,
-    get_object_or_404
-)
-
 from django.contrib import messages
-from django.db.models import Q
-from .models import Retour
-from .forms import RetourForm
+from django.db.models import Q, Sum
+from django.shortcuts import get_object_or_404, redirect, render
+
 from audit.utils import enregistrer_action
-from django.db.models import Sum
+
+from .forms import RetourForm
+from .models import Retour
 
 
 # ==========================================
@@ -19,47 +15,25 @@ def retour_list(request):
 
     queryset = Retour.objects.all()
 
-
     montant = request.GET.get("montant", "").strip()
-
 
     if montant:
 
-        queryset = queryset.filter(
-            montant__icontains=montant
-        )
-
+        queryset = queryset.filter(montant__icontains=montant)
 
     # ===============================
     # TOTAL DES RETOURS
     # ===============================
 
-    total_retours = queryset.aggregate(
-        total=Sum("montant")
-    )["total"] or 0
-
-
+    total_retours = queryset.aggregate(total=Sum("montant"))["total"] or 0
 
     context = {
-
         "retours": queryset,
-
         "montant": montant,
-
         "total_retours": total_retours,
-
     }
 
-
-    return render(
-
-        request,
-
-        "retours/list.html",
-
-        context
-
-    )
+    return render(request, "retours/list.html", context)
 
 
 # ==========================================
@@ -67,19 +41,9 @@ def retour_list(request):
 # ==========================================
 def retour_detail(request, id):
 
-    retour = get_object_or_404(
-        Retour,
-        id=id
-    )
+    retour = get_object_or_404(Retour, id=id)
 
-    return render(
-        request,
-        "retours/detail.html",
-        {
-            "retour": retour
-        }
-    )
-
+    return render(request, "retours/detail.html", {"retour": retour})
 
 
 # ==========================================
@@ -99,47 +63,28 @@ def retour_add(request):
 
             if user_id:
                 from users.models import AppUser
-                retour.enregistrer_par = AppUser.objects.get(
-                    id=user_id
-                )
+
+                retour.enregistrer_par = AppUser.objects.get(id=user_id)
 
             retour.save()
-
 
             enregistrer_action(
                 request,
                 "CREATE",
                 "Retour",
                 retour.id,
-                nouvelle={
-                    "montant": str(retour.montant)
-                },
-                description="Création d'un retour"
+                nouvelle={"montant": str(retour.montant)},
+                description="Création d'un retour",
             )
 
+            messages.success(request, "Retour enregistré avec succès.")
 
-            messages.success(
-                request,
-                "Retour enregistré avec succès."
-            )
-
-            return redirect(
-                "retours:retour_list"
-            )
+            return redirect("retours:retour_list")
 
     else:
         form = RetourForm()
 
-
-    return render(
-        request,
-        "retours/form.html",
-        {
-            "form": form,
-            "action": "Ajouter"
-        }
-    )
-
+    return render(request, "retours/form.html", {"form": form, "action": "Ajouter"})
 
 
 # ==========================================
@@ -147,26 +92,17 @@ def retour_add(request):
 # ==========================================
 def retour_edit(request, id):
 
-    retour = get_object_or_404(
-        Retour,
-        id=id
-    )
-
+    retour = get_object_or_404(Retour, id=id)
 
     ancienne = str(retour)
 
-
     if request.method == "POST":
 
-        form = RetourForm(
-            request.POST,
-            instance=retour
-        )
+        form = RetourForm(request.POST, instance=retour)
 
         if form.is_valid():
 
             retour = form.save()
-
 
             enregistrer_action(
                 request,
@@ -175,34 +111,18 @@ def retour_edit(request, id):
                 retour.id,
                 ancienne=ancienne,
                 nouvelle=str(retour),
-                description="Modification d'un retour"
+                description="Modification d'un retour",
             )
 
+            messages.success(request, "Retour modifié avec succès.")
 
-            messages.success(
-                request,
-                "Retour modifié avec succès."
-            )
-
-            return redirect(
-                "retours:retour_list"
-            )
+            return redirect("retours:retour_list")
 
     else:
 
-        form = RetourForm(
-            instance=retour
-        )
+        form = RetourForm(instance=retour)
 
-    return render(
-        request,
-        "retours/form.html",
-        {
-            "form": form,
-            "action": "Modifier"
-        }
-    )
-
+    return render(request, "retours/form.html", {"form": form, "action": "Modifier"})
 
 
 # ==========================================
@@ -210,14 +130,9 @@ def retour_edit(request, id):
 # ==========================================
 def retour_delete(request, id):
 
-    retour = get_object_or_404(
-        Retour,
-        id=id
-    )
-
+    retour = get_object_or_404(Retour, id=id)
 
     if request.method == "POST":
-
 
         enregistrer_action(
             request,
@@ -225,27 +140,13 @@ def retour_delete(request, id):
             "Retour",
             retour.id,
             ancienne=str(retour),
-            description="Suppression d'un retour"
+            description="Suppression d'un retour",
         )
-
 
         retour.delete()
 
+        messages.success(request, "Retour supprimé avec succès.")
 
-        messages.success(
-            request,
-            "Retour supprimé avec succès."
-        )
+        return redirect("retours:retour_list")
 
-        return redirect(
-            "retours:retour_list"
-        )
-
-
-    return render(
-        request,
-        "retours/confirm.html",
-        {
-            "retour": retour
-        }
-    )
+    return render(request, "retours/confirm.html", {"retour": retour})

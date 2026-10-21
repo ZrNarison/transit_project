@@ -7,17 +7,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materiels', '0001_initial'),
-        ('materielsort', '0001_initial'),
+        ("materiels", "0001_initial"),
+        ("materielsort", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='materielsort',
-            name='id_Materiel',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sorties', to='materiels.materiels'),
+            model_name="materielsort",
+            name="id_Materiel",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="sorties",
+                to="materiels.materiels",
+            ),
         ),
         migrations.DeleteModel(
-            name='Materiels',
+            name="Materiels",
         ),
     ]

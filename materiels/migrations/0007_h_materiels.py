@@ -6,19 +6,35 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materiels', '0006_materiels_photo'),
+        ("materiels", "0006_materiels_photo"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='H_Materiels',
+            name="H_Materiels",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=100)),
-                ('typeMat', models.CharField(max_length=100)),
-                ('catMat', models.CharField(max_length=100)),
-                ('photo', models.ImageField(blank=True, null=True, upload_to='images/materiaux/')),
-                ('stock_initial', models.DecimalField(decimal_places=0, default=0, max_digits=10)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nom", models.CharField(max_length=100)),
+                ("typeMat", models.CharField(max_length=100)),
+                ("catMat", models.CharField(max_length=100)),
+                (
+                    "photo",
+                    models.ImageField(
+                        blank=True, null=True, upload_to="images/materiaux/"
+                    ),
+                ),
+                (
+                    "stock_initial",
+                    models.DecimalField(decimal_places=0, default=0, max_digits=10),
+                ),
             ],
         ),
     ]

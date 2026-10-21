@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('recette', '0004_h_recette'),
-        ('users', '0013_h_appuser'),
+        ("recette", "0004_h_recette"),
+        ("users", "0013_h_appuser"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='h_recette',
-            name='enregistreur',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='historique_recettes', to='users.h_appuser'),
+            model_name="h_recette",
+            name="enregistreur",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="historique_recettes",
+                to="users.h_appuser",
+            ),
         ),
     ]

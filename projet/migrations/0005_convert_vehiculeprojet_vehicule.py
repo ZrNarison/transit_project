@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 # ============================================================
 # CONVERSION :
 #
@@ -75,14 +74,10 @@ def convertir_vehicule(apps, schema_editor):
     tables = {row[0] for row in cursor.fetchall()}
 
     if "projet_vehiculeprojet" not in tables:
-        raise RuntimeError(
-            "La table 'projet_vehiculeprojet' est introuvable."
-        )
+        raise RuntimeError("La table 'projet_vehiculeprojet' est introuvable.")
 
     if "materiaux_vehicule" not in tables:
-        raise RuntimeError(
-            "La table 'materiaux_vehicule' est introuvable."
-        )
+        raise RuntimeError("La table 'materiaux_vehicule' est introuvable.")
 
     # ========================================================
     # 2. Lecture des anciens enregistrements
@@ -172,13 +167,9 @@ def convertir_vehicule(apps, schema_editor):
         ) = ligne
 
         if ancienne_immatriculation is None:
-            raise RuntimeError(
-                f"VehiculeProjet #{row_id} possède un véhicule NULL."
-            )
+            raise RuntimeError(f"VehiculeProjet #{row_id} possède un véhicule NULL.")
 
-        cle = str(
-            ancienne_immatriculation
-        ).strip().lower()
+        cle = str(ancienne_immatriculation).strip().lower()
 
         vehicule_id = vehicules_par_immatriculation.get(cle)
 
@@ -614,6 +605,7 @@ def annuler_conversion(apps, schema_editor):
 # ============================================================
 # MIGRATION
 # ============================================================
+
 
 class Migration(migrations.Migration):
 

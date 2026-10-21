@@ -1,18 +1,17 @@
+from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
-from collections import defaultdict
 
 from django.shortcuts import render
 
-from entretien.models import Entretien
-from depense.models import Depense
-from retours.models import Retour
-from vehiculesortant.models import VehiculeSortant
-from produit.models import PaiementProduit
-from avances.models import Avance
 from avanceclient.models import AvanceClient
+from avances.models import Avance
+from depense.models import Depense
+from entretien.models import Entretien
+from produit.models import PaiementProduit
+from retours.models import Retour
 from salaire.models import Salaire
-
+from vehiculesortant.models import VehiculeSortant
 
 # ============================================================
 # CONFIGURATION DU RAPPORT
@@ -35,6 +34,7 @@ TYPE_TRAVAIL_RAPPORT = "Mica"
 # ============================================================
 # CONSTRUIRE RAPPORT GENERAL
 # ============================================================
+
 
 def construire_rapport(request):
 
@@ -65,14 +65,10 @@ def construire_rapport(request):
     entretiens = Entretien.objects.all()
 
     if date_debut:
-        entretiens = entretiens.filter(
-            date_cree__gte=date_debut
-        )
+        entretiens = entretiens.filter(date_cree__gte=date_debut)
 
     if date_fin:
-        entretiens = entretiens.filter(
-            date_cree__lte=date_fin
-        )
+        entretiens = entretiens.filter(date_cree__lte=date_fin)
 
     for e in entretiens:
 
@@ -83,10 +79,7 @@ def construire_rapport(request):
 
         prix = e.prix_du_piece or Decimal("0")
 
-        montant = (
-            Decimal(str(nombre))
-            * Decimal(str(prix))
-        )
+        montant = Decimal(str(nombre)) * Decimal(str(prix))
 
         rapport[e.date_cree]["entretien"] += montant
 
@@ -97,14 +90,10 @@ def construire_rapport(request):
     depenses = Depense.objects.all()
 
     if date_debut:
-        depenses = depenses.filter(
-            date__gte=date_debut
-        )
+        depenses = depenses.filter(date__gte=date_debut)
 
     if date_fin:
-        depenses = depenses.filter(
-            date__lte=date_fin
-        )
+        depenses = depenses.filter(date__lte=date_fin)
 
     for d in depenses:
 
@@ -113,16 +102,9 @@ def construire_rapport(request):
 
         ligne = rapport[d.date]
 
-        titre = (
-            (d.titre or "")
-            .strip()
-            .lower()
-        )
+        titre = (d.titre or "").strip().lower()
 
-        montant = (
-            d.montant
-            or Decimal("0")
-        )
+        montant = d.montant or Decimal("0")
 
         if titre == "sakafo":
 
@@ -152,14 +134,10 @@ def construire_rapport(request):
     paiements = PaiementProduit.objects.all()
 
     if date_debut:
-        paiements = paiements.filter(
-            date__date__gte=date_debut
-        )
+        paiements = paiements.filter(date__date__gte=date_debut)
 
     if date_fin:
-        paiements = paiements.filter(
-            date__date__lte=date_fin
-        )
+        paiements = paiements.filter(date__date__lte=date_fin)
 
     for p in paiements:
 
@@ -169,10 +147,7 @@ def construire_rapport(request):
         # PaiementProduit.date est traité comme DateTimeField.
         date_paiement = p.date.date()
 
-        montant = (
-            p.montant
-            or Decimal("0")
-        )
+        montant = p.montant or Decimal("0")
 
         rapport[date_paiement]["achat_mica"] += montant
 
@@ -184,14 +159,10 @@ def construire_rapport(request):
     vehicules_sortants = VehiculeSortant.objects.all()
 
     if date_debut:
-        vehicules_sortants = vehicules_sortants.filter(
-            created_at__date__gte=date_debut
-        )
+        vehicules_sortants = vehicules_sortants.filter(created_at__date__gte=date_debut)
 
     if date_fin:
-        vehicules_sortants = vehicules_sortants.filter(
-            created_at__date__lte=date_fin
-        )
+        vehicules_sortants = vehicules_sortants.filter(created_at__date__lte=date_fin)
 
     for v in vehicules_sortants:
 
@@ -200,10 +171,7 @@ def construire_rapport(request):
 
         date_sortie = v.created_at.date()
 
-        montant = (
-            v.montant
-            or Decimal("0")
-        )
+        montant = v.montant or Decimal("0")
 
         rapport[date_sortie]["transport"] += montant
 
@@ -218,28 +186,20 @@ def construire_rapport(request):
     # Construction est totalement exclu.
     # ========================================================
 
-    avances_personnel = (
-        Avance.objects
-        .select_related(
-            "personnel",
-            "distribution",
-            "enregistre_par",
-        )
-        .filter(
-            personnel__isnull=False,
-            personnel__typeTravail=TYPE_TRAVAIL_RAPPORT,
-        )
+    avances_personnel = Avance.objects.select_related(
+        "personnel",
+        "distribution",
+        "enregistre_par",
+    ).filter(
+        personnel__isnull=False,
+        personnel__typeTravail=TYPE_TRAVAIL_RAPPORT,
     )
 
     if date_debut:
-        avances_personnel = avances_personnel.filter(
-            dateAv__gte=date_debut
-        )
+        avances_personnel = avances_personnel.filter(dateAv__gte=date_debut)
 
     if date_fin:
-        avances_personnel = avances_personnel.filter(
-            dateAv__lte=date_fin
-        )
+        avances_personnel = avances_personnel.filter(dateAv__lte=date_fin)
 
     for avance in avances_personnel:
 
@@ -255,10 +215,7 @@ def construire_rapport(request):
         # dateAv est déjà un datetime.date.
         date_avance = avance.dateAv
 
-        montant = (
-            avance.montantAv
-            or Decimal("0")
-        )
+        montant = avance.montantAv or Decimal("0")
 
         rapport[date_avance]["avance_personnel"] += montant
 
@@ -278,28 +235,20 @@ def construire_rapport(request):
     # simplement parce qu'elle possède une distribution.
     # ========================================================
 
-    avances_chauffeurs = (
-        Avance.objects
-        .select_related(
-            "personnel",
-            "distribution",
-            "enregistre_par",
-        )
-        .filter(
-            personnel__isnull=True,
-            distribution__isnull=False,
-        )
+    avances_chauffeurs = Avance.objects.select_related(
+        "personnel",
+        "distribution",
+        "enregistre_par",
+    ).filter(
+        personnel__isnull=True,
+        distribution__isnull=False,
     )
 
     if date_debut:
-        avances_chauffeurs = avances_chauffeurs.filter(
-            dateAv__gte=date_debut
-        )
+        avances_chauffeurs = avances_chauffeurs.filter(dateAv__gte=date_debut)
 
     if date_fin:
-        avances_chauffeurs = avances_chauffeurs.filter(
-            dateAv__lte=date_fin
-        )
+        avances_chauffeurs = avances_chauffeurs.filter(dateAv__lte=date_fin)
 
     for avance in avances_chauffeurs:
 
@@ -308,10 +257,7 @@ def construire_rapport(request):
 
         date_avance = avance.dateAv
 
-        montant = (
-            avance.montantAv
-            or Decimal("0")
-        )
+        montant = avance.montantAv or Decimal("0")
 
         rapport[date_avance]["avance_chauffeur"] += montant
 
@@ -326,23 +272,15 @@ def construire_rapport(request):
     # Aucun salaire Construction.
     # ========================================================
 
-    salaires = (
-        Salaire.objects
-        .select_related("personnel")
-        .filter(
-            personnel__typeTravail=TYPE_TRAVAIL_RAPPORT
-        )
+    salaires = Salaire.objects.select_related("personnel").filter(
+        personnel__typeTravail=TYPE_TRAVAIL_RAPPORT
     )
 
     if date_debut:
-        salaires = salaires.filter(
-            date__gte=date_debut
-        )
+        salaires = salaires.filter(date__gte=date_debut)
 
     if date_fin:
-        salaires = salaires.filter(
-            date__lte=date_fin
-        )
+        salaires = salaires.filter(date__lte=date_fin)
 
     for salaire in salaires:
 
@@ -351,10 +289,7 @@ def construire_rapport(request):
 
         date_salaire = salaire.date
 
-        montant = (
-            salaire.montant
-            or Decimal("0")
-        )
+        montant = salaire.montant or Decimal("0")
 
         rapport[date_salaire]["salaire"] += montant
 
@@ -365,14 +300,10 @@ def construire_rapport(request):
     avances_clients = AvanceClient.objects.all()
 
     if date_debut:
-        avances_clients = avances_clients.filter(
-            date__date__gte=date_debut
-        )
+        avances_clients = avances_clients.filter(date__date__gte=date_debut)
 
     if date_fin:
-        avances_clients = avances_clients.filter(
-            date__date__lte=date_fin
-        )
+        avances_clients = avances_clients.filter(date__date__lte=date_fin)
 
     for avance_client in avances_clients:
 
@@ -381,14 +312,9 @@ def construire_rapport(request):
 
         date_avance_client = avance_client.date.date()
 
-        montant = (
-            avance_client.montant
-            or Decimal("0")
-        )
+        montant = avance_client.montant or Decimal("0")
 
-        rapport[
-            date_avance_client
-        ]["avance_client"] += montant
+        rapport[date_avance_client]["avance_client"] += montant
 
     # ========================================================
     # RETOURS CLIENT
@@ -397,14 +323,10 @@ def construire_rapport(request):
     retours = Retour.objects.all()
 
     if date_debut:
-        retours = retours.filter(
-            created_at__date__gte=date_debut
-        )
+        retours = retours.filter(created_at__date__gte=date_debut)
 
     if date_fin:
-        retours = retours.filter(
-            created_at__date__lte=date_fin
-        )
+        retours = retours.filter(created_at__date__lte=date_fin)
 
     for retour in retours:
 
@@ -413,14 +335,9 @@ def construire_rapport(request):
 
         date_retour = retour.created_at.date()
 
-        montant = (
-            retour.montant
-            or Decimal("0")
-        )
+        montant = retour.montant or Decimal("0")
 
-        rapport[
-            date_retour
-        ]["retour"] += montant
+        rapport[date_retour]["retour"] += montant
 
     # ========================================================
     # PREPARATION DES LIGNES
@@ -428,14 +345,9 @@ def construire_rapport(request):
 
     lignes = []
 
-    totaux = defaultdict(
-        lambda: Decimal("0")
-    )
+    totaux = defaultdict(lambda: Decimal("0"))
 
-    for date, data in sorted(
-        rapport.items(),
-        reverse=True
-    ):
+    for date, data in sorted(rapport.items(), reverse=True):
 
         data["date"] = date
 
@@ -482,6 +394,7 @@ def construire_rapport(request):
 # LISTE RAPPORT
 # ============================================================
 
+
 def rapport_list(request):
 
     (
@@ -499,17 +412,17 @@ def rapport_list(request):
             "totaux": totaux,
             "date_debut": date_debut,
             "date_fin": date_fin,
-
             # Informations du rapport
             "type_travail": TYPE_TRAVAIL_RAPPORT,
             "role": request.session.get("role"),
-        }
+        },
     )
 
 
 # ============================================================
 # IMPRESSION RAPPORT
 # ============================================================
+
 
 def rapport_print(request):
 
@@ -528,16 +441,16 @@ def rapport_print(request):
             "totaux": totaux,
             "date_debut": date_debut,
             "date_fin": date_fin,
-
             "type_travail": TYPE_TRAVAIL_RAPPORT,
             "role": request.session.get("role"),
-        }
+        },
     )
 
 
 # ============================================================
 # DETAIL PAR DATE
 # ============================================================
+
 
 def rapport_detail(request, date):
 
@@ -547,10 +460,7 @@ def rapport_detail(request, date):
 
     try:
 
-        date_obj = datetime.strptime(
-            date,
-            "%Y-%m-%d"
-        ).date()
+        date_obj = datetime.strptime(date, "%Y-%m-%d").date()
 
     except (TypeError, ValueError):
 
@@ -562,25 +472,19 @@ def rapport_detail(request, date):
     # ENTRETIENS
     # ========================================================
 
-    entretiens = Entretien.objects.filter(
-        date_cree=date_obj
-    )
+    entretiens = Entretien.objects.filter(date_cree=date_obj)
 
     # ========================================================
     # DEPENSES
     # ========================================================
 
-    depenses = Depense.objects.filter(
-        date=date_obj
-    )
+    depenses = Depense.objects.filter(date=date_obj)
 
     # ========================================================
     # PAIEMENTS PRODUITS
     # ========================================================
 
-    paiements = PaiementProduit.objects.filter(
-        date__date=date_obj
-    )
+    paiements = PaiementProduit.objects.filter(date__date=date_obj)
 
     # ========================================================
     # AVANCES PERSONNEL MICA UNIQUEMENT
@@ -589,8 +493,7 @@ def rapport_detail(request, date):
     # ========================================================
 
     avances_personnel = (
-        Avance.objects
-        .filter(
+        Avance.objects.filter(
             dateAv=date_obj,
             personnel__isnull=False,
             personnel__typeTravail=TYPE_TRAVAIL_RAPPORT,
@@ -608,8 +511,7 @@ def rapport_detail(request, date):
     # ========================================================
 
     avances_chauffeur = (
-        Avance.objects
-        .filter(
+        Avance.objects.filter(
             dateAv=date_obj,
             personnel__isnull=True,
             distribution__isnull=False,
@@ -633,38 +535,35 @@ def rapport_detail(request, date):
     # ========================================================
 
     avances = (
-        Avance.objects
-        .filter(
-            dateAv=date_obj
+        (
+            Avance.objects.filter(dateAv=date_obj).filter(
+                personnel__isnull=True,
+                distribution__isnull=False,
+            )
+            | Avance.objects.filter(
+                dateAv=date_obj,
+                personnel__isnull=False,
+                personnel__typeTravail=TYPE_TRAVAIL_RAPPORT,
+            )
         )
-        .filter(
-            personnel__isnull=True,
-            distribution__isnull=False,
+        .select_related(
+            "personnel",
+            "distribution",
+            "enregistre_par",
         )
-        | Avance.objects.filter(
-            dateAv=date_obj,
-            personnel__isnull=False,
-            personnel__typeTravail=TYPE_TRAVAIL_RAPPORT,
-        )
-    ).select_related(
-        "personnel",
-        "distribution",
-        "enregistre_par",
-    ).order_by("-dateAv")
+        .order_by("-dateAv")
+    )
 
     # ========================================================
     # SALAIRES MICA UNIQUEMENT
     # ========================================================
 
     salaires = (
-        Salaire.objects
-        .filter(
+        Salaire.objects.filter(
             date=date_obj,
             personnel__typeTravail=TYPE_TRAVAIL_RAPPORT,
         )
-        .select_related(
-            "personnel"
-        )
+        .select_related("personnel")
         .order_by("-date")
     )
 
@@ -708,17 +607,13 @@ def rapport_detail(request, date):
     # AVANCES CLIENT
     # ========================================================
 
-    avances_clients = AvanceClient.objects.filter(
-        date__date=date_obj
-    )
+    avances_clients = AvanceClient.objects.filter(date__date=date_obj)
 
     # ========================================================
     # RETOURS CLIENT
     # ========================================================
 
-    retours = Retour.objects.filter(
-        created_at__date=date_obj
-    )
+    retours = Retour.objects.filter(created_at__date=date_obj)
 
     # ========================================================
     # RENDU
@@ -729,55 +624,35 @@ def rapport_detail(request, date):
         "rapports/detail.html",
         {
             "date": date_obj,
-
             # -----------------------------------------------
             # Opérations générales
             # -----------------------------------------------
-
             "entretiens": entretiens,
-
             "depenses": depenses,
-
             "paiements": paiements,
-
             # -----------------------------------------------
             # Avances
             # -----------------------------------------------
-
             "avances": avances,
-
             "avances_personnel": avances_personnel,
-
             "avances_mica": avances_mica,
-
             "avances_construction": avances_construction,
-
             "avances_chauffeur": avances_chauffeur,
-
             # -----------------------------------------------
             # Salaires
             # -----------------------------------------------
-
             "salaires": salaires,
-
             "salaires_mica": salaires_mica,
-
             "salaires_construction": salaires_construction,
-
             # -----------------------------------------------
             # Clients / retours
             # -----------------------------------------------
-
             "avances_clients": avances_clients,
-
             "retours": retours,
-
             # -----------------------------------------------
             # Informations rapport
             # -----------------------------------------------
-
             "type_travail": TYPE_TRAVAIL_RAPPORT,
-
             "role": request.session.get("role"),
-        }
+        },
     )

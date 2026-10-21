@@ -1,4 +1,5 @@
 from django import forms
+
 from .models import Categorie
 
 
@@ -8,29 +9,18 @@ class CategorieForm(forms.ModelForm):
 
         model = Categorie
 
-        fields = [
-            "nom",
-            "description"
-        ]
-
+        fields = ["nom", "description"]
 
         widgets = {
-
             "nom": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Nom catégorie"
-                }
+                attrs={"class": "form-control", "placeholder": "Nom catégorie"}
             ),
-
-
             "description": forms.Textarea(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Description",
                     "rows": 3,
-                    "style": "resize:none;"
+                    "style": "resize:none;",
                 }
             ),
-
         }

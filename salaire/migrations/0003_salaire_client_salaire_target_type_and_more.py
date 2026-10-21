@@ -7,25 +7,41 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('clients', '0008_alter_client_id'),
-        ('personnel', '0003_alter_personnel_photo'),
-        ('salaire', '0002_alter_salaire_personnel'),
+        ("clients", "0008_alter_client_id"),
+        ("personnel", "0003_alter_personnel_photo"),
+        ("salaire", "0002_alter_salaire_personnel"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='salaire',
-            name='client',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='salaires', to='clients.client'),
+            model_name="salaire",
+            name="client",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="salaires",
+                to="clients.client",
+            ),
         ),
         migrations.AddField(
-            model_name='salaire',
-            name='target_type',
-            field=models.CharField(choices=[('personnel', 'Personnel'), ('client', 'Client')], default='personnel', max_length=20),
+            model_name="salaire",
+            name="target_type",
+            field=models.CharField(
+                choices=[("personnel", "Personnel"), ("client", "Client")],
+                default="personnel",
+                max_length=20,
+            ),
         ),
         migrations.AlterField(
-            model_name='salaire',
-            name='personnel',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='salaires', to='personnel.personnel'),
+            model_name="salaire",
+            name="personnel",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="salaires",
+                to="personnel.personnel",
+            ),
         ),
     ]

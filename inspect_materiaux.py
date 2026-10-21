@@ -1,5 +1,4 @@
-﻿
-from django.apps import apps
+﻿from django.apps import apps
 
 for model in apps.get_app_config("materiaux").get_models():
     print("\n" + model._meta.label)

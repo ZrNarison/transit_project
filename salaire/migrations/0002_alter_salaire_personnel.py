@@ -7,14 +7,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('personnel', '0003_alter_personnel_photo'),
-        ('salaire', '0001_initial'),
+        ("personnel", "0003_alter_personnel_photo"),
+        ("salaire", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='salaire',
-            name='personnel',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='salaires', to='personnel.personnel'),
+            model_name="salaire",
+            name="personnel",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="salaires",
+                to="personnel.personnel",
+            ),
         ),
     ]

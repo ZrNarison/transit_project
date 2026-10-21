@@ -7,23 +7,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materielEntre', '0004_remove_materielentre_id_materiel_and_more'),
-        ('materiels', '0004_alter_materiels_options'),
+        ("materielEntre", "0004_remove_materielentre_id_materiel_and_more"),
+        ("materiels", "0004_alter_materiels_options"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='materielentre',
+            name="materielentre",
             options={},
         ),
         migrations.RemoveField(
-            model_name='materielentre',
-            name='id_MaterielSort',
+            model_name="materielentre",
+            name="id_MaterielSort",
         ),
         migrations.AddField(
-            model_name='materielentre',
-            name='materiel',
-            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, related_name='entrees', to='materiels.materiels'),
+            model_name="materielentre",
+            name="materiel",
+            field=models.ForeignKey(
+                default=0,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="entrees",
+                to="materiels.materiels",
+            ),
             preserve_default=False,
         ),
     ]

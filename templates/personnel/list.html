@@ -241,13 +241,8 @@
 
                             <td class="text-center">
                                 <div class="btn-group">
-                                    <a href="{% url 'personnel:personnel_detail' personnel.id %}"
-                                       class="btn btn-sm btn-info"
-                                       title="Voir le détail">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
 
-                                    {% if personnel.enregistre_par_id|stringformat:"s" == user_id|stringformat:"s" %}
+                                    {% if request.session.role == "Admin" %}
                                     <a href="{% url 'personnel:personnel_edit' personnel.id %}"
                                        class="btn btn-sm btn-warning"
                                        title="Modifier mon enregistrement">

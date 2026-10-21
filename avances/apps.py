@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class AvanceConfig(AppConfig):
-    name = 'avances'
+    name = "avances"
 
     def ready(self):
         # Import signal handlers to ensure they are registered

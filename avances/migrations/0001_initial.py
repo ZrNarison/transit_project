@@ -9,19 +9,42 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('clients', '0002_alter_client_date_naissance_and_more'),
+        ("clients", "0002_alter_client_date_naissance_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Avance',
+            name="Avance",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('motifAv', models.CharField(max_length=255)),
-                ('montantAv', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('typeAv', models.CharField(choices=[('espece', 'Espèce'), ('cheque', 'Chèque'), ('mobile_money', 'Mobile Money')], max_length=20)),
-                ('dateAv', models.DateTimeField(auto_now_add=True)),
-                ('id_client', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='clients.client')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("motifAv", models.CharField(max_length=255)),
+                ("montantAv", models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "typeAv",
+                    models.CharField(
+                        choices=[
+                            ("espece", "Espèce"),
+                            ("cheque", "Chèque"),
+                            ("mobile_money", "Mobile Money"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("dateAv", models.DateTimeField(auto_now_add=True)),
+                (
+                    "id_client",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="clients.client"
+                    ),
+                ),
             ],
         ),
     ]

@@ -7,48 +7,115 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materiaux', '0017_alter_activitetransport_options_and_more'),
-        ('users', '0015_alter_appuser_role'),
+        ("materiaux", "0017_alter_activitetransport_options_and_more"),
+        ("users", "0015_alter_appuser_role"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MateriauMCCR',
+            name="MateriauMCCR",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=100, verbose_name='Nom du matériau')),
-                ('unite', models.CharField(max_length=50, verbose_name='Unité')),
-                ('actif', models.BooleanField(default=True, verbose_name='Actif')),
-                ('date_creation', models.DateTimeField(auto_now_add=True)),
-                ('enregistreur', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='materiaux_mccr_enregistres', to='users.h_appuser', verbose_name='Enregistré par')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "nom",
+                    models.CharField(max_length=100, verbose_name="Nom du matériau"),
+                ),
+                ("unite", models.CharField(max_length=50, verbose_name="Unité")),
+                ("actif", models.BooleanField(default=True, verbose_name="Actif")),
+                ("date_creation", models.DateTimeField(auto_now_add=True)),
+                (
+                    "enregistreur",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="materiaux_mccr_enregistres",
+                        to="users.h_appuser",
+                        verbose_name="Enregistré par",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Matériau MCCR',
-                'verbose_name_plural': 'Matériaux MCCR',
-                'ordering': ['nom'],
+                "verbose_name": "Matériau MCCR",
+                "verbose_name_plural": "Matériaux MCCR",
+                "ordering": ["nom"],
             },
         ),
         migrations.CreateModel(
-            name='MouvementMateriauMCCR',
+            name="MouvementMateriauMCCR",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('type_mouvement', models.CharField(choices=[('ENTREE', 'Entrée'), ('SORTIE', 'Sortie'), ('RETOUR', 'Retour')], max_length=10, verbose_name='Type de mouvement')),
-                ('quantite', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='Quantité')),
-                ('motif', models.CharField(max_length=255, verbose_name='Motif')),
-                ('date_mouvement', models.DateTimeField(verbose_name='Date du mouvement')),
-                ('observation', models.TextField(blank=True, verbose_name='Observation')),
-                ('date_creation', models.DateTimeField(auto_now_add=True)),
-                ('enregistreur', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='mouvements_materiaux_mccr_enregistres', to='users.h_appuser', verbose_name='Enregistré par')),
-                ('materiau', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='mouvements', to='materiaux.materiaumccr', verbose_name='Matériau')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "type_mouvement",
+                    models.CharField(
+                        choices=[
+                            ("ENTREE", "Entrée"),
+                            ("SORTIE", "Sortie"),
+                            ("RETOUR", "Retour"),
+                        ],
+                        max_length=10,
+                        verbose_name="Type de mouvement",
+                    ),
+                ),
+                (
+                    "quantite",
+                    models.DecimalField(
+                        decimal_places=2, max_digits=12, verbose_name="Quantité"
+                    ),
+                ),
+                ("motif", models.CharField(max_length=255, verbose_name="Motif")),
+                (
+                    "date_mouvement",
+                    models.DateTimeField(verbose_name="Date du mouvement"),
+                ),
+                (
+                    "observation",
+                    models.TextField(blank=True, verbose_name="Observation"),
+                ),
+                ("date_creation", models.DateTimeField(auto_now_add=True)),
+                (
+                    "enregistreur",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="mouvements_materiaux_mccr_enregistres",
+                        to="users.h_appuser",
+                        verbose_name="Enregistré par",
+                    ),
+                ),
+                (
+                    "materiau",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="mouvements",
+                        to="materiaux.materiaumccr",
+                        verbose_name="Matériau",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Mouvement de matériau MCCR',
-                'verbose_name_plural': 'Mouvements de matériaux MCCR',
-                'ordering': ['-date_mouvement', '-id'],
+                "verbose_name": "Mouvement de matériau MCCR",
+                "verbose_name_plural": "Mouvements de matériaux MCCR",
+                "ordering": ["-date_mouvement", "-id"],
             },
         ),
         migrations.AddConstraint(
-            model_name='materiaumccr',
-            constraint=models.UniqueConstraint(fields=('nom',), name='unique_nom_materiau_mccr'),
+            model_name="materiaumccr",
+            constraint=models.UniqueConstraint(
+                fields=("nom",), name="unique_nom_materiau_mccr"
+            ),
         ),
     ]

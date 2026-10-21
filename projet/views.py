@@ -1,57 +1,93 @@
+﻿from decimal import Decimal, InvalidOperation
 from functools import wraps
-from decimal import Decimal
+
 from django.contrib import messages
+from django.contrib.auth.hashers import make_password
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import DecimalField, ExpressionWrapper, F, ProtectedError, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import path, reverse, reverse_lazy
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from users.models import AppUser
-from .models import MouvementMateriauProjet
-from .forms import MouvementMateriauProjetForm
-from django.contrib.auth.hashers import make_password
-from django.utils import timezone
-from django.db.models import  Sum, F, ExpressionWrapper, DecimalField
-from django.db.models import ( Q,DecimalField, ExpressionWrapper, F, Sum,)
-from django.contrib import messages
-from django.core.exceptions import PermissionDenied
-from django.db.models import ProtectedError
-from django.shortcuts import get_object_or_404, redirect, render
-from django.core.exceptions import ValidationError
-from django.db import transaction
-from users.models import AppUser
-from personnel.models import Personnel
-from django.urls import path, reverse, reverse_lazy
-from .forms import (ProjetForm,EquipeProjetForm,ChefEquipeProjetForm,MinierProjetForm,MateriauProjetForm,PointProjetForm,RapportProjetForm,
-    RapportTravailForm,RapportMateriauForm,VehiculeProjetForm,EnginProjetForm,
-    RapportVehiculeForm,AvanceEquipeProjetForm,
-    ActiviteTransportProjetForm,
-    MouvementVehiculeProjetForm,
-    AchatMateriauProjetForm,
-    ReceptionMateriauProjetForm,MouvementMateriauProjetForm,
-    DistributionMateriauProjetForm,
-    ConsommationMateriauProjetForm,
-    RetourMateriauProjetForm)
-from .models import (
-    Projet,MateriauProjet,EquipeProjet,PointProjet,RapportProjet,RapportTravail,    RapportMateriau,
-    VehiculeProjet,EnginProjet,    MouvementVehiculeProjet,    RapportVehicule,    ActiviteTransportProjet,
-    PersonnelExecutionProjet,    MouvementPersonnelProjet,    EquipageProjet,    AvanceEquipeProjet,
-    EquipeMateriauProjet,    VehiculeLourdsProjet,MouvementMateriauProjet)
-from users.decorators import (get_current_user,project_access_required,user_can_manage_projects,user_has_project_access,    get_current_personnel,user_can_manage_materiaux,
-    login_required_projet,    project_manager_required,    )
 from materiaux.models import (
-    MateriauxOut,
     ActiviteTransport,
-    ReceptionMateriau,
-    UtilisationMateriau,
-    MateriauxRetour,Depense,
+    Depense,
     DepenseGasoil,
+    MateriauxOut,
+    MateriauxRetour,
+    PaiementDocker,
+    ReceptionMateriau,
     ReparationVehicule,
-    PaiementDocker,)
+    UtilisationMateriau,
+)
+from personnel.models import Personnel
 from projet.models import (
     AchatMateriauProjet,
+    ConsommationMateriauProjet,
     DistributionMateriauProjet,
     ReceptionMateriauProjet,
-    ConsommationMateriauProjet,
     RetourMateriauProjet,
+)
+from datetime import datetime
+from users.decorators import (
+    get_current_personnel,
+    get_current_user,
+    login_required_projet,
+    project_access_required,
+    project_manager_required,
+    user_can_manage_materiaux,
+    user_can_manage_projects,
+    user_has_project_access,
+    user_has_project_function,
+)
+from users.models import AppUser
+
+from .forms import (
+    AchatMateriauProjetForm,
+    ActiviteTransportProjetForm,
+    AvanceEquipeProjetForm,
+    ChefEquipeProjetForm,
+    ConsommationMateriauProjetForm,
+    DistributionMateriauProjetForm,
+    EnginProjetForm,
+    EquipeProjetForm,
+    MateriauProjetForm,
+    MinierProjetForm,
+    MouvementMateriauProjetForm,
+    MouvementVehiculeProjetForm,
+    PointProjetForm,
+    ProjetForm,
+    RapportMateriauForm,
+    RapportProjetForm,
+    RapportTravailForm,
+    RapportVehiculeForm,
+    ReceptionMateriauProjetForm,
+    RetourMateriauProjetForm,
+    VehiculeProjetForm,
+)
+from .models import (
+    ActiviteTransportProjet,
+    AvanceEquipeProjet,
+    EnginProjet,
+    EquipageProjet,
+    EquipeMateriauProjet,
+    EquipeProjet,
+    MateriauProjet,
+    MouvementMateriauProjet,
+    MouvementPersonnelProjet,
+    MouvementVehiculeProjet,
+    PersonnelExecutionProjet,
+    PointProjet,
+    Projet,
+    RapportMateriau,
+    RapportProjet,
+    RapportTravail,
+    RapportVehicule,
+    VehiculeLourdsProjet,
+    VehiculeProjet,
 )
 
 # ============================================================
@@ -59,7 +95,7 @@ from projet.models import (
 # ============================================================
 
 PERSONNEL_PROJET_FONCTIONS = [
-    ("INGENIEUR", "Ingénieur Responsable du Chantier"),
+    ("INGENIEUR", "IngÃ©nieur Responsable du Chantier"),
     ("CHEF_CHANTIER", "Chef de Chantier"),
     ("CHEF_MAGASIN", "Chef Magasinier"),
     ("MAGASINIER", "Magasinier"),
@@ -99,7 +135,7 @@ def synchroniser_affectations_equipe(projet):
             resultat["ignores"] += 1
             continue
 
-        # Ne pas créer de doublon.
+        # Ne pas crÃ©er de doublon.
         if EquipeProjet.objects.filter(
             projet_id=projet.pk,
             personnel_execution_id=execution.pk,
@@ -111,17 +147,19 @@ def synchroniser_affectations_equipe(projet):
         date_debut = execution.date_debut or projet.date_debut
         date_fin = execution.date_fin or projet.date_fin
 
-        # Vérifier que les deux dates sont disponibles.
+        # VÃ©rifier que les deux dates sont disponibles.
         if not date_debut or not date_fin:
             resultat["ignores"] += 1
-            resultat["erreurs"].append({
-                "execution_id": execution.pk,
-                "nom": execution.nom,
-                "erreur": (
-                    "Date de début ou de fin absente "
-                    "dans l'inscription et dans le projet."
-                ),
-            })
+            resultat["erreurs"].append(
+                {
+                    "execution_id": execution.pk,
+                    "nom": execution.nom,
+                    "erreur": (
+                        "Date de dÃ©but ou de fin absente "
+                        "dans l'inscription et dans le projet."
+                    ),
+                }
+            )
             continue
 
         affectation = EquipeProjet(
@@ -141,22 +179,23 @@ def synchroniser_affectations_equipe(projet):
 
         except ValidationError as exc:
             resultat["ignores"] += 1
-            resultat["erreurs"].append({
-                "execution_id": execution.pk,
-                "nom": execution.nom,
-                "erreur": (
-                    exc.message_dict
-                    if hasattr(exc, "message_dict")
-                    else exc.messages
-                ),
-            })
+            resultat["erreurs"].append(
+                {
+                    "execution_id": execution.pk,
+                    "nom": execution.nom,
+                    "erreur": (
+                        exc.message_dict
+                        if hasattr(exc, "message_dict")
+                        else exc.messages
+                    ),
+                }
+            )
 
     return resultat
 
 
-
 # ============================================================
-# CRUD CHEF D'ÉQUIPE
+# CRUD CHEF D'Ã‰QUIPE
 # ============================================================
 @project_manager_required
 def chef_equipe_list(request, projet_id):
@@ -173,13 +212,13 @@ def chef_equipe_list(request, projet_id):
     )
 
     # ============================================================
-    # VÉRIFICATION DE L'ACCÈS
+    # VÃ‰RIFICATION DE L'ACCÃˆS
     # ============================================================
 
     if not user_has_project_access(current_user, projet):
         messages.error(
             request,
-            "Votre accès à ce projet n'est pas actif.",
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
         return redirect("projet:projet_list")
 
@@ -204,20 +243,16 @@ def chef_equipe_list(request, projet_id):
     date_fin = request.GET.get("date_fin", "").strip()
 
     # ============================================================
-    # REQUÊTE DES CHEFS D'ÉQUIPE
+    # REQUÃŠTE DES CHEFS D'Ã‰QUIPE
     # ============================================================
 
-    chefs_queryset = (
-        PersonnelExecutionProjet.objects
-        .filter(
-            projet=projet,
-            type_class="CHEF_EQUIPE",
-        )
-        .select_related(
-            "projet",
-            "enregistre_par",
-            "point_projet",
-        )
+    chefs_queryset = PersonnelExecutionProjet.objects.filter(
+        projet=projet,
+        type_class="CHEF_EQUIPE",
+    ).select_related(
+        "projet",
+        "enregistre_par",
+        "point_projet",
     )
 
     if nom:
@@ -254,20 +289,17 @@ def chef_equipe_list(request, projet_id):
     for chef in chefs:
 
         # Montant forfaitaire total du contrat
-        montant_forfait = (
-            chef.montant or Decimal("0.00")
-        )
+        montant_forfait = chef.montant or Decimal("0.00")
         avances_queryset = AvanceEquipeProjet.objects.filter(
             equipe_execution__projet=projet,
             equipe_execution__personnel_execution=chef,
         )
 
-        montant_avances = (
-            avances_queryset.aggregate(
-                total=Sum("montant"),
-            )["total"]
-            or Decimal("0.00")
-        )
+        montant_avances = avances_queryset.aggregate(
+            total=Sum("montant"),
+        )[
+            "total"
+        ] or Decimal("0.00")
 
         chef.montant_forfait = montant_forfait
         chef.total_avances = montant_avances
@@ -294,12 +326,10 @@ def chef_equipe_list(request, projet_id):
         "personnel": personnel_connecte,
         "peut_gerer": peut_gerer,
         "aujourd_hui": timezone.localdate(),
-
         # Filtres
         "filtre_nom": nom,
         "filtre_date_debut": date_debut,
         "filtre_date_fin": date_fin,
-
         # Statistiques
         "total_chefs": len(chefs),
         "total_remuneration": total_remuneration,
@@ -313,15 +343,29 @@ def chef_equipe_list(request, projet_id):
         context,
     )
 
+
 # ============================================================
-# AJOUTER UN CHEF D'ÉQUIPE
+# AJOUTER UN CHEF D'Ã‰QUIPE
 # ============================================================
 @project_manager_required
-def chef_equipe_create(request,projet_id,):
-    projet = get_object_or_404(Projet,pk=projet_id,)
-    personnel_connecte = get_object_or_404(Personnel,pk=request.current_user.pk,)
+def chef_equipe_create(
+    request,
+    projet_id,
+):
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
+    personnel_connecte = get_object_or_404(
+        Personnel,
+        pk=request.current_user.pk,
+    )
     if request.method == "POST":
-        form = ChefEquipeProjetForm(request.POST,request.FILES,projet=projet,)
+        form = ChefEquipeProjetForm(
+            request.POST,
+            request.FILES,
+            projet=projet,
+        )
         if form.is_valid():
             chef = form.save(commit=False)
             chef.projet = projet
@@ -332,9 +376,9 @@ def chef_equipe_create(request,projet_id,):
             messages.success(
                 request,
                 (
-                    f"Le chef d'équipe "
-                    f"« {chef.nom} » a été enregistré "
-                    f"pour le projet « {projet.titre} »."
+                    f"Le chef d'Ã©quipe "
+                    f"Â« {chef.nom} Â» a Ã©tÃ© enregistrÃ© "
+                    f"pour le projet Â« {projet.titre} Â»."
                 ),
             )
 
@@ -355,27 +399,43 @@ def chef_equipe_create(request,projet_id,):
             "projet": projet,
             "chef": None,
             "mode": "ajout",
-            "titre_page": "Ajouter un chef d'équipe",
+            "titre_page": "Ajouter un chef d'Ã©quipe",
             "user": request.current_user,
         },
     )
 
 
 # ============================================================
-# MODIFIER UN CHEF D'ÉQUIPE
+# MODIFIER UN CHEF D'Ã‰QUIPE
 # ============================================================
 
+
 @project_manager_required
-def chef_equipe_update(request,projet_id,pk,):
-    projet = get_object_or_404(        Projet,        pk=projet_id,    )
-    chef = get_object_or_404(PersonnelExecutionProjet,pk=pk,projet=projet,type_class="CHEF_EQUIPE",)
-    personnel_connecte = get_object_or_404(Personnel,pk=request.current_user.pk,)
+def chef_equipe_update(
+    request,
+    projet_id,
+    pk,
+):
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
+    chef = get_object_or_404(
+        PersonnelExecutionProjet,
+        pk=pk,
+        projet=projet,
+        type_class="CHEF_EQUIPE",
+    )
+    personnel_connecte = get_object_or_404(
+        Personnel,
+        pk=request.current_user.pk,
+    )
     if chef.enregistre_par_id != personnel_connecte.pk:
         messages.error(
             request,
             (
                 "Vous ne pouvez modifier que les chefs "
-                "d'équipe que vous avez enregistrés."
+                "d'Ã©quipe que vous avez enregistrÃ©s."
             ),
         )
 
@@ -400,9 +460,9 @@ def chef_equipe_update(request,projet_id,pk,):
             messages.success(
                 request,
                 (
-                    f"Le chef d'équipe "
-                    f"« {chef_modifie.nom} » "
-                    f"a été modifié avec succès."
+                    f"Le chef d'Ã©quipe "
+                    f"Â« {chef_modifie.nom} Â» "
+                    f"a Ã©tÃ© modifiÃ© avec succÃ¨s."
                 ),
             )
 
@@ -423,25 +483,36 @@ def chef_equipe_update(request,projet_id,pk,):
             "projet": projet,
             "chef": chef,
             "mode": "modification",
-            "titre_page": "Modifier le chef d'équipe",
+            "titre_page": "Modifier le chef d'Ã©quipe",
             "user": request.current_user,
         },
     )
 
 
 # ============================================================
-# SUPPRIMER UN CHEF D'ÉQUIPE
+# SUPPRIMER UN CHEF D'Ã‰QUIPE
 # ============================================================
 @project_manager_required
 def chef_equipe_delete(request, projet_id, pk):
-    projet = get_object_or_404(Projet,pk=projet_id,    )
-    chef = get_object_or_404(PersonnelExecutionProjet,pk=pk,projet=projet,type_class="CHEF_EQUIPE",)
-    personnel_connecte = get_object_or_404(Personnel,pk=request.current_user.pk,)
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
+    chef = get_object_or_404(
+        PersonnelExecutionProjet,
+        pk=pk,
+        projet=projet,
+        type_class="CHEF_EQUIPE",
+    )
+    personnel_connecte = get_object_or_404(
+        Personnel,
+        pk=request.current_user.pk,
+    )
     if chef.enregistre_par_id != personnel_connecte.pk:
         messages.error(
             request,
             "Vous ne pouvez supprimer que les chefs "
-            "d'équipe que vous avez enregistrés.",
+            "d'Ã©quipe que vous avez enregistrÃ©s.",
         )
         return redirect(
             "projet:chef_equipe_list",
@@ -463,34 +534,30 @@ def chef_equipe_delete(request, projet_id, pk):
     try:
         with transaction.atomic():
             # Verrouiller le chef et ses affectations
-            chef = (
-                PersonnelExecutionProjet.objects
-                .select_for_update()
-                .get(
-                    pk=pk,
-                    projet=projet,
-                    type_class="CHEF_EQUIPE",
-                )
+            chef = PersonnelExecutionProjet.objects.select_for_update().get(
+                pk=pk,
+                projet=projet,
+                type_class="CHEF_EQUIPE",
             )
 
             affectations = list(
-                EquipeProjet.objects
-                .select_for_update()
-                .filter(personnel_execution=chef)
+                EquipeProjet.objects.select_for_update().filter(
+                    personnel_execution=chef
+                )
             )
 
-            # Ne pas supprimer une affectation utilisée
+            # Ne pas supprimer une affectation utilisÃ©e
             for affectation in affectations:
                 if (
                     affectation.avances_equipe.exists()
                     or affectation.avances_miniers.exists()
                 ):
                     raise ProtectedError(
-                        "Une affectation possède des avances.",
+                        "Une affectation possÃ¨de des avances.",
                         [affectation],
                     )
 
-            # Supprimer les affectations inutilisées
+            # Supprimer les affectations inutilisÃ©es
             for affectation in affectations:
                 affectation.delete()
 
@@ -499,39 +566,46 @@ def chef_equipe_delete(request, projet_id, pk):
 
         messages.success(
             request,
-            f"Le chef d'équipe « {nom} » et ses "
-            "affectations inutilisées ont été supprimés.",
+            f"Le chef d'Ã©quipe Â« {nom} Â» et ses "
+            "affectations inutilisÃ©es ont Ã©tÃ© supprimÃ©s.",
         )
 
     except ProtectedError:
         messages.error(
             request,
-            "Impossible de supprimer ce chef d'équipe : "
-            "d'autres données du projet utilisent encore "
+            "Impossible de supprimer ce chef d'Ã©quipe : "
+            "d'autres donnÃ©es du projet utilisent encore "
             "ce chef ou l'une de ses affectations. "
-            "Aucune suppression partielle n'a été conservée.",
+            "Aucune suppression partielle n'a Ã©tÃ© conservÃ©e.",
         )
 
     except PersonnelExecutionProjet.DoesNotExist:
         messages.error(
             request,
-            "Ce chef d'équipe n'existe plus ou a déjà été supprimé.",
+            "Ce chef d'Ã©quipe n'existe plus ou a dÃ©jÃ  Ã©tÃ© supprimÃ©.",
         )
 
     return redirect(
         "projet:chef_equipe_list",
         projet_id=projet.pk,
     )
+
+
 # ============================================================
 # CREER UN COMPTE UTILISATEUR POUR UN MEMBRE DU PROJET
 # ============================================================
 @project_manager_required
-def utilisateur_projet_create(request,projet_id,equipe_id,):
-    projet = get_object_or_404(Projet,pk=projet_id,)
+def utilisateur_projet_create(
+    request,
+    projet_id,
+    equipe_id,
+):
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
     affectation = get_object_or_404(
-        EquipeProjet.objects.select_related(
-            "personnel"
-        ),
+        EquipeProjet.objects.select_related("personnel"),
         pk=equipe_id,
         projet=projet,
     )
@@ -542,7 +616,7 @@ def utilisateur_projet_create(request,projet_id,equipe_id,):
 
         messages.error(
             request,
-            "Cette affectation ne possède pas de personnel interne.",
+            "Cette affectation ne possÃ¨de pas de personnel interne.",
         )
 
         return redirect(
@@ -550,21 +624,15 @@ def utilisateur_projet_create(request,projet_id,equipe_id,):
             projet_id=projet.pk,
         )
 
-    compte_existant = (
-        AppUser.objects
-        .filter(
-            personnel=personnel
-        )
-        .first()
-    )
+    compte_existant = AppUser.objects.filter(personnel=personnel).first()
 
     if compte_existant:
 
         messages.warning(
             request,
             (
-                f"{personnel} possède déjà un compte "
-                f"utilisateur « {compte_existant.username} »."
+                f"{personnel} possÃ¨de dÃ©jÃ  un compte "
+                f"utilisateur Â« {compte_existant.username} Â»."
             ),
         )
 
@@ -611,16 +679,11 @@ def utilisateur_projet_create(request,projet_id,equipe_id,):
                 "Les deux mots de passe ne correspondent pas.",
             )
 
-        elif AppUser.objects.filter(
-            username=username
-        ).exists():
+        elif AppUser.objects.filter(username=username).exists():
 
             messages.error(
                 request,
-                (
-                    f"Le nom d'utilisateur "
-                    f"« {username} » existe déjà."
-                ),
+                (f"Le nom d'utilisateur " f"Â« {username} Â» existe dÃ©jÃ ."),
             )
 
         else:
@@ -635,8 +698,8 @@ def utilisateur_projet_create(request,projet_id,equipe_id,):
             messages.success(
                 request,
                 (
-                    f"Le compte « {utilisateur.username} » "
-                    f"a été créé pour {personnel}."
+                    f"Le compte Â« {utilisateur.username} Â» "
+                    f"a Ã©tÃ© crÃ©Ã© pour {personnel}."
                 ),
             )
 
@@ -682,8 +745,7 @@ def projet_list(request):
         else:
             aujourd_hui = timezone.localdate()
             projets = (
-                Projet.objects
-                .filter(
+                Projet.objects.filter(
                     equipe__personnel=personnel,
                     equipe__actif=True,
                     equipe__date_debut__lte=aujourd_hui,
@@ -713,20 +775,14 @@ def projet_list(request):
 @project_manager_required
 def projet_create(request):
     if request.method == "POST":
-        form = ProjetForm(
-            request.POST
-        )
+        form = ProjetForm(request.POST)
         if form.is_valid():
-            projet = form.save(
-                commit=False
-            )
-            projet.enregistre_par = (
-                request.current_user
-            )
+            projet = form.save(commit=False)
+            projet.enregistre_par = request.current_user
             projet.save()
             messages.success(
                 request,
-                "Le projet a été créé avec succès.",
+                "Le projet a Ã©tÃ© crÃ©Ã© avec succÃ¨s.",
             )
 
             return redirect(
@@ -752,25 +808,27 @@ def projet_create(request):
 # MODIFIER UN PROJET
 # ============================================================
 @project_manager_required
-def projet_update(request,projet_id,):
+def projet_update(
+    request,
+    projet_id,
+):
 
-    projet = get_object_or_404(Projet,pk=projet_id,    )
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
     if request.method == "POST":
         form = ProjetForm(
             request.POST,
             instance=projet,
         )
         if form.is_valid():
-            projet_modifie = form.save(
-                commit=False
-            )
-            projet_modifie.enregistre_par_id = (
-                projet.enregistre_par_id
-            )
+            projet_modifie = form.save(commit=False)
+            projet_modifie.enregistre_par_id = projet.enregistre_par_id
             projet_modifie.save()
             messages.success(
                 request,
-                "Le projet a été modifié avec succès.",
+                "Le projet a Ã©tÃ© modifiÃ© avec succÃ¨s.",
             )
             return redirect(
                 "projet:projet_detail",
@@ -797,12 +855,18 @@ def projet_update(request,projet_id,):
 # SUPPRIMER UN PROJET
 # ============================================================
 @project_manager_required
-def projet_delete(request,projet_id,):
-    projet = get_object_or_404(Projet,pk=projet_id,)
+def projet_delete(
+    request,
+    projet_id,
+):
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
     if projet.enregistre_par_id != request.current_user.id:
         messages.error(
             request,
-            "Vous n'êtes pas autorisé à supprimer ce projet.",
+            "Vous n'Ãªtes pas autorisÃ© Ã  supprimer ce projet.",
         )
         return redirect(
             "projet:projet_detail",
@@ -820,7 +884,7 @@ def projet_delete(request,projet_id,):
 
         messages.success(
             request,
-            "Le projet a été supprimé.",
+            "Le projet a Ã©tÃ© supprimÃ©.",
         )
 
     except ProtectedError:
@@ -829,29 +893,31 @@ def projet_delete(request,projet_id,):
             request,
             (
                 "Impossible de supprimer ce projet car "
-                "il possède des données liées."
+                "il possÃ¨de des donnÃ©es liÃ©es."
             ),
         )
 
-    return redirect(
-        "projet:projet_list"
-    )
+    return redirect("projet:projet_list")
+
+
 # ============================================================
 # DETAIL D'UN PROJET
 # ============================================================
 @login_required_projet
-def projet_detail(    request,    projet_id,):
+def projet_detail(
+    request,
+    projet_id,
+):
     current_user = request.current_user
     if not current_user:
         messages.error(
             request,
-            "Utilisateur connecté introuvable.",
+            "Utilisateur connectÃ© introuvable.",
         )
 
         return redirect("users:login")
     projet = get_object_or_404(
-        Projet.objects
-        .select_related(
+        Projet.objects.select_related(
             "enregistre_par",
         ),
         pk=projet_id,
@@ -862,15 +928,12 @@ def projet_detail(    request,    projet_id,):
     ):
         messages.error(
             request,
-            "Votre accès à ce projet n'est pas actif.",
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
 
-        return redirect(
-            "projet:projet_list"
-        )
+        return redirect("projet:projet_list")
     equipe = (
-        projet.equipe
-        .all()
+        projet.equipe.all()
         .select_related(
             "personnel",
             "personnel_execution",
@@ -883,11 +946,7 @@ def projet_detail(    request,    projet_id,):
             "personnel__prenom",
         )
     )
-    equipe_active = sum(
-        1
-        for membre in equipe
-        if membre.acces_actif
-    )
+    equipe_active = sum(1 for membre in equipe if membre.acces_actif)
     fonction_projet = None
     personnel_connecte_id = getattr(
         current_user,
@@ -898,29 +957,20 @@ def projet_detail(    request,    projet_id,):
     if personnel_connecte_id:
 
         for membre in equipe:
-            if (
-                membre.personnel_id
-                and membre.personnel_id == personnel_connecte_id
-            ):
+            if membre.personnel_id and membre.personnel_id == personnel_connecte_id:
 
                 if membre.acces_actif:
 
                     fonction_projet = membre.fonction
 
                     break
-            if (
-                membre.personnel_execution_id
-                and membre.personnel_execution
-            ):
+            if membre.personnel_execution_id and membre.personnel_execution:
 
-                personnel_execution = (
-                    membre.personnel_execution
-                )
+                personnel_execution = membre.personnel_execution
 
                 if (
                     personnel_execution.personnel_id
-                    and personnel_execution.personnel_id
-                    == personnel_connecte_id
+                    and personnel_execution.personnel_id == personnel_connecte_id
                 ):
 
                     if membre.acces_actif:
@@ -928,16 +978,11 @@ def projet_detail(    request,    projet_id,):
                         fonction_projet = membre.fonction
 
                         break
-    points = (
-        projet.points
-        .all()
-        .order_by(
-            "nom",
-        )
+    points = projet.points.all().order_by(
+        "nom",
     )
     chefs_equipe = (
-        PersonnelExecutionProjet.objects
-        .filter(
+        PersonnelExecutionProjet.objects.filter(
             projet=projet,
             type_class="CHEF_EQUIPE",
         )
@@ -953,12 +998,9 @@ def projet_detail(    request,    projet_id,):
         )
     )
 
-    nombre_chefs_equipe = (
-        chefs_equipe.count()
-    )
+    nombre_chefs_equipe = chefs_equipe.count()
     personnels_execution = (
-        PersonnelExecutionProjet.objects
-        .filter(
+        PersonnelExecutionProjet.objects.filter(
             projet=projet,
         )
         .select_related(
@@ -972,19 +1014,13 @@ def projet_detail(    request,    projet_id,):
             "nom",
         )
     )
-    miniers = (
-        personnels_execution
-        .filter(
-            type_class="MINIER",
-        )
+    miniers = personnels_execution.filter(
+        type_class="MINIER",
     )
 
-    nombre_miniers = (
-        miniers.count()
-    )
+    nombre_miniers = miniers.count()
     materiaux_projet = (
-        projet.materiaux_projet
-        .all()
+        projet.materiaux_projet.all()
         .select_related(
             "projet",
         )
@@ -994,12 +1030,9 @@ def projet_detail(    request,    projet_id,):
         )
     )
 
-    nombre_materiaux_projet = (
-        materiaux_projet.count()
-    )
+    nombre_materiaux_projet = materiaux_projet.count()
     rapports_projet = (
-        projet.rapports_projet
-        .all()
+        projet.rapports_projet.all()
         .select_related(
             "auteur",
         )
@@ -1008,8 +1041,7 @@ def projet_detail(    request,    projet_id,):
         )
     )
     rapports_travaux = (
-        projet.rapports_travaux
-        .all()
+        projet.rapports_travaux.all()
         .select_related(
             "auteur",
         )
@@ -1018,8 +1050,7 @@ def projet_detail(    request,    projet_id,):
         )
     )
     rapports_materiaux = (
-        projet.rapports_materiaux
-        .all()
+        projet.rapports_materiaux.all()
         .select_related(
             "materiau",
             "auteur",
@@ -1029,8 +1060,7 @@ def projet_detail(    request,    projet_id,):
         )
     )
     rapports_vehicules = (
-        projet.rapports_vehicules
-        .all()
+        projet.rapports_vehicules.all()
         .select_related(
             "vehicule",
             "chauffeur",
@@ -1046,183 +1076,135 @@ def projet_detail(    request,    projet_id,):
         + rapports_vehicules.count()
     )
 
-    nombre_rapports_travaux = (
-        rapports_travaux.count()
+    nombre_rapports_travaux = rapports_travaux.count()
+    sorties_materiaux = MateriauxOut.objects.filter(
+        projet=projet,
+    ).select_related(
+        "materiau",
+        "division",
+        "point_projet",
     )
-    sorties_materiaux = (
-        MateriauxOut.objects
-        .filter(
-            projet=projet,
-        )
-        .select_related(
-            "materiau",
-            "division",
-            "point_projet",
-        )
+    transports = ActiviteTransport.objects.filter(
+        projet=projet,
+    ).select_related(
+        "vehicule",
+        "chauffeur_personnel",
+        "point_projet",
+        "sortie_materiau",
     )
-    transports = (
-        ActiviteTransport.objects
-        .filter(
-            projet=projet,
-        )
-        .select_related(
-            "vehicule",
-            "chauffeur_personnel",
-            "point_projet",
-            "sortie_materiau",
-        )
+    receptions = ReceptionMateriau.objects.filter(
+        projet=projet,
+    ).select_related(
+        "transport",
+        "point",
     )
-    receptions = (
-        ReceptionMateriau.objects
-        .filter(
-            projet=projet,
-        )
-        .select_related(
-            "transport",
-            "point",
-        )
+    utilisations = UtilisationMateriau.objects.filter(
+        reception__projet=projet,
     )
-    utilisations = (
-        UtilisationMateriau.objects
-        .filter(
-            reception__projet=projet,
-        )
+    retours = MateriauxRetour.objects.filter(
+        sortie__projet=projet,
     )
-    retours = (
-        MateriauxRetour.objects
-        .filter(
-            sortie__projet=projet,
-        )
+    depenses = Depense.objects.filter(
+        projet=projet,
     )
-    depenses = (
-        Depense.objects
-        .filter(
-            projet=projet,
-        )
+    depenses_gasoil = DepenseGasoil.objects.filter(
+        projet=projet,
     )
-    depenses_gasoil = (
-        DepenseGasoil.objects
-        .filter(
-            projet=projet,
-        )
+    reparations = ReparationVehicule.objects.filter(
+        projet=projet,
     )
-    reparations = (
-        ReparationVehicule.objects
-        .filter(
-            projet=projet,
-        )
-    )
-    paiements_dockers = (
-        PaiementDocker.objects
-        .filter(
-            projet=projet,
-        )
+    paiements_dockers = PaiementDocker.objects.filter(
+        projet=projet,
     )
     total_sorties = (
-        sorties_materiaux
-        .aggregate(
+        sorties_materiaux.aggregate(
             total=Sum("quantite"),
         )["total"]
         or 0
     )
 
     total_transport = (
-        transports
-        .aggregate(
+        transports.aggregate(
             total=Sum("quantite"),
         )["total"]
         or 0
     )
 
     total_reception = (
-        receptions
-        .aggregate(
+        receptions.aggregate(
             total=Sum("quantite_recue"),
         )["total"]
         or 0
     )
 
     total_utilisation = (
-        utilisations
-        .aggregate(
+        utilisations.aggregate(
             total=Sum("quantite_utilisee"),
         )["total"]
         or 0
     )
 
     total_retour = (
-        retours
-        .aggregate(
+        retours.aggregate(
             total=Sum("quantite"),
         )["total"]
         or 0
     )
 
     # ============================================================
-    # TOTAL MATÉRIAUX RAVITAILLÉS
+    # TOTAL MATÃ‰RIAUX RAVITAILLÃ‰S
     # ============================================================
 
-    total_materiaux = (
-        total_sorties
-    )
+    total_materiaux = total_sorties
 
     # ============================================================
-    # TOTAUX DÉPENSES
+    # TOTAUX DÃ‰PENSES
     # ============================================================
 
     total_depenses = (
-        depenses
-        .aggregate(
+        depenses.aggregate(
             total=Sum("montant"),
         )["total"]
         or 0
     )
 
     total_gasoil = (
-        depenses_gasoil
-        .aggregate(
+        depenses_gasoil.aggregate(
             total=Sum("total"),
         )["total"]
         or 0
     )
 
     total_reparations = (
-        reparations
-        .aggregate(
+        reparations.aggregate(
             total=Sum("total"),
         )["total"]
         or 0
     )
 
     total_dockers = (
-        paiements_dockers
-        .aggregate(
+        paiements_dockers.aggregate(
             total=Sum("montant"),
         )["total"]
         or 0
     )
 
     # ============================================================
-    # TOTAL GLOBAL DÉPENSES PROJET
+    # TOTAL GLOBAL DÃ‰PENSES PROJET
     # ============================================================
 
     total_depenses_projet = (
-        total_depenses
-        + total_gasoil
-        + total_reparations
-        + total_dockers
+        total_depenses + total_gasoil + total_reparations + total_dockers
     )
 
     # ============================================================
     # PERMISSION DE GESTION
     # ============================================================
 
-    peut_gerer = user_can_manage_projects(
-        current_user
-    )
+    peut_gerer = user_can_manage_projects(current_user)
 
     # ============================================================
-    # ACCÈS ACTUEL
+    # ACCÃˆS ACTUEL
     # ============================================================
 
     acces_actuel = user_has_project_access(
@@ -1235,123 +1217,90 @@ def projet_detail(    request,    projet_id,):
     # ============================================================
 
     context = {
-
         # --------------------------------------------------------
         # PROJET
         # --------------------------------------------------------
-
         "projet": projet,
-
         # --------------------------------------------------------
         # UTILISATEUR
         # --------------------------------------------------------
-
         "user": current_user,
         "current_user": current_user,
-
         # --------------------------------------------------------
         # PERMISSIONS
         # --------------------------------------------------------
-
         "peut_gerer": peut_gerer,
         "acces_actuel": acces_actuel,
-
         # --------------------------------------------------------
         # FONCTION SUR LE PROJET
         # --------------------------------------------------------
-
         "fonction_projet": fonction_projet,
-
         # --------------------------------------------------------
-        # ÉQUIPE
+        # Ã‰QUIPE
         # --------------------------------------------------------
-
         "equipe": equipe,
         "equipe_active": equipe_active,
-
         # --------------------------------------------------------
-        # CHEFS D'ÉQUIPE
+        # CHEFS D'Ã‰QUIPE
         # --------------------------------------------------------
-
         "chefs_equipe": chefs_equipe,
         "nombre_chefs_equipe": nombre_chefs_equipe,
-
         # --------------------------------------------------------
-        # PERSONNEL D'EXÉCUTION
+        # PERSONNEL D'EXÃ‰CUTION
         # --------------------------------------------------------
-
         "personnels_execution": personnels_execution,
-
         # --------------------------------------------------------
         # MINIERS
         # --------------------------------------------------------
-
         "miniers": miniers,
         "nombre_miniers": nombre_miniers,
-
         # --------------------------------------------------------
         # POINTS
         # --------------------------------------------------------
-
         "points": points,
-
         # --------------------------------------------------------
-        # MATÉRIAUX DU PROJET
+        # MATÃ‰RIAUX DU PROJET
         # --------------------------------------------------------
-
         "materiaux_projet": materiaux_projet,
         "nombre_materiaux_projet": nombre_materiaux_projet,
-
         # --------------------------------------------------------
         # RAPPORTS
         # --------------------------------------------------------
-
         "rapports_projet": rapports_projet,
         "rapports_travaux": rapports_travaux,
         "rapports_materiaux": rapports_materiaux,
         "rapports_vehicules": rapports_vehicules,
-
         "total_rapports": total_rapports,
         "nombre_rapports_travaux": nombre_rapports_travaux,
-
         # --------------------------------------------------------
-        # MATÉRIAUX / LOGISTIQUE
+        # MATÃ‰RIAUX / LOGISTIQUE
         # --------------------------------------------------------
-
         "sorties_materiaux": sorties_materiaux,
         "transports": transports,
         "receptions": receptions,
         "utilisations": utilisations,
         "retours": retours,
-
         "total_sorties": total_sorties,
         "total_transport": total_transport,
         "total_reception": total_reception,
         "total_utilisation": total_utilisation,
         "total_retour": total_retour,
-
         "total_materiaux": total_materiaux,
-
         # --------------------------------------------------------
-        # DÉPENSES
+        # DÃ‰PENSES
         # --------------------------------------------------------
-
         "depenses": depenses,
         "depenses_gasoil": depenses_gasoil,
         "reparations": reparations,
         "paiements_dockers": paiements_dockers,
-
         "total_depenses": total_depenses,
         "total_gasoil": total_gasoil,
         "total_reparations": total_reparations,
         "total_dockers": total_dockers,
-
         "total_depenses_projet": total_depenses_projet,
-
         # --------------------------------------------------------
         # DATE
         # --------------------------------------------------------
-
         "aujourd_hui": timezone.localdate(),
     }
 
@@ -1365,6 +1314,7 @@ def projet_detail(    request,    projet_id,):
         context,
     )
 
+
 # ============================================================
 # RAPPORT FINANCIER GLOBAL DU PROJET
 # ============================================================
@@ -1375,11 +1325,10 @@ def rapport_projet_global(request, projet_id):
     ZERO = Decimal("0.00")
 
     # --------------------------------------------------------
-    # 1. ACHATS DE MATÉRIAUX
+    # 1. ACHATS DE MATÃ‰RIAUX
     # --------------------------------------------------------
     achats_materiaux = (
-        AchatMateriauProjet.objects
-        .filter(materiau_projet__projet=projet)
+        AchatMateriauProjet.objects.filter(materiau_projet__projet=projet)
         .select_related(
             "materiau_projet",
             "enregistre_par",
@@ -1393,11 +1342,10 @@ def rapport_projet_global(request, projet_id):
         total_achats += achat.montant_total
 
     # --------------------------------------------------------
-    # 2. RÉMUNÉRATION PRÉVUE DU PERSONNEL D'EXÉCUTION
+    # 2. RÃ‰MUNÃ‰RATION PRÃ‰VUE DU PERSONNEL D'EXÃ‰CUTION
     # --------------------------------------------------------
     personnels_execution = (
-        PersonnelExecutionProjet.objects
-        .filter(projet=projet)
+        PersonnelExecutionProjet.objects.filter(projet=projet)
         .select_related(
             "point_projet",
             "materiau_projet",
@@ -1421,22 +1369,17 @@ def rapport_projet_global(request, projet_id):
         else:
             total_autres_personnels += montant
 
-    total_remunerations = (
-        total_chefs_equipe
-        + total_miniers
-        + total_autres_personnels
-    )
+    total_remunerations = total_chefs_equipe + total_miniers + total_autres_personnels
 
     # --------------------------------------------------------
-    # 3. AVANCES VERSÉES AUX ÉQUIPES
+    # 3. AVANCES VERSÃ‰ES AUX Ã‰QUIPES
     # --------------------------------------------------------
     avances_equipe = (
-        AvanceEquipeProjet.objects
-        .filter(
-            # Les avances sont rattachées à EquipeProjet.
-            # On recherche les équipes du projet concerné.
-            # Le filtre exact dépend de la relation utilisée.
-            # Voir la correction ci-dessous si nécessaire.
+        AvanceEquipeProjet.objects.filter(
+            # Les avances sont rattachÃ©es Ã  EquipeProjet.
+            # On recherche les Ã©quipes du projet concernÃ©.
+            # Le filtre exact dÃ©pend de la relation utilisÃ©e.
+            # Voir la correction ci-dessous si nÃ©cessaire.
             equipe_execution__projet=projet
         )
         .select_related(
@@ -1447,10 +1390,9 @@ def rapport_projet_global(request, projet_id):
         .order_by("-date_avance", "-id")
     )
 
-    # Inclure aussi les avances rattachées aux équipes de miniers.
+    # Inclure aussi les avances rattachÃ©es aux Ã©quipes de miniers.
     avances_miniers = (
-        AvanceEquipeProjet.objects
-        .filter(miniers_execution__projet=projet)
+        AvanceEquipeProjet.objects.filter(miniers_execution__projet=projet)
         .select_related(
             "equipe_execution",
             "miniers_execution",
@@ -1459,31 +1401,21 @@ def rapport_projet_global(request, projet_id):
         .order_by("-date_avance", "-id")
     )
 
-    # Éviter les doublons si une avance correspond à une seule équipe.
+    # Ã‰viter les doublons si une avance correspond Ã  une seule Ã©quipe.
     avances_equipe = (
-        avances_equipe | avances_miniers
-    ).distinct().order_by("-date_avance", "-id")
-
-    total_avances = (
-        avances_equipe.aggregate(
-            total=Sum("montant")
-        )["total"] or ZERO
+        (avances_equipe | avances_miniers).distinct().order_by("-date_avance", "-id")
     )
 
+    total_avances = avances_equipe.aggregate(total=Sum("montant"))["total"] or ZERO
+
     # --------------------------------------------------------
-    # 4. SYNTHÈSE FINANCIÈRE
+    # 4. SYNTHÃˆSE FINANCIÃˆRE
     # --------------------------------------------------------
     budget_previsionnel = projet.budget_previsionnel or ZERO
 
-    total_depenses_identifiees = (
-        total_achats
-        + total_remunerations
-    )
+    total_depenses_identifiees = total_achats + total_remunerations
 
-    solde_budget = (
-        budget_previsionnel
-        - total_depenses_identifiees
-    )
+    solde_budget = budget_previsionnel - total_depenses_identifiees
 
     depassement_budget = max(
         ZERO,
@@ -1491,9 +1423,7 @@ def rapport_projet_global(request, projet_id):
     )
 
     taux_utilisation = (
-        total_depenses_identifiees
-        / budget_previsionnel
-        * Decimal("100")
+        total_depenses_identifiees / budget_previsionnel * Decimal("100")
         if budget_previsionnel > ZERO
         else ZERO
     )
@@ -1504,33 +1434,26 @@ def rapport_projet_global(request, projet_id):
         {
             "projet": projet,
             "aujourd_hui": timezone.localdate(),
-
             # Budget
             "budget_previsionnel": budget_previsionnel,
             "total_achats": total_achats,
-
-            # Rémunérations
+            # RÃ©munÃ©rations
             "personnels_execution": personnels_execution,
             "total_chefs_equipe": total_chefs_equipe,
             "total_miniers": total_miniers,
             "total_autres_personnels": total_autres_personnels,
             "total_remunerations": total_remunerations,
-
             # Achats et avances
             "achats_materiaux": achats_materiaux,
             "avances_equipe": avances_equipe,
             "total_avances": total_avances,
-
-            # Synthèse
+            # SynthÃ¨se
             "total_depenses_identifiees": total_depenses_identifiees,
             "solde_budget": solde_budget,
             "depassement_budget": depassement_budget,
             "taux_utilisation": taux_utilisation,
-
             "user": request.current_user,
-            "peut_gerer": user_can_manage_projects(
-                request.current_user
-            ),
+            "peut_gerer": user_can_manage_projects(request.current_user),
         },
     )
 
@@ -1539,7 +1462,10 @@ def rapport_projet_global(request, projet_id):
 # EQUIPE - LISTE
 # ============================================================
 @project_manager_required
-def equipe_list(    request,    projet_id,):
+def equipe_list(
+    request,
+    projet_id,
+):
 
     projet = get_object_or_404(
         Projet,
@@ -1547,10 +1473,7 @@ def equipe_list(    request,    projet_id,):
     )
 
     equipe = (
-        EquipeProjet.objects
-        .filter(
-            projet=projet
-        )
+        EquipeProjet.objects.filter(projet=projet)
         .select_related(
             "personnel",
         )
@@ -1568,15 +1491,15 @@ def equipe_list(    request,    projet_id,):
             "projet": projet,
             "equipe": equipe,
             "user": request.current_user,
-            "peut_gerer": user_can_manage_projects(
-                request.current_user
-            ),
+            "peut_gerer": user_can_manage_projects(request.current_user),
         },
     )
 
+
 # ============================================================
-# CRÉATION D'UNE AFFECTATION D'ÉQUIPE
+# CRÃ‰ATION D'UNE AFFECTATION D'Ã‰QUIPE
 # ============================================================
+
 
 @project_manager_required
 def equipe_create(request, projet_id):
@@ -1607,8 +1530,8 @@ def equipe_create(request, projet_id):
             messages.success(
                 request,
                 (
-                    f"{affectation.personnel} a été affecté "
-                    f"au projet « {projet.titre} » comme "
+                    f"{affectation.personnel} a Ã©tÃ© affectÃ© "
+                    f"au projet Â« {projet.titre} Â» comme "
                     f"{affectation.get_fonction_display()}."
                 ),
             )
@@ -1639,16 +1562,29 @@ def equipe_create(request, projet_id):
         },
     )
 
+
 # ============================================================
 # MODIFIER UNE AFFECTATION
 # ============================================================
 
+
 @project_manager_required
-def equipe_update(    request,    projet_id,    equipe_id,):
+def equipe_update(
+    request,
+    projet_id,
+    equipe_id,
+):
 
-    projet = get_object_or_404(Projet,pk=projet_id,)
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
 
-    affectation = get_object_or_404(EquipeProjet,pk=equipe_id,projet=projet,)
+    affectation = get_object_or_404(
+        EquipeProjet,
+        pk=equipe_id,
+        projet=projet,
+    )
 
     if request.method == "POST":
 
@@ -1668,9 +1604,7 @@ def equipe_update(    request,    projet_id,    equipe_id,):
 
         if form.is_valid():
 
-            affectation_modifiee = form.save(
-                commit=False
-            )
+            affectation_modifiee = form.save(commit=False)
 
             affectation_modifiee.projet = projet
             affectation_modifiee.save()
@@ -1680,7 +1614,7 @@ def equipe_update(    request,    projet_id,    equipe_id,):
                 (
                     f"L'affectation de "
                     f"{affectation_modifiee.personnel} "
-                    f"a été modifiée avec succès."
+                    f"a Ã©tÃ© modifiÃ©e avec succÃ¨s."
                 ),
             )
 
@@ -1712,9 +1646,7 @@ def equipe_update(    request,    projet_id,    equipe_id,):
             "mode": "modification",
             "titre_page": "Modifier l'affectation",
             "user": request.current_user,
-            "peut_gerer": user_can_manage_projects(
-                request.current_user
-            ),
+            "peut_gerer": user_can_manage_projects(request.current_user),
         },
     )
 
@@ -1723,17 +1655,23 @@ def equipe_update(    request,    projet_id,    equipe_id,):
 # SUPPRIMER UNE AFFECTATION
 # ============================================================
 @project_manager_required
-def equipe_delete(    request,    projet_id,    equipe_id,):
+def equipe_delete(
+    request,
+    projet_id,
+    equipe_id,
+):
 
-    affectation = get_object_or_404(EquipeProjet,pk=equipe_id,projet_id=projet_id,    )
+    affectation = get_object_or_404(
+        EquipeProjet,
+        pk=equipe_id,
+        projet_id=projet_id,
+    )
 
     if request.method != "POST":
 
         messages.error(
             request,
-            (
-                "La suppression d'une affectation doit être effectuée par POST."
-            ),
+            ("La suppression d'une affectation doit Ãªtre effectuÃ©e par POST."),
         )
 
         return redirect(
@@ -1749,9 +1687,7 @@ def equipe_delete(    request,    projet_id,    equipe_id,):
 
         messages.success(
             request,
-            (
-                f"L'affectation de {personnel} a été supprimée du projet."
-            ),
+            (f"L'affectation de {personnel} a Ã©tÃ© supprimÃ©e du projet."),
         )
 
     except ProtectedError:
@@ -1759,7 +1695,7 @@ def equipe_delete(    request,    projet_id,    equipe_id,):
         messages.error(
             request,
             (
-                "Cette affectation est utilisée par des données historiques et ne peut pas être supprimée."
+                "Cette affectation est utilisÃ©e par des donnÃ©es historiques et ne peut pas Ãªtre supprimÃ©e."
             ),
         )
 
@@ -1772,28 +1708,115 @@ def equipe_delete(    request,    projet_id,    equipe_id,):
 # ============================================================
 # POINTS - LISTE
 # ============================================================
+
+
 @login_required_projet
-def point_list(request,projet_id,):
+def point_list(request, projet_id):
+    current_user = request.current_user
 
-    projet = get_object_or_404(Projet,pk=projet_id,)
-
-    if not user_has_project_access(
-        request.current_user,
-        projet,
-    ):
-        return redirect(
-            "projet:projet_list"
-        )
-
-    points = (
-        PointProjet.objects
-        .filter(
-            projet=projet
-        )
-        .order_by(
-            "nom"
-        )
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
     )
+
+    if not user_has_project_access(current_user, projet):
+        messages.error(
+            request,
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+        )
+        return redirect("projet:projet_list")
+
+    # --------------------------------------------------------
+    # FILTRES
+    # --------------------------------------------------------
+    nom = request.GET.get("nom", "").strip()
+    distance_min = request.GET.get("distance_min", "").strip()
+    distance_max = request.GET.get("distance_max", "").strip()
+
+    queryset = PointProjet.objects.filter(
+        projet=projet,
+    ).select_related("enregistre_par")
+
+    if nom:
+        queryset = queryset.filter(nom__icontains=nom)
+
+    if distance_min:
+        try:
+            valeur_min = Decimal(distance_min)
+
+            if not valeur_min.is_finite() or valeur_min < 0:
+                raise InvalidOperation
+
+            queryset = queryset.filter(
+                distance_km__gte=valeur_min,
+            )
+
+        except (InvalidOperation, ValueError):
+            messages.warning(
+                request,
+                "La distance minimale saisie n'est pas valide.",
+            )
+            distance_min = ""
+
+    if distance_max:
+        try:
+            valeur_max = Decimal(distance_max)
+
+            if not valeur_max.is_finite() or valeur_max < 0:
+                raise InvalidOperation
+
+            queryset = queryset.filter(
+                distance_km__lte=valeur_max,
+            )
+
+        except (InvalidOperation, ValueError):
+            messages.warning(
+                request,
+                "La distance maximale saisie n'est pas valide.",
+            )
+            distance_max = ""
+
+    # --------------------------------------------------------
+    # TOTALS SUR TOUS LES RÃ‰SULTATS FILTRÃ‰S
+    # --------------------------------------------------------
+    total_points = queryset.count()
+
+    total_distance = sum(
+        (
+            distance or Decimal("0.00")
+            for distance in queryset.values_list(
+                "distance_km",
+                flat=True,
+            )
+        ),
+        Decimal("0.00"),
+    )
+
+    # --------------------------------------------------------
+    # PAGINATION : 10 POINTS PAR PAGE
+    # --------------------------------------------------------
+    paginator = Paginator(
+        queryset.order_by("distance_km", "nom", "pk"),
+        10,
+    )
+
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    points = list(page_obj.object_list)
+
+    # --------------------------------------------------------
+    # DROITS DE GESTION PAR POINT
+    # --------------------------------------------------------
+    peut_gerer_projet = user_can_manage_projects(current_user)
+
+    for point in points:
+        est_enregistreur = (
+            current_user is not None
+            and point.enregistre_par_id is not None
+            and point.enregistre_par_id == current_user.pk
+        )
+
+        point.peut_gerer = peut_gerer_projet or est_enregistreur
 
     return render(
         request,
@@ -1801,19 +1824,58 @@ def point_list(request,projet_id,):
         {
             "projet": projet,
             "points": points,
-            "user": request.current_user,
+            "page_obj": page_obj,
+            "paginator": paginator,
+            "total_points": total_points,
+            "total_distance": total_distance,
+            "nom_filtre": nom,
+            "distance_min": distance_min,
+            "distance_max": distance_max,
+            "user": current_user,
+            "current_user": current_user,
         },
     )
 
 
 # ============================================================
-# AJOUTER UN POINT
+# AJOUTER UN POINT DE CHANTIER
 # ============================================================
 @login_required_projet
-def point_create(    request,    projet_id,):
+def point_create(request, projet_id):
 
-    projet = get_object_or_404(        Projet,        pk=projet_id,    )
+    # ========================================================
+    # UTILISATEUR CONNECTÃ‰
+    # ========================================================
+    current_user = request.current_user
 
+    if not current_user:
+        messages.error(
+            request,
+            "Utilisateur connectÃ© introuvable.",
+        )
+        return redirect("users:login")
+
+    # ========================================================
+    # RÃ‰CUPÃ‰RER LE PROJET
+    # ========================================================
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
+
+    # ========================================================
+    # VÃ‰RIFIER L'ACCÃˆS AU PROJET
+    # ========================================================
+    if not user_has_project_access(current_user, projet):
+        messages.error(
+            request,
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+        )
+        return redirect("projet:projet_list")
+
+    # ========================================================
+    # TRAITEMENT DU FORMULAIRE
+    # ========================================================
     if request.method == "POST":
 
         form = PointProjetForm(
@@ -1821,20 +1883,146 @@ def point_create(    request,    projet_id,):
             projet=projet,
         )
 
-        form.instance.projet = projet
-
         if form.is_valid():
 
-            point = form.save(
-                commit=False
-            )
+            # PrÃ©parer l'objet sans l'enregistrer immÃ©diatement.
+            point = form.save(commit=False)
 
+            # Associer le projet courant.
             point.projet = projet
+
+            # Enregistrer le crÃ©ateur du point.
+            point.enregistre_par = current_user
+
+            # Enregistrer le point en base de donnÃ©es.
             point.save()
+
+            # Enregistrer les relations Ã©ventuelles du formulaire.
+            form.save_m2m()
 
             messages.success(
                 request,
-                "Le point de chantier a été créé.",
+                f"Le point Â« {point.nom} Â» a Ã©tÃ© crÃ©Ã© avec succÃ¨s.",
+            )
+
+            return redirect(
+                "projet:point_list",
+                projet_id=projet.pk,
+            )
+
+        else:
+            messages.error(
+                request,
+                "Veuillez corriger les erreurs du formulaire.",
+            )
+
+    # ========================================================
+    # AFFICHAGE DU FORMULAIRE
+    # ========================================================
+    else:
+        form = PointProjetForm(
+            projet=projet,
+        )
+
+    # ========================================================
+    # CONTEXTE
+    # ========================================================
+    context = {
+        "form": form,
+        "projet": projet,
+        "user": current_user,
+        "current_user": current_user,
+        "titre_page": "Nouveau point de chantier",
+    }
+
+    # ========================================================
+    # AFFICHAGE
+    # ========================================================
+    return render(
+        request,
+        "projet/point/form.html",
+        context,
+    )
+
+
+# ============================================================
+# MODIFIER UN POINT DE CHANTIER
+# ============================================================
+@login_required_projet
+def point_update(request, projet_id, point_id):
+
+    current_user = request.current_user
+
+    # --------------------------------------------------------
+    # RÃ‰CUPÃ‰RER LE PROJET ET LE POINT
+    # --------------------------------------------------------
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
+
+    point = get_object_or_404(
+        PointProjet.objects.select_related("enregistre_par"),
+        pk=point_id,
+        projet=projet,
+    )
+
+    # --------------------------------------------------------
+    # VÃ‰RIFIER L'ACCÃˆS AU PROJET
+    # --------------------------------------------------------
+    if not user_has_project_access(current_user, projet):
+        messages.error(
+            request,
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+        )
+        return redirect("projet:projet_list")
+
+    # --------------------------------------------------------
+    # DROITS : GESTIONNAIRE OU ENREGISTREUR DU POINT
+    # --------------------------------------------------------
+    est_gestionnaire = user_can_manage_projects(current_user)
+
+    est_enregistreur = (
+        current_user is not None
+        and point.enregistre_par_id is not None
+        and point.enregistre_par_id == current_user.pk
+    )
+
+    if not (est_gestionnaire or est_enregistreur):
+        messages.error(
+            request,
+            "Vous n'avez pas l'autorisation de modifier ce point.",
+        )
+        return redirect(
+            "projet:point_list",
+            projet_id=projet.pk,
+        )
+
+    # --------------------------------------------------------
+    # TRAITEMENT DU FORMULAIRE
+    # --------------------------------------------------------
+    if request.method == "POST":
+
+        form = PointProjetForm(
+            request.POST,
+            instance=point,
+            projet=projet,
+        )
+
+        if form.is_valid():
+
+            point_modifie = form.save(commit=False)
+
+            # Conserver le projet et le crÃ©ateur d'origine.
+            point_modifie.projet = projet
+            point_modifie.enregistre_par = point.enregistre_par
+
+            point_modifie.save()
+            form.save_m2m()
+
+            messages.success(
+                request,
+                f"Le point Â« {point.nom} Â» a Ã©tÃ© modifiÃ© avec succÃ¨s.",
             )
 
             return redirect(
@@ -1843,114 +2031,116 @@ def point_create(    request,    projet_id,):
             )
 
     else:
-
         form = PointProjetForm(
+            instance=point,
             projet=projet,
         )
 
+    # --------------------------------------------------------
+    # AFFICHAGE
+    # --------------------------------------------------------
     return render(
         request,
         "projet/point/form.html",
         {
             "form": form,
             "projet": projet,
-            "titre_page": "Nouveau point de chantier",
-            "user": request.current_user,
-        },
-    )
-
-
-# ============================================================
-# MODIFIER UN POINT
-# ============================================================
-@project_manager_required
-def point_update(    request,projet_id,point_id,):
-
-    projet = get_object_or_404(Projet,pk=projet_id,)
-
-    point = get_object_or_404(PointProjet,pk=point_id,projet=projet,)
-
-    if request.method == "POST":
-
-        form = PointProjetForm(
-            request.POST,
-            instance=point,
-            projet=projet,
-        )
-
-        form.instance.projet = projet
-
-        if form.is_valid():
-
-            point_modifie = form.save(
-                commit=False
-            )
-
-            point_modifie.projet = projet
-            point_modifie.save()
-
-            messages.success(
-                request,
-                "Le point de chantier a été modifié.",
-            )
-
-            return redirect(
-                "projet:point_list",
-                projet_id=projet.pk,
-            )
-
-    else:
-
-        form = PointProjetForm(
-            instance=point,
-            projet=projet,
-        )
-
-    return render(
-        request,
-        "projet/point_form.html",
-        {
-            "form": form,
-            "projet": projet,
             "point": point,
             "titre_page": "Modifier le point de chantier",
-            "user": request.current_user,
+            "user": current_user,
+            "current_user": current_user,
         },
     )
 
 
 # ============================================================
-# SUPPRIMER UN POINT
+# SUPPRIMER UN POINT DE CHANTIER
 # ============================================================
-@project_manager_required
-def point_delete(    request,    projet_id,    point_id,):
+@login_required_projet
+def point_delete(request, projet_id, point_id):
 
-    point = get_object_or_404(PointProjet,pk=point_id,projet_id=projet_id,    )
+    current_user = request.current_user
 
-    if request.method == "POST":
+    # --------------------------------------------------------
+    # RÃ‰CUPÃ‰RER LE PROJET ET LE POINT
+    # --------------------------------------------------------
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
 
-        try:
+    point = get_object_or_404(
+        PointProjet.objects.select_related("enregistre_par"),
+        pk=point_id,
+        projet=projet,
+    )
 
-            point.delete()
+    # --------------------------------------------------------
+    # VÃ‰RIFIER L'ACCÃˆS AU PROJET
+    # --------------------------------------------------------
+    if not user_has_project_access(current_user, projet):
+        messages.error(
+            request,
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+        )
+        return redirect("projet:projet_list")
 
-            messages.success(
-                request,
-                "Le point de chantier a été supprimé.",
-            )
+    # --------------------------------------------------------
+    # DROITS : GESTIONNAIRE OU ENREGISTREUR DU POINT
+    # --------------------------------------------------------
+    est_gestionnaire = user_can_manage_projects(current_user)
 
-        except ProtectedError:
+    est_enregistreur = (
+        current_user is not None
+        and point.enregistre_par_id is not None
+        and point.enregistre_par_id == current_user.pk
+    )
 
-            messages.error(
-                request,
-                (
-                    "Impossible de supprimer ce point car "
-                    "il est utilisé par des données du projet."
-                ),
-            )
+    if not (est_gestionnaire or est_enregistreur):
+        messages.error(
+            request,
+            "Vous n'avez pas l'autorisation de supprimer ce point.",
+        )
+        return redirect(
+            "projet:point_list",
+            projet_id=projet.pk,
+        )
+
+    # --------------------------------------------------------
+    # SUPPRESSION UNIQUEMENT PAR POST
+    # --------------------------------------------------------
+    if request.method != "POST":
+        messages.warning(
+            request,
+            "La suppression doit Ãªtre confirmÃ©e depuis le formulaire.",
+        )
+        return redirect(
+            "projet:point_list",
+            projet_id=projet.pk,
+        )
+
+    nom_point = point.nom
+
+    try:
+        point.delete()
+
+        messages.success(
+            request,
+            f"Le point Â« {nom_point} Â» a Ã©tÃ© supprimÃ© avec succÃ¨s.",
+        )
+
+    except ProtectedError:
+        messages.error(
+            request,
+            (
+                "Impossible de supprimer ce point, car il est "
+                "utilisÃ© par des donnÃ©es du projet."
+            ),
+        )
 
     return redirect(
         "projet:point_list",
-        projet_id=projet_id,
+        projet_id=projet.pk,
     )
 
 
@@ -1960,10 +2150,7 @@ def minier_list(request, projet_id):
     current_user = request.current_user
 
     if not current_user:
-        messages.error(
-            request,
-            "Utilisateur connecté introuvable."
-        )
+        messages.error(request, "Utilisateur connectÃ© introuvable.")
         return redirect("users:login")
 
     # ============================================================
@@ -1976,23 +2163,18 @@ def minier_list(request, projet_id):
     )
 
     # ============================================================
-    # ACCÈS AU PROJET
+    # ACCÃˆS AU PROJET
     # ============================================================
 
     if not user_has_project_access(
         current_user,
         projet,
     ):
-        messages.error(
-            request,
-            "Votre accès à ce projet n'est pas actif."
-        )
-        return redirect(
-            "projet:projet_list"
-        )
+        messages.error(request, "Votre accÃ¨s Ã  ce projet n'est pas actif.")
+        return redirect("projet:projet_list")
 
     # ============================================================
-    # PERSONNEL CONNECTÉ
+    # PERSONNEL CONNECTÃ‰
     # ============================================================
 
     personnel_connecte = getattr(
@@ -2048,10 +2230,7 @@ def minier_list(request, projet_id):
                 "%Y-%m-%d",
             ).date()
         except ValueError:
-            messages.warning(
-                request,
-                "La date de début est invalide."
-            )
+            messages.warning(request, "La date de dÃ©but est invalide.")
             filtre_date_debut = ""
 
     if filtre_date_fin:
@@ -2061,28 +2240,21 @@ def minier_list(request, projet_id):
                 "%Y-%m-%d",
             ).date()
         except ValueError:
-            messages.warning(
-                request,
-                "La date de fin est invalide."
-            )
+            messages.warning(request, "La date de fin est invalide.")
             filtre_date_fin = ""
 
     # ============================================================
     # QUERYSET DE BASE
     # ============================================================
 
-    miniers_queryset = (
-        PersonnelExecutionProjet.objects
-        .filter(
-            projet=projet,
-            type_class="MINIER",
-        )
-        .select_related(
-            "projet",
-            "materiau_projet",
-            "point_projet",
-            "enregistre_par",
-        )
+    miniers_queryset = PersonnelExecutionProjet.objects.filter(
+        projet=projet,
+        type_class="MINIER",
+    ).select_related(
+        "projet",
+        "materiau_projet",
+        "point_projet",
+        "enregistre_par",
     )
 
     # ============================================================
@@ -2091,12 +2263,10 @@ def minier_list(request, projet_id):
 
     if filtre_nom:
 
-        miniers_queryset = miniers_queryset.filter(
-            nom__icontains=filtre_nom
-        )
+        miniers_queryset = miniers_queryset.filter(nom__icontains=filtre_nom)
 
     # ============================================================
-    # FILTRE MATÉRIAU
+    # FILTRE MATÃ‰RIAU
     #
     # MateriauProjet.materiau est un CharField.
     # ============================================================
@@ -2108,14 +2278,12 @@ def minier_list(request, projet_id):
         )
 
     # ============================================================
-    # FILTRE DATE DE DÉBUT
+    # FILTRE DATE DE DÃ‰BUT
     # ============================================================
 
     if date_debut:
 
-        miniers_queryset = miniers_queryset.filter(
-            date_production__gte=date_debut
-        )
+        miniers_queryset = miniers_queryset.filter(date_production__gte=date_debut)
 
     # ============================================================
     # FILTRE DATE DE FIN
@@ -2123,13 +2291,11 @@ def minier_list(request, projet_id):
 
     if date_fin:
 
-        miniers_queryset = miniers_queryset.filter(
-            date_production__lte=date_fin
-        )
+        miniers_queryset = miniers_queryset.filter(date_production__lte=date_fin)
 
     # ============================================================
-    # SÉCURITÉ :
-    # DATE DÉBUT > DATE FIN
+    # SÃ‰CURITÃ‰ :
+    # DATE DÃ‰BUT > DATE FIN
     # ============================================================
 
     if date_debut and date_fin:
@@ -2138,12 +2304,12 @@ def minier_list(request, projet_id):
 
             messages.warning(
                 request,
-                "La date de début ne peut pas être postérieure "
-                "à la date de fin."
+                "La date de dÃ©but ne peut pas Ãªtre postÃ©rieure "
+                "Ã  la date de fin.",
             )
 
-            # On remet la liste à zéro afin d'éviter
-            # un résultat incohérent.
+            # On remet la liste Ã  zÃ©ro afin d'Ã©viter
+            # un rÃ©sultat incohÃ©rent.
 
             miniers_queryset = miniers_queryset.none()
 
@@ -2164,45 +2330,37 @@ def minier_list(request, projet_id):
     # ============================================================
 
     total_miniers = miniers_queryset.count()
-    total_montant = (
-        miniers_queryset.aggregate(
-            total=Sum(
-                ExpressionWrapper(
-                    F("quantite") * F("prix_unitaire"),
-                    output_field=DecimalField(
-                        max_digits=20,
-                        decimal_places=2,
-                    ),
-                )
+    total_montant = miniers_queryset.aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F("quantite") * F("prix_unitaire"),
+                output_field=DecimalField(
+                    max_digits=20,
+                    decimal_places=2,
+                ),
             )
-        )["total"]
-    )
+        )
+    )["total"]
 
     # ============================================================
-    # AUCUN RÉSULTAT
+    # AUCUN RÃ‰SULTAT
     # ============================================================
 
     if total_montant is None:
 
-        total_montant = Decimal(
-            "0.00"
-        )
+        total_montant = Decimal("0.00")
 
     # ============================================================
-    # FORMAT DÉCIMAL
+    # FORMAT DÃ‰CIMAL
     # ============================================================
 
-    total_montant = total_montant.quantize(
-        Decimal("0.01")
-    )
+    total_montant = total_montant.quantize(Decimal("0.01"))
 
     # ============================================================
     # TRANSFORMATION EN LISTE
     # ============================================================
 
-    miniers = list(
-        miniers_queryset
-    )
+    miniers = list(miniers_queryset)
 
     # ============================================================
     # DROIT DE MODIFICATION / SUPPRESSION
@@ -2213,8 +2371,7 @@ def minier_list(request, projet_id):
         minier.peut_modifier = (
             personnel_connecte is not None
             and minier.enregistre_par_id is not None
-            and minier.enregistre_par_id
-            == personnel_connecte.pk
+            and minier.enregistre_par_id == personnel_connecte.pk
         )
 
     # ============================================================
@@ -2222,56 +2379,38 @@ def minier_list(request, projet_id):
     # ============================================================
 
     context = {
-
         # --------------------------------------------------------
         # PROJET
         # --------------------------------------------------------
-
         "projet": projet,
-
         # --------------------------------------------------------
         # LISTE
         # --------------------------------------------------------
-
         "miniers": miniers,
-
         # --------------------------------------------------------
         # STATISTIQUES
         # --------------------------------------------------------
-
         "total_miniers": total_miniers,
-
         "total_montant": total_montant,
-
         # --------------------------------------------------------
         # UTILISATEUR
         # --------------------------------------------------------
-
         "current_user": current_user,
-
         "user": current_user,
-
         "personnel": personnel_connecte,
-
         # --------------------------------------------------------
         # DROITS
         # --------------------------------------------------------
-
         "peut_gerer": peut_gerer,
-
         # --------------------------------------------------------
         # VALEURS DES FILTRES
         #
         # Elles permettent de conserver les valeurs
-        # dans les champs après validation.
+        # dans les champs aprÃ¨s validation.
         # --------------------------------------------------------
-
         "filtre_nom": filtre_nom,
-
         "filtre_materiau": filtre_materiau,
-
         "filtre_date_debut": filtre_date_debut,
-
         "filtre_date_fin": filtre_date_fin,
     }
 
@@ -2290,13 +2429,11 @@ def minier_list(request, projet_id):
 # MINIER PROJET - AJOUT
 # ============================================================
 
+
 @project_manager_required
 def minier_projet_create(request, projet_id):
 
-    projet = get_object_or_404(
-        Projet,
-        pk=projet_id
-    )
+    projet = get_object_or_404(Projet, pk=projet_id)
 
     if request.method == "POST":
 
@@ -2308,31 +2445,23 @@ def minier_projet_create(request, projet_id):
 
         if form.is_valid():
 
-            minier = form.save(
-                commit=False
-            )
+            minier = form.save(commit=False)
 
             minier.projet = projet
             minier.type_class = "MINIER"
             minier.type_contrat = "PRE_PAYER"
 
             # ------------------------------------------------
-            # Utilisateur connecté
+            # Utilisateur connectÃ©
             # ------------------------------------------------
 
-            user_id = request.session.get(
-                "user_id"
-            )
+            user_id = request.session.get("user_id")
 
             if user_id:
 
                 try:
 
-                    minier.enregistre_par = (
-                        Personnel.objects.get(
-                            pk=user_id
-                        )
-                    )
+                    minier.enregistre_par = Personnel.objects.get(pk=user_id)
 
                 except Personnel.DoesNotExist:
 
@@ -2340,10 +2469,7 @@ def minier_projet_create(request, projet_id):
 
             minier.save()
 
-            messages.success(
-                request,
-                "Le Minier a été enregistré avec succès."
-            )
+            messages.success(request, "Le Minier a Ã©tÃ© enregistrÃ© avec succÃ¨s.")
 
             return redirect(
                 "projet:minier_projet_list",
@@ -2352,9 +2478,7 @@ def minier_projet_create(request, projet_id):
 
     else:
 
-        form = MinierProjetForm(
-            projet=projet
-        )
+        form = MinierProjetForm(projet=projet)
 
     return render(
         request,
@@ -2363,23 +2487,19 @@ def minier_projet_create(request, projet_id):
             "form": form,
             "projet": projet,
             "titre": "Ajouter un Minier",
-        }
+        },
     )
-
-
 
 
 # ============================================================
 # MINIER PROJET - MODIFICATION
 # ============================================================
 
+
 @project_manager_required
 def minier_projet_update(request, projet_id, pk):
 
-    projet = get_object_or_404(
-        Projet,
-        pk=projet_id
-    )
+    projet = get_object_or_404(Projet, pk=projet_id)
 
     minier = get_object_or_404(
         PersonnelExecutionProjet,
@@ -2389,22 +2509,14 @@ def minier_projet_update(request, projet_id, pk):
     )
 
     # --------------------------------------------------------
-    # Seul le créateur peut modifier
+    # Seul le crÃ©ateur peut modifier
     # --------------------------------------------------------
 
-    user_id = request.session.get(
-        "user_id"
-    )
+    user_id = request.session.get("user_id")
 
-    if (
-        minier.enregistre_par_id
-        and str(minier.enregistre_par_id) != str(user_id)
-    ):
+    if minier.enregistre_par_id and str(minier.enregistre_par_id) != str(user_id):
 
-        messages.error(
-            request,
-            "Vous n'êtes pas autorisé à modifier ce Minier."
-        )
+        messages.error(request, "Vous n'Ãªtes pas autorisÃ© Ã  modifier ce Minier.")
 
         return redirect(
             "projet:minier_projet_list",
@@ -2422,9 +2534,7 @@ def minier_projet_update(request, projet_id, pk):
 
         if form.is_valid():
 
-            minier = form.save(
-                commit=False
-            )
+            minier = form.save(commit=False)
 
             minier.projet = projet
             minier.type_class = "MINIER"
@@ -2432,10 +2542,7 @@ def minier_projet_update(request, projet_id, pk):
 
             minier.save()
 
-            messages.success(
-                request,
-                "Le Minier a été modifié avec succès."
-            )
+            messages.success(request, "Le Minier a Ã©tÃ© modifiÃ© avec succÃ¨s.")
 
             return redirect(
                 "projet:minier_projet_list",
@@ -2457,12 +2564,14 @@ def minier_projet_update(request, projet_id, pk):
             "projet": projet,
             "minier": minier,
             "titre": "Modifier le Minier",
-        }
+        },
     )
+
 
 # ============================================================
 # RAPPORT PROJET - LISTE
 # ============================================================
+
 
 @project_access_required
 def rapport_projet_list(
@@ -2470,14 +2579,8 @@ def rapport_projet_list(
     projet_id,
 ):
 
-    rapports = (
-        RapportProjet.objects
-        .filter(
-            projet=request.projet
-        )
-        .select_related(
-            "auteur"
-        )
+    rapports = RapportProjet.objects.filter(projet=request.projet).select_related(
+        "auteur"
     )
 
     return render(
@@ -2495,21 +2598,16 @@ def rapport_projet_list(
 # SELECTION PROJET POUR RAPPORT
 # ============================================================
 
+
 @login_required_projet
 def rapport_projet_selection(request):
 
-    projets = (
-        Projet.objects
-        .all()
-        .order_by(
-            "-date_debut",
-            "-id",
-        )
+    projets = Projet.objects.all().order_by(
+        "-date_debut",
+        "-id",
     )
 
-    if not user_can_manage_projects(
-        request.current_user
-    ):
+    if not user_can_manage_projects(request.current_user):
 
         personnel = getattr(
             request.current_user,
@@ -2526,8 +2624,7 @@ def rapport_projet_selection(request):
             aujourd_hui = timezone.localdate()
 
             projets = (
-                Projet.objects
-                .filter(
+                Projet.objects.filter(
                     equipe__personnel=personnel,
                     equipe__actif=True,
                     equipe__date_debut__lte=aujourd_hui,
@@ -2555,6 +2652,7 @@ def rapport_projet_selection(request):
 # CREER RAPPORT PROJET
 # ============================================================
 
+
 @project_access_required
 def rapport_projet_create(
     request,
@@ -2572,10 +2670,7 @@ def rapport_projet_create(
 
         messages.error(
             request,
-            (
-                "Seul l'Ingénieur Responsable du Chantier "
-                "peut créer ce rapport."
-            ),
+            ("Seul l'IngÃ©nieur Responsable du Chantier " "peut crÃ©er ce rapport."),
         )
 
         return redirect(
@@ -2585,15 +2680,11 @@ def rapport_projet_create(
 
     if request.method == "POST":
 
-        form = RapportProjetForm(
-            request.POST
-        )
+        form = RapportProjetForm(request.POST)
 
         if form.is_valid():
 
-            rapport = form.save(
-                commit=False
-            )
+            rapport = form.save(commit=False)
 
             rapport.projet = projet
             rapport.auteur = user.personnel
@@ -2602,7 +2693,7 @@ def rapport_projet_create(
 
             messages.success(
                 request,
-                "Le rapport de projet a été enregistré.",
+                "Le rapport de projet a Ã©tÃ© enregistrÃ©.",
             )
 
             return redirect(
@@ -2630,6 +2721,7 @@ def rapport_projet_create(
 # MODIFIER RAPPORT PROJET
 # ============================================================
 
+
 @project_access_required
 def rapport_projet_update(
     request,
@@ -2654,9 +2746,7 @@ def rapport_projet_update(
 
         if form.is_valid():
 
-            rapport_modifie = form.save(
-                commit=False
-            )
+            rapport_modifie = form.save(commit=False)
 
             rapport_modifie.projet = projet
             rapport_modifie.auteur = rapport.auteur
@@ -2664,7 +2754,7 @@ def rapport_projet_update(
 
             messages.success(
                 request,
-                "Le rapport a été modifié.",
+                "Le rapport a Ã©tÃ© modifiÃ©.",
             )
 
             return redirect(
@@ -2695,21 +2785,16 @@ def rapport_projet_update(
 # RAPPORT TRAVAIL - LISTE
 # ============================================================
 
+
 @project_access_required
 def rapport_travail_list(
     request,
     projet_id,
 ):
 
-    rapports = (
-        RapportTravail.objects
-        .filter(
-            projet=request.projet
-        )
-        .select_related(
-            "point",
-            "auteur",
-        )
+    rapports = RapportTravail.objects.filter(projet=request.projet).select_related(
+        "point",
+        "auteur",
     )
 
     return render(
@@ -2726,6 +2811,7 @@ def rapport_travail_list(
 # ============================================================
 # RAPPORT TRAVAIL - CREER
 # ============================================================
+
 
 @project_access_required
 def rapport_travail_create(
@@ -2744,10 +2830,7 @@ def rapport_travail_create(
 
         messages.error(
             request,
-            (
-                "Seul le Chef de Chantier peut enregistrer "
-                "un rapport de travail."
-            ),
+            ("Seul le Chef de Chantier peut enregistrer " "un rapport de travail."),
         )
 
         return redirect(
@@ -2765,9 +2848,7 @@ def rapport_travail_create(
 
         if form.is_valid():
 
-            rapport = form.save(
-                commit=False
-            )
+            rapport = form.save(commit=False)
 
             rapport.projet = projet
             rapport.auteur = user.personnel
@@ -2776,7 +2857,7 @@ def rapport_travail_create(
 
             messages.success(
                 request,
-                "Le rapport de travail a été enregistré.",
+                "Le rapport de travail a Ã©tÃ© enregistrÃ©.",
             )
 
             return redirect(
@@ -2801,68 +2882,49 @@ def rapport_travail_create(
         },
     )
 
+
 # ============================================================
 # RAPPORT MATERIAU - CREER
 # ============================================================
 def rapport_materiau_create(request, projet_id):
     """
-    Ajout d'un rapport matériau pour un projet.
+    Ajout d'un rapport matÃ©riau pour un projet.
     """
 
     # ============================================================
     # PROJET
     # ============================================================
-    projet = get_object_or_404(
-        Projet,
-        pk=projet_id
-    )
+    projet = get_object_or_404(Projet, pk=projet_id)
     # ============================================================
-    # CONTRÔLE D'ACCÈS AU PROJET
+    # CONTRÃ”LE D'ACCÃˆS AU PROJET
     # ============================================================
-    if not user_has_project_access(
-        request.current_user,
-        projet
-    ):
-        messages.error(
-            request,
-            "Votre accès à ce projet n'est pas actif."
-        )
-        return redirect(
-            "projet:projet_list"
-        )
+    if not user_has_project_access(request.current_user, projet):
+        messages.error(request, "Votre accÃ¨s Ã  ce projet n'est pas actif.")
+        return redirect("projet:projet_list")
 
     # ============================================================
     # DROIT DE GESTION
     # ============================================================
-    if not user_can_manage_projects(
-        request.current_user
-    ):
+    if not user_can_manage_projects(request.current_user):
         messages.error(
-            request,
-            "Vous n'avez pas l'autorisation d'ajouter "
-            "un rapport matériau."
+            request, "Vous n'avez pas l'autorisation d'ajouter " "un rapport matÃ©riau."
         )
-        return redirect(
-            "projet:rapport_materiau_list",
-            projet_id=projet.id
-        )
+        return redirect("projet:rapport_materiau_list", projet_id=projet.id)
 
     # ============================================================
     # FORMULAIRE
     # ============================================================
     if request.method == "POST":
 
-        form = RapportMateriauProjetForm(
+        form = RapportMateriauForm(
             request.POST,
             request.FILES,
-            projet=projet
+            projet=projet,
         )
 
         if form.is_valid():
 
-            rapport = form.save(
-                commit=False
-            )
+            rapport = form.save(commit=False)
 
             # ----------------------------------------------------
             # PROJET
@@ -2870,7 +2932,7 @@ def rapport_materiau_create(request, projet_id):
             rapport.projet = projet
 
             # ----------------------------------------------------
-            # ENREGISTRÉ PAR
+            # ENREGISTRÃ‰ PAR
             # ----------------------------------------------------
             personnel_connecte = Personnel.objects.filter(
                 pk=request.current_user.pk
@@ -2884,20 +2946,14 @@ def rapport_materiau_create(request, projet_id):
             rapport.save()
 
             messages.success(
-                request,
-                "Le rapport matériau a été ajouté avec succès."
+                request, "Le rapport matÃ©riau a Ã©tÃ© ajoutÃ© avec succÃ¨s."
             )
 
-            return redirect(
-                "projet:rapport_materiau_list",
-                projet_id=projet.id
-            )
+            return redirect("projet:rapport_materiau_list", projet_id=projet.id)
 
     else:
 
-        form = RapportMateriauProjetForm(
-            projet=projet
-        )
+        form = RapportMateriauForm(projet=projet)
 
     # ============================================================
     # CONTEXTE
@@ -2905,7 +2961,7 @@ def rapport_materiau_create(request, projet_id):
     context = {
         "projet": projet,
         "form": form,
-        "titre": "Ajouter un rapport matériau",
+        "titre": "Ajouter un rapport matÃ©riau",
         "mode": "create",
         "user": request.current_user,
     }
@@ -2913,16 +2969,11 @@ def rapport_materiau_create(request, projet_id):
     # ============================================================
     # TEMPLATE
     # ============================================================
-    return render(
-        request,
-        "projet/rapport_materiau/form.html",
-        context
-    )
-
+    return render(request, "projet/rapport_materiau/form.html", context)
 
 
 # ============================================================
-# VÉHICULES / ENGIN AFFECTÉS AUX PROJETS
+# VÃ‰HICULES / ENGIN AFFECTÃ‰S AUX PROJETS
 # CRUD COMPLET
 # ============================================================
 
@@ -2931,18 +2982,31 @@ def rapport_materiau_create(request, projet_id):
 # LISTE - READ
 # ============================================================
 
+
 @login_required_projet
-def vehicule_projet_list(request,projet_id,):
+def vehicule_projet_list(
+    request,
+    projet_id,
+):
 
-    projet = get_object_or_404(Projet,pk=projet_id,)
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
 
     # --------------------------------------------------------
-    # VÉRIFICATION DE L'ACCÈS AU PROJET
+    # VÃ‰RIFICATION DE L'ACCÃˆS AU PROJET
     # --------------------------------------------------------
 
-    if not user_has_project_access(request.current_user,projet,):
+    if not user_has_project_access(
+        request.current_user,
+        projet,
+    ):
 
-        messages.error(request,"Votre accès à ce projet n'est pas actif.",)
+        messages.error(
+            request,
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+        )
 
         return redirect("projet:projet_list")
 
@@ -2951,8 +3015,7 @@ def vehicule_projet_list(request,projet_id,):
     # --------------------------------------------------------
 
     affectations = (
-        VehiculeProjet.objects
-        .filter(
+        VehiculeProjet.objects.filter(
             projet=projet,
         )
         .select_related(
@@ -2970,26 +3033,16 @@ def vehicule_projet_list(request,projet_id,):
     # --------------------------------------------------------
 
     total_km = sum(
-        (
-            affectation.kilometres_parcourus
-            for affectation in affectations
-        ),
+        (affectation.kilometres_parcourus for affectation in affectations),
         Decimal("0.00"),
     )
 
     total_carburant = sum(
-        (
-            affectation.carburant_estime
-            for affectation in affectations
-        ),
+        (affectation.carburant_estime for affectation in affectations),
         Decimal("0.00"),
     )
 
-    total_actifs = sum(
-        1
-        for affectation in affectations
-        if affectation.acces_actif
-    )
+    total_actifs = sum(1 for affectation in affectations if affectation.acces_actif)
 
     total_affectations = affectations.count()
 
@@ -3003,25 +3056,30 @@ def vehicule_projet_list(request,projet_id,):
         {
             "projet": projet,
             "affectations": affectations,
-
             "total_affectations": total_affectations,
             "total_km": total_km,
             "total_carburant": total_carburant,
             "total_actifs": total_actifs,
-
             "user": request.current_user,
         },
     )
 
 
 # ============================================================
-# CRÉER - CREATE
+# CRÃ‰ER - CREATE
 # ============================================================
 
-@project_manager_required
-def vehicule_projet_create(request,projet_id,):
 
-    projet = get_object_or_404(Projet,pk=projet_id,)
+@project_manager_required
+def vehicule_projet_create(
+    request,
+    projet_id,
+):
+
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
 
     # --------------------------------------------------------
     # POST
@@ -3029,7 +3087,10 @@ def vehicule_projet_create(request,projet_id,):
 
     if request.method == "POST":
 
-        form = VehiculeProjetForm(request.POST,projet=projet,)
+        form = VehiculeProjetForm(
+            request.POST,
+            projet=projet,
+        )
 
         if form.is_valid():
 
@@ -3050,10 +3111,10 @@ def vehicule_projet_create(request,projet_id,):
             messages.success(
                 request,
                 (
-                    f"Le véhicule / engin "
-                    f"« {affectation.vehicule} » "
-                    f"a été affecté au projet "
-                    f"« {projet.titre} »."
+                    f"Le vÃ©hicule / engin "
+                    f"Â« {affectation.vehicule} Â» "
+                    f"a Ã©tÃ© affectÃ© au projet "
+                    f"Â« {projet.titre} Â»."
                 ),
             )
 
@@ -3082,13 +3143,8 @@ def vehicule_projet_create(request,projet_id,):
         {
             "form": form,
             "projet": projet,
-
             "affectation": None,
-
-            "titre_page": (
-                "Affecter un véhicule / engin au projet"
-            ),
-
+            "titre_page": ("Affecter un vÃ©hicule / engin au projet"),
             "user": request.current_user,
         },
     )
@@ -3098,13 +3154,21 @@ def vehicule_projet_create(request,projet_id,):
 # MODIFIER - UPDATE
 # ============================================================
 
-@project_manager_required
-def vehicule_projet_update(request,projet_id,vehicule_projet_id,):
 
-    projet = get_object_or_404(Projet,pk=projet_id,)
+@project_manager_required
+def vehicule_projet_update(
+    request,
+    projet_id,
+    vehicule_projet_id,
+):
+
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
 
     # --------------------------------------------------------
-    # RÉCUPÉRATION DE L'AFFECTATION
+    # RÃ‰CUPÃ‰RATION DE L'AFFECTATION
     # --------------------------------------------------------
 
     affectation = get_object_or_404(
@@ -3153,9 +3217,9 @@ def vehicule_projet_update(request,projet_id,vehicule_projet_id,):
             messages.success(
                 request,
                 (
-                    f"L'affectation du véhicule "
-                    f"« {affectation_modifiee.vehicule} » "
-                    f"a été modifiée avec succès."
+                    f"L'affectation du vÃ©hicule "
+                    f"Â« {affectation_modifiee.vehicule} Â» "
+                    f"a Ã©tÃ© modifiÃ©e avec succÃ¨s."
                 ),
             )
 
@@ -3185,13 +3249,8 @@ def vehicule_projet_update(request,projet_id,vehicule_projet_id,):
         {
             "form": form,
             "projet": projet,
-
             "affectation": affectation,
-
-            "titre_page": (
-                "Modifier l'affectation du véhicule / engin"
-            ),
-
+            "titre_page": ("Modifier l'affectation du vÃ©hicule / engin"),
             "user": request.current_user,
         },
     )
@@ -3201,16 +3260,28 @@ def vehicule_projet_update(request,projet_id,vehicule_projet_id,):
 # SUPPRIMER - DELETE
 # ============================================================
 
+
 @project_manager_required
-def vehicule_projet_delete(request,projet_id,vehicule_projet_id,):
+def vehicule_projet_delete(
+    request,
+    projet_id,
+    vehicule_projet_id,
+):
 
-    projet = get_object_or_404(Projet,pk=projet_id,)
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
 
     # --------------------------------------------------------
-    # RÉCUPÉRATION DE L'AFFECTATION
+    # RÃ‰CUPÃ‰RATION DE L'AFFECTATION
     # --------------------------------------------------------
 
-    affectation = get_object_or_404(VehiculeProjet,pk=vehicule_projet_id,projet=projet,)
+    affectation = get_object_or_404(
+        VehiculeProjet,
+        pk=vehicule_projet_id,
+        projet=projet,
+    )
 
     # --------------------------------------------------------
     # SUPPRESSION UNIQUEMENT EN POST
@@ -3227,9 +3298,9 @@ def vehicule_projet_delete(request,projet_id,vehicule_projet_id,):
             messages.success(
                 request,
                 (
-                    f"L'affectation du véhicule / engin "
-                    f"« {vehicule} » "
-                    f"a été supprimée avec succès."
+                    f"L'affectation du vÃ©hicule / engin "
+                    f"Â« {vehicule} Â» "
+                    f"a Ã©tÃ© supprimÃ©e avec succÃ¨s."
                 ),
             )
 
@@ -3239,7 +3310,7 @@ def vehicule_projet_delete(request,projet_id,vehicule_projet_id,):
                 request,
                 (
                     "Impossible de supprimer cette affectation "
-                    "car elle est utilisée par d'autres données."
+                    "car elle est utilisÃ©e par d'autres donnÃ©es."
                 ),
             )
 
@@ -3254,7 +3325,7 @@ def vehicule_projet_delete(request,projet_id,vehicule_projet_id,):
 
     messages.warning(
         request,
-        "La suppression doit être confirmée par une requête POST.",
+        "La suppression doit Ãªtre confirmÃ©e par une requÃªte POST.",
     )
 
     return redirect(
@@ -3262,18 +3333,20 @@ def vehicule_projet_delete(request,projet_id,vehicule_projet_id,):
         projet_id=projet.pk,
     )
 
+
 # ============================================================
-# LISTE DES ENGINS AFFECTÉS AU PROJET
+# LISTE DES ENGINS AFFECTÃ‰S AU PROJET
 # ============================================================
+
 
 @login_required_projet
 def engin_list(request, projet_id):
     """
-    Affiche la liste des engins affectés à un projet.
+    Affiche la liste des engins affectÃ©s Ã  un projet.
     """
 
     # ============================================================
-    # UTILISATEUR CONNECTÉ
+    # UTILISATEUR CONNECTÃ‰
     # ============================================================
 
     current_user = request.current_user
@@ -3281,7 +3354,7 @@ def engin_list(request, projet_id):
     if not current_user:
         messages.error(
             request,
-            "Utilisateur connecté introuvable.",
+            "Utilisateur connectÃ© introuvable.",
         )
 
         return redirect("users:login")
@@ -3296,7 +3369,7 @@ def engin_list(request, projet_id):
     )
 
     # ============================================================
-    # VÉRIFICATION DE L'ACCÈS AU PROJET
+    # VÃ‰RIFICATION DE L'ACCÃˆS AU PROJET
     # ============================================================
 
     if not user_has_project_access(
@@ -3305,20 +3378,17 @@ def engin_list(request, projet_id):
     ):
         messages.error(
             request,
-            "Votre accès à ce projet n'est pas actif.",
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
 
-        return redirect(
-            "projet:projet_list"
-        )
+        return redirect("projet:projet_list")
 
     # ============================================================
-    # ÉQUIPE DU PROJET
+    # Ã‰QUIPE DU PROJET
     # ============================================================
 
     equipe = (
-        projet.equipe
-        .all()
+        projet.equipe.all()
         .select_related(
             "personnel",
             "personnel_execution",
@@ -3352,31 +3422,22 @@ def engin_list(request, projet_id):
             # PERSONNEL PRINCIPAL
             # ----------------------------------------------------
 
-            if (
-                membre.personnel_id
-                and membre.personnel_id == personnel_connecte_id
-            ):
+            if membre.personnel_id and membre.personnel_id == personnel_connecte_id:
                 if membre.acces_actif:
                     fonction_projet = membre.fonction
                     break
 
             # ----------------------------------------------------
-            # PERSONNEL D'EXÉCUTION
+            # PERSONNEL D'EXÃ‰CUTION
             # ----------------------------------------------------
 
-            if (
-                membre.personnel_execution_id
-                and membre.personnel_execution
-            ):
+            if membre.personnel_execution_id and membre.personnel_execution:
 
-                personnel_execution = (
-                    membre.personnel_execution
-                )
+                personnel_execution = membre.personnel_execution
 
                 if (
                     personnel_execution.personnel_id
-                    and personnel_execution.personnel_id
-                    == personnel_connecte_id
+                    and personnel_execution.personnel_id == personnel_connecte_id
                 ):
 
                     if membre.acces_actif:
@@ -3388,10 +3449,7 @@ def engin_list(request, projet_id):
     # ============================================================
 
     engins = (
-        EnginProjet.objects
-        .filter(
-            projet=projet
-        )
+        EnginProjet.objects.filter(projet=projet)
         .select_related(
             "conducteur",
             "projet",
@@ -3408,29 +3466,17 @@ def engin_list(request, projet_id):
 
     total_engins = engins.count()
 
-    engins_actifs = [
-        engin
-        for engin in engins
-        if engin.acces_actif
-    ]
+    engins_actifs = [engin for engin in engins if engin.acces_actif]
 
-    nombre_actifs = len(
-        engins_actifs
-    )
+    nombre_actifs = len(engins_actifs)
 
     total_heures = sum(
-        (
-            engin.heures_travail
-            for engin in engins
-        ),
+        (engin.heures_travail for engin in engins),
         Decimal("0.00"),
     )
 
     total_carburant = sum(
-        (
-            engin.carburant_estime
-            for engin in engins
-        ),
+        (engin.carburant_estime for engin in engins),
         Decimal("0.00"),
     )
 
@@ -3438,24 +3484,17 @@ def engin_list(request, projet_id):
     # PERMISSIONS
     # ============================================================
 
-    peut_gerer = user_can_manage_projects(
-        current_user
-    )
+    peut_gerer = user_can_manage_projects(current_user)
 
-    peut_rapport_engin = (
-        fonction_projet
-        in {
-            "CHAUFFEUR",
-            "CHEF_CHANTIER",
-            "INGENIEUR",
-        }
-        or current_user.role
-        in {
-            "UserEntreprise",
-            "Admin",
-            "Superviseur",
-        }
-    )
+    peut_rapport_engin = fonction_projet in {
+        "CHAUFFEUR",
+        "CHEF_CHANTIER",
+        "INGENIEUR",
+    } or current_user.role in {
+        "UserEntreprise",
+        "Admin",
+        "Superviseur",
+    }
 
     # ============================================================
     # CONTEXTE
@@ -3465,20 +3504,14 @@ def engin_list(request, projet_id):
         "projet": projet,
         "user": current_user,
         "current_user": current_user,
-
         "fonction_projet": fonction_projet,
-
         "engins": engins,
-
         "total_engins": total_engins,
         "nombre_actifs": nombre_actifs,
-
         "total_heures": total_heures,
         "total_carburant": total_carburant,
-
         "peut_gerer": peut_gerer,
         "peut_rapport_engin": peut_rapport_engin,
-
         "aujourd_hui": timezone.localdate(),
     }
 
@@ -3497,46 +3530,73 @@ def engin_list(request, projet_id):
 # AJOUT ENGIN
 # ============================================================
 
-@login_required_projet
-def engin_create(request,projet_id,):
-            
-        """
-        Ajout d'un EnginProjet au projet.
-        """
 
-        projet = get_object_or_404(
-            Projet,
-            pk=projet_id,
+@login_required_projet
+def engin_create(
+    request,
+    projet_id,
+):
+    """
+    Ajout d'un EnginProjet au projet.
+    """
+
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
+
+    # ============================================================
+    # ACCÃˆS
+    # ============================================================
+
+    if not user_has_project_access(
+        request.current_user,
+        projet,
+    ):
+        messages.error(
+            request,
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
 
-        # ============================================================
-        # ACCÈS
-        # ============================================================
+        return redirect("projet:projet_list")
 
-        if not user_has_project_access(
-            request.current_user,
-            projet,
-        ):
-            messages.error(
+    # ============================================================
+    # PERMISSION
+    # ============================================================
+
+    if not user_can_manage_projects(request.current_user):
+        messages.error(
+            request,
+            "Vous n'avez pas l'autorisation " "d'ajouter un engin.",
+        )
+
+        return redirect(
+            "projet:engin_list",
+            projet_id=projet.id,
+        )
+
+    # ============================================================
+    # FORMULAIRE
+    # ============================================================
+
+    if request.method == "POST":
+
+        form = EnginProjetForm(
+            request.POST,
+            projet=projet,
+        )
+
+        if form.is_valid():
+
+            engin = form.save(commit=False)
+
+            engin.projet = projet
+
+            engin.save()
+
+            messages.success(
                 request,
-                "Votre accès à ce projet n'est pas actif.",
-            )
-
-            return redirect(
-                "projet:projet_list"
-            )
-
-        # ============================================================
-        # PERMISSION
-        # ============================================================
-
-        if not user_can_manage_projects(
-            request.current_user
-        ):
-            messages.error(
-                request,
-                "Vous n'avez pas l'autorisation "
-                "d'ajouter un engin.",
+                (f"L'engin Â« {engin.engin} Â» " "a Ã©tÃ© ajoutÃ© au projet."),
             )
 
             return redirect(
@@ -3544,60 +3604,27 @@ def engin_create(request,projet_id,):
                 projet_id=projet.id,
             )
 
-        # ============================================================
-        # FORMULAIRE
-        # ============================================================
+    else:
 
-        if request.method == "POST":
-
-            form = EnginProjetForm(
-                request.POST,
-                projet=projet,
-            )
-
-            if form.is_valid():
-
-                engin = form.save(
-                    commit=False
-                )
-
-                engin.projet = projet
-
-                engin.save()
-
-                messages.success(
-                    request,
-                    (
-                        f"L'engin « {engin.engin} » "
-                        "a été ajouté au projet."
-                    ),
-                )
-
-                return redirect(
-                    "projet:engin_list",
-                    projet_id=projet.id,
-                )
-
-        else:
-
-            form = EnginProjetForm(
-                projet=projet,
-            )
-
-        context = {
-            "projet": projet,
-            "form": form,
-            "titre": "Ajouter un engin",
-            "mode": "create",
-            "user": request.current_user,
-            "object": None,
-        }
-
-        return render(
-            request,
-            "projet/engin/form.html",
-            context,
+        form = EnginProjetForm(
+            projet=projet,
         )
+
+    context = {
+        "projet": projet,
+        "form": form,
+        "titre": "Ajouter un engin",
+        "mode": "create",
+        "user": request.current_user,
+        "object": None,
+    }
+
+    return render(
+        request,
+        "projet/engin/form.html",
+        context,
+    )
+
 
 # ============================================================
 
@@ -3605,45 +3632,84 @@ def engin_create(request,projet_id,):
 
 # ============================================================
 
-@login_required_projet
-def engin_update(request,projet_id,pk,):
-        """
-        Modification d'un EnginProjet.
-        """
 
-        projet = get_object_or_404(
-            Projet,
-            pk=projet_id,
+@login_required_projet
+def engin_update(
+    request,
+    projet_id,
+    pk,
+):
+    """
+    Modification d'un EnginProjet.
+    """
+
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
+
+    # ============================================================
+    # ACCÃˆS
+    # ============================================================
+
+    if not user_has_project_access(
+        request.current_user,
+        projet,
+    ):
+        messages.error(
+            request,
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
 
-        # ============================================================
-        # ACCÈS
-        # ============================================================
+        return redirect("projet:projet_list")
 
-        if not user_has_project_access(
-            request.current_user,
-            projet,
-        ):
-            messages.error(
+    # ============================================================
+    # PERMISSION
+    # ============================================================
+
+    if not user_can_manage_projects(request.current_user):
+        messages.error(
+            request,
+            "Vous n'avez pas l'autorisation " "de modifier cet engin.",
+        )
+
+        return redirect(
+            "projet:engin_list",
+            projet_id=projet.id,
+        )
+
+    # ============================================================
+    # ENGIN
+    # ============================================================
+
+    engin = get_object_or_404(
+        EnginProjet.objects.select_related(
+            "conducteur",
+            "projet",
+        ),
+        pk=pk,
+        projet=projet,
+    )
+
+    # ============================================================
+    # FORMULAIRE
+    # ============================================================
+
+    if request.method == "POST":
+
+        form = EnginProjetForm(
+            request.POST,
+            instance=engin,
+            projet=projet,
+        )
+
+        if form.is_valid():
+
+            engin = form.save()
+
+            messages.success(
                 request,
-                "Votre accès à ce projet n'est pas actif.",
-            )
-
-            return redirect(
-                "projet:projet_list"
-            )
-
-        # ============================================================
-        # PERMISSION
-        # ============================================================
-
-        if not user_can_manage_projects(
-            request.current_user
-        ):
-            messages.error(
-                request,
-                "Vous n'avez pas l'autorisation "
-                "de modifier cet engin.",
+                (f"L'engin Â« {engin.engin} Â» " "a Ã©tÃ© modifiÃ©."),
             )
 
             return redirect(
@@ -3651,71 +3717,29 @@ def engin_update(request,projet_id,pk,):
                 projet_id=projet.id,
             )
 
-        # ============================================================
-        # ENGIN
-        # ============================================================
+    else:
 
-        engin = get_object_or_404(
-            EnginProjet.objects.select_related(
-                "conducteur",
-                "projet",
-            ),
-            pk=pk,
+        form = EnginProjetForm(
+            instance=engin,
             projet=projet,
         )
 
-        # ============================================================
-        # FORMULAIRE
-        # ============================================================
+    context = {
+        "projet": projet,
+        "engin": engin,
+        "object": engin,
+        "form": form,
+        "titre": "Modifier l'engin",
+        "mode": "update",
+        "user": request.current_user,
+    }
 
-        if request.method == "POST":
+    return render(
+        request,
+        "projet/engin/form.html",
+        context,
+    )
 
-            form = EnginProjetForm(
-                request.POST,
-                instance=engin,
-                projet=projet,
-            )
-
-            if form.is_valid():
-
-                engin = form.save()
-
-                messages.success(
-                    request,
-                    (
-                        f"L'engin « {engin.engin} » "
-                        "a été modifié."
-                    ),
-                )
-
-                return redirect(
-                    "projet:engin_list",
-                    projet_id=projet.id,
-                )
-
-        else:
-
-            form = EnginProjetForm(
-                instance=engin,
-                projet=projet,
-            )
-
-        context = {
-            "projet": projet,
-            "engin": engin,
-            "object": engin,
-            "form": form,
-            "titre": "Modifier l'engin",
-            "mode": "update",
-            "user": request.current_user,
-        }
-
-        return render(
-            request,
-            "projet/engin/form.html",
-            context,
-        )
-        
 
 # ============================================================
 
@@ -3723,96 +3747,96 @@ def engin_update(request,projet_id,pk,):
 
 # ============================================================
 
+
 @login_required_projet
-def engin_delete(request,projet_id,pk,):
-        """
-        Suppression d'un EnginProjet.
-        """
-        projet = get_object_or_404(Projet,pk=projet_id,)
+def engin_delete(
+    request,
+    projet_id,
+    pk,
+):
+    """
+    Suppression d'un EnginProjet.
+    """
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
 
-        # ============================================================
-        # ACCÈS
-        # ============================================================
+    # ============================================================
+    # ACCÃˆS
+    # ============================================================
 
-        if not user_has_project_access(
-            request.current_user,
-            projet,
-        ):
-            messages.error(
-                request,
-                "Votre accès à ce projet n'est pas actif.",
-            )
-
-            return redirect(
-                "projet:projet_list"
-            )
-
-        # ============================================================
-        # PERMISSION
-        # ============================================================
-
-        if not user_can_manage_projects(
-            request.current_user
-        ):
-            messages.error(
-                request,
-                "Vous n'avez pas l'autorisation "
-                "de supprimer cet engin.",
-            )
-
-            return redirect(
-                "projet:engin_list",
-                projet_id=projet.id,
-            )
-
-        # ============================================================
-        # ENGIN
-        # ============================================================
-
-        engin = get_object_or_404(
-            EnginProjet,
-            pk=pk,
-            projet=projet,
-        )
-
-        # ============================================================
-        # CONFIRMATION
-        # ============================================================
-
-        if request.method == "POST":
-
-            nom_engin = engin.engin
-
-            engin.delete()
-
-            messages.success(
-                request,
-                (
-                    f"L'engin « {nom_engin} » "
-                    "a été supprimé."
-                ),
-            )
-
-            return redirect(
-                "projet:engin_list",
-                projet_id=projet.id,
-            )
-
-        context = {
-            "projet": projet,
-            "engin": engin,
-            "user": request.current_user,
-        }
-
-        return render(
+    if not user_has_project_access(
+        request.current_user,
+        projet,
+    ):
+        messages.error(
             request,
-            "projet/engin_delete.html",
-            context,
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
+
+        return redirect("projet:projet_list")
+
+    # ============================================================
+    # PERMISSION
+    # ============================================================
+
+    if not user_can_manage_projects(request.current_user):
+        messages.error(
+            request,
+            "Vous n'avez pas l'autorisation " "de supprimer cet engin.",
+        )
+
+        return redirect(
+            "projet:engin_list",
+            projet_id=projet.id,
+        )
+
+    # ============================================================
+    # ENGIN
+    # ============================================================
+
+    engin = get_object_or_404(
+        EnginProjet,
+        pk=pk,
+        projet=projet,
+    )
+
+    # ============================================================
+    # CONFIRMATION
+    # ============================================================
+
+    if request.method == "POST":
+
+        nom_engin = engin.engin
+
+        engin.delete()
+
+        messages.success(
+            request,
+            (f"L'engin Â« {nom_engin} Â» " "a Ã©tÃ© supprimÃ©."),
+        )
+
+        return redirect(
+            "projet:engin_list",
+            projet_id=projet.id,
+        )
+
+    context = {
+        "projet": projet,
+        "engin": engin,
+        "user": request.current_user,
+    }
+
+    return render(
+        request,
+        "projet/engin_delete.html",
+        context,
+    )
 
 
 # ============================================================
-# MATÉRIAUX DU PROJET
+# MATÃ‰RIAUX DU PROJET
 # ============================================================
 def _peut_modifier_mouvement_materiau(
     request,
@@ -3820,16 +3844,16 @@ def _peut_modifier_mouvement_materiau(
     mouvement,
 ):
     """
-    Autorise la modification d'un mouvement de matériau
-    uniquement à son enregistreur initial.
+    Autorise la modification d'un mouvement de matÃ©riau
+    uniquement Ã  son enregistreur initial.
 
-    Vérifie également que le mouvement appartient au projet
-    demandé et que l'utilisateur est identifié.
+    VÃ©rifie Ã©galement que le mouvement appartient au projet
+    demandÃ© et que l'utilisateur est identifiÃ©.
     """
     if not request or not projet or not mouvement:
         return False
 
-    # Vérifier que le mouvement appartient au projet concerné.
+    # VÃ©rifier que le mouvement appartient au projet concernÃ©.
     projet_mouvement_id = getattr(
         mouvement,
         "projet_id",
@@ -3840,13 +3864,13 @@ def _peut_modifier_mouvement_materiau(
         if projet_mouvement_id != projet.pk:
             return False
 
-    # Récupérer l'utilisateur applicatif connecté.
+    # RÃ©cupÃ©rer l'utilisateur applicatif connectÃ©.
     current_user = get_current_user(request)
 
     if not current_user:
         return False
 
-    # L'enregistreur initial ne doit pas être remplacé.
+    # L'enregistreur initial ne doit pas Ãªtre remplacÃ©.
     enregistreur_id = getattr(
         mouvement,
         "enregistre_par_id",
@@ -3864,20 +3888,22 @@ def _peut_modifier_mouvement_materiau(
         and utilisateur_id is not None
         and enregistreur_id == utilisateur_id
     )
+
+
 # ============================================================
-# LISTE DES MATÉRIAUX DU PROJET
+# LISTE DES MATÃ‰RIAUX DU PROJET
 # ============================================================
 @login_required_projet
 def materiau_list(request, projet_id):
     # ========================================================
-    # UTILISATEUR CONNECTÉ
+    # UTILISATEUR CONNECTÃ‰
     # ========================================================
     current_user = get_current_user(request)
 
     if not current_user:
         messages.error(
             request,
-            "Utilisateur connecté introuvable.",
+            "Utilisateur connectÃ© introuvable.",
         )
         return redirect("users:login")
 
@@ -3892,17 +3918,15 @@ def materiau_list(request, projet_id):
     if not user_has_project_access(current_user, projet):
         messages.error(
             request,
-            "Votre accès à ce projet n'est pas actif.",
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
         return redirect("projet:projet_list")
 
     # ========================================================
-    # MATÉRIAUX DU PROJET — DÉPÔT 2
+    # MATÃ‰RIAUX DU PROJET â€” DÃ‰PÃ”T 2
     # ========================================================
     materiaux = list(
-        MateriauProjet.objects
-        .filter(projet=projet)
-        .order_by("materiau", "id")
+        MateriauProjet.objects.filter(projet=projet).order_by("materiau", "id")
     )
 
     ZERO = Decimal("0.00")
@@ -3912,75 +3936,59 @@ def materiau_list(request, projet_id):
     total_distribue = ZERO
 
     # ========================================================
-    # CALCUL DES QUANTITÉS PAR MATÉRIAU
+    # CALCUL DES QUANTITÃ‰S PAR MATÃ‰RIAU
     # ========================================================
     for materiau in materiaux:
 
         # ----------------------------------------------------
-        # 1. QUANTITÉ PRÉVUE
+        # 1. QUANTITÃ‰ PRÃ‰VUE
         # ----------------------------------------------------
-        quantite_prevue = (
-            materiau.quantite_prevue or ZERO
-        )
+        quantite_prevue = materiau.quantite_prevue or ZERO
 
         materiau.quantite_prevue_affichee = quantite_prevue
 
         total_quantite_prevue += quantite_prevue
 
         # ----------------------------------------------------
-        # 2. QUANTITÉ REÇUE AU MAGASIN DU CHANTIER
-        # DÉPÔT 2 : point=None signifie réception au dépôt.
+        # 2. QUANTITÃ‰ REÃ‡UE AU MAGASIN DU CHANTIER
+        # DÃ‰PÃ”T 2 : point=None signifie rÃ©ception au dÃ©pÃ´t.
         # ----------------------------------------------------
         quantite_recue_magasin = (
-            ReceptionMateriauProjet.objects
-            .filter(
+            ReceptionMateriauProjet.objects.filter(
                 materiau_projet=materiau,
                 point__isnull=True,
-            )
-            .aggregate(
-                total=Sum("quantite_recue")
-            )["total"]
+            ).aggregate(total=Sum("quantite_recue"))["total"]
             or ZERO
         )
 
         # ----------------------------------------------------
-        # 3. TOTAL DISTRIBUÉ AUX ÉQUIPES
+        # 3. TOTAL DISTRIBUÃ‰ AUX Ã‰QUIPES
         # ----------------------------------------------------
         quantite_distribuee = (
-            DistributionMateriauProjet.objects
-            .filter(
+            DistributionMateriauProjet.objects.filter(
                 materiau_projet=materiau,
-            )
-            .aggregate(
-                total=Sum("quantite")
-            )["total"]
+            ).aggregate(total=Sum("quantite"))["total"]
             or ZERO
         )
 
         # ----------------------------------------------------
         # 4. RETOURS AU MAGASIN
-        # Retours associés aux distributions du magasin.
+        # Retours associÃ©s aux distributions du magasin.
         # ----------------------------------------------------
         quantite_retournee_magasin = (
-            RetourMateriauProjet.objects
-            .filter(
+            RetourMateriauProjet.objects.filter(
                 distribution__materiau_projet=materiau,
                 reception_directe__isnull=True,
-            )
-            .aggregate(
-                total=Sum("quantite")
-            )["total"]
+            ).aggregate(total=Sum("quantite"))["total"]
             or ZERO
         )
 
         # ----------------------------------------------------
-        # 5. STOCK ACTUEL DU MAGASIN — DÉPÔT 2
-        # Stock = reçu - distribué + retourné
+        # 5. STOCK ACTUEL DU MAGASIN â€” DÃ‰PÃ”T 2
+        # Stock = reÃ§u - distribuÃ© + retournÃ©
         # ----------------------------------------------------
         stock_magasin = (
-            quantite_recue_magasin
-            - quantite_distribuee
-            + quantite_retournee_magasin
+            quantite_recue_magasin - quantite_distribuee + quantite_retournee_magasin
         )
 
         # ----------------------------------------------------
@@ -3989,7 +3997,7 @@ def materiau_list(request, projet_id):
         materiau.stock_magasin = stock_magasin
         materiau.total_distribue = quantite_distribuee
 
-        # Compatibilité avec les anciens templates.
+        # CompatibilitÃ© avec les anciens templates.
         materiau.stock_total = stock_magasin
         materiau.stock_entrepot = ZERO
 
@@ -4005,7 +4013,7 @@ def materiau_list(request, projet_id):
     )
 
     # ========================================================
-    # DROITS D'AJOUT DE MATÉRIAUX
+    # DROITS D'AJOUT DE MATÃ‰RIAUX
     # Admin, ChefMagasin, Magasin, UserEntreprise
     # ========================================================
     roles_ajout_materiau = {
@@ -4021,9 +4029,7 @@ def materiau_list(request, projet_id):
         "",
     )
 
-    peut_ajouter_materiau = (
-        role_utilisateur in roles_ajout_materiau
-    )
+    peut_ajouter_materiau = role_utilisateur in roles_ajout_materiau
 
     # ========================================================
     # CONTEXTE
@@ -4031,12 +4037,10 @@ def materiau_list(request, projet_id):
     context = {
         "projet": projet,
         "materiaux": materiaux,
-
         "total_materiaux": len(materiaux),
         "total_quantite_prevue": total_quantite_prevue,
         "total_stock_magasin": total_stock_magasin,
         "total_distribue": total_distribue,
-
         "user": current_user,
         "current_user": current_user,
         "personnel": getattr(
@@ -4044,7 +4048,6 @@ def materiau_list(request, projet_id):
             "personnel",
             None,
         ),
-
         "peut_gerer": peut_gerer,
         "peut_ajouter_materiau": peut_ajouter_materiau,
     }
@@ -4056,27 +4059,24 @@ def materiau_list(request, projet_id):
     )
 
 
-
 # ============================================================
-# AJOUTER UN MATÉRIAU AU PROJET
+# AJOUTER UN MATÃ‰RIAU AU PROJET
 # ============================================================
 @login_required_projet
 def materiau_create(request, projet_id):
     current_user = get_current_user(request)
 
     # ========================================================
-    # 1. VÉRIFICATION DE L'UTILISATEUR CONNECTÉ
+    # 1. VÃ‰RIFICATION DE L'UTILISATEUR CONNECTÃ‰
     # ========================================================
     if not current_user:
         messages.error(
-            request,
-            "Utilisateur connecté introuvable. "
-            "Veuillez vous reconnecter."
+            request, "Utilisateur connectÃ© introuvable. " "Veuillez vous reconnecter."
         )
         return redirect("users:login")
 
     # ========================================================
-    # 2. RÉCUPÉRATION DU PROJET
+    # 2. RÃ‰CUPÃ‰RATION DU PROJET
     # ========================================================
     projet = get_object_or_404(
         Projet,
@@ -4084,18 +4084,15 @@ def materiau_create(request, projet_id):
     )
 
     # ========================================================
-    # 3. VÉRIFICATION DE L'ACCÈS AU PROJET
+    # 3. VÃ‰RIFICATION DE L'ACCÃˆS AU PROJET
     # ========================================================
     if not user_has_project_access(current_user, projet):
-        messages.error(
-            request,
-            "Votre accès à ce projet n'est pas actif."
-        )
+        messages.error(request, "Votre accÃ¨s Ã  ce projet n'est pas actif.")
         return redirect("projet:projet_list")
 
     # ========================================================
-    # 4. VÉRIFICATION DES DROITS D'AJOUT
-    # Rôles autorisés :
+    # 4. VÃ‰RIFICATION DES DROITS D'AJOUT
+    # RÃ´les autorisÃ©s :
     # Admin, ChefMagasin, Magasin, UserEntreprise
     # ========================================================
     roles_autorises_ajout = {
@@ -4112,16 +4109,12 @@ def materiau_create(request, projet_id):
         projet,
     )
 
-    peut_ajouter = (
-        role_utilisateur in roles_autorises_ajout
-        or peut_gerer
-    )
+    peut_ajouter = role_utilisateur in roles_autorises_ajout or peut_gerer
 
     if not peut_ajouter:
         messages.error(
             request,
-            "Vous n'avez pas l'autorisation d'ajouter "
-            "un matériau à ce projet."
+            "Vous n'avez pas l'autorisation d'ajouter " "un matÃ©riau Ã  ce projet.",
         )
         return redirect(
             "projet:materiau_list",
@@ -4140,31 +4133,31 @@ def materiau_create(request, projet_id):
         if form.is_valid():
             materiau_projet = form.save(commit=False)
 
-            # Le projet est imposé côté serveur.
+            # Le projet est imposÃ© cÃ´tÃ© serveur.
             materiau_projet.projet = projet
 
             # ================================================
-            # ENREGISTREMENT DE L'UTILISATEUR CONNECTÉ
+            # ENREGISTREMENT DE L'UTILISATEUR CONNECTÃ‰
             # ================================================
             from users.models import AppUser
 
             if not isinstance(current_user, AppUser):
                 messages.error(
                     request,
-                    "L'utilisateur connecté n'est pas "
+                    "L'utilisateur connectÃ© n'est pas "
                     "un compte AppUser valide. "
-                    "Le matériau n'a pas été enregistré."
+                    "Le matÃ©riau n'a pas Ã©tÃ© enregistrÃ©.",
                 )
             else:
                 materiau_projet.enregistre_par = current_user
 
-                # Enregistrer le matériau.
+                # Enregistrer le matÃ©riau.
                 materiau_projet.save()
 
                 messages.success(
                     request,
-                    f"Le matériau « {materiau_projet.materiau} » "
-                    "a été ajouté au projet."
+                    f"Le matÃ©riau Â« {materiau_projet.materiau} Â» "
+                    "a Ã©tÃ© ajoutÃ© au projet.",
                 )
 
                 return redirect(
@@ -4172,10 +4165,7 @@ def materiau_create(request, projet_id):
                     projet_id=projet.id,
                 )
         else:
-            messages.error(
-                request,
-                "Veuillez corriger les erreurs du formulaire."
-            )
+            messages.error(request, "Veuillez corriger les erreurs du formulaire.")
 
     else:
         # Affichage initial du formulaire.
@@ -4189,7 +4179,7 @@ def materiau_create(request, projet_id):
     context = {
         "projet": projet,
         "form": form,
-        "titre": "Ajouter un matériau au projet",
+        "titre": "Ajouter un matÃ©riau au projet",
         "mode": "creation",
         "user": current_user,
         "current_user": current_user,
@@ -4213,22 +4203,30 @@ def materiau_create(request, projet_id):
 
 
 # ============================================================
-# MODIFIER UN MATÉRIAU
+# MODIFIER UN MATÃ‰RIAU
 # ============================================================
 def materiau_update(request, projet_id, pk):
 
-    projet = get_object_or_404(Projet,pk=projet_id,)
+    projet = get_object_or_404(
+        Projet,
+        pk=projet_id,
+    )
 
-    materiau = get_object_or_404(MateriauProjet,pk=pk,projet=projet,)
+    materiau = get_object_or_404(
+        MateriauProjet,
+        pk=pk,
+        projet=projet,
+    )
 
-    # Récupérer l'utilisateur de la session GALAXY.
+    # RÃ©cupÃ©rer l'utilisateur de la session GALAXY.
     utilisateur = getattr(request, "current_user", None)
 
     if utilisateur is None:
         from users.decorators import get_current_user
+
         utilisateur = get_current_user(request)
 
-    # Vérifier l'enregistreur initial.
+    # VÃ©rifier l'enregistreur initial.
     if (
         utilisateur is None
         or materiau.enregistre_par_id is None
@@ -4236,7 +4234,7 @@ def materiau_update(request, projet_id, pk):
     ):
         messages.error(
             request,
-            "Modification refusée : seul l'enregistreur initial peut modifier ce matériau.",
+            "Modification refusÃ©e : seul l'enregistreur initial peut modifier ce matÃ©riau.",
         )
         return redirect(
             "projet:materiau_list",
@@ -4255,16 +4253,14 @@ def materiau_update(request, projet_id, pk):
             objet_modifie = form.save(commit=False)
 
             objet_modifie.projet = projet
-            objet_modifie.enregistre_par_id = (
-                materiau.enregistre_par_id
-            )
+            objet_modifie.enregistre_par_id = materiau.enregistre_par_id
 
             objet_modifie.save()
             form.save_m2m()
 
             messages.success(
                 request,
-                "Matériau modifié avec succès.",
+                "MatÃ©riau modifiÃ© avec succÃ¨s.",
             )
 
             return redirect(
@@ -4287,7 +4283,7 @@ def materiau_update(request, projet_id, pk):
             "objet": materiau,
             "mode_modification": True,
             "mode": "update",
-            "titre_page": "Modifier un matériau",
+            "titre_page": "Modifier un matÃ©riau",
             "url_retour": redirect(
                 "projet:materiau_list",
                 projet_id=projet.pk,
@@ -4297,7 +4293,7 @@ def materiau_update(request, projet_id, pk):
 
 
 # ============================================================
-# SUPPRIMER UN MATÉRIAU
+# SUPPRIMER UN MATÃ‰RIAU
 # ============================================================
 
 
@@ -4307,7 +4303,7 @@ def materiau_delete(request, projet_id, pk):
     from django.shortcuts import get_object_or_404, redirect, render
 
     # ========================================================
-    # 1. UTILISATEUR CONNECTÉ
+    # 1. UTILISATEUR CONNECTÃ‰
     # ========================================================
 
     current_user = get_current_user(request)
@@ -4315,7 +4311,7 @@ def materiau_delete(request, projet_id, pk):
     if not current_user:
         messages.error(
             request,
-            "Utilisateur connecté introuvable.",
+            "Utilisateur connectÃ© introuvable.",
         )
         return redirect("users:login")
 
@@ -4329,18 +4325,18 @@ def materiau_delete(request, projet_id, pk):
     )
 
     # ========================================================
-    # 3. VÉRIFICATION DE L'ACCÈS AU PROJET
+    # 3. VÃ‰RIFICATION DE L'ACCÃˆS AU PROJET
     # ========================================================
 
     if not user_has_project_access(current_user, projet):
         messages.error(
             request,
-            "Votre accès à ce projet n'est pas actif.",
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
         return redirect("projet:projet_list")
 
     # ========================================================
-    # 4. RÉCUPÉRER LE MATÉRIAU DU PROJET
+    # 4. RÃ‰CUPÃ‰RER LE MATÃ‰RIAU DU PROJET
     # ========================================================
 
     materiau_projet = get_object_or_404(
@@ -4350,11 +4346,11 @@ def materiau_delete(request, projet_id, pk):
     )
 
     # ========================================================
-    # 5. IDENTIFIER L'ENREGISTREUR DU MATÉRIAU
+    # 5. IDENTIFIER L'ENREGISTREUR DU MATÃ‰RIAU
     # ========================================================
 
     # Plusieurs noms possibles sont pris en charge.
-    # Le premier champ existant dans le modèle est utilisé.
+    # Le premier champ existant dans le modÃ¨le est utilisÃ©.
     champs_enregistreur = (
         "enregistre_par",
         "enregistreur",
@@ -4366,10 +4362,7 @@ def materiau_delete(request, projet_id, pk):
         (
             nom
             for nom in champs_enregistreur
-            if any(
-                champ.name == nom
-                for champ in MateriauProjet._meta.fields
-            )
+            if any(champ.name == nom for champ in MateriauProjet._meta.fields)
         ),
         None,
     )
@@ -4386,29 +4379,24 @@ def materiau_delete(request, projet_id, pk):
                 None,
             )
 
-    # L'utilisateur est le créateur du matériau.
-    est_enregistreur = (
-        enregistreur_id is not None
-        and str(enregistreur_id) == str(current_user.pk)
+    # L'utilisateur est le crÃ©ateur du matÃ©riau.
+    est_enregistreur = enregistreur_id is not None and str(enregistreur_id) == str(
+        current_user.pk
     )
 
     # ========================================================
     # 6. AUTORISATION
     # ========================================================
 
-    # Les utilisateurs déjà autorisés par la règle métier
+    # Les utilisateurs dÃ©jÃ  autorisÃ©s par la rÃ¨gle mÃ©tier
     # conservent leurs droits.
-    # Le créateur peut également supprimer son propre matériau.
-    peut_gerer = (
-        user_can_manage_materiaux(current_user, projet)
-        or est_enregistreur
-    )
+    # Le crÃ©ateur peut Ã©galement supprimer son propre matÃ©riau.
+    peut_gerer = user_can_manage_materiaux(current_user, projet) or est_enregistreur
 
     if not peut_gerer:
         messages.error(
             request,
-            "Vous n'avez pas l'autorisation de supprimer "
-            "ce matériau de ce projet.",
+            "Vous n'avez pas l'autorisation de supprimer " "ce matÃ©riau de ce projet.",
         )
         return redirect(
             "projet:materiau_list",
@@ -4426,8 +4414,7 @@ def materiau_delete(request, projet_id, pk):
 
         messages.success(
             request,
-            f"Le matériau « {nom_materiau} » "
-            "a été supprimé du projet.",
+            f"Le matÃ©riau Â« {nom_materiau} Â» " "a Ã©tÃ© supprimÃ© du projet.",
         )
 
         return redirect(
@@ -4454,6 +4441,7 @@ def materiau_delete(request, projet_id, pk):
         context,
     )
 
+
 # ============================================================
 # CRUD MINIER PROJET
 # ============================================================
@@ -4465,7 +4453,7 @@ def minier_list(
     projet_id,
 ):
     """
-    Liste les miniers affectés au projet.
+    Liste les miniers affectÃ©s au projet.
     """
 
     projet = get_object_or_404(
@@ -4474,7 +4462,7 @@ def minier_list(
     )
 
     # --------------------------------------------------------
-    # CONTRÔLE D'ACCÈS AU PROJET
+    # CONTRÃ”LE D'ACCÃˆS AU PROJET
     # --------------------------------------------------------
 
     if not user_has_project_access(
@@ -4483,20 +4471,17 @@ def minier_list(
     ):
         messages.error(
             request,
-            "Votre accès à ce projet n'est pas actif.",
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
 
-        return redirect(
-            "projet:projet_list"
-        )
+        return redirect("projet:projet_list")
 
     # --------------------------------------------------------
     # MINERS
     # --------------------------------------------------------
 
     miniers = (
-        PersonnelExecutionProjet.objects
-        .filter(
+        PersonnelExecutionProjet.objects.filter(
             projet=projet,
             type_class="MINIER",
         )
@@ -4519,46 +4504,28 @@ def minier_list(
 
     aujourd_hui = timezone.localdate()
 
-    nombre_actifs = sum(
-        1
-        for minier in miniers
-        if minier.acces_actif
-    )
+    nombre_actifs = sum(1 for minier in miniers if minier.acces_actif)
 
     # --------------------------------------------------------
     # TOTAL PRODUCTION
     #
     # Pour un MINIER :
-    # quantité × prix unitaire
+    # quantitÃ© Ã— prix unitaire
     # --------------------------------------------------------
 
     total_production = sum(
-        (
-            minier.montant_total_production
-            for minier in miniers
-        ),
+        (minier.montant_total_production for minier in miniers),
         Decimal("0.00"),
     )
 
     context = {
         "projet": projet,
-
         "miniers": miniers,
-
         "total_miniers": total_miniers,
-
         "nombre_actifs": nombre_actifs,
-
         "total_production": total_production,
-
-        "peut_gerer": (
-            user_can_manage_projects(
-                request.current_user
-            )
-        ),
-
+        "peut_gerer": (user_can_manage_projects(request.current_user)),
         "user": request.current_user,
-
         "aujourd_hui": aujourd_hui,
     }
 
@@ -4568,21 +4535,21 @@ def minier_list(
         context,
     )
 
- 
+
 @login_required_projet
 def minier_create(request, projet_id):
     """
     Ajouter un minier au projet.
 
-    Autorisés à ajouter :
+    AutorisÃ©s Ã  ajouter :
         - Admin
         - Superviseur
         - UserEntreprise
-        - Ingénieur du projet
+        - IngÃ©nieur du projet
         - Chef de chantier du projet
-        - Chef d'équipe du projet
+        - Chef d'Ã©quipe du projet
 
-    L'utilisateur connecté devient automatiquement
+    L'utilisateur connectÃ© devient automatiquement
     l'enregistreur du minier.
     """
 
@@ -4598,7 +4565,7 @@ def minier_create(request, projet_id):
     )
 
     # ============================================================
-    # VÉRIFICATION ACCÈS AU PROJET
+    # VÃ‰RIFICATION ACCÃˆS AU PROJET
     # ============================================================
 
     if not user_has_project_access(
@@ -4607,14 +4574,12 @@ def minier_create(request, projet_id):
     ):
         messages.error(
             request,
-            "Votre accès à ce projet n'est pas actif.",
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
-        return redirect(
-            "projet:projet_list"
-        )
+        return redirect("projet:projet_list")
 
     # ============================================================
-    # VÉRIFICATION DROIT D'AJOUT D'UN MINIER
+    # VÃ‰RIFICATION DROIT D'AJOUT D'UN MINIER
     # ============================================================
 
     if not user_can_manage_materiaux(
@@ -4623,8 +4588,7 @@ def minier_create(request, projet_id):
     ):
         messages.error(
             request,
-            "Vous n'avez pas l'autorisation d'ajouter "
-            "un minier sur ce projet.",
+            "Vous n'avez pas l'autorisation d'ajouter " "un minier sur ce projet.",
         )
         return redirect(
             "projet:minier_list",
@@ -4632,7 +4596,7 @@ def minier_create(request, projet_id):
         )
 
     # ============================================================
-    # PERSONNEL CONNECTÉ
+    # PERSONNEL CONNECTÃ‰
     # ============================================================
 
     personnel_connecte = getattr(
@@ -4644,8 +4608,7 @@ def minier_create(request, projet_id):
     if not personnel_connecte:
         messages.error(
             request,
-            "Aucun personnel n'est associé à votre "
-            "compte utilisateur.",
+            "Aucun personnel n'est associÃ© Ã  votre " "compte utilisateur.",
         )
         return redirect(
             "projet:minier_list",
@@ -4671,37 +4634,35 @@ def minier_create(request, projet_id):
         if form.is_valid():
 
             # ----------------------------------------------------
-            # CRÉATION DE L'INSTANCE
+            # CRÃ‰ATION DE L'INSTANCE
             # ----------------------------------------------------
 
-            minier = form.save(
-                commit=False
-            )
+            minier = form.save(commit=False)
 
             # ----------------------------------------------------
-            # DONNÉES AUTOMATIQUES DU MINIER
+            # DONNÃ‰ES AUTOMATIQUES DU MINIER
             # ----------------------------------------------------
 
             # Projet
             minier.projet = projet
 
             # Un minier est une personne externe.
-            # Il ne doit donc pas être lié à Personnel.
+            # Il ne doit donc pas Ãªtre liÃ© Ã  Personnel.
             minier.personnel = None
 
-            # Type d'exécution
+            # Type d'exÃ©cution
             minier.type_class = "MINIER"
 
-            # Un minier n'est pas directement affecté
-            # à un PointProjet.
+            # Un minier n'est pas directement affectÃ©
+            # Ã  un PointProjet.
             minier.point_projet = None
 
-            # Pour un minier, le montant est calculé
-            # automatiquement à partir de :
+            # Pour un minier, le montant est calculÃ©
+            # automatiquement Ã  partir de :
             #
-            # quantité × prix unitaire
+            # quantitÃ© Ã— prix unitaire
             #
-            # Le champ montant reste donc à zéro.
+            # Le champ montant reste donc Ã  zÃ©ro.
             minier.montant = Decimal("0.00")
 
             # ----------------------------------------------------
@@ -4725,12 +4686,11 @@ def minier_create(request, projet_id):
 
             messages.success(
                 request,
-                f"Le minier « {minier.nom} » a été ajouté "
-                f"avec succès.",
+                f"Le minier Â« {minier.nom} Â» a Ã©tÃ© ajoutÃ© " f"avec succÃ¨s.",
             )
 
             # ----------------------------------------------------
-            # RETOUR À LA LISTE
+            # RETOUR Ã€ LA LISTE
             # ----------------------------------------------------
 
             return redirect(
@@ -4758,11 +4718,9 @@ def minier_create(request, projet_id):
         "current_user": current_user,
         "user": current_user,
         "personnel": personnel_connecte,
-
-        # L'utilisateur a déjà été autorisé
+        # L'utilisateur a dÃ©jÃ  Ã©tÃ© autorisÃ©
         # par user_can_manage_materiaux().
         "peut_gerer": True,
-
         "mode": "create",
         "titre": "Ajouter un minier",
     }
@@ -4777,10 +4735,11 @@ def minier_create(request, projet_id):
         context,
     )
 
- 
+
 # ============================================================
 # MODIFICATION MINIER
 # ============================================================
+
 
 @login_required_projet
 def minier_update(
@@ -4791,17 +4750,17 @@ def minier_update(
     """
     Modifie un minier existant.
 
-    RÈGLE IMPORTANTE :
-    Seul l'utilisateur qui a enregistré le minier
+    RÃˆGLE IMPORTANTE :
+    Seul l'utilisateur qui a enregistrÃ© le minier
     peut le modifier.
 
-    Les autres utilisateurs, même s'ils sont :
+    Les autres utilisateurs, mÃªme s'ils sont :
         - Admin
         - Superviseur
         - UserEntreprise
-        - Ingénieur
+        - IngÃ©nieur
         - Chef de chantier
-        - Chef d'équipe
+        - Chef d'Ã©quipe
 
     ne peuvent pas modifier cet enregistrement.
     """
@@ -4818,7 +4777,7 @@ def minier_update(
     )
 
     # --------------------------------------------------------
-    # ACCÈS AU PROJET
+    # ACCÃˆS AU PROJET
     # --------------------------------------------------------
 
     if not user_has_project_access(
@@ -4827,15 +4786,13 @@ def minier_update(
     ):
         messages.error(
             request,
-            "Votre accès à ce projet n'est pas actif.",
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
 
-        return redirect(
-            "projet:projet_list"
-        )
+        return redirect("projet:projet_list")
 
     # --------------------------------------------------------
-    # PERSONNEL CONNECTÉ
+    # PERSONNEL CONNECTÃ‰
     # --------------------------------------------------------
 
     personnel_connecte = getattr(
@@ -4847,7 +4804,7 @@ def minier_update(
     if not personnel_connecte:
         messages.error(
             request,
-            "Aucun personnel n'est associé à votre compte.",
+            "Aucun personnel n'est associÃ© Ã  votre compte.",
         )
 
         return redirect(
@@ -4860,8 +4817,7 @@ def minier_update(
     # --------------------------------------------------------
 
     minier = get_object_or_404(
-        PersonnelExecutionProjet.objects
-        .select_related(
+        PersonnelExecutionProjet.objects.select_related(
             "projet",
             "materiau_projet",
             "enregistre_par",
@@ -4872,10 +4828,10 @@ def minier_update(
     )
 
     # --------------------------------------------------------
-    # CONTRÔLE DE L'ENREGISTREUR
+    # CONTRÃ”LE DE L'ENREGISTREUR
     # --------------------------------------------------------
     #
-    # Seul celui qui a créé l'enregistrement peut modifier.
+    # Seul celui qui a crÃ©Ã© l'enregistrement peut modifier.
     # --------------------------------------------------------
 
     if (
@@ -4885,7 +4841,7 @@ def minier_update(
         messages.error(
             request,
             "Vous ne pouvez pas modifier ce minier. "
-            "Seul l'utilisateur qui l'a enregistré "
+            "Seul l'utilisateur qui l'a enregistrÃ© "
             "peut le modifier.",
         )
 
@@ -4909,12 +4865,10 @@ def minier_update(
 
         if form.is_valid():
 
-            minier = form.save(
-                commit=False
-            )
+            minier = form.save(commit=False)
 
             # ------------------------------------------------
-            # VALEURS IMPOSÉES
+            # VALEURS IMPOSÃ‰ES
             # ------------------------------------------------
 
             minier.projet = projet
@@ -4945,10 +4899,7 @@ def minier_update(
 
             messages.success(
                 request,
-                (
-                    f"Le minier « {minier.nom} » "
-                    "a été modifié avec succès."
-                ),
+                (f"Le minier Â« {minier.nom} Â» " "a Ã©tÃ© modifiÃ© avec succÃ¨s."),
             )
 
             return redirect(
@@ -4994,9 +4945,9 @@ def minier_delete(request, projet_id, pk):
     """
     Supprime un minier du projet.
 
-    Seul le personnel ayant enregistré le minier peut le supprimer.
-    Les affectations inutilisées sont supprimées avec le minier.
-    Les données historiques protégées sont conservées.
+    Seul le personnel ayant enregistrÃ© le minier peut le supprimer.
+    Les affectations inutilisÃ©es sont supprimÃ©es avec le minier.
+    Les donnÃ©es historiques protÃ©gÃ©es sont conservÃ©es.
     """
 
     current_user = request.current_user
@@ -5007,18 +4958,18 @@ def minier_delete(request, projet_id, pk):
     )
 
     # --------------------------------------------------------
-    # CONTRÔLE D'ACCÈS AU PROJET
+    # CONTRÃ”LE D'ACCÃˆS AU PROJET
     # --------------------------------------------------------
 
     if not user_has_project_access(current_user, projet):
         messages.error(
             request,
-            "Votre accès à ce projet n'est pas actif.",
+            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
         )
         return redirect("projet:projet_list")
 
     # --------------------------------------------------------
-    # PERSONNEL CONNECTÉ
+    # PERSONNEL CONNECTÃ‰
     # --------------------------------------------------------
 
     personnel_connecte = getattr(
@@ -5030,7 +4981,7 @@ def minier_delete(request, projet_id, pk):
     if not personnel_connecte:
         messages.error(
             request,
-            "Aucun personnel n'est associé à votre compte.",
+            "Aucun personnel n'est associÃ© Ã  votre compte.",
         )
         return redirect(
             "projet:minier_list",
@@ -5053,7 +5004,7 @@ def minier_delete(request, projet_id, pk):
     )
 
     # --------------------------------------------------------
-    # VÉRIFICATION DU CRÉATEUR
+    # VÃ‰RIFICATION DU CRÃ‰ATEUR
     # --------------------------------------------------------
 
     if (
@@ -5063,7 +5014,7 @@ def minier_delete(request, projet_id, pk):
         messages.error(
             request,
             "Vous ne pouvez pas supprimer ce minier. "
-            "Seul le personnel qui l'a enregistré "
+            "Seul le personnel qui l'a enregistrÃ© "
             "peut le supprimer.",
         )
         return redirect(
@@ -5097,46 +5048,38 @@ def minier_delete(request, projet_id, pk):
     try:
         with transaction.atomic():
 
-            # Recharger le minier pour éviter de travailler
-            # sur une instance devenue obsolète.
-            minier = (
-                PersonnelExecutionProjet.objects
-                .select_for_update()
-                .get(
-                    pk=pk,
-                    projet=projet,
-                    type_class="MINIER",
-                )
+            # Recharger le minier pour Ã©viter de travailler
+            # sur une instance devenue obsolÃ¨te.
+            minier = PersonnelExecutionProjet.objects.select_for_update().get(
+                pk=pk,
+                projet=projet,
+                type_class="MINIER",
             )
 
-            # Vérifier à nouveau le créateur.
+            # VÃ©rifier Ã  nouveau le crÃ©ateur.
             if (
                 not minier.enregistre_par_id
-                or minier.enregistre_par_id
-                != personnel_connecte.pk
+                or minier.enregistre_par_id != personnel_connecte.pk
             ):
                 messages.error(
                     request,
-                    "Vous n'êtes plus autorisé à supprimer "
-                    "ce minier.",
+                    "Vous n'Ãªtes plus autorisÃ© Ã  supprimer " "ce minier.",
                 )
                 return redirect(
                     "projet:minier_list",
                     projet_id=projet.pk,
                 )
 
-            # Récupérer les affectations du minier.
+            # RÃ©cupÃ©rer les affectations du minier.
             affectations = list(
-                EquipeProjet.objects
-                .select_for_update()
-                .filter(
+                EquipeProjet.objects.select_for_update().filter(
                     personnel_execution=minier,
                     projet=projet,
                 )
             )
 
             # Ne jamais supprimer une affectation
-            # qui possède des avances.
+            # qui possÃ¨de des avances.
             for affectation in affectations:
                 if (
                     affectation.avances_equipe.exists()
@@ -5145,42 +5088,42 @@ def minier_delete(request, projet_id, pk):
                     messages.error(
                         request,
                         "Impossible de supprimer ce minier : "
-                        "une affectation possède des avances. "
-                        "Les données existantes ont été conservées.",
+                        "une affectation possÃ¨de des avances. "
+                        "Les donnÃ©es existantes ont Ã©tÃ© conservÃ©es.",
                     )
                     return redirect(
                         "projet:minier_list",
                         projet_id=projet.pk,
                     )
 
-            # Supprimer les affectations inutilisées.
+            # Supprimer les affectations inutilisÃ©es.
             for affectation in affectations:
                 affectation.delete()
 
             # Supprimer ensuite le minier.
-            # Si une autre relation protégée existe,
+            # Si une autre relation protÃ©gÃ©e existe,
             # ProtectedError annulera toute la transaction.
             minier.delete()
 
         messages.success(
             request,
-            f"Le minier « {nom_minier} » et ses "
-            "affectations inutilisées ont été supprimés.",
+            f"Le minier Â« {nom_minier} Â» et ses "
+            "affectations inutilisÃ©es ont Ã©tÃ© supprimÃ©s.",
         )
 
     except ProtectedError:
         messages.error(
             request,
             "Impossible de supprimer ce minier : "
-            "d'autres données du projet utilisent encore "
+            "d'autres donnÃ©es du projet utilisent encore "
             "ce minier. Aucune suppression partielle "
-            "n'a été conservée.",
+            "n'a Ã©tÃ© conservÃ©e.",
         )
 
     except PersonnelExecutionProjet.DoesNotExist:
         messages.error(
             request,
-            "Ce minier n'existe plus ou a déjà été supprimé.",
+            "Ce minier n'existe plus ou a dÃ©jÃ  Ã©tÃ© supprimÃ©.",
         )
 
     return redirect(
@@ -5188,9 +5131,11 @@ def minier_delete(request, projet_id, pk):
         projet_id=projet.pk,
     )
 
+
 # ============================================================
 # RAPPORT VEHICULE - LISTE
 # ============================================================
+
 
 @project_access_required
 def rapport_vehicule_list(
@@ -5198,15 +5143,9 @@ def rapport_vehicule_list(
     projet_id,
 ):
 
-    rapports = (
-        RapportVehicule.objects
-        .filter(
-            projet=request.projet
-        )
-        .select_related(
-            "vehicule",
-            "chauffeur",
-        )
+    rapports = RapportVehicule.objects.filter(projet=request.projet).select_related(
+        "vehicule",
+        "chauffeur",
     )
 
     return render(
@@ -5223,6 +5162,7 @@ def rapport_vehicule_list(
 # ============================================================
 # RAPPORT VEHICULE - CREER
 # ============================================================
+
 
 @project_access_required
 def rapport_vehicule_create(
@@ -5242,33 +5182,27 @@ def rapport_vehicule_create(
 
         if form.is_valid():
 
-            vehicule = form.cleaned_data.get(
-                "vehicule"
-            )
+            vehicule = form.cleaned_data.get("vehicule")
 
-            chauffeur = form.cleaned_data.get(
-                "chauffeur"
-            )
+            chauffeur = form.cleaned_data.get("chauffeur")
 
             if vehicule is None:
 
                 form.add_error(
                     "vehicule",
-                    "Veuillez sélectionner un véhicule.",
+                    "Veuillez sÃ©lectionner un vÃ©hicule.",
                 )
 
             if chauffeur is None:
 
                 form.add_error(
                     "chauffeur",
-                    "Veuillez sélectionner un chauffeur.",
+                    "Veuillez sÃ©lectionner un chauffeur.",
                 )
 
             if not form.errors:
 
-                rapport = form.save(
-                    commit=False
-                )
+                rapport = form.save(commit=False)
 
                 rapport.projet_id = projet.pk
                 rapport.vehicule_id = vehicule.pk
@@ -5278,7 +5212,7 @@ def rapport_vehicule_create(
 
                 messages.success(
                     request,
-                    "Rapport véhicule enregistré avec succès.",
+                    "Rapport vÃ©hicule enregistrÃ© avec succÃ¨s.",
                 )
 
                 return redirect(
@@ -5307,30 +5241,23 @@ def rapport_vehicule_create(
 # SELECTION PROJET POUR EQUIPE
 # ============================================================
 
+
 @login_required_projet
 def equipe_projet_selection(request):
 
-    projets = (
-        Projet.objects
-        .all()
-        .order_by(
-            "-date_debut",
-            "-id",
-        )
+    projets = Projet.objects.all().order_by(
+        "-date_debut",
+        "-id",
     )
 
-    if not user_can_manage_projects(
-        request.current_user
-    ):
+    if not user_can_manage_projects(request.current_user):
 
         messages.error(
             request,
-            "Vous n'avez pas l'autorisation de gérer les équipes.",
+            "Vous n'avez pas l'autorisation de gÃ©rer les Ã©quipes.",
         )
 
-        return redirect(
-            "projet:projet_list"
-        )
+        return redirect("projet:projet_list")
 
     return render(
         request,
@@ -5346,6 +5273,7 @@ def equipe_projet_selection(request):
 # ACTIVITES TRANSPORT DU PROJET
 # ============================================================
 
+
 @project_manager_required
 def activite_transport_projet_list(
     request,
@@ -5358,10 +5286,7 @@ def activite_transport_projet_list(
     )
 
     activites = (
-        ActiviteTransportProjet.objects
-        .filter(
-            projet=projet
-        )
+        ActiviteTransportProjet.objects.filter(projet=projet)
         .select_related(
             "projet",
             "chauffeur",
@@ -5374,18 +5299,12 @@ def activite_transport_projet_list(
     )
 
     total_km = sum(
-        (
-            activite.kilometres_parcourus
-            for activite in activites
-        ),
+        (activite.kilometres_parcourus for activite in activites),
         Decimal("0.00"),
     )
 
     total_carburant = sum(
-        (
-            activite.carburant_estime
-            for activite in activites
-        ),
+        (activite.carburant_estime for activite in activites),
         Decimal("0.00"),
     )
 
@@ -5409,6 +5328,7 @@ def activite_transport_projet_list(
 # ACTIVITE TRANSPORT - CREER
 # ============================================================
 
+
 @project_manager_required
 def activite_transport_projet_create(
     request,
@@ -5429,23 +5349,16 @@ def activite_transport_projet_create(
 
         if form.is_valid():
 
-            activite = form.save(
-                commit=False
-            )
+            activite = form.save(commit=False)
 
             activite.projet = projet
-            activite.enregistre_par = (
-                request.current_user
-            )
+            activite.enregistre_par = request.current_user
 
             activite.save()
 
             messages.success(
                 request,
-                (
-                    "L'activité de transport "
-                    "a été enregistrée avec succès."
-                ),
+                ("L'activitÃ© de transport " "a Ã©tÃ© enregistrÃ©e avec succÃ¨s."),
             )
 
             return redirect(
@@ -5465,7 +5378,7 @@ def activite_transport_projet_create(
         {
             "form": form,
             "projet": projet,
-            "titre_page": "Nouvelle activité de transport",
+            "titre_page": "Nouvelle activitÃ© de transport",
             "mode": "create",
             "user": request.current_user,
         },
@@ -5475,6 +5388,7 @@ def activite_transport_projet_create(
 # ============================================================
 # ACTIVITE TRANSPORT - MODIFIER
 # ============================================================
+
 
 @project_manager_required
 def activite_transport_projet_update(
@@ -5504,10 +5418,7 @@ def activite_transport_projet_update(
 
         messages.error(
             request,
-            (
-                "Vous n'êtes pas autorisé à modifier "
-                "cette activité."
-            ),
+            ("Vous n'Ãªtes pas autorisÃ© Ã  modifier " "cette activitÃ©."),
         )
 
         return redirect(
@@ -5525,23 +5436,16 @@ def activite_transport_projet_update(
 
         if form.is_valid():
 
-            activite_modifiee = form.save(
-                commit=False
-            )
+            activite_modifiee = form.save(commit=False)
 
             activite_modifiee.projet = projet
-            activite_modifiee.enregistre_par_id = (
-                activite.enregistre_par_id
-            )
+            activite_modifiee.enregistre_par_id = activite.enregistre_par_id
 
             activite_modifiee.save()
 
             messages.success(
                 request,
-                (
-                    "L'activité de transport "
-                    "a été modifiée avec succès."
-                ),
+                ("L'activitÃ© de transport " "a Ã©tÃ© modifiÃ©e avec succÃ¨s."),
             )
 
             return redirect(
@@ -5563,9 +5467,7 @@ def activite_transport_projet_update(
             "form": form,
             "projet": projet,
             "activite": activite,
-            "titre_page": (
-                "Modifier l'activité de transport"
-            ),
+            "titre_page": ("Modifier l'activitÃ© de transport"),
             "mode": "update",
             "user": request.current_user,
         },
@@ -5576,8 +5478,13 @@ def activite_transport_projet_update(
 # ACTIVITE TRANSPORT - SUPPRIMER
 # ============================================================
 
+
 @project_manager_required
-def activite_transport_projet_delete(request,projet_id,activite_id,):
+def activite_transport_projet_delete(
+    request,
+    projet_id,
+    activite_id,
+):
 
     projet = get_object_or_404(
         Projet,
@@ -5596,10 +5503,7 @@ def activite_transport_projet_delete(request,projet_id,activite_id,):
 
         messages.error(
             request,
-            (
-                "Vous n'êtes pas autorisé à supprimer "
-                "cette activité."
-            ),
+            ("Vous n'Ãªtes pas autorisÃ© Ã  supprimer " "cette activitÃ©."),
         )
 
         return redirect(
@@ -5615,10 +5519,7 @@ def activite_transport_projet_delete(request,projet_id,activite_id,):
 
             messages.success(
                 request,
-                (
-                    "L'activité de transport "
-                    "a été supprimée avec succès."
-                ),
+                ("L'activitÃ© de transport " "a Ã©tÃ© supprimÃ©e avec succÃ¨s."),
             )
 
         except ProtectedError:
@@ -5626,8 +5527,8 @@ def activite_transport_projet_delete(request,projet_id,activite_id,):
             messages.error(
                 request,
                 (
-                    "Impossible de supprimer cette activité "
-                    "car elle est utilisée par d'autres données."
+                    "Impossible de supprimer cette activitÃ© "
+                    "car elle est utilisÃ©e par d'autres donnÃ©es."
                 ),
             )
 
@@ -5647,21 +5548,18 @@ def activite_transport_projet_delete(request,projet_id,activite_id,):
     )
 
 
+# ============================================================
+# OUTILS - MOUVEMENT VÃ‰HICULE / ENGIN
+# ============================================================
 
-# ============================================================
-# OUTILS - MOUVEMENT VÉHICULE / ENGIN
-# ============================================================
 
 def _mouvement_est_createur(mouvement, user):
-    """Vérifie si l'utilisateur connecté est le créateur."""
-    return (
-        user is not None
-        and mouvement.enregistre_par_id == getattr(user, "pk", None)
-    )
+    """VÃ©rifie si l'utilisateur connectÃ© est le crÃ©ateur."""
+    return user is not None and mouvement.enregistre_par_id == getattr(user, "pk", None)
 
 
 def _mouvement_peut_gerer(mouvement, user):
-    """Créateur ou administrateur."""
+    """CrÃ©ateur ou administrateur."""
     if _mouvement_est_createur(mouvement, user):
         return True
 
@@ -5672,6 +5570,7 @@ def _mouvement_peut_gerer(mouvement, user):
 # ============================================================
 # MOUVEMENTS - LISTE ET BILAN DU PROJET
 # ============================================================
+
 
 @project_access_required
 def mouvement_vehicule_projet_list(request, projet_id):
@@ -5688,8 +5587,7 @@ def mouvement_vehicule_projet_list(request, projet_id):
 
     mouvements_qs = (
         MouvementVehiculeProjet.objects.filter(
-            Q(vehicule_projet__projet=projet)
-            | Q(engin_projet__projet=projet)
+            Q(vehicule_projet__projet=projet) | Q(engin_projet__projet=projet)
         )
         .select_related(
             "vehicule_projet",
@@ -5737,8 +5635,7 @@ def mouvement_vehicule_projet_list(request, projet_id):
             )
         else:
             mouvements_qs = mouvements_qs.filter(
-                Q(vehicule_projet_id=materiel_id)
-                | Q(engin_projet_id=materiel_id)
+                Q(vehicule_projet_id=materiel_id) | Q(engin_projet_id=materiel_id)
             )
     else:
         materiel_filtre = ""
@@ -5746,7 +5643,7 @@ def mouvement_vehicule_projet_list(request, projet_id):
     mouvements = list(mouvements_qs)
 
     # --------------------------------------------------------
-    # STATISTIQUES DES MOUVEMENTS AFFICHÉS
+    # STATISTIQUES DES MOUVEMENTS AFFICHÃ‰S
     # --------------------------------------------------------
 
     total_km = sum(
@@ -5768,18 +5665,12 @@ def mouvement_vehicule_projet_list(request, projet_id):
     )
 
     total_carburant = sum(
-        (
-            mouvement.carburant_litre
-            for mouvement in mouvements
-        ),
+        (mouvement.carburant_litre for mouvement in mouvements),
         Decimal("0.00"),
     )
 
     total_duree_minutes = sum(
-        (
-            mouvement.duree_minutes
-            for mouvement in mouvements
-        ),
+        (mouvement.duree_minutes for mouvement in mouvements),
         0,
     )
 
@@ -5793,8 +5684,7 @@ def mouvement_vehicule_projet_list(request, projet_id):
     # --------------------------------------------------------
 
     mouvements_gerables = {
-        mouvement.pk: _mouvement_peut_gerer(mouvement, user)
-        for mouvement in mouvements
+        mouvement.pk: _mouvement_peut_gerer(mouvement, user) for mouvement in mouvements
     }
 
     context = {
@@ -5820,9 +5710,11 @@ def mouvement_vehicule_projet_list(request, projet_id):
         context,
     )
 
+
 # ============================================================
-# MOUVEMENTS - DÉTAIL
+# MOUVEMENTS - DÃ‰TAIL
 # ============================================================
+
 
 @project_access_required
 def mouvement_vehicule_projet_detail(
@@ -5844,7 +5736,7 @@ def mouvement_vehicule_projet_detail(
         ).filter(pk=mouvement_id),
     )
 
-    # Vérifier que le mouvement appartient au projet.
+    # VÃ©rifier que le mouvement appartient au projet.
     appartient_au_projet = (
         mouvement.vehicule_projet is not None
         and mouvement.vehicule_projet.projet_id == projet.pk
@@ -5854,9 +5746,7 @@ def mouvement_vehicule_projet_detail(
     )
 
     if not appartient_au_projet:
-        raise PermissionDenied(
-            "Ce mouvement n'appartient pas à ce projet."
-        )
+        raise PermissionDenied("Ce mouvement n'appartient pas Ã  ce projet.")
 
     return render(
         request,
@@ -5874,8 +5764,9 @@ def mouvement_vehicule_projet_detail(
 
 
 # ============================================================
-# MOUVEMENTS - CRÉER
+# MOUVEMENTS - CRÃ‰ER
 # ============================================================
+
 
 @project_access_required
 def mouvement_vehicule_projet_create(request, projet_id):
@@ -5891,7 +5782,7 @@ def mouvement_vehicule_projet_create(request, projet_id):
         if form.is_valid():
             mouvement = form.save(commit=False)
 
-            # Un mouvement doit concerner un véhicule OU un engin
+            # Un mouvement doit concerner un vÃ©hicule OU un engin
             # appartenant au projet courant.
             vehicule = mouvement.vehicule_projet
             engin = mouvement.engin_projet
@@ -5899,23 +5790,19 @@ def mouvement_vehicule_projet_create(request, projet_id):
             if bool(vehicule) == bool(engin):
                 form.add_error(
                     None,
-                    "Sélectionnez un seul véhicule ou un seul engin.",
+                    "SÃ©lectionnez un seul vÃ©hicule ou un seul engin.",
                 )
             elif vehicule and vehicule.projet_id != projet.pk:
-                raise PermissionDenied(
-                    "Ce véhicule n'appartient pas à ce projet."
-                )
+                raise PermissionDenied("Ce vÃ©hicule n'appartient pas Ã  ce projet.")
             elif engin and engin.projet_id != projet.pk:
-                raise PermissionDenied(
-                    "Cet engin n'appartient pas à ce projet."
-                )
+                raise PermissionDenied("Cet engin n'appartient pas Ã  ce projet.")
             else:
                 mouvement.enregistre_par = user
                 mouvement.save()
 
                 messages.success(
                     request,
-                    "Le rapport d'activité a été enregistré avec succès.",
+                    "Le rapport d'activitÃ© a Ã©tÃ© enregistrÃ© avec succÃ¨s.",
                 )
 
                 return redirect(
@@ -5932,7 +5819,7 @@ def mouvement_vehicule_projet_create(request, projet_id):
             "form": form,
             "projet": projet,
             "mouvement": None,
-            "titre_page": "Nouveau rapport d'activité",
+            "titre_page": "Nouveau rapport d'activitÃ©",
             "user": user,
         },
     )
@@ -5941,6 +5828,7 @@ def mouvement_vehicule_projet_create(request, projet_id):
 # ============================================================
 # MOUVEMENTS - MODIFIER
 # ============================================================
+
 
 @project_access_required
 def mouvement_vehicule_projet_update(
@@ -5968,9 +5856,7 @@ def mouvement_vehicule_projet_update(
     )
 
     if not appartient_au_projet:
-        raise PermissionDenied(
-            "Ce mouvement n'appartient pas à ce projet."
-        )
+        raise PermissionDenied("Ce mouvement n'appartient pas Ã  ce projet.")
 
     if not _mouvement_peut_gerer(mouvement, user):
         messages.error(
@@ -5998,26 +5884,20 @@ def mouvement_vehicule_projet_update(
             if bool(vehicule) == bool(engin):
                 form.add_error(
                     None,
-                    "Sélectionnez un seul véhicule ou un seul engin.",
+                    "SÃ©lectionnez un seul vÃ©hicule ou un seul engin.",
                 )
             elif vehicule and vehicule.projet_id != projet.pk:
-                raise PermissionDenied(
-                    "Ce véhicule n'appartient pas à ce projet."
-                )
+                raise PermissionDenied("Ce vÃ©hicule n'appartient pas Ã  ce projet.")
             elif engin and engin.projet_id != projet.pk:
-                raise PermissionDenied(
-                    "Cet engin n'appartient pas à ce projet."
-                )
+                raise PermissionDenied("Cet engin n'appartient pas Ã  ce projet.")
             else:
-                # Conserver le créateur initial.
-                mouvement_modifie.enregistre_par = (
-                    mouvement.enregistre_par
-                )
+                # Conserver le crÃ©ateur initial.
+                mouvement_modifie.enregistre_par = mouvement.enregistre_par
                 mouvement_modifie.save()
 
                 messages.success(
                     request,
-                    "Le rapport d'activité a été modifié avec succès.",
+                    "Le rapport d'activitÃ© a Ã©tÃ© modifiÃ© avec succÃ¨s.",
                 )
 
                 return redirect(
@@ -6037,7 +5917,7 @@ def mouvement_vehicule_projet_update(
             "form": form,
             "projet": projet,
             "mouvement": mouvement,
-            "titre_page": "Modifier le rapport d'activité",
+            "titre_page": "Modifier le rapport d'activitÃ©",
             "user": user,
         },
     )
@@ -6046,6 +5926,7 @@ def mouvement_vehicule_projet_update(
 # ============================================================
 # MOUVEMENTS - SUPPRIMER
 # ============================================================
+
 
 @project_access_required
 def mouvement_vehicule_projet_delete(
@@ -6073,9 +5954,7 @@ def mouvement_vehicule_projet_delete(
     )
 
     if not appartient_au_projet:
-        raise PermissionDenied(
-            "Ce mouvement n'appartient pas à ce projet."
-        )
+        raise PermissionDenied("Ce mouvement n'appartient pas Ã  ce projet.")
 
     if not _mouvement_peut_gerer(mouvement, user):
         messages.error(
@@ -6091,13 +5970,13 @@ def mouvement_vehicule_projet_delete(
         mouvement.delete()
         messages.success(
             request,
-            "Le rapport d'activité a été supprimé avec succès.",
+            "Le rapport d'activitÃ© a Ã©tÃ© supprimÃ© avec succÃ¨s.",
         )
     except Exception:
         messages.error(
             request,
             "Impossible de supprimer ce mouvement. "
-            "Vérifiez s'il est utilisé par d'autres données.",
+            "VÃ©rifiez s'il est utilisÃ© par d'autres donnÃ©es.",
         )
 
     return redirect(
@@ -6105,43 +5984,44 @@ def mouvement_vehicule_projet_delete(
         projet_id=projet.pk,
     )
 
+
 # ================================================
 # AVANCE
 # ================================================
 def _avances_du_projet(projet):
     """
-    Retourne uniquement les avances rattachées à ce projet
-    via leur équipe d'exécution ou leur équipe de miniers.
+    Retourne uniquement les avances rattachÃ©es Ã  ce projet
+    via leur Ã©quipe d'exÃ©cution ou leur Ã©quipe de miniers.
     """
-    return AvanceEquipeProjet.objects.filter(
-        Q(equipe_execution__projet=projet)
-        | Q(miniers_execution__projet=projet)
-    ).select_related(
-        "equipe_execution",
-        "miniers_execution",
-        "enregistre_par",
-    ).distinct()
+    return (
+        AvanceEquipeProjet.objects.filter(
+            Q(equipe_execution__projet=projet) | Q(miniers_execution__projet=projet)
+        )
+        .select_related(
+            "equipe_execution",
+            "miniers_execution",
+            "enregistre_par",
+        )
+        .distinct()
+    )
 
 
 def _peut_gerer_avance(request, avance):
     """
     L'auteur peut modifier ou supprimer son avance.
-    Admin et Superviseur disposent également de ce droit.
+    Admin et Superviseur disposent Ã©galement de ce droit.
     """
     role = request.session.get("role")
     user_id = request.session.get("user_id")
 
-    return (
-        role in ("Admin", "Superviseur")
-        or (
-            user_id is not None
-            and avance.enregistre_par_id == user_id
-        )
+    return role in ("Admin", "Superviseur") or (
+        user_id is not None and avance.enregistre_par_id == user_id
     )
 
 
 def calculer_situation_avance_equipe(avance):
     from decimal import Decimal
+
     from django.db.models import Sum
 
     ZERO = Decimal("0.00")
@@ -6196,10 +6076,7 @@ def calculer_situation_avance_equipe(avance):
         )
 
     total_avances = (
-        avances_beneficiaire.aggregate(
-            total=Sum("montant")
-        )["total"]
-        or ZERO
+        avances_beneficiaire.aggregate(total=Sum("montant"))["total"] or ZERO
     )
 
     return {
@@ -6208,6 +6085,7 @@ def calculer_situation_avance_equipe(avance):
         "total_avances": total_avances,
         "reste_a_payer": total_contrat - total_avances,
     }
+
 
 @project_access_required
 def avance_equipe_projet_list(request, projet_id):
@@ -6245,25 +6123,17 @@ def avance_equipe_projet_list(request, projet_id):
 
     if filtre_date_debut:
         try:
-            date_debut = datetime.strptime(
-                filtre_date_debut, "%Y-%m-%d"
-            ).date()
+            date_debut = datetime.strptime(filtre_date_debut, "%Y-%m-%d").date()
 
-            avances = avances.filter(
-                date_avance__date__gte=date_debut
-            )
+            avances = avances.filter(date_avance__date__gte=date_debut)
         except ValueError:
             filtre_date_debut = ""
 
     if filtre_date_fin:
         try:
-            date_fin = datetime.strptime(
-                filtre_date_fin, "%Y-%m-%d"
-            ).date()
+            date_fin = datetime.strptime(filtre_date_fin, "%Y-%m-%d").date()
 
-            avances = avances.filter(
-                date_avance__date__lte=date_fin
-            )
+            avances = avances.filter(date_avance__date__lte=date_fin)
         except ValueError:
             filtre_date_fin = ""
 
@@ -6297,20 +6167,18 @@ def avance_equipe_projet_list(request, projet_id):
             if execution.type_class == "MINIER":
                 avance.beneficiaire_type = "Minier"
             elif execution.type_class == "CHEF_EQUIPE":
-                avance.beneficiaire_type = "Chef d'équipe"
+                avance.beneficiaire_type = "Chef d'Ã©quipe"
             else:
-                avance.beneficiaire_type = (
-                    execution.get_type_class_display()
-                )
+                avance.beneficiaire_type = execution.get_type_class_display()
         elif equipe and equipe.personnel_id:
             avance.beneficiaire_nom = str(equipe.personnel)
             avance.beneficiaire_type = equipe.get_fonction_display()
         else:
-            avance.beneficiaire_nom = "Bénéficiaire non défini"
+            avance.beneficiaire_nom = "BÃ©nÃ©ficiaire non dÃ©fini"
             avance.beneficiaire_type = ""
 
     # --------------------------------------------------------
-    # TOTAL DE LA PAGE : AVANCES AFFICHÉES UNIQUEMENT
+    # TOTAL DE LA PAGE : AVANCES AFFICHÃ‰ES UNIQUEMENT
     # --------------------------------------------------------
     total_montant = sum(
         (avance.montant or Decimal("0.00") for avance in avances_liste),
@@ -6334,11 +6202,12 @@ def avance_equipe_projet_list(request, projet_id):
         },
     )
 
+
 @project_access_required
 def avance_equipe_projet_create(request, projet_id):
     projet = get_object_or_404(Projet, pk=projet_id)
 
-    # Actualiser automatiquement les bénéficiaires disponibles.
+    # Actualiser automatiquement les bÃ©nÃ©ficiaires disponibles.
     synchroniser_affectations_equipe(projet)
 
     if request.method == "POST":
@@ -6356,7 +6225,7 @@ def avance_equipe_projet_create(request, projet_id):
 
             messages.success(
                 request,
-                "L'avance d'équipe a été enregistrée avec succès.",
+                "L'avance d'Ã©quipe a Ã©tÃ© enregistrÃ©e avec succÃ¨s.",
             )
 
             return redirect(
@@ -6372,14 +6241,16 @@ def avance_equipe_projet_create(request, projet_id):
         {
             "projet": projet,
             "form": form,
-            "titre": "Nouvelle avance d'équipe",
+            "titre": "Nouvelle avance d'Ã©quipe",
             "bouton": "Enregistrer",
         },
     )
 
+
 # ============================================================
-# AVANCE ÉQUIPE PROJET - MODIFICATION
+# AVANCE Ã‰QUIPE PROJET - MODIFICATION
 # ============================================================
+
 
 @project_access_required
 def avance_equipe_projet_update(request, projet_id, avance_id):
@@ -6396,7 +6267,7 @@ def avance_equipe_projet_update(request, projet_id, avance_id):
     if not _peut_gerer_avance(request, avance):
         messages.error(
             request,
-            "Vous n'êtes pas autorisé à modifier cette avance.",
+            "Vous n'Ãªtes pas autorisÃ© Ã  modifier cette avance.",
         )
         return redirect(
             "projet:avance_equipe_projet_list",
@@ -6415,10 +6286,10 @@ def avance_equipe_projet_update(request, projet_id, avance_id):
 
             messages.success(
                 request,
-                "L'avance d'équipe a été modifiée avec succès.",
+                "L'avance d'Ã©quipe a Ã©tÃ© modifiÃ©e avec succÃ¨s.",
             )
 
-            # Retour à la liste : aucune page de détail
+            # Retour Ã  la liste : aucune page de dÃ©tail
             return redirect(
                 "projet:avance_equipe_projet_list",
                 projet_id=projet.pk,
@@ -6436,15 +6307,16 @@ def avance_equipe_projet_update(request, projet_id, avance_id):
             "projet": projet,
             "avance": avance,
             "form": form,
-            "titre": "Modifier l'avance d'équipe",
+            "titre": "Modifier l'avance d'Ã©quipe",
             "bouton": "Enregistrer les modifications",
         },
     )
 
 
 # ============================================================
-# AVANCE ÉQUIPE PROJET - SUPPRESSION
+# AVANCE Ã‰QUIPE PROJET - SUPPRESSION
 # ============================================================
+
 
 @project_access_required
 def avance_equipe_projet_delete(request, projet_id, avance_id):
@@ -6458,7 +6330,7 @@ def avance_equipe_projet_delete(request, projet_id, avance_id):
     if not _peut_gerer_avance(request, avance):
         messages.error(
             request,
-            "Vous n'êtes pas autorisé à supprimer cette avance.",
+            "Vous n'Ãªtes pas autorisÃ© Ã  supprimer cette avance.",
         )
         return redirect(
             "projet:avance_equipe_projet_list",
@@ -6470,7 +6342,7 @@ def avance_equipe_projet_delete(request, projet_id, avance_id):
 
         messages.success(
             request,
-            "L'avance d'équipe a été supprimée avec succès.",
+            "L'avance d'Ã©quipe a Ã©tÃ© supprimÃ©e avec succÃ¨s.",
         )
 
         return redirect(
@@ -6489,7 +6361,7 @@ def avance_equipe_projet_delete(request, projet_id, avance_id):
 
 
 # ======================================================
-# MATÉRIAUX — TABLEAU DE BORD DU PROJET
+# MATÃ‰RIAUX â€” TABLEAU DE BORD DU PROJET
 # ======================================================
 @project_access_required
 def dashboard_materiaux(request, projet_id):
@@ -6502,18 +6374,15 @@ def dashboard_materiaux(request, projet_id):
     ZERO = Decimal("0.00")
 
     # ==========================================================
-    # 1. MATÉRIAUX ET MOUVEMENTS DU PROJET
+    # 1. MATÃ‰RIAUX ET MOUVEMENTS DU PROJET
     # ==========================================================
 
     materiaux = list(
-        MateriauProjet.objects
-        .filter(projet=projet)
-        .order_by("materiau", "id")
+        MateriauProjet.objects.filter(projet=projet).order_by("materiau", "id")
     )
 
     mouvements = (
-        MouvementMateriauProjet.objects
-        .filter(materiau_projet__projet=projet)
+        MouvementMateriauProjet.objects.filter(materiau_projet__projet=projet)
         .select_related(
             "materiau_projet",
             "point_depart",
@@ -6526,15 +6395,15 @@ def dashboard_materiaux(request, projet_id):
     mouvements_par_materiau = {}
 
     for mouvement in mouvements:
-        mouvements_par_materiau.setdefault(
-            mouvement.materiau_projet_id, []
-        ).append(mouvement)
+        mouvements_par_materiau.setdefault(mouvement.materiau_projet_id, []).append(
+            mouvement
+        )
 
     materiaux_stats = []
     stocks_par_point_dict = {}
 
     # ==========================================================
-    # 2. TOTAUX GÉNÉRAUX
+    # 2. TOTAUX GÃ‰NÃ‰RAUX
     # ==========================================================
 
     total_prevu = ZERO
@@ -6552,33 +6421,22 @@ def dashboard_materiaux(request, projet_id):
     total_valeur_stock = ZERO
 
     # ==========================================================
-    # 3. CALCUL PAR MATÉRIAU
+    # 3. CALCUL PAR MATÃ‰RIAU
     # ==========================================================
 
     for materiau in materiaux:
-        mouvements_materiau = mouvements_par_materiau.get(
-            materiau.pk, []
-        )
+        mouvements_materiau = mouvements_par_materiau.get(materiau.pk, [])
 
         quantite_prevue = materiau.quantite_prevue or ZERO
 
-        entrees = [
-            m for m in mouvements_materiau
-            if m.type_mouvement == "ENTREE"
-        ]
+        entrees = [m for m in mouvements_materiau if m.type_mouvement == "ENTREE"]
 
-        sorties = [
-            m for m in mouvements_materiau
-            if m.type_mouvement == "SORTIE"
-        ]
+        sorties = [m for m in mouvements_materiau if m.type_mouvement == "SORTIE"]
 
-        retours = [
-            m for m in mouvements_materiau
-            if m.type_mouvement == "RETOUR"
-        ]
+        retours = [m for m in mouvements_materiau if m.type_mouvement == "RETOUR"]
 
         # ------------------------------------------------------
-        # ENTRÉES ET PRIX MOYEN PONDÉRÉ
+        # ENTRÃ‰ES ET PRIX MOYEN PONDÃ‰RÃ‰
         # ------------------------------------------------------
 
         quantite_recue = sum(
@@ -6587,19 +6445,11 @@ def dashboard_materiaux(request, projet_id):
         )
 
         montant_entrees = sum(
-            (
-                (m.quantite or ZERO)
-                * (m.prix_unitaire or ZERO)
-                for m in entrees
-            ),
+            ((m.quantite or ZERO) * (m.prix_unitaire or ZERO) for m in entrees),
             ZERO,
         )
 
-        prix_moyen = (
-            montant_entrees / quantite_recue
-            if quantite_recue > ZERO
-            else ZERO
-        )
+        prix_moyen = montant_entrees / quantite_recue if quantite_recue > ZERO else ZERO
 
         # ------------------------------------------------------
         # SORTIES ET RETOURS
@@ -6615,7 +6465,7 @@ def dashboard_materiaux(request, projet_id):
             ZERO,
         )
 
-        # Toutes les sorties comptent dans le montant utilisé.
+        # Toutes les sorties comptent dans le montant utilisÃ©.
         quantite_utilisee = quantite_sortie
 
         montant_sorties = quantite_sortie * prix_moyen
@@ -6630,14 +6480,10 @@ def dashboard_materiaux(request, projet_id):
 
         for mouvement in mouvements_materiau:
             if mouvement.point_depart_id:
-                points_concernes[mouvement.point_depart_id] = (
-                    mouvement.point_depart
-                )
+                points_concernes[mouvement.point_depart_id] = mouvement.point_depart
 
             if mouvement.point_arrivee_id:
-                points_concernes[mouvement.point_arrivee_id] = (
-                    mouvement.point_arrivee
-                )
+                points_concernes[mouvement.point_arrivee_id] = mouvement.point_arrivee
 
         stock_materiau_total = ZERO
 
@@ -6660,16 +6506,12 @@ def dashboard_materiaux(request, projet_id):
                 ZERO,
             )
 
-            stock_point = (
-                quantite_entree_point - quantite_sortie_point
-            )
+            stock_point = quantite_entree_point - quantite_sortie_point
 
             stock_materiau_total += stock_point
 
             if stock_point != ZERO:
-                stocks_par_point_dict[
-                    (materiau.pk, point_id)
-                ] = {
+                stocks_par_point_dict[(materiau.pk, point_id)] = {
                     "materiau": materiau.materiau,
                     "materiau_projet": materiau,
                     "point": point,
@@ -6681,18 +6523,16 @@ def dashboard_materiaux(request, projet_id):
                 }
 
         # ------------------------------------------------------
-        # VALORISATION FINANCIÈRE SELON TES FORMULES
+        # VALORISATION FINANCIÃˆRE SELON TES FORMULES
         # ------------------------------------------------------
 
         montant_prevu = quantite_prevue * prix_moyen
 
-        # Formule demandée :
-        # (quantité entrée - quantité sortie) × prix moyen.
+        # Formule demandÃ©e :
+        # (quantitÃ© entrÃ©e - quantitÃ© sortie) Ã— prix moyen.
         quantite_stock_valorisee = quantite_recue - quantite_sortie
 
-        montant_restant = (
-            quantite_stock_valorisee * prix_moyen
-        )
+        montant_restant = quantite_stock_valorisee * prix_moyen
 
         # ------------------------------------------------------
         # MONTANT DE CHAQUE MOUVEMENT POUR LE TABLEAU HISTORIQUE
@@ -6700,46 +6540,38 @@ def dashboard_materiaux(request, projet_id):
 
         for mouvement in mouvements_materiau:
             if mouvement.type_mouvement == "ENTREE":
-                mouvement.montant_mouvement = (
-                    (mouvement.quantite or ZERO)
-                    * (mouvement.prix_unitaire or ZERO)
+                mouvement.montant_mouvement = (mouvement.quantite or ZERO) * (
+                    mouvement.prix_unitaire or ZERO
                 )
             else:
-                mouvement.montant_mouvement = (
-                    (mouvement.quantite or ZERO) * prix_moyen
-                )
+                mouvement.montant_mouvement = (mouvement.quantite or ZERO) * prix_moyen
 
             mouvement.prix_moyen_materiau = prix_moyen
 
         # ------------------------------------------------------
-        # LIGNE DU TABLEAU DES MATÉRIAUX
+        # LIGNE DU TABLEAU DES MATÃ‰RIAUX
         # ------------------------------------------------------
 
         ligne = {
             "materiau": materiau.materiau,
             "materiau_projet": materiau,
             "unite": materiau.unite,
-
             "quantite_prevue": quantite_prevue,
             "quantite_recue": quantite_recue,
             "quantite_sortie_depot": quantite_sortie,
             "quantite_utilisee": quantite_utilisee,
             "quantite_retournee": quantite_retournee,
-
             "quantite_restante": quantite_stock_valorisee,
             "stock_materiau_total": stock_materiau_total,
             "solde_global": stock_materiau_total,
-
             "prix_unitaire_moyen": prix_moyen,
-
             "montant_prevu": montant_prevu,
             "montant_recu": montant_entrees,
             "montant_sortie": montant_sorties,
             "montant_utilise": montant_utilise,
             "montant_retourne": montant_retourne,
             "montant_restant": montant_restant,
-
-            # Compatibilité avec les anciens champs du template.
+            # CompatibilitÃ© avec les anciens champs du template.
             "quantite_entree_depot": quantite_recue,
             "quantite_livree_directement": ZERO,
             "stock_depot": ZERO,
@@ -6789,17 +6621,13 @@ def dashboard_materiaux(request, projet_id):
     # ==========================================================
 
     dernieres_receptions = (
-        ReceptionMateriauProjet.objects
-        .filter(materiau_projet__projet=projet)
-        .select_related(
-            "materiau_projet", "point", "enregistre_par"
-        )
+        ReceptionMateriauProjet.objects.filter(materiau_projet__projet=projet)
+        .select_related("materiau_projet", "point", "enregistre_par")
         .order_by("-date_reception", "-id")[:10]
     )
 
     dernieres_distributions = (
-        DistributionMateriauProjet.objects
-        .filter(materiau_projet__projet=projet)
+        DistributionMateriauProjet.objects.filter(materiau_projet__projet=projet)
         .select_related(
             "materiau_projet",
             "chef_equipe",
@@ -6810,8 +6638,7 @@ def dashboard_materiaux(request, projet_id):
     )
 
     dernieres_utilisations = (
-        ConsommationMateriauProjet.objects
-        .filter(
+        ConsommationMateriauProjet.objects.filter(
             Q(distribution__materiau_projet__projet=projet)
             | Q(reception_directe__materiau_projet__projet=projet)
         )
@@ -6826,8 +6653,7 @@ def dashboard_materiaux(request, projet_id):
     )
 
     derniers_retours = (
-        RetourMateriauProjet.objects
-        .filter(
+        RetourMateriauProjet.objects.filter(
             Q(distribution__materiau_projet__projet=projet)
             | Q(reception_directe__materiau_projet__projet=projet)
         )
@@ -6847,22 +6673,14 @@ def dashboard_materiaux(request, projet_id):
 
     nombre_materiaux = len(materiaux)
 
-    nombre_receptions = mouvements.filter(
-        type_mouvement="ENTREE"
-    ).count()
+    nombre_receptions = mouvements.filter(type_mouvement="ENTREE").count()
 
-    nombre_distributions = mouvements.filter(
-        type_mouvement="SORTIE"
-    ).count()
+    nombre_distributions = mouvements.filter(type_mouvement="SORTIE").count()
 
-    nombre_retours = mouvements.filter(
-        type_mouvement="RETOUR"
-    ).count()
+    nombre_retours = mouvements.filter(type_mouvement="RETOUR").count()
 
     taux_utilisation = (
-        total_utilise / total_recu * Decimal("100")
-        if total_recu > ZERO
-        else ZERO
+        total_utilise / total_recu * Decimal("100") if total_recu > ZERO else ZERO
     )
 
     taux_progression = min(
@@ -6876,13 +6694,11 @@ def dashboard_materiaux(request, projet_id):
 
     context = {
         "projet": projet,
-
         "materiaux_stats": materiaux_stats,
         "materiaux_projet": materiaux_stats,
         "stocks_par_point": stocks_par_point,
         "stocks": stocks_par_point,
         "derniers_mouvements": derniers_mouvements,
-
         "total_prevu": total_prevu,
         "total_recu": total_recu,
         "total_entree_depot": total_recu,
@@ -6895,28 +6711,23 @@ def dashboard_materiaux(request, projet_id):
         "total_solde_global": total_solde_global,
         "total_restant": sum(
             (
-                ligne["quantite_recue"]
-                - ligne["quantite_sortie_depot"]
+                ligne["quantite_recue"] - ligne["quantite_sortie_depot"]
                 for ligne in materiaux_stats
             ),
             ZERO,
         ),
-
         "total_montant_prevu": total_montant_prevu,
         "total_montant_entrees": total_montant_entrees,
         "total_montant_sorties": total_montant_sorties,
         "total_montant_utilise": total_montant_utilise,
         "total_montant_retourne": total_montant_retourne,
         "total_valeur_stock": total_valeur_stock,
-
         "nombre_materiaux": nombre_materiaux,
         "nombre_receptions": nombre_receptions,
         "nombre_distributions": nombre_distributions,
         "nombre_retours": nombre_retours,
-
         "taux_utilisation": taux_utilisation,
         "taux_progression": taux_progression,
-
         "dernieres_receptions": dernieres_receptions,
         "dernieres_distributions": dernieres_distributions,
         "dernieres_utilisations": dernieres_utilisations,
@@ -6929,17 +6740,18 @@ def dashboard_materiaux(request, projet_id):
         context,
     )
 
+
 # ============================================================
-# CRUD MATÉRIAUX DU PROJET — DÉPÔT 2
+# CRUD MATÃ‰RIAUX DU PROJET â€” DÃ‰PÃ”T 2
 # ============================================================
 
 MATERIAUX_PROJET_CRUD = {
     "achat": {
         "model": AchatMateriauProjet,
         "form": AchatMateriauProjetForm,
-        "titre": "Achats de matériaux",
-        "titre_create": "Nouvel achat de matériaux",
-        "titre_update": "Modifier un achat de matériaux",
+        "titre": "Achats de matÃ©riaux",
+        "titre_create": "Nouvel achat de matÃ©riaux",
+        "titre_update": "Modifier un achat de matÃ©riaux",
         "list_url": "projet:achat_materiau_projet_list",
         "create_url": "projet:achat_materiau_projet_create",
         "update_url": "projet:achat_materiau_projet_update",
@@ -6950,9 +6762,9 @@ MATERIAUX_PROJET_CRUD = {
     "reception": {
         "model": ReceptionMateriauProjet,
         "form": ReceptionMateriauProjetForm,
-        "titre": "Réceptions de matériaux",
-        "titre_create": "Nouvelle réception de matériaux",
-        "titre_update": "Modifier une réception",
+        "titre": "RÃ©ceptions de matÃ©riaux",
+        "titre_create": "Nouvelle rÃ©ception de matÃ©riaux",
+        "titre_update": "Modifier une rÃ©ception",
         "list_url": "projet:reception_materiau_projet_list",
         "create_url": "projet:reception_materiau_projet_create",
         "update_url": "projet:reception_materiau_projet_update",
@@ -6963,8 +6775,8 @@ MATERIAUX_PROJET_CRUD = {
     "distribution": {
         "model": DistributionMateriauProjet,
         "form": DistributionMateriauProjetForm,
-        "titre": "Distributions de matériaux",
-        "titre_create": "Nouvelle distribution de matériaux",
+        "titre": "Distributions de matÃ©riaux",
+        "titre_create": "Nouvelle distribution de matÃ©riaux",
         "titre_update": "Modifier une distribution",
         "list_url": "projet:distribution_materiau_projet_list",
         "create_url": "projet:distribution_materiau_projet_create",
@@ -6976,8 +6788,8 @@ MATERIAUX_PROJET_CRUD = {
     "consommation": {
         "model": ConsommationMateriauProjet,
         "form": ConsommationMateriauProjetForm,
-        "titre": "Consommations de matériaux",
-        "titre_create": "Nouvelle consommation de matériaux",
+        "titre": "Consommations de matÃ©riaux",
+        "titre_create": "Nouvelle consommation de matÃ©riaux",
         "titre_update": "Modifier une consommation",
         "list_url": "projet:consommation_materiau_projet_list",
         "create_url": "projet:consommation_materiau_projet_create",
@@ -6988,8 +6800,8 @@ MATERIAUX_PROJET_CRUD = {
     "retour": {
         "model": RetourMateriauProjet,
         "form": RetourMateriauProjetForm,
-        "titre": "Retours de matériaux",
-        "titre_create": "Nouveau retour de matériaux",
+        "titre": "Retours de matÃ©riaux",
+        "titre_create": "Nouveau retour de matÃ©riaux",
         "titre_update": "Modifier un retour",
         "list_url": "projet:retour_materiau_projet_list",
         "create_url": "projet:retour_materiau_projet_create",
@@ -7001,21 +6813,20 @@ MATERIAUX_PROJET_CRUD = {
 
 
 # ============================================================
-# QUERYSET DES MATÉRIAUX DU PROJET
+# QUERYSET DES MATÃ‰RIAUX DU PROJET
 # ============================================================
+
 
 def _materiaux_projet_queryset(config, projet):
     """
     Retourne uniquement les enregistrements appartenant au projet.
-    Les consommations et retours peuvent être rattachés à une
-    distribution ou à une réception directe.
+    Les consommations et retours peuvent Ãªtre rattachÃ©s Ã  une
+    distribution ou Ã  une rÃ©ception directe.
     """
     model = config["model"]
 
     if "relation" in config:
-        return model.objects.filter(
-            **{config["relation"]: projet}
-        )
+        return model.objects.filter(**{config["relation"]: projet})
 
     if model is ConsommationMateriauProjet:
         return model.objects.filter(
@@ -7033,14 +6844,12 @@ def _materiaux_projet_queryset(config, projet):
 
 
 # ============================================================
-# LISTE GÉNÉRIQUE
+# LISTE GÃ‰NÃ‰RIQUE
 # ============================================================
 def _materiaux_projet_list(request, projet, type_objet):
     config = MATERIAUX_PROJET_CRUD[type_objet]
 
-    objets = _materiaux_projet_queryset(
-        config, projet
-    ).order_by(
+    objets = _materiaux_projet_queryset(config, projet).order_by(
         f"-{config['date_field']}",
         "-pk",
     )
@@ -7053,50 +6862,34 @@ def _materiaux_projet_list(request, projet, type_objet):
     date_debut = getattr(projet, "date_debut", None)
     date_fin = getattr(projet, "date_fin", None)
 
-    periode_autorisee = (
-        (date_debut is None or aujourd_hui >= date_debut)
-        and
-        (date_fin is None or aujourd_hui <= date_fin)
+    periode_autorisee = (date_debut is None or aujourd_hui >= date_debut) and (
+        date_fin is None or aujourd_hui <= date_fin
     )
 
     for numero, objet in enumerate(objets, start=1):
 
         # --------------------------------------------------
-        # MATÉRIAU
+        # MATÃ‰RIAU
         # --------------------------------------------------
-        materiau_projet = getattr(
-            objet, "materiau_projet", None
-        )
+        materiau_projet = getattr(objet, "materiau_projet", None)
 
         if materiau_projet is None:
             distribution = getattr(objet, "distribution", None)
-            reception_directe = getattr(
-                objet, "reception_directe", None
-            )
+            reception_directe = getattr(objet, "reception_directe", None)
 
             if distribution:
-                materiau_projet = getattr(
-                    distribution, "materiau_projet", None
-                )
+                materiau_projet = getattr(distribution, "materiau_projet", None)
             elif reception_directe:
-                materiau_projet = getattr(
-                    reception_directe, "materiau_projet", None
-                )
+                materiau_projet = getattr(reception_directe, "materiau_projet", None)
 
         materiau = (
-            getattr(materiau_projet, "materiau", None)
-            if materiau_projet
-            else None
+            getattr(materiau_projet, "materiau", None) if materiau_projet else None
         )
 
-        unite = (
-            getattr(materiau_projet, "unite", "")
-            if materiau_projet
-            else ""
-        )
+        unite = getattr(materiau_projet, "unite", "") if materiau_projet else ""
 
         # --------------------------------------------------
-        # QUANTITÉ SELON LE TYPE D'OPÉRATION
+        # QUANTITÃ‰ SELON LE TYPE D'OPÃ‰RATION
         # --------------------------------------------------
         quantite = None
 
@@ -7119,9 +6912,7 @@ def _materiaux_projet_list(request, projet, type_objet):
 
         if point is None:
             distribution = getattr(objet, "distribution", None)
-            reception_directe = getattr(
-                objet, "reception_directe", None
-            )
+            reception_directe = getattr(objet, "reception_directe", None)
 
             if distribution:
                 point = getattr(distribution, "point", None)
@@ -7131,9 +6922,7 @@ def _materiaux_projet_list(request, projet, type_objet):
         # --------------------------------------------------
         # ENREGISTREUR
         # --------------------------------------------------
-        enregistreur_id = getattr(
-            objet, "enregistre_par_id", None
-        )
+        enregistreur_id = getattr(objet, "enregistre_par_id", None)
 
         est_enregistreur = (
             utilisateur is not None
@@ -7141,60 +6930,54 @@ def _materiaux_projet_list(request, projet, type_objet):
             and enregistreur_id == utilisateur.pk
         )
 
-        peut_modifier = (
-            est_enregistreur and periode_autorisee
-        )
+        peut_modifier = est_enregistreur and periode_autorisee
 
         # --------------------------------------------------
         # DATES
         # --------------------------------------------------
-        date_operation = getattr(
-            objet, config["date_field"], None
-        )
+        date_operation = getattr(objet, config["date_field"], None)
 
         enregistre_le = getattr(objet, "created_at", None)
 
         if enregistre_le is None:
-            enregistre_le = getattr(
-                objet, "date_creation", None
-            )
+            enregistre_le = getattr(objet, "date_creation", None)
 
         # --------------------------------------------------
         # LIGNE DU TABLEAU
         # --------------------------------------------------
-        lignes.append({
-            "numero": numero,
-            "objet": objet,
-            "materiau": materiau,
-            "quantite": quantite,
-            "unite": unite,
-            "point": point,
-            "observation": getattr(objet, "observation", ""),
-            "date_operation": date_operation,
-            "enregistre_le": enregistre_le,
-            "est_enregistreur": est_enregistreur,
-            "peut_modifier": peut_modifier,
-
-            "modifier_url": (
-                reverse(
-                    config["update_url"],
+        lignes.append(
+            {
+                "numero": numero,
+                "objet": objet,
+                "materiau": materiau,
+                "quantite": quantite,
+                "unite": unite,
+                "point": point,
+                "observation": getattr(objet, "observation", ""),
+                "date_operation": date_operation,
+                "enregistre_le": enregistre_le,
+                "est_enregistreur": est_enregistreur,
+                "peut_modifier": peut_modifier,
+                "modifier_url": (
+                    reverse(
+                        config["update_url"],
+                        kwargs={
+                            "projet_id": projet.pk,
+                            "pk": objet.pk,
+                        },
+                    )
+                    if peut_modifier
+                    else None
+                ),
+                "supprimer_url": reverse(
+                    config["delete_url"],
                     kwargs={
                         "projet_id": projet.pk,
                         "pk": objet.pk,
                     },
-                )
-                if peut_modifier
-                else None
-            ),
-
-            "supprimer_url": reverse(
-                config["delete_url"],
-                kwargs={
-                    "projet_id": projet.pk,
-                    "pk": objet.pk,
-                },
-            ),
-        })
+                ),
+            }
+        )
 
     context = {
         "projet": projet,
@@ -7214,23 +6997,22 @@ def _materiaux_projet_list(request, projet, type_objet):
 
     return render(request, template_name, context)
 
+
 # ============================================================
-# CRÉATION GÉNÉRIQUE
+# CRÃ‰ATION GÃ‰NÃ‰RIQUE
 # ============================================================
+
 
 def _materiaux_projet_create(request, projet, type_objet):
     from django.contrib import messages
+    from django.core.exceptions import ValidationError
     from django.shortcuts import redirect, render
     from django.urls import reverse
-    from django.core.exceptions import ValidationError
 
     config = MATERIAUX_PROJET_CRUD.get(type_objet)
 
     if config is None:
-        messages.error(
-            request,
-            "Type d'opération de matériaux inconnu."
-        )
+        messages.error(request, "Type d'opÃ©ration de matÃ©riaux inconnu.")
         return redirect("projet:projet_list")
 
     FormClass = config["form"]
@@ -7258,9 +7040,9 @@ def _materiaux_projet_create(request, projet, type_objet):
         if form.is_valid():
 
             # =====================================================
-            # CAS PARTICULIER : RETOUR DE MATÉRIAUX
-            # Le formulaire répartit automatiquement le retour
-            # entre les distributions concernées.
+            # CAS PARTICULIER : RETOUR DE MATÃ‰RIAUX
+            # Le formulaire rÃ©partit automatiquement le retour
+            # entre les distributions concernÃ©es.
             # =====================================================
             if type_objet == "retour":
                 utilisateur = getattr(
@@ -7271,14 +7053,10 @@ def _materiaux_projet_create(request, projet, type_objet):
 
                 from users.models import AppUser
 
-                if (
-                    utilisateur is None
-                    or not isinstance(utilisateur, AppUser)
-                ):
+                if utilisateur is None or not isinstance(utilisateur, AppUser):
                     messages.error(
                         request,
-                        "Utilisateur non identifié. "
-                        "Veuillez vous reconnecter."
+                        "Utilisateur non identifiÃ©. " "Veuillez vous reconnecter.",
                     )
                     contexte["form"] = form
 
@@ -7289,19 +7067,15 @@ def _materiaux_projet_create(request, projet, type_objet):
                     )
 
                 try:
-                    retours_crees = form.enregistrer_retour(
-                        enregistre_par=utilisateur
-                    )
+                    retours_crees = form.enregistrer_retour(enregistre_par=utilisateur)
 
                     if not retours_crees:
                         form.add_error(
-                            None,
-                            "Aucun retour de matériau n'a été enregistré."
+                            None, "Aucun retour de matÃ©riau n'a Ã©tÃ© enregistrÃ©."
                         )
 
                         messages.error(
-                            request,
-                            "Aucun retour de matériau n'a été enregistré."
+                            request, "Aucun retour de matÃ©riau n'a Ã©tÃ© enregistrÃ©."
                         )
 
                         contexte["form"] = form
@@ -7313,7 +7087,7 @@ def _materiaux_projet_create(request, projet, type_objet):
                         )
 
                 except ValidationError as exc:
-                    # Ne pas ajouter les erreurs aux champs du modèle
+                    # Ne pas ajouter les erreurs aux champs du modÃ¨le
                     # distribution/reception_directe : ces champs ne
                     # figurent pas dans le formulaire de retour.
                     if hasattr(exc, "message_dict"):
@@ -7326,8 +7100,8 @@ def _materiaux_projet_create(request, projet, type_objet):
 
                     messages.error(
                         request,
-                        "Le retour n'a pas pu être enregistré. "
-                        "Vérifiez les informations saisies."
+                        "Le retour n'a pas pu Ãªtre enregistrÃ©. "
+                        "VÃ©rifiez les informations saisies.",
                     )
 
                     contexte["form"] = form
@@ -7339,8 +7113,7 @@ def _materiaux_projet_create(request, projet, type_objet):
                     )
 
                 messages.success(
-                    request,
-                    f"{config['titre']} : enregistrement réussi."
+                    request, f"{config['titre']} : enregistrement rÃ©ussi."
                 )
 
                 return redirect(
@@ -7349,12 +7122,12 @@ def _materiaux_projet_create(request, projet, type_objet):
                 )
 
             # =====================================================
-            # AUTRES OPÉRATIONS : COMPORTEMENT HABITUEL
+            # AUTRES OPÃ‰RATIONS : COMPORTEMENT HABITUEL
             # =====================================================
             objet = form.save(commit=False)
 
-            # Affecter l'utilisateur uniquement si le modèle
-            # possède le champ enregistre_par.
+            # Affecter l'utilisateur uniquement si le modÃ¨le
+            # possÃ¨de le champ enregistre_par.
             if hasattr(objet, "enregistre_par_id"):
                 from users.models import AppUser
 
@@ -7364,14 +7137,10 @@ def _materiaux_projet_create(request, projet, type_objet):
                     None,
                 )
 
-                if (
-                    utilisateur is None
-                    or not isinstance(utilisateur, AppUser)
-                ):
+                if utilisateur is None or not isinstance(utilisateur, AppUser):
                     messages.error(
                         request,
-                        "Utilisateur non identifié. "
-                        "Veuillez vous reconnecter."
+                        "Utilisateur non identifiÃ©. " "Veuillez vous reconnecter.",
                     )
 
                     contexte["form"] = form
@@ -7387,20 +7156,14 @@ def _materiaux_projet_create(request, projet, type_objet):
             objet.save()
             form.save_m2m()
 
-            messages.success(
-                request,
-                f"{config['titre']} : enregistrement réussi."
-            )
+            messages.success(request, f"{config['titre']} : enregistrement rÃ©ussi.")
 
             return redirect(
                 config["list_url"],
                 projet_id=projet.pk,
             )
 
-        messages.error(
-            request,
-            "Veuillez corriger les erreurs du formulaire."
-        )
+        messages.error(request, "Veuillez corriger les erreurs du formulaire.")
 
     else:
         form = FormClass(projet=projet)
@@ -7413,8 +7176,9 @@ def _materiaux_projet_create(request, projet, type_objet):
         contexte,
     )
 
+
 # ============================================================
-# MODIFICATION GÉNÉRIQUE
+# MODIFICATION GÃ‰NÃ‰RIQUE
 # ============================================================
 def _materiaux_projet_update(request, projet, type_objet, pk):
     config = MATERIAUX_PROJET_CRUD[type_objet]
@@ -7425,7 +7189,7 @@ def _materiaux_projet_update(request, projet, type_objet, pk):
         pk=pk,
     )
 
-    # Contrôle des droits avant d'afficher ou de traiter le formulaire.
+    # ContrÃ´le des droits avant d'afficher ou de traiter le formulaire.
     if not _peut_modifier_mouvement_materiau(
         request,
         projet,
@@ -7434,8 +7198,8 @@ def _materiaux_projet_update(request, projet, type_objet, pk):
         messages.error(
             request,
             (
-                "Modification refusée : seul l'enregistreur initial "
-                "peut modifier cette opération pendant la période du projet."
+                "Modification refusÃ©e : seul l'enregistreur initial "
+                "peut modifier cette opÃ©ration pendant la pÃ©riode du projet."
             ),
         )
         return redirect(
@@ -7454,7 +7218,7 @@ def _materiaux_projet_update(request, projet, type_objet, pk):
         if form.is_valid():
             objet_modifie = form.save(commit=False)
 
-            # Protection : l'enregistreur initial ne peut pas être remplacé.
+            # Protection : l'enregistreur initial ne peut pas Ãªtre remplacÃ©.
             objet_modifie.enregistre_par_id = objet.enregistre_par_id
 
             objet_modifie.save()
@@ -7462,7 +7226,7 @@ def _materiaux_projet_update(request, projet, type_objet, pk):
 
             messages.success(
                 request,
-                "Modification enregistrée avec succès.",
+                "Modification enregistrÃ©e avec succÃ¨s.",
             )
 
             return redirect(
@@ -7491,13 +7255,14 @@ def _materiaux_projet_update(request, projet, type_objet, pk):
             ),
         },
     )
+
+
 # ============================================================
-# SUPPRESSION GÉNÉRIQUE
+# SUPPRESSION GÃ‰NÃ‰RIQUE
 # ============================================================
 
-def _materiaux_projet_delete(
-    request, projet, type_objet, pk
-):
+
+def _materiaux_projet_delete(request, projet, type_objet, pk):
     config = MATERIAUX_PROJET_CRUD[type_objet]
 
     objet = get_object_or_404(
@@ -7511,7 +7276,7 @@ def _materiaux_projet_delete(
 
             messages.success(
                 request,
-                "Enregistrement supprimé avec succès.",
+                "Enregistrement supprimÃ© avec succÃ¨s.",
             )
 
         except ProtectedError:
@@ -7519,8 +7284,8 @@ def _materiaux_projet_delete(
                 request,
                 (
                     "Suppression impossible : cet enregistrement "
-                    "est utilisé par d'autres opérations. "
-                    "Vérifiez les mouvements liés avant de continuer."
+                    "est utilisÃ© par d'autres opÃ©rations. "
+                    "VÃ©rifiez les mouvements liÃ©s avant de continuer."
                 ),
             )
 
@@ -7546,8 +7311,9 @@ def _materiaux_projet_delete(
 
 
 # ============================================================
-# VUES PUBLIQUES — ACHATS
+# VUES PUBLIQUES â€” ACHATS
 # ============================================================
+
 
 @project_access_required
 def achat_materiau_projet_list(request, projet_id):
@@ -7564,172 +7330,133 @@ def achat_materiau_projet_create(request, projet_id):
 @project_access_required
 def achat_materiau_projet_update(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_update(
-        request, projet, "achat", pk
-    )
+    return _materiaux_projet_update(request, projet, "achat", pk)
 
 
 @project_access_required
 def achat_materiau_projet_delete(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_delete(
-        request, projet, "achat", pk
-    )
+    return _materiaux_projet_delete(request, projet, "achat", pk)
 
 
 # ============================================================
-# VUES PUBLIQUES — RÉCEPTIONS
+# VUES PUBLIQUES â€” RÃ‰CEPTIONS
 # ============================================================
+
 
 @project_access_required
 def reception_materiau_projet_list(request, projet_id):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_list(
-        request, projet, "reception"
-    )
+    return _materiaux_projet_list(request, projet, "reception")
 
 
 @project_access_required
 def reception_materiau_projet_create(request, projet_id):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_create(
-        request, projet, "reception"
-    )
+    return _materiaux_projet_create(request, projet, "reception")
 
 
 @project_access_required
 def reception_materiau_projet_update(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_update(
-        request, projet, "reception", pk
-    )
+    return _materiaux_projet_update(request, projet, "reception", pk)
 
 
 @project_access_required
 def reception_materiau_projet_delete(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_delete(
-        request, projet, "reception", pk
-    )
+    return _materiaux_projet_delete(request, projet, "reception", pk)
 
 
 # ============================================================
-# VUES PUBLIQUES — DISTRIBUTIONS
+# VUES PUBLIQUES â€” DISTRIBUTIONS
 # ============================================================
+
 
 @project_access_required
 def distribution_materiau_projet_list(request, projet_id):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_list(
-        request, projet, "distribution"
-    )
+    return _materiaux_projet_list(request, projet, "distribution")
 
 
 @project_access_required
 def distribution_materiau_projet_create(request, projet_id):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_create(
-        request, projet, "distribution"
-    )
+    return _materiaux_projet_create(request, projet, "distribution")
 
 
 @project_access_required
 def distribution_materiau_projet_update(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_update(
-        request, projet, "distribution", pk
-    )
+    return _materiaux_projet_update(request, projet, "distribution", pk)
 
 
 @project_access_required
 def distribution_materiau_projet_delete(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_delete(
-        request, projet, "distribution", pk
-    )
+    return _materiaux_projet_delete(request, projet, "distribution", pk)
 
 
 # ============================================================
-# VUES PUBLIQUES — CONSOMMATIONS
+# VUES PUBLIQUES â€” CONSOMMATIONS
 # ============================================================
+
 
 @project_access_required
 def consommation_materiau_projet_list(request, projet_id):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_list(
-        request, projet, "consommation"
-    )
+    return _materiaux_projet_list(request, projet, "consommation")
 
 
 @project_access_required
 def consommation_materiau_projet_create(request, projet_id):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_create(
-        request, projet, "consommation"
-    )
+    return _materiaux_projet_create(request, projet, "consommation")
 
 
 @project_access_required
-def consommation_materiau_projet_update(
-    request, projet_id, pk
-):
+def consommation_materiau_projet_update(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_update(
-        request, projet, "consommation", pk
-    )
+    return _materiaux_projet_update(request, projet, "consommation", pk)
 
 
 @project_access_required
-def consommation_materiau_projet_delete(
-    request, projet_id, pk
-):
+def consommation_materiau_projet_delete(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_delete(
-        request, projet, "consommation", pk
-    )
+    return _materiaux_projet_delete(request, projet, "consommation", pk)
 
 
 # ============================================================
-# VUES PUBLIQUES — RETOURS
+# VUES PUBLIQUES â€” RETOURS
 # ============================================================
+
 
 @project_access_required
 def retour_materiau_projet_list(request, projet_id):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_list(
-        request, projet, "retour"
-    )
+    return _materiaux_projet_list(request, projet, "retour")
 
 
 @project_access_required
 def retour_materiau_projet_create(request, projet_id):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_create(
-        request, projet, "retour"
-    )
+    return _materiaux_projet_create(request, projet, "retour")
 
 
 @project_access_required
 def retour_materiau_projet_update(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_update(
-        request, projet, "retour", pk
-    )
+    return _materiaux_projet_update(request, projet, "retour", pk)
 
 
 @project_access_required
 def retour_materiau_projet_delete(request, projet_id, pk):
     projet = get_object_or_404(Projet, pk=projet_id)
-    return _materiaux_projet_delete(
-        request, projet, "retour", pk
-    )
-
-
-
+    return _materiaux_projet_delete(request, projet, "retour", pk)
 
 
 # ============================================================
-# MOUVEMENTS UNIFIÉS DES MATÉRIAUX DU PROJET
+# MOUVEMENTS UNIFIÃ‰S DES MATÃ‰RIAUX DU PROJET
 # ============================================================
 def calculer_stock_point(projet, materiau, point):
     mouvements = MouvementMateriauProjet.objects.filter(
@@ -7737,20 +7464,15 @@ def calculer_stock_point(projet, materiau, point):
         materiau_projet=materiau,
     )
 
-    entrees = mouvements.filter(
-        point_arrivee=point
-    ).aggregate(
-        total=Sum("quantite")
-    )["total"] or Decimal("0.00")
+    entrees = mouvements.filter(point_arrivee=point).aggregate(total=Sum("quantite"))[
+        "total"
+    ] or Decimal("0.00")
 
-    sorties = mouvements.filter(
-        point_depart=point
-    ).aggregate(
-        total=Sum("quantite")
-    )["total"] or Decimal("0.00")
+    sorties = mouvements.filter(point_depart=point).aggregate(total=Sum("quantite"))[
+        "total"
+    ] or Decimal("0.00")
 
     return entrees - sorties
-
 
 
 @project_access_required
@@ -7763,12 +7485,11 @@ def mouvements_materiaux_projet(request, projet_id):
     ZERO = Decimal("0")
 
     # ======================================================
-    # 1. RÉCUPÉRER LES MOUVEMENTS DU PROJET
+    # 1. RÃ‰CUPÃ‰RER LES MOUVEMENTS DU PROJET
     # ======================================================
 
     mouvements = (
-        MouvementMateriauProjet.objects
-        .filter(materiau_projet__projet=projet)
+        MouvementMateriauProjet.objects.filter(materiau_projet__projet=projet)
         .select_related(
             "materiau_projet",
             "point_depart",
@@ -7779,16 +7500,13 @@ def mouvements_materiaux_projet(request, projet_id):
     )
 
     # ======================================================
-    # 2. VÉRIFIER SI LA PÉRIODE DU PROJET EST ACTIVE
+    # 2. VÃ‰RIFIER SI LA PÃ‰RIODE DU PROJET EST ACTIVE
     # ======================================================
 
-    periode_projet_active = (
-        projet.est_actif
-        and not projet.periode_terminee
-    )
+    periode_projet_active = projet.est_actif and not projet.periode_terminee
 
     # ======================================================
-    # 3. IDENTIFIER L'UTILISATEUR CONNECTÉ
+    # 3. IDENTIFIER L'UTILISATEUR CONNECTÃ‰
     # ======================================================
 
     utilisateur_courant = getattr(
@@ -7801,9 +7519,7 @@ def mouvements_materiaux_projet(request, projet_id):
         utilisateur_id = request.session.get("user_id")
 
         if utilisateur_id:
-            utilisateur_courant = AppUser.objects.filter(
-                pk=utilisateur_id
-            ).first()
+            utilisateur_courant = AppUser.objects.filter(pk=utilisateur_id).first()
 
     # ======================================================
     # 4. DROITS DE MODIFICATION ET DE SUPPRESSION
@@ -7814,40 +7530,31 @@ def mouvements_materiaux_projet(request, projet_id):
             periode_projet_active
             and utilisateur_courant is not None
             and mouvement.enregistre_par_id is not None
-            and mouvement.enregistre_par_id
-            == utilisateur_courant.pk
+            and mouvement.enregistre_par_id == utilisateur_courant.pk
         )
 
     # ======================================================
-    # 5. RÉCUPÉRER LES MATÉRIAUX DU PROJET
+    # 5. RÃ‰CUPÃ‰RER LES MATÃ‰RIAUX DU PROJET
     # ======================================================
 
-    materiaux = (
-        MateriauProjet.objects
-        .filter(projet=projet)
-        .order_by("materiau", "id")
-    )
+    materiaux = MateriauProjet.objects.filter(projet=projet).order_by("materiau", "id")
 
     # ======================================================
-    # 6. CALCULER LES STOCKS PAR MATÉRIAU ET PAR POINT
+    # 6. CALCULER LES STOCKS PAR MATÃ‰RIAU ET PAR POINT
     # ======================================================
 
     stocks = []
 
     points_utilises = {}
 
-    # Ne retenir que les points réellement associés
+    # Ne retenir que les points rÃ©ellement associÃ©s
     # aux mouvements du projet.
     for mouvement in mouvements:
         if mouvement.point_depart_id:
-            points_utilises[mouvement.point_depart_id] = (
-                mouvement.point_depart
-            )
+            points_utilises[mouvement.point_depart_id] = mouvement.point_depart
 
         if mouvement.point_arrivee_id:
-            points_utilises[mouvement.point_arrivee_id] = (
-                mouvement.point_arrivee
-            )
+            points_utilises[mouvement.point_arrivee_id] = mouvement.point_arrivee
 
     # Trier les points par identifiant.
     points = sorted(
@@ -7865,21 +7572,23 @@ def mouvements_materiaux_projet(request, projet_id):
             )
 
             # Ne pas afficher les stocks nuls.
-            # Les stocks négatifs restent visibles pour
-            # permettre de repérer une anomalie.
+            # Les stocks nÃ©gatifs restent visibles pour
+            # permettre de repÃ©rer une anomalie.
             if stock is None or stock == ZERO:
                 continue
 
-            stocks.append({
-                "materiau": materiau.materiau,
-                "materiau_projet": materiau,
-                "unite": materiau.unite,
-                "point": point,
-                "stock": stock,
-            })
+            stocks.append(
+                {
+                    "materiau": materiau.materiau,
+                    "materiau_projet": materiau,
+                    "unite": materiau.unite,
+                    "point": point,
+                    "stock": stock,
+                }
+            )
 
     # ======================================================
-    # 7. ENVOYER LES DONNÉES AU TEMPLATE
+    # 7. ENVOYER LES DONNÃ‰ES AU TEMPLATE
     # ======================================================
 
     return render(
@@ -7907,17 +7616,14 @@ def mouvement_materiau_projet_create(request, projet_id):
         if form.is_valid():
             mouvement = form.save(commit=False)
 
-            utilisateur = getattr(
-                request, "current_user", None
-            )
+            utilisateur = getattr(request, "current_user", None)
 
             if utilisateur is None:
                 utilisateur_id = request.session.get("user_id")
                 if utilisateur_id:
                     from users.models import AppUser
-                    utilisateur = AppUser.objects.filter(
-                        pk=utilisateur_id
-                    ).first()
+
+                    utilisateur = AppUser.objects.filter(pk=utilisateur_id).first()
 
             mouvement.enregistre_par = utilisateur
 
@@ -7940,16 +7646,14 @@ def mouvement_materiau_projet_create(request, projet_id):
                                     f"{mouvement.materiau_projet.unite}."
                                 ),
                             )
-                            raise ValidationError(
-                                "Stock insuffisant."
-                            )
+                            raise ValidationError("Stock insuffisant.")
 
                     mouvement.full_clean()
                     mouvement.save()
 
                 messages.success(
                     request,
-                    "Mouvement de matériau enregistré avec succès.",
+                    "Mouvement de matÃ©riau enregistrÃ© avec succÃ¨s.",
                 )
                 return redirect(
                     "projet:mouvements_materiaux_projet",
@@ -7974,11 +7678,10 @@ def mouvement_materiau_projet_create(request, projet_id):
         {
             "projet": projet,
             "form": form,
-            "titre": "Nouveau mouvement de matériau",
+            "titre": "Nouveau mouvement de matÃ©riau",
             "bouton": "Enregistrer le mouvement",
         },
     )
-
 
 
 def _utilisateur_mouvement_courant(request):
@@ -8008,9 +7711,7 @@ def _mouvement_modifiable(request, projet, mouvement):
 
 @project_access_required
 @require_http_methods(["GET", "POST"])
-def mouvement_materiau_projet_update(
-    request, projet_id, mouvement_id
-):
+def mouvement_materiau_projet_update(request, projet_id, mouvement_id):
     projet = request.projet
 
     mouvement = get_object_or_404(
@@ -8023,7 +7724,7 @@ def mouvement_materiau_projet_update(
         messages.error(
             request,
             "Modification interdite : seul l'enregistreur peut "
-            "modifier ce mouvement pendant la période active du projet."
+            "modifier ce mouvement pendant la pÃ©riode active du projet.",
         )
         return redirect(
             "projet:mouvements_materiaux_projet",
@@ -8038,10 +7739,7 @@ def mouvement_materiau_projet_update(
 
         if form.is_valid():
             form.save()
-            messages.success(
-                request,
-                "Le mouvement de matériau a été modifié."
-            )
+            messages.success(request, "Le mouvement de matÃ©riau a Ã©tÃ© modifiÃ©.")
             return redirect(
                 "projet:mouvements_materiaux_projet",
                 projet_id=projet.pk,
@@ -8063,9 +7761,7 @@ def mouvement_materiau_projet_update(
 
 @project_access_required
 @require_http_methods(["GET", "POST"])
-def mouvement_materiau_projet_delete(
-    request, projet_id, mouvement_id
-):
+def mouvement_materiau_projet_delete(request, projet_id, mouvement_id):
     projet = request.projet
 
     mouvement = get_object_or_404(
@@ -8078,7 +7774,7 @@ def mouvement_materiau_projet_delete(
         messages.error(
             request,
             "Suppression interdite : seul l'enregistreur peut "
-            "supprimer ce mouvement pendant la période active du projet."
+            "supprimer ce mouvement pendant la pÃ©riode active du projet.",
         )
         return redirect(
             "projet:mouvements_materiaux_projet",
@@ -8087,10 +7783,7 @@ def mouvement_materiau_projet_delete(
 
     if request.method == "POST":
         mouvement.delete()
-        messages.success(
-            request,
-            "Le mouvement de matériau a été supprimé."
-        )
+        messages.success(request, "Le mouvement de matÃ©riau a Ã©tÃ© supprimÃ©.")
         return redirect(
             "projet:mouvements_materiaux_projet",
             projet_id=projet.pk,

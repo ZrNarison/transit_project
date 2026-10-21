@@ -7,20 +7,27 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Recette',
+            name="Recette",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('montant', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('type_virement', models.CharField(max_length=100)),
-                ('date', models.DateField()),
-                ('source', models.CharField(max_length=100)),
-                ('date_enregistrement', models.DateTimeField(auto_now_add=True)),
-                ('enregistreur', models.CharField(max_length=100)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("montant", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("type_virement", models.CharField(max_length=100)),
+                ("date", models.DateField()),
+                ("source", models.CharField(max_length=100)),
+                ("date_enregistrement", models.DateTimeField(auto_now_add=True)),
+                ("enregistreur", models.CharField(max_length=100)),
             ],
         ),
     ]

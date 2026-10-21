@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db import models
 from django.db.models import Sum
 
-from personnel.models import Personnel, H_Personnel
+from personnel.models import H_Personnel, Personnel
 from users.models import AppUser, H_AppUser
 
 
@@ -24,7 +24,7 @@ class Avance(models.Model):
         on_delete=models.CASCADE,
         related_name="avances",
         null=True,
-        blank=True
+        blank=True,
     )
 
     # =========================================================
@@ -36,55 +36,40 @@ class Avance(models.Model):
         on_delete=models.CASCADE,
         related_name="avances",
         null=True,
-        blank=True
+        blank=True,
     )
 
     # =========================================================
     # MOTIF
     # =========================================================
 
-    motifAv = models.CharField(
-        max_length=255
-    )
+    motifAv = models.CharField(max_length=255)
 
     # =========================================================
     # MONTANT INITIAL
     # =========================================================
 
-    montantAv = models.DecimalField(
-        max_digits=12,
-        decimal_places=0
-    )
+    montantAv = models.DecimalField(max_digits=12, decimal_places=0)
 
     # =========================================================
     # MONTANT DÉJÀ RÉCUPÉRÉ
     # =========================================================
 
     montant_recupere = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal("0")
+        max_digits=12, decimal_places=2, default=Decimal("0")
     )
 
     # =========================================================
     # RESTE DE L'AVANCE
     # =========================================================
 
-    reste = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal("0")
-    )
+    reste = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0"))
 
     # =========================================================
     # TYPE
     # =========================================================
 
-    typeAv = models.CharField(
-        max_length=20,
-        choices=TYPE_AVANCE,
-        default="ESPECE"
-    )
+    typeAv = models.CharField(max_length=20, choices=TYPE_AVANCE, default="ESPECE")
 
     # =========================================================
     # DATE
@@ -92,9 +77,7 @@ class Avance(models.Model):
 
     dateAv = models.DateField()
 
-    dateEnregistremeny = models.DateTimeField(
-        auto_now_add=True
-    )
+    dateEnregistremeny = models.DateTimeField(auto_now_add=True)
 
     # =========================================================
     # ENREGISTREUR
@@ -105,7 +88,7 @@ class Avance(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="avances_enregistrees"
+        related_name="avances_enregistrees",
     )
 
     # =========================================================
@@ -117,9 +100,7 @@ class Avance(models.Model):
         Calcule le montant réellement récupéré sur les salaires.
         """
 
-        total = self.affectations_salaires.aggregate(
-            total=Sum("montant")
-        )["total"]
+        total = self.affectations_salaires.aggregate(total=Sum("montant"))["total"]
 
         total = total or Decimal("0")
 
@@ -134,11 +115,8 @@ class Avance(models.Model):
 
         self.reste = reste
 
-        Avance.objects.filter(
-            pk=self.pk
-        ).update(
-            montant_recupere=self.montant_recupere,
-            reste=self.reste
+        Avance.objects.filter(pk=self.pk).update(
+            montant_recupere=self.montant_recupere, reste=self.reste
         )
 
         return self.reste
@@ -150,9 +128,7 @@ class Avance(models.Model):
     def save(self, *args, **kwargs):
 
         if self._state.adding:
-            self.reste = Decimal(
-                str(self.montantAv or 0)
-            )
+            self.reste = Decimal(str(self.montantAv or 0))
 
         super().save(*args, **kwargs)
 
@@ -172,7 +148,6 @@ class Avance(models.Model):
         return f"Avance {self.montantAv} Ar"
 
 
-
 class H_Avance(models.Model):
 
     TYPE_AVANCE = [
@@ -190,55 +165,40 @@ class H_Avance(models.Model):
         on_delete=models.CASCADE,
         related_name="avances",
         null=True,
-        blank=True
+        blank=True,
     )
 
     # =========================================================
     # MOTIF
     # =========================================================
 
-    motifAv = models.CharField(
-        max_length=255
-    )
+    motifAv = models.CharField(max_length=255)
 
     # =========================================================
     # MONTANT INITIAL
     # =========================================================
 
-    montantAv = models.DecimalField(
-        max_digits=12,
-        decimal_places=0
-    )
+    montantAv = models.DecimalField(max_digits=12, decimal_places=0)
 
     # =========================================================
     # MONTANT DÉJÀ RÉCUPÉRÉ
     # =========================================================
 
     montant_recupere = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal("0")
+        max_digits=12, decimal_places=2, default=Decimal("0")
     )
 
     # =========================================================
     # RESTE DE L'AVANCE
     # =========================================================
 
-    reste = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal("0")
-    )
+    reste = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0"))
 
     # =========================================================
     # TYPE
     # =========================================================
 
-    typeAv = models.CharField(
-        max_length=20,
-        choices=TYPE_AVANCE,
-        default="ESPECE"
-    )
+    typeAv = models.CharField(max_length=20, choices=TYPE_AVANCE, default="ESPECE")
 
     # =========================================================
     # DATE
@@ -246,9 +206,7 @@ class H_Avance(models.Model):
 
     dateAv = models.DateField()
 
-    dateEnregistremeny = models.DateTimeField(
-        auto_now_add=True
-    )
+    dateEnregistremeny = models.DateTimeField(auto_now_add=True)
 
     # =========================================================
     # ENREGISTREUR
@@ -259,7 +217,7 @@ class H_Avance(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="avances_enregistrees"
+        related_name="avances_enregistrees",
     )
 
     # =========================================================
@@ -271,9 +229,7 @@ class H_Avance(models.Model):
         Calcule le montant réellement récupéré sur les salaires.
         """
 
-        total = self.affectations_salaires.aggregate(
-            total=Sum("montant")
-        )["total"]
+        total = self.affectations_salaires.aggregate(total=Sum("montant"))["total"]
 
         total = total or Decimal("0")
 
@@ -288,11 +244,8 @@ class H_Avance(models.Model):
 
         self.reste = reste
 
-        Avance.objects.filter(
-            pk=self.pk
-        ).update(
-            montant_recupere=self.montant_recupere,
-            reste=self.reste
+        Avance.objects.filter(pk=self.pk).update(
+            montant_recupere=self.montant_recupere, reste=self.reste
         )
 
         return self.reste
@@ -304,9 +257,7 @@ class H_Avance(models.Model):
     def save(self, *args, **kwargs):
 
         if self._state.adding:
-            self.reste = Decimal(
-                str(self.montantAv or 0)
-            )
+            self.reste = Decimal(str(self.montantAv or 0))
 
         super().save(*args, **kwargs)
 

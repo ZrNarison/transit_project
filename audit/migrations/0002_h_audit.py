@@ -7,23 +7,51 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('audit', '0001_initial'),
-        ('users', '0013_h_appuser'),
+        ("audit", "0001_initial"),
+        ("users", "0013_h_appuser"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='H_Audit',
+            name="H_Audit",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('action', models.CharField(choices=[('CREATE', 'Création'), ('UPDATE', 'Modification'), ('DELETE', 'Suppression'), ('LOGIN', 'Connexion'), ('LOGOUT', 'Déconnexion')], max_length=20)),
-                ('table', models.CharField(max_length=100)),
-                ('objet_id', models.IntegerField(blank=True, null=True)),
-                ('ancienne_valeur', models.JSONField(blank=True, null=True)),
-                ('nouvelle_valeur', models.JSONField(blank=True, null=True)),
-                ('description', models.TextField(blank=True)),
-                ('date_action', models.DateTimeField(auto_now_add=True)),
-                ('utilisateur', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='users.h_appuser')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "action",
+                    models.CharField(
+                        choices=[
+                            ("CREATE", "Création"),
+                            ("UPDATE", "Modification"),
+                            ("DELETE", "Suppression"),
+                            ("LOGIN", "Connexion"),
+                            ("LOGOUT", "Déconnexion"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("table", models.CharField(max_length=100)),
+                ("objet_id", models.IntegerField(blank=True, null=True)),
+                ("ancienne_valeur", models.JSONField(blank=True, null=True)),
+                ("nouvelle_valeur", models.JSONField(blank=True, null=True)),
+                ("description", models.TextField(blank=True)),
+                ("date_action", models.DateTimeField(auto_now_add=True)),
+                (
+                    "utilisateur",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="users.h_appuser",
+                    ),
+                ),
             ],
         ),
     ]

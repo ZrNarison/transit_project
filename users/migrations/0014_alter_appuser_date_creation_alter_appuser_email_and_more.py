@@ -7,79 +7,129 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('personnel', '0015_alter_h_personnel_cin_alter_h_personnel_telephone'),
-        ('users', '0013_h_appuser'),
+        ("personnel", "0015_alter_h_personnel_cin_alter_h_personnel_telephone"),
+        ("users", "0013_h_appuser"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='appuser',
-            name='date_creation',
-            field=models.DateTimeField(auto_now_add=True, verbose_name='Date de création'),
+            model_name="appuser",
+            name="date_creation",
+            field=models.DateTimeField(
+                auto_now_add=True, verbose_name="Date de création"
+            ),
         ),
         migrations.AlterField(
-            model_name='appuser',
-            name='email',
-            field=models.EmailField(blank=True, max_length=254, null=True, verbose_name='Adresse e-mail'),
+            model_name="appuser",
+            name="email",
+            field=models.EmailField(
+                blank=True, max_length=254, null=True, verbose_name="Adresse e-mail"
+            ),
         ),
         migrations.AlterField(
-            model_name='appuser',
-            name='password',
-            field=models.CharField(max_length=255, verbose_name='Mot de passe'),
+            model_name="appuser",
+            name="password",
+            field=models.CharField(max_length=255, verbose_name="Mot de passe"),
         ),
         migrations.AlterField(
-            model_name='appuser',
-            name='personnel',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='user', to='personnel.personnel', verbose_name='Personnel'),
+            model_name="appuser",
+            name="personnel",
+            field=models.OneToOneField(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="user",
+                to="personnel.personnel",
+                verbose_name="Personnel",
+            ),
         ),
         migrations.AlterField(
-            model_name='appuser',
-            name='photo',
-            field=models.ImageField(blank=True, null=True, upload_to='images/users/', verbose_name='Photo'),
+            model_name="appuser",
+            name="photo",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="images/users/", verbose_name="Photo"
+            ),
         ),
         migrations.AlterField(
-            model_name='appuser',
-            name='role',
-            field=models.CharField(choices=[('Admin', 'Administrateur'), ('ChauffeurEntreprise', 'Chauffeur Entreprise'), ('ChauffeurMica', 'Chauffeur Mica'), ('ChefMagasin', 'Chef Magasiné'), ('Magasin', 'Magasiné'), ('Superviseur', 'Superviseur'), ('UserMica', 'Comptable Mica'), ('UserEntreprise', 'Comptable Entreprise'), ('UserProjet', 'Utilisateur Projet')], default='UserMica', max_length=50, verbose_name='Rôle'),
+            model_name="appuser",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("Admin", "Administrateur"),
+                    ("ChauffeurEntreprise", "Chauffeur Entreprise"),
+                    ("ChauffeurMica", "Chauffeur Mica"),
+                    ("ChefMagasin", "Chef Magasiné"),
+                    ("Magasin", "Magasiné"),
+                    ("Superviseur", "Superviseur"),
+                    ("UserMica", "Comptable Mica"),
+                    ("UserEntreprise", "Comptable Entreprise"),
+                    ("UserProjet", "Utilisateur Projet"),
+                ],
+                default="UserMica",
+                max_length=50,
+                verbose_name="Rôle",
+            ),
         ),
         migrations.AlterField(
-            model_name='appuser',
-            name='username',
-            field=models.CharField(max_length=100, unique=True, verbose_name="Nom d'utilisateur"),
+            model_name="appuser",
+            name="username",
+            field=models.CharField(
+                max_length=100, unique=True, verbose_name="Nom d'utilisateur"
+            ),
         ),
         migrations.AlterField(
-            model_name='h_appuser',
-            name='date_creation',
-            field=models.DateTimeField(auto_now_add=True, verbose_name='Date de création'),
+            model_name="h_appuser",
+            name="date_creation",
+            field=models.DateTimeField(
+                auto_now_add=True, verbose_name="Date de création"
+            ),
         ),
         migrations.AlterField(
-            model_name='h_appuser',
-            name='email',
-            field=models.EmailField(blank=True, max_length=254, null=True, verbose_name='Adresse e-mail'),
+            model_name="h_appuser",
+            name="email",
+            field=models.EmailField(
+                blank=True, max_length=254, null=True, verbose_name="Adresse e-mail"
+            ),
         ),
         migrations.AlterField(
-            model_name='h_appuser',
-            name='password',
-            field=models.CharField(max_length=255, verbose_name='Mot de passe'),
+            model_name="h_appuser",
+            name="password",
+            field=models.CharField(max_length=255, verbose_name="Mot de passe"),
         ),
         migrations.AlterField(
-            model_name='h_appuser',
-            name='personnel',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='historique_user', to='personnel.h_personnel', verbose_name='Personnel H'),
+            model_name="h_appuser",
+            name="personnel",
+            field=models.OneToOneField(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="historique_user",
+                to="personnel.h_personnel",
+                verbose_name="Personnel H",
+            ),
         ),
         migrations.AlterField(
-            model_name='h_appuser',
-            name='photo',
-            field=models.ImageField(blank=True, null=True, upload_to='images/users/', verbose_name='Photo'),
+            model_name="h_appuser",
+            name="photo",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="images/users/", verbose_name="Photo"
+            ),
         ),
         migrations.AlterField(
-            model_name='h_appuser',
-            name='role',
-            field=models.CharField(choices=[('Dir', 'Administrateur'), ('Compta', 'Comptable')], default='Compta', max_length=50, verbose_name='Rôle'),
+            model_name="h_appuser",
+            name="role",
+            field=models.CharField(
+                choices=[("Dir", "Administrateur"), ("Compta", "Comptable")],
+                default="Compta",
+                max_length=50,
+                verbose_name="Rôle",
+            ),
         ),
         migrations.AlterField(
-            model_name='h_appuser',
-            name='username',
-            field=models.CharField(max_length=100, unique=True, verbose_name="Nom d'utilisateur"),
+            model_name="h_appuser",
+            name="username",
+            field=models.CharField(
+                max_length=100, unique=True, verbose_name="Nom d'utilisateur"
+            ),
         ),
     ]

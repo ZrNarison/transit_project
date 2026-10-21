@@ -7,19 +7,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('avances', '0009_remove_avance_client_remove_avance_vehicule'),
+        ("avances", "0009_remove_avance_client_remove_avance_vehicule"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='avance',
-            name='dateEnregistremeny',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="avance",
+            name="dateEnregistremeny",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='avance',
-            name='dateAv',
+            model_name="avance",
+            name="dateAv",
             field=models.DateTimeField(),
         ),
     ]

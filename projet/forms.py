@@ -1,35 +1,39 @@
-from django import forms
-from django.db import models
-from django.utils import timezone
 from decimal import Decimal
-from django.db import transaction
-from personnel.models import Personnel
+
+from django import forms
 from django.core.exceptions import ValidationError
-from .models import (Projet,EquipeProjet,PointProjet,EnginProjet,RapportProjet,
-    RapportTravail,MouvementMateriauProjet,
-    RapportMateriau,
-    VehiculeProjet,
-    RapportVehicule,
+from django.db import models, transaction
+from django.urls import path, reverse, reverse_lazy
+from django.utils import timezone
+
+from personnel.models import Personnel
+
+from .models import (
+    AchatMateriauProjet,
     ActiviteTransportProjet,
-    PersonnelExecutionProjet,
+    AvanceEquipeProjet,
+    ConsommationMateriauProjet,
+    DistributionMateriauProjet,
+    EnginProjet,
+    EquipageProjet,
+    EquipeMateriauProjet,
+    EquipeProjet,
+    MateriauProjet,
+    MouvementMateriauProjet,
     MouvementPersonnelProjet,
     MouvementVehiculeProjet,
-    EquipageProjet,MateriauProjet,
-    AvanceEquipeProjet,
-    EquipeMateriauProjet,
-    VehiculeLourdsProjet
-)
-from .models import (
-    MateriauProjet,
-    AchatMateriauProjet,
-    ReceptionMateriauProjet,
-    DistributionMateriauProjet,
-    ConsommationMateriauProjet,
-    RetourMateriauProjet,
     PersonnelExecutionProjet,
     PointProjet,
+    Projet,
+    RapportMateriau,
+    RapportProjet,
+    RapportTravail,
+    RapportVehicule,
+    ReceptionMateriauProjet,
+    RetourMateriauProjet,
+    VehiculeLourdsProjet,
+    VehiculeProjet,
 )
-from django.urls import path, reverse, reverse_lazy
 
 # ============================================================
 # WIDGETS BOOTSTRAP
@@ -94,6 +98,7 @@ FILE_WIDGET = forms.ClearableFileInput(
 # PROJET
 # ============================================================
 
+
 class ProjetForm(forms.ModelForm):
 
     class Meta:
@@ -140,8 +145,7 @@ class ProjetForm(forms.ModelForm):
         if date_debut and date_fin and date_fin < date_debut:
             self.add_error(
                 "date_fin",
-                "La date de fin doit être supérieure "
-                "ou égale à la date de début.",
+                "La date de fin doit être supérieure " "ou égale à la date de début.",
             )
 
         if budget is not None and budget < 0:
@@ -156,6 +160,7 @@ class ProjetForm(forms.ModelForm):
 # ============================================================
 # EQUIPE PROJET
 # ============================================================
+
 
 class EquipeProjetForm(forms.ModelForm):
 
@@ -195,11 +200,9 @@ class EquipeProjetForm(forms.ModelForm):
 
         self.projet = projet
 
-        self.fields["personnel"].queryset = (
-            Personnel.objects
-            .filter(typeTravail="Construction")
-            .order_by("nom", "prenom")
-        )
+        self.fields["personnel"].queryset = Personnel.objects.filter(
+            typeTravail="Construction"
+        ).order_by("nom", "prenom")
 
         if projet and not self.is_bound and not self.instance.pk:
 
@@ -228,8 +231,7 @@ class EquipeProjetForm(forms.ModelForm):
         if date_debut and date_fin and date_fin < date_debut:
             self.add_error(
                 "date_fin",
-                "La fin de l'affectation doit être "
-                "postérieure ou égale au début.",
+                "La fin de l'affectation doit être " "postérieure ou égale au début.",
             )
 
         if self.projet:
@@ -241,19 +243,13 @@ class EquipeProjetForm(forms.ModelForm):
             ):
                 self.add_error(
                     "date_debut",
-                    "L'affectation ne peut pas commencer "
-                    "avant le début du projet.",
+                    "L'affectation ne peut pas commencer " "avant le début du projet.",
                 )
 
-            if (
-                date_fin
-                and self.projet.date_fin
-                and date_fin > self.projet.date_fin
-            ):
+            if date_fin and self.projet.date_fin and date_fin > self.projet.date_fin:
                 self.add_error(
                     "date_fin",
-                    "L'affectation ne peut pas dépasser "
-                    "la date de fin du projet.",
+                    "L'affectation ne peut pas dépasser " "la date de fin du projet.",
                 )
 
         if personnel and self.projet:
@@ -264,24 +260,21 @@ class EquipeProjetForm(forms.ModelForm):
             )
 
             if self.instance.pk:
-                queryset = queryset.exclude(
-                    pk=self.instance.pk
-                )
+                queryset = queryset.exclude(pk=self.instance.pk)
 
             if queryset.exists():
                 self.add_error(
                     "personnel",
-                    "Ce personnel est déjà affecté "
-                    "à ce projet.",
+                    "Ce personnel est déjà affecté " "à ce projet.",
                 )
 
         return cleaned_data
 
 
-
 # ============================================================
 # VÉHICULE ROUTIER AFFECTÉ AU PROJET
 # ============================================================
+
 
 class VehiculeProjetForm(forms.ModelForm):
 
@@ -306,27 +299,23 @@ class VehiculeProjetForm(forms.ModelForm):
                     "placeholder": "Exemple : Camion 01",
                 }
             ),
-
             "chauffeur": forms.Select(
                 attrs={
                     "class": "form-select",
                 }
             ),
-
             "date_debut": forms.DateInput(
                 attrs={
                     "class": "form-control",
                     "type": "date",
                 }
             ),
-
             "date_fin": forms.DateInput(
                 attrs={
                     "class": "form-control",
                     "type": "date",
                 }
             ),
-
             "kilometrage_initial": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -334,7 +323,6 @@ class VehiculeProjetForm(forms.ModelForm):
                     "min": "0",
                 }
             ),
-
             "kilometrage_final": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -342,7 +330,6 @@ class VehiculeProjetForm(forms.ModelForm):
                     "min": "0",
                 }
             ),
-
             "consommation_km_litre": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -351,7 +338,6 @@ class VehiculeProjetForm(forms.ModelForm):
                     "placeholder": "Exemple : 3.50",
                 }
             ),
-
             "actif": forms.CheckboxInput(
                 attrs={
                     "class": "form-check-input",
@@ -380,11 +366,9 @@ class VehiculeProjetForm(forms.ModelForm):
         # CHAUFFEURS
         # ----------------------------------------------------
 
-        self.fields["chauffeur"].queryset = (
-            Personnel.objects
-            .filter(typeTravail="Construction")
-            .order_by("nom", "prenom")
-        )
+        self.fields["chauffeur"].queryset = Personnel.objects.filter(
+            typeTravail="Construction"
+        ).order_by("nom", "prenom")
 
         self.fields["chauffeur"].required = False
 
@@ -395,22 +379,22 @@ class VehiculeProjetForm(forms.ModelForm):
         if projet:
 
             if projet.date_debut:
-                self.fields["date_debut"].widget.attrs["min"] = (
-                    projet.date_debut.isoformat()
-                )
+                self.fields["date_debut"].widget.attrs[
+                    "min"
+                ] = projet.date_debut.isoformat()
 
             if projet.date_fin:
-                self.fields["date_debut"].widget.attrs["max"] = (
-                    projet.date_fin.isoformat()
-                )
+                self.fields["date_debut"].widget.attrs[
+                    "max"
+                ] = projet.date_fin.isoformat()
 
-                self.fields["date_fin"].widget.attrs["min"] = (
-                    projet.date_debut.isoformat()
-                )
+                self.fields["date_fin"].widget.attrs[
+                    "min"
+                ] = projet.date_debut.isoformat()
 
-                self.fields["date_fin"].widget.attrs["max"] = (
-                    projet.date_fin.isoformat()
-                )
+                self.fields["date_fin"].widget.attrs[
+                    "max"
+                ] = projet.date_fin.isoformat()
 
         # ----------------------------------------------------
         # VALEURS PAR DÉFAUT
@@ -421,14 +405,10 @@ class VehiculeProjetForm(forms.ModelForm):
             if projet:
 
                 if projet.date_debut:
-                    self.fields["date_debut"].initial = (
-                        projet.date_debut
-                    )
+                    self.fields["date_debut"].initial = projet.date_debut
 
                 if projet.date_fin:
-                    self.fields["date_fin"].initial = (
-                        projet.date_fin
-                    )
+                    self.fields["date_fin"].initial = projet.date_fin
 
             self.fields["actif"].initial = True
 
@@ -440,9 +420,7 @@ class VehiculeProjetForm(forms.ModelForm):
             vehicule = vehicule.strip()
 
         if not vehicule:
-            raise forms.ValidationError(
-                "Veuillez saisir le véhicule."
-            )
+            raise forms.ValidationError("Veuillez saisir le véhicule.")
 
         # Vérification du doublon dans le même projet
         if self.projet:
@@ -453,14 +431,10 @@ class VehiculeProjetForm(forms.ModelForm):
             )
 
             if self.instance.pk:
-                queryset = queryset.exclude(
-                    pk=self.instance.pk
-                )
+                queryset = queryset.exclude(pk=self.instance.pk)
 
             if queryset.exists():
-                raise forms.ValidationError(
-                    "Ce véhicule est déjà affecté à ce projet."
-                )
+                raise forms.ValidationError("Ce véhicule est déjà affecté à ce projet.")
 
         return vehicule
 
@@ -471,17 +445,11 @@ class VehiculeProjetForm(forms.ModelForm):
         date_debut = cleaned_data.get("date_debut")
         date_fin = cleaned_data.get("date_fin")
 
-        kilometrage_initial = cleaned_data.get(
-            "kilometrage_initial"
-        )
+        kilometrage_initial = cleaned_data.get("kilometrage_initial")
 
-        kilometrage_final = cleaned_data.get(
-            "kilometrage_final"
-        )
+        kilometrage_final = cleaned_data.get("kilometrage_final")
 
-        consommation = cleaned_data.get(
-            "consommation_km_litre"
-        )
+        consommation = cleaned_data.get("consommation_km_litre")
 
         # ----------------------------------------------------
         # DATES
@@ -511,46 +479,32 @@ class VehiculeProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "date_debut",
-                    "L'affectation ne peut pas commencer "
-                    "avant le début du projet.",
+                    "L'affectation ne peut pas commencer " "avant le début du projet.",
                 )
 
-            if (
-                date_fin
-                and self.projet.date_fin
-                and date_fin > self.projet.date_fin
-            ):
+            if date_fin and self.projet.date_fin and date_fin > self.projet.date_fin:
 
                 self.add_error(
                     "date_fin",
-                    "L'affectation ne peut pas dépasser "
-                    "la date de fin du projet.",
+                    "L'affectation ne peut pas dépasser " "la date de fin du projet.",
                 )
 
         # ----------------------------------------------------
         # KILOMÉTRAGE
         # ----------------------------------------------------
 
-        if (
-            kilometrage_initial is not None
-            and kilometrage_initial < 0
-        ):
+        if kilometrage_initial is not None and kilometrage_initial < 0:
 
             self.add_error(
                 "kilometrage_initial",
-                "Le kilométrage initial "
-                "ne peut pas être négatif.",
+                "Le kilométrage initial " "ne peut pas être négatif.",
             )
 
-        if (
-            kilometrage_final is not None
-            and kilometrage_final < 0
-        ):
+        if kilometrage_final is not None and kilometrage_final < 0:
 
             self.add_error(
                 "kilometrage_final",
-                "Le kilométrage final "
-                "ne peut pas être négatif.",
+                "Le kilométrage final " "ne peut pas être négatif.",
             )
 
         if (
@@ -569,10 +523,7 @@ class VehiculeProjetForm(forms.ModelForm):
         # CONSOMMATION
         # ----------------------------------------------------
 
-        if (
-            consommation is not None
-            and consommation < 0
-        ):
+        if consommation is not None and consommation < 0:
 
             self.add_error(
                 "consommation_km_litre",
@@ -608,45 +559,39 @@ class EnginProjetForm(forms.ModelForm):
                     "placeholder": "Exemple : Pelle hydraulique",
                 }
             ),
-
             "conducteur": forms.Select(
                 attrs={
                     "class": "form-select",
                 }
             ),
-
             "date_debut": forms.DateInput(
                 attrs={
                     "class": "form-control",
                     "type": "date",
                 }
             ),
-
             "date_fin": forms.DateInput(
                 attrs={
                     "class": "form-control",
                     "type": "date",
                 }
             ),
-
             "heures_initiales": forms.NumberInput(
-                    attrs={
-                        "class": "form-control",
-                        "step": "0.01",
-                        "min": "0",
-                        "placeholder": "Compteur initial",
-                    }
-                ),
-
-                "heures_finales": forms.NumberInput(
-                    attrs={
-                        "class": "form-control",
-                        "step": "0.01",
-                        "min": "0",
-                        "placeholder": "Compteur final",
-                    }
-                ),
-
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Compteur initial",
+                }
+            ),
+            "heures_finales": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Compteur final",
+                }
+            ),
             "consommation_heure_litre": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -655,7 +600,6 @@ class EnginProjetForm(forms.ModelForm):
                     "placeholder": "Exemple : 12.50",
                 }
             ),
-
             "actif": forms.CheckboxInput(
                 attrs={
                     "class": "form-check-input",
@@ -684,11 +628,9 @@ class EnginProjetForm(forms.ModelForm):
         # CONDUCTEURS
         # ----------------------------------------------------
 
-        self.fields["conducteur"].queryset = (
-            Personnel.objects
-            .filter(typeTravail="Construction")
-            .order_by("nom", "prenom")
-        )
+        self.fields["conducteur"].queryset = Personnel.objects.filter(
+            typeTravail="Construction"
+        ).order_by("nom", "prenom")
 
         self.fields["conducteur"].required = False
 
@@ -699,22 +641,22 @@ class EnginProjetForm(forms.ModelForm):
         if projet:
 
             if projet.date_debut:
-                self.fields["date_debut"].widget.attrs["min"] = (
-                    projet.date_debut.isoformat()
-                )
+                self.fields["date_debut"].widget.attrs[
+                    "min"
+                ] = projet.date_debut.isoformat()
 
             if projet.date_fin:
-                self.fields["date_debut"].widget.attrs["max"] = (
-                    projet.date_fin.isoformat()
-                )
+                self.fields["date_debut"].widget.attrs[
+                    "max"
+                ] = projet.date_fin.isoformat()
 
-                self.fields["date_fin"].widget.attrs["min"] = (
-                    projet.date_debut.isoformat()
-                )
+                self.fields["date_fin"].widget.attrs[
+                    "min"
+                ] = projet.date_debut.isoformat()
 
-                self.fields["date_fin"].widget.attrs["max"] = (
-                    projet.date_fin.isoformat()
-                )
+                self.fields["date_fin"].widget.attrs[
+                    "max"
+                ] = projet.date_fin.isoformat()
 
         # ----------------------------------------------------
         # VALEURS PAR DÉFAUT
@@ -725,14 +667,10 @@ class EnginProjetForm(forms.ModelForm):
             if projet:
 
                 if projet.date_debut:
-                    self.fields["date_debut"].initial = (
-                        projet.date_debut
-                    )
+                    self.fields["date_debut"].initial = projet.date_debut
 
                 if projet.date_fin:
-                    self.fields["date_fin"].initial = (
-                        projet.date_fin
-                    )
+                    self.fields["date_fin"].initial = projet.date_fin
 
             self.fields["actif"].initial = True
 
@@ -744,9 +682,7 @@ class EnginProjetForm(forms.ModelForm):
             engin = engin.strip()
 
         if not engin:
-            raise forms.ValidationError(
-                "Veuillez saisir l'engin."
-            )
+            raise forms.ValidationError("Veuillez saisir l'engin.")
 
         # Vérification du doublon dans le même projet
         if self.projet:
@@ -757,14 +693,10 @@ class EnginProjetForm(forms.ModelForm):
             )
 
             if self.instance.pk:
-                queryset = queryset.exclude(
-                    pk=self.instance.pk
-                )
+                queryset = queryset.exclude(pk=self.instance.pk)
 
             if queryset.exists():
-                raise forms.ValidationError(
-                    "Cet engin est déjà affecté à ce projet."
-                )
+                raise forms.ValidationError("Cet engin est déjà affecté à ce projet.")
 
         return engin
 
@@ -775,17 +707,11 @@ class EnginProjetForm(forms.ModelForm):
         date_debut = cleaned_data.get("date_debut")
         date_fin = cleaned_data.get("date_fin")
 
-        heures_initiales = cleaned_data.get(
-            "heures_initiales"
-        )
+        heures_initiales = cleaned_data.get("heures_initiales")
 
-        heures_finales = cleaned_data.get(
-            "heures_finales"
-        )
+        heures_finales = cleaned_data.get("heures_finales")
 
-        consommation = cleaned_data.get(
-            "consommation_heure_litre"
-        )
+        consommation = cleaned_data.get("consommation_heure_litre")
 
         # ----------------------------------------------------
         # DATES
@@ -815,39 +741,27 @@ class EnginProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "date_debut",
-                    "L'affectation ne peut pas commencer "
-                    "avant le début du projet.",
+                    "L'affectation ne peut pas commencer " "avant le début du projet.",
                 )
 
-            if (
-                date_fin
-                and self.projet.date_fin
-                and date_fin > self.projet.date_fin
-            ):
+            if date_fin and self.projet.date_fin and date_fin > self.projet.date_fin:
 
                 self.add_error(
                     "date_fin",
-                    "L'affectation ne peut pas dépasser "
-                    "la date de fin du projet.",
+                    "L'affectation ne peut pas dépasser " "la date de fin du projet.",
                 )
 
                 # ----------------------------------------------------
         # COMPTEUR D'HEURES
         # ----------------------------------------------------
 
-        if (
-            heures_initiales is not None
-            and heures_initiales < 0
-        ):
+        if heures_initiales is not None and heures_initiales < 0:
             self.add_error(
                 "heures_initiales",
                 "Les heures initiales ne peuvent pas être négatives.",
             )
 
-        if (
-            heures_finales is not None
-            and heures_finales < 0
-        ):
+        if heures_finales is not None and heures_finales < 0:
             self.add_error(
                 "heures_finales",
                 "Les heures finales ne peuvent pas être négatives.",
@@ -860,23 +774,18 @@ class EnginProjetForm(forms.ModelForm):
         ):
             self.add_error(
                 "heures_finales",
-                "Le compteur initial doit être supérieur "
-                "ou égal au compteur final.",
+                "Le compteur initial doit être supérieur " "ou égal au compteur final.",
             )
 
         # ----------------------------------------------------
         # CONSOMMATION
         # ----------------------------------------------------
 
-        if (
-            consommation is not None
-            and consommation < 0
-        ):
+        if consommation is not None and consommation < 0:
 
             self.add_error(
                 "consommation_heure_litre",
-                "La consommation L/h "
-                "ne peut pas être négative.",
+                "La consommation L/h " "ne peut pas être négative.",
             )
 
         return cleaned_data
@@ -945,25 +854,27 @@ class MouvementVehiculeProjetForm(forms.ModelForm):
         self.projet = projet
 
         self.fields["vehicule_projet"].queryset = (
-            VehiculeProjet.objects.filter(projet=projet)
-            .order_by("vehicule")
-            if projet else VehiculeProjet.objects.none()
+            VehiculeProjet.objects.filter(projet=projet).order_by("vehicule")
+            if projet
+            else VehiculeProjet.objects.none()
         )
 
         self.fields["engin_projet"].queryset = (
-            EnginProjet.objects.filter(projet=projet)
-            .order_by("engin")
-            if projet else EnginProjet.objects.none()
+            EnginProjet.objects.filter(projet=projet).order_by("engin")
+            if projet
+            else EnginProjet.objects.none()
         )
 
         self.fields["point_depart"].queryset = (
             PointProjet.objects.filter(projet=projet).order_by("nom")
-            if projet else PointProjet.objects.none()
+            if projet
+            else PointProjet.objects.none()
         )
 
         self.fields["point_arrivee"].queryset = (
             PointProjet.objects.filter(projet=projet).order_by("nom")
-            if projet else PointProjet.objects.none()
+            if projet
+            else PointProjet.objects.none()
         )
 
     def clean(self):
@@ -977,13 +888,11 @@ class MouvementVehiculeProjetForm(forms.ModelForm):
         # Exactement un matériel doit être choisi.
         if vehicule and engin:
             self.add_error(
-                "engin_projet",
-                "Choisissez soit un véhicule routier, soit un engin."
+                "engin_projet", "Choisissez soit un véhicule routier, soit un engin."
             )
         elif not vehicule and not engin:
             self.add_error(
-                "vehicule_projet",
-                "Sélectionnez un véhicule routier ou un engin."
+                "vehicule_projet", "Sélectionnez un véhicule routier ou un engin."
             )
 
         materiel = engin or vehicule
@@ -992,21 +901,16 @@ class MouvementVehiculeProjetForm(forms.ModelForm):
             if materiel.projet_id != self.projet.pk:
                 self.add_error(
                     "engin_projet" if engin else "vehicule_projet",
-                    "Le matériel sélectionné n'appartient pas à ce projet."
+                    "Le matériel sélectionné n'appartient pas à ce projet.",
                 )
 
         for champ, point in (
             ("point_depart", point_depart),
             ("point_arrivee", point_arrivee),
         ):
-            if (
-                point
-                and self.projet
-                and point.projet_id != self.projet.pk
-            ):
+            if point and self.projet and point.projet_id != self.projet.pk:
                 self.add_error(
-                    champ,
-                    "Ce point n'appartient pas au projet sélectionné."
+                    champ, "Ce point n'appartient pas au projet sélectionné."
                 )
 
         if engin:
@@ -1015,21 +919,19 @@ class MouvementVehiculeProjetForm(forms.ModelForm):
 
             if initial is not None and initial < 0:
                 self.add_error(
-                    "heures_initiales",
-                    "Le compteur initial ne peut pas être négatif."
+                    "heures_initiales", "Le compteur initial ne peut pas être négatif."
                 )
 
             if final is not None and final < 0:
                 self.add_error(
-                    "heures_finales",
-                    "Le compteur final ne peut pas être négatif."
+                    "heures_finales", "Le compteur final ne peut pas être négatif."
                 )
 
             if initial is not None and final is not None and final > initial:
                 self.add_error(
                     "heures_finales",
                     "Le compteur final doit être inférieur ou égal "
-                    "au compteur initial."
+                    "au compteur initial.",
                 )
 
         elif vehicule:
@@ -1039,28 +941,25 @@ class MouvementVehiculeProjetForm(forms.ModelForm):
             if initial is not None and initial < 0:
                 self.add_error(
                     "kilometrage_initial",
-                    "Le kilométrage initial ne peut pas être négatif."
+                    "Le kilométrage initial ne peut pas être négatif.",
                 )
 
             if final is not None and final < 0:
                 self.add_error(
                     "kilometrage_final",
-                    "Le kilométrage final ne peut pas être négatif."
+                    "Le kilométrage final ne peut pas être négatif.",
                 )
 
             if initial is not None and final is not None and final < initial:
                 self.add_error(
                     "kilometrage_final",
                     "Le kilométrage final doit être supérieur ou égal "
-                    "au kilométrage initial."
+                    "au kilométrage initial.",
                 )
 
         carburant = cleaned_data.get("carburant_litre")
         if carburant is not None and carburant < 0:
-            self.add_error(
-                "carburant_litre",
-                "Le carburant ne peut pas être négatif."
-            )
+            self.add_error("carburant_litre", "Le carburant ne peut pas être négatif.")
 
         return cleaned_data
 
@@ -1068,6 +967,7 @@ class MouvementVehiculeProjetForm(forms.ModelForm):
 # ============================================================
 # MOUVEMENT PERSONNEL
 # ============================================================
+
 
 class MouvementPersonnelProjetForm(forms.ModelForm):
 
@@ -1104,12 +1004,7 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
             "observation": "Observation",
         }
 
-    def __init__(
-        self,
-        *args,
-        projet=None,
-        **kwargs
-    ):
+    def __init__(self, *args, projet=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.projet = projet
@@ -1119,8 +1014,7 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
         # ----------------------------------------------------
 
         self.fields["personnel_execution"].queryset = (
-            PersonnelExecutionProjet.objects
-            .filter(projet=projet)
+            PersonnelExecutionProjet.objects.filter(projet=projet)
             .select_related(
                 "projet",
                 "personnel",
@@ -1135,9 +1029,7 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
         # ----------------------------------------------------
 
         self.fields["point"].queryset = (
-            PointProjet.objects
-            .filter(projet=projet)
-            .order_by("nom")
+            PointProjet.objects.filter(projet=projet).order_by("nom")
             if projet
             else PointProjet.objects.none()
         )
@@ -1146,36 +1038,22 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
         # DATE PAR DÉFAUT
         # ----------------------------------------------------
 
-        if (
-            projet
-            and not self.is_bound
-            and not self.instance.pk
-        ):
-            self.fields["date_mouvement"].initial = (
-                timezone.now()
-            )
+        if projet and not self.is_bound and not self.instance.pk:
+            self.fields["date_mouvement"].initial = timezone.now()
 
     def clean(self):
 
         cleaned_data = super().clean()
 
-        personnel_execution = cleaned_data.get(
-            "personnel_execution"
-        )
+        personnel_execution = cleaned_data.get("personnel_execution")
 
         point = cleaned_data.get("point")
 
-        date_mouvement = cleaned_data.get(
-            "date_mouvement"
-        )
+        date_mouvement = cleaned_data.get("date_mouvement")
 
-        date_debut = cleaned_data.get(
-            "date_debut"
-        )
+        date_debut = cleaned_data.get("date_debut")
 
-        date_fin = cleaned_data.get(
-            "date_fin"
-        )
+        date_fin = cleaned_data.get("date_fin")
 
         # ----------------------------------------------------
         # PERSONNEL
@@ -1183,14 +1061,10 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
 
         if self.projet and personnel_execution:
 
-            if (
-                personnel_execution.projet_id
-                != self.projet.pk
-            ):
+            if personnel_execution.projet_id != self.projet.pk:
                 self.add_error(
                     "personnel_execution",
-                    "Ce personnel d'exécution "
-                    "n'appartient pas à ce projet.",
+                    "Ce personnel d'exécution " "n'appartient pas à ce projet.",
                 )
 
         # ----------------------------------------------------
@@ -1212,14 +1086,10 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
 
         if personnel_execution and point:
 
-            if (
-                personnel_execution.projet_id
-                != point.projet_id
-            ):
+            if personnel_execution.projet_id != point.projet_id:
                 self.add_error(
                     "point",
-                    "Le point et le personnel doivent "
-                    "appartenir au même projet.",
+                    "Le point et le personnel doivent " "appartenir au même projet.",
                 )
 
         # ----------------------------------------------------
@@ -1230,41 +1100,27 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
 
             date_mouvement_date = date_mouvement.date()
 
-            if (
-                self.projet.date_debut
-                and date_mouvement_date
-                < self.projet.date_debut
-            ):
+            if self.projet.date_debut and date_mouvement_date < self.projet.date_debut:
                 self.add_error(
                     "date_mouvement",
                     "La date du mouvement ne peut pas "
                     "être avant le début du projet.",
                 )
 
-            if (
-                self.projet.date_fin
-                and date_mouvement_date
-                > self.projet.date_fin
-            ):
+            if self.projet.date_fin and date_mouvement_date > self.projet.date_fin:
                 self.add_error(
                     "date_mouvement",
-                    "La date du mouvement ne peut pas "
-                    "dépasser la fin du projet.",
+                    "La date du mouvement ne peut pas " "dépasser la fin du projet.",
                 )
 
         # ----------------------------------------------------
         # DATES D'ACTIVITÉ
         # ----------------------------------------------------
 
-        if (
-            date_debut
-            and date_fin
-            and date_fin < date_debut
-        ):
+        if date_debut and date_fin and date_fin < date_debut:
             self.add_error(
                 "date_fin",
-                "La date de fin doit être "
-                "postérieure ou égale à la date de début.",
+                "La date de fin doit être " "postérieure ou égale à la date de début.",
             )
 
         # ----------------------------------------------------
@@ -1273,26 +1129,17 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
 
         if self.projet and date_debut:
 
-            if (
-                self.projet.date_debut
-                and date_debut.date()
-                < self.projet.date_debut
-            ):
+            if self.projet.date_debut and date_debut.date() < self.projet.date_debut:
                 self.add_error(
                     "date_debut",
                     "Le début de l'activité ne peut pas "
                     "être avant le début du projet.",
                 )
 
-            if (
-                self.projet.date_fin
-                and date_debut.date()
-                > self.projet.date_fin
-            ):
+            if self.projet.date_fin and date_debut.date() > self.projet.date_fin:
                 self.add_error(
                     "date_debut",
-                    "Le début de l'activité ne peut pas "
-                    "dépasser la fin du projet.",
+                    "Le début de l'activité ne peut pas " "dépasser la fin du projet.",
                 )
 
         # ----------------------------------------------------
@@ -1301,33 +1148,26 @@ class MouvementPersonnelProjetForm(forms.ModelForm):
 
         if self.projet and date_fin:
 
-            if (
-                self.projet.date_debut
-                and date_fin.date()
-                < self.projet.date_debut
-            ):
+            if self.projet.date_debut and date_fin.date() < self.projet.date_debut:
                 self.add_error(
                     "date_fin",
                     "La fin de l'activité ne peut pas "
                     "être avant le début du projet.",
                 )
 
-            if (
-                self.projet.date_fin
-                and date_fin.date()
-                > self.projet.date_fin
-            ):
+            if self.projet.date_fin and date_fin.date() > self.projet.date_fin:
                 self.add_error(
                     "date_fin",
-                    "La fin de l'activité ne peut pas "
-                    "dépasser la fin du projet.",
+                    "La fin de l'activité ne peut pas " "dépasser la fin du projet.",
                 )
 
         return cleaned_data
 
+
 # ============================================================
 # FORMULAIRE POINT PROJET
 # ============================================================
+
 
 class PointProjetForm(forms.ModelForm):
 
@@ -1361,69 +1201,35 @@ class PointProjetForm(forms.ModelForm):
             "actif": "Point actif",
         }
 
-    # ========================================================
-    # INITIALISATION
-    # ========================================================
-
-    def __init__(
-        self,
-        *args,
-        projet=None,
-        **kwargs
-    ):
-
-        super().__init__(
-            *args,
-            **kwargs
-        )
-
+    def __init__(self, *args, projet=None, **kwargs):
+        super().__init__(*args, **kwargs)
         self.projet = projet
 
-    # ========================================================
-    # VALIDATION DISTANCE
-    # ========================================================
-
     def clean_distance_km(self):
-
-        value = self.cleaned_data.get(
-            "distance_km"
-        )
+        value = self.cleaned_data.get("distance_km")
 
         if value is not None and value < 0:
-
-            raise forms.ValidationError(
-                "La distance ne peut pas être négative."
-            )
+            raise forms.ValidationError("La distance ne peut pas être négative.")
 
         return value
 
-    # ========================================================
-    # ENREGISTREMENT
-    # ========================================================
-
     def save(self, commit=True):
-
-        instance = super().save(
-            commit=False
-        )
-
-        # ----------------------------------------------------
-        # Le projet vient de l'URL
-        # ----------------------------------------------------
+        instance = super().save(commit=False)
 
         if self.projet is not None:
-
             instance.projet = self.projet
 
         if commit:
-
             instance.save()
+            self.save_m2m()
 
         return instance
+
 
 # ============================================================
 # RAPPORT PROJET
 # ============================================================
+
 
 class RapportProjetForm(forms.ModelForm):
 
@@ -1488,24 +1294,16 @@ class RapportProjetForm(forms.ModelForm):
 
         if self.projet and date_rapport:
 
-            if (
-                self.projet.date_debut
-                and date_rapport < self.projet.date_debut
-            ):
+            if self.projet.date_debut and date_rapport < self.projet.date_debut:
                 self.add_error(
                     "date_rapport",
-                    "La date du rapport ne peut pas être "
-                    "avant le début du projet.",
+                    "La date du rapport ne peut pas être " "avant le début du projet.",
                 )
 
-            if (
-                self.projet.date_fin
-                and date_rapport > self.projet.date_fin
-            ):
+            if self.projet.date_fin and date_rapport > self.projet.date_fin:
                 self.add_error(
                     "date_rapport",
-                    "La date du rapport ne peut pas dépasser "
-                    "la fin du projet.",
+                    "La date du rapport ne peut pas dépasser " "la fin du projet.",
                 )
 
         return cleaned_data
@@ -1514,6 +1312,7 @@ class RapportProjetForm(forms.ModelForm):
 # ============================================================
 # RAPPORT TRAVAIL
 # ============================================================
+
 
 class RapportTravailForm(forms.ModelForm):
 
@@ -1560,15 +1359,11 @@ class RapportTravailForm(forms.ModelForm):
         self.projet = projet
 
         if projet:
-            self.fields["point"].queryset = (
-                PointProjet.objects
-                .filter(projet=projet)
-                .order_by("nom")
-            )
+            self.fields["point"].queryset = PointProjet.objects.filter(
+                projet=projet
+            ).order_by("nom")
         else:
-            self.fields["point"].queryset = (
-                PointProjet.objects.none()
-            )
+            self.fields["point"].queryset = PointProjet.objects.none()
 
     def clean(self):
 
@@ -1588,8 +1383,7 @@ class RapportTravailForm(forms.ModelForm):
         if date_debut and date_fin and date_fin < date_debut:
             self.add_error(
                 "date_fin",
-                "La date de fin doit être postérieure "
-                "ou égale à la date de début.",
+                "La date de fin doit être postérieure " "ou égale à la date de début.",
             )
 
         if self.projet:
@@ -1601,19 +1395,13 @@ class RapportTravailForm(forms.ModelForm):
             ):
                 self.add_error(
                     "date_debut",
-                    "La date de début du travail ne peut pas "
-                    "être avant le projet.",
+                    "La date de début du travail ne peut pas " "être avant le projet.",
                 )
 
-            if (
-                date_fin
-                and self.projet.date_fin
-                and date_fin > self.projet.date_fin
-            ):
+            if date_fin and self.projet.date_fin and date_fin > self.projet.date_fin:
                 self.add_error(
                     "date_fin",
-                    "La date de fin du travail ne peut pas "
-                    "dépasser le projet.",
+                    "La date de fin du travail ne peut pas " "dépasser le projet.",
                 )
 
         return cleaned_data
@@ -1622,6 +1410,7 @@ class RapportTravailForm(forms.ModelForm):
 # ============================================================
 # RAPPORT MATERIAU
 # ============================================================
+
 
 class RapportMateriauForm(forms.ModelForm):
 
@@ -1661,22 +1450,14 @@ class RapportMateriauForm(forms.ModelForm):
 
         self.projet = projet
 
-        self.fields["materiau"].queryset = (
-            Materiaux.objects
-            .all()
-            .order_by("libelle")
-        )
+        self.fields["materiau"].queryset = Materiaux.objects.all().order_by("libelle")
 
         if projet:
-            self.fields["point"].queryset = (
-                PointProjet.objects
-                .filter(projet=projet)
-                .order_by("nom")
-            )
+            self.fields["point"].queryset = PointProjet.objects.filter(
+                projet=projet
+            ).order_by("nom")
         else:
-            self.fields["point"].queryset = (
-                PointProjet.objects.none()
-            )
+            self.fields["point"].queryset = PointProjet.objects.none()
 
     def clean(self):
 
@@ -1684,9 +1465,7 @@ class RapportMateriauForm(forms.ModelForm):
 
         quantite = cleaned_data.get("quantite")
         point = cleaned_data.get("point")
-        date_ravitaillement = cleaned_data.get(
-            "date_ravitaillement"
-        )
+        date_ravitaillement = cleaned_data.get("date_ravitaillement")
 
         if quantite is not None and quantite <= 0:
             self.add_error(
@@ -1703,20 +1482,14 @@ class RapportMateriauForm(forms.ModelForm):
 
         if self.projet and date_ravitaillement:
 
-            if (
-                self.projet.date_debut
-                and date_ravitaillement < self.projet.date_debut
-            ):
+            if self.projet.date_debut and date_ravitaillement < self.projet.date_debut:
                 self.add_error(
                     "date_ravitaillement",
                     "La date de ravitaillement ne peut pas "
                     "être avant le début du projet.",
                 )
 
-            if (
-                self.projet.date_fin
-                and date_ravitaillement > self.projet.date_fin
-            ):
+            if self.projet.date_fin and date_ravitaillement > self.projet.date_fin:
                 self.add_error(
                     "date_ravitaillement",
                     "La date de ravitaillement ne peut pas "
@@ -1729,6 +1502,7 @@ class RapportMateriauForm(forms.ModelForm):
 # ============================================================
 # RAPPORT VEHICULE
 # ============================================================
+
 
 class RapportVehiculeForm(forms.ModelForm):
 
@@ -1780,30 +1554,22 @@ class RapportVehiculeForm(forms.ModelForm):
 
         if projet:
 
-            self.fields["vehicule"].queryset = (
-                Vehicule.objects
-                .filter(
-                    actif=True,
-                )
-                .order_by("immatriculation")
-            )
+            self.fields["vehicule"].queryset = Vehicule.objects.filter(
+                actif=True,
+            ).order_by("immatriculation")
 
         else:
 
-            self.fields["vehicule"].queryset = (
-                Vehicule.objects
-                .filter(actif=True)
-                .order_by("immatriculation")
-            )
+            self.fields["vehicule"].queryset = Vehicule.objects.filter(
+                actif=True
+            ).order_by("immatriculation")
 
         # ----------------------------------------------------
         # PERSONNEL
         # ----------------------------------------------------
 
-        self.fields["chauffeur"].queryset = (
-            Personnel.objects
-            .all()
-            .order_by("nom", "prenom")
+        self.fields["chauffeur"].queryset = Personnel.objects.all().order_by(
+            "nom", "prenom"
         )
 
     def clean(self):
@@ -1824,24 +1590,16 @@ class RapportVehiculeForm(forms.ModelForm):
 
         if projet and date_rapport:
 
-            if (
-                projet.date_debut
-                and date_rapport < projet.date_debut
-            ):
+            if projet.date_debut and date_rapport < projet.date_debut:
                 self.add_error(
                     "date_rapport",
-                    "La date du rapport ne peut pas être "
-                    "avant le début du projet.",
+                    "La date du rapport ne peut pas être " "avant le début du projet.",
                 )
 
-            if (
-                projet.date_fin
-                and date_rapport > projet.date_fin
-            ):
+            if projet.date_fin and date_rapport > projet.date_fin:
                 self.add_error(
                     "date_rapport",
-                    "La date du rapport ne peut pas dépasser "
-                    "la fin du projet.",
+                    "La date du rapport ne peut pas dépasser " "la fin du projet.",
                 )
 
         # ----------------------------------------------------
@@ -1862,22 +1620,17 @@ class RapportVehiculeForm(forms.ModelForm):
             if matricule is None:
                 matricule = str(vehicule)
 
-            affectation = (
-                VehiculeProjet.objects
-                .filter(
-                    projet=projet,
-                    vehicule=str(matricule),
-                    actif=True,
-                )
-                .exists()
-            )
+            affectation = VehiculeProjet.objects.filter(
+                projet=projet,
+                vehicule=str(matricule),
+                actif=True,
+            ).exists()
 
             if not affectation:
 
                 self.add_error(
                     "vehicule",
-                    "Ce véhicule n'est pas actuellement "
-                    "affecté à ce projet.",
+                    "Ce véhicule n'est pas actuellement " "affecté à ce projet.",
                 )
 
         # ----------------------------------------------------
@@ -1886,23 +1639,18 @@ class RapportVehiculeForm(forms.ModelForm):
 
         if chauffeur and projet:
 
-            affectation = (
-                EquipeProjet.objects
-                .filter(
-                    projet=projet,
-                    personnel=chauffeur,
-                    fonction="CHAUFFEUR",
-                    actif=True,
-                )
-                .exists()
-            )
+            affectation = EquipeProjet.objects.filter(
+                projet=projet,
+                personnel=chauffeur,
+                fonction="CHAUFFEUR",
+                actif=True,
+            ).exists()
 
             if not affectation:
 
                 self.add_error(
                     "chauffeur",
-                    "Ce personnel n'est pas affecté comme "
-                    "chauffeur à ce projet.",
+                    "Ce personnel n'est pas affecté comme " "chauffeur à ce projet.",
                 )
 
         return cleaned_data
@@ -1911,6 +1659,7 @@ class RapportVehiculeForm(forms.ModelForm):
 # ============================================================
 # ACTIVITE TRANSPORT PROJET
 # ============================================================
+
 
 class ActiviteTransportProjetForm(forms.ModelForm):
 
@@ -1983,8 +1732,7 @@ class ActiviteTransportProjetForm(forms.ModelForm):
             self.fields["projet"].disabled = True
 
             self.fields["chauffeur"].queryset = (
-                Personnel.objects
-                .filter(
+                Personnel.objects.filter(
                     equipe_projet__projet=projet,
                     equipe_projet__fonction="CHAUFFEUR",
                     equipe_projet__actif=True,
@@ -1995,16 +1743,12 @@ class ActiviteTransportProjetForm(forms.ModelForm):
 
         else:
 
-            self.fields["chauffeur"].queryset = (
-                Personnel.objects
-                .all()
-                .order_by("nom", "prenom")
+            self.fields["chauffeur"].queryset = Personnel.objects.all().order_by(
+                "nom", "prenom"
             )
 
-        self.fields["vehicule"].queryset = (
-            Vehicule.objects
-            .filter(actif=True)
-            .order_by("immatriculation")
+        self.fields["vehicule"].queryset = Vehicule.objects.filter(actif=True).order_by(
+            "immatriculation"
         )
 
     def clean(self):
@@ -2015,27 +1759,17 @@ class ActiviteTransportProjetForm(forms.ModelForm):
         chauffeur = cleaned_data.get("chauffeur")
         date_transport = cleaned_data.get("date_transport")
 
-        kilometrage_initial = cleaned_data.get(
-            "kilometrage_initial"
-        )
+        kilometrage_initial = cleaned_data.get("kilometrage_initial")
 
-        kilometrage_final = cleaned_data.get(
-            "kilometrage_final"
-        )
+        kilometrage_final = cleaned_data.get("kilometrage_final")
 
-        if (
-            kilometrage_initial is not None
-            and kilometrage_initial < 0
-        ):
+        if kilometrage_initial is not None and kilometrage_initial < 0:
             self.add_error(
                 "kilometrage_initial",
                 "Le kilométrage initial ne peut pas être négatif.",
             )
 
-        if (
-            kilometrage_final is not None
-            and kilometrage_final < 0
-        ):
+        if kilometrage_final is not None and kilometrage_final < 0:
             self.add_error(
                 "kilometrage_final",
                 "Le kilométrage final ne peut pas être négatif.",
@@ -2054,51 +1788,41 @@ class ActiviteTransportProjetForm(forms.ModelForm):
 
         if projet and date_transport:
 
-            if (
-                projet.date_debut
-                and date_transport < projet.date_debut
-            ):
+            if projet.date_debut and date_transport < projet.date_debut:
                 self.add_error(
                     "date_transport",
                     "La date du transport ne peut pas être "
                     "avant le début du projet.",
                 )
 
-            if (
-                projet.date_fin
-                and date_transport > projet.date_fin
-            ):
+            if projet.date_fin and date_transport > projet.date_fin:
                 self.add_error(
                     "date_transport",
-                    "La date du transport ne peut pas dépasser "
-                    "la fin du projet.",
+                    "La date du transport ne peut pas dépasser " "la fin du projet.",
                 )
 
         if projet and chauffeur:
 
-            affectation = (
-                EquipeProjet.objects
-                .filter(
-                    projet=projet,
-                    personnel=chauffeur,
-                    fonction="CHAUFFEUR",
-                    actif=True,
-                )
-                .exists()
-            )
+            affectation = EquipeProjet.objects.filter(
+                projet=projet,
+                personnel=chauffeur,
+                fonction="CHAUFFEUR",
+                actif=True,
+            ).exists()
 
             if not affectation:
                 self.add_error(
                     "chauffeur",
-                    "Ce personnel n'est pas affecté comme "
-                    "chauffeur à ce projet.",
+                    "Ce personnel n'est pas affecté comme " "chauffeur à ce projet.",
                 )
 
         return cleaned_data
 
+
 # ============================================================
 # PERSONNEL D'EXÉCUTION DU PROJET
 # ============================================================
+
 
 class PersonnelExecutionProjetForm(forms.ModelForm):
 
@@ -2125,17 +1849,11 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
         ]
 
         widgets = {
-
             "projet": SELECT_WIDGET,
-
             "personnel": SELECT_WIDGET,
-
             "nom": TEXT_WIDGET,
-
             "type_class": SELECT_WIDGET,
-
             "montant": NUMBER_WIDGET,
-
             "date_debut": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
@@ -2143,7 +1861,6 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
                     "type": "date",
                 },
             ),
-
             "date_fin": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
@@ -2151,17 +1868,11 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
                     "type": "date",
                 },
             ),
-
             "photo": FILE_WIDGET,
-
             "point_projet": SELECT_WIDGET,
-
             "materiau_projet": SELECT_WIDGET,
-
             "quantite": NUMBER_WIDGET,
-
             "prix_unitaire": NUMBER_WIDGET,
-
             "date_production": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
@@ -2169,7 +1880,6 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
                     "type": "date",
                 },
             ),
-
             "observation": forms.Textarea(
                 attrs={
                     "class": "form-control",
@@ -2177,43 +1887,26 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
                     "placeholder": "Observation éventuelle...",
                 }
             ),
-
             "enregistre_par": SELECT_WIDGET,
         }
 
         labels = {
-
             "projet": "Projet",
-
             "personnel": "Personnel interne",
-
             "nom": "Nom",
-
             "type_class": "Type",
-
             "montant": "Montant",
-
             "date_debut": "Date de début",
-
             "date_fin": "Date de fin",
-
             "photo": "Photo",
-
             "point_projet": "Point du projet",
-
             "materiau_projet": "Matériau du projet",
-
             "quantite": "Quantité",
-
             "prix_unitaire": "Prix unitaire",
-
             "date_production": "Date de production",
-
             "observation": "Observation",
-
             "enregistre_par": "Enregistré par",
         }
-        
 
     # ========================================================
     # INITIALISATION
@@ -2232,9 +1925,7 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
         if self.data.get("projet"):
 
             try:
-                projet_id = int(
-                    self.data.get("projet")
-                )
+                projet_id = int(self.data.get("projet"))
             except (TypeError, ValueError):
 
                 projet_id = None
@@ -2249,18 +1940,14 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
         if projet_id:
 
-            self.fields[
-                "point_projet"
-            ].queryset = PointProjet.objects.filter(
+            self.fields["point_projet"].queryset = PointProjet.objects.filter(
                 projet_id=projet_id,
                 actif=True,
             )
 
         else:
 
-            self.fields[
-                "point_projet"
-            ].queryset = PointProjet.objects.none()
+            self.fields["point_projet"].queryset = PointProjet.objects.none()
 
         # ----------------------------------------------------
         # Filtrer les matériaux du projet
@@ -2268,20 +1955,14 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
         if projet_id:
 
-            self.fields[
-                "materiau_projet"
-            ].queryset = MateriauProjet.objects.filter(
+            self.fields["materiau_projet"].queryset = MateriauProjet.objects.filter(
                 projet_id=projet_id,
                 actif=True,
-            ).select_related(
-                "materiau"
-            )
+            ).select_related("materiau")
 
         else:
 
-            self.fields[
-                "materiau_projet"
-            ].queryset = MateriauProjet.objects.none()
+            self.fields["materiau_projet"].queryset = MateriauProjet.objects.none()
 
         # ----------------------------------------------------
         # Champs facultatifs au niveau formulaire
@@ -2289,47 +1970,27 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
         # La validation dépend ensuite du type.
         # ----------------------------------------------------
 
-        self.fields[
-            "personnel"
-        ].required = False
+        self.fields["personnel"].required = False
 
-        self.fields[
-            "point_projet"
-        ].required = False
+        self.fields["point_projet"].required = False
 
-        self.fields[
-            "materiau_projet"
-        ].required = False
+        self.fields["materiau_projet"].required = False
 
-        self.fields[
-            "date_debut"
-        ].required = False
+        self.fields["date_debut"].required = False
 
-        self.fields[
-            "date_fin"
-        ].required = False
+        self.fields["date_fin"].required = False
 
-        self.fields[
-            "date_production"
-        ].required = False
+        self.fields["date_production"].required = False
 
-        self.fields[
-            "montant"
-        ].required = False
+        self.fields["montant"].required = False
 
         # ----------------------------------------------------
         # Si modification d'un minier
         # ----------------------------------------------------
 
-        if (
-            self.instance
-            and self.instance.pk
-            and self.instance.type_class == "MINIER"
-        ):
+        if self.instance and self.instance.pk and self.instance.type_class == "MINIER":
 
-            self.fields[
-                "montant"
-            ].disabled = True
+            self.fields["montant"].disabled = True
 
     # ========================================================
     # VALIDATION
@@ -2343,53 +2004,29 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
         # DONNÉES
         # ====================================================
 
-        projet = cleaned_data.get(
-            "projet"
-        )
+        projet = cleaned_data.get("projet")
 
-        type_class = cleaned_data.get(
-            "type_class"
-        )
+        type_class = cleaned_data.get("type_class")
 
-        personnel = cleaned_data.get(
-            "personnel"
-        )
+        personnel = cleaned_data.get("personnel")
 
-        nom = cleaned_data.get(
-            "nom"
-        )
+        nom = cleaned_data.get("nom")
 
-        montant = cleaned_data.get(
-            "montant"
-        )
+        montant = cleaned_data.get("montant")
 
-        date_debut = cleaned_data.get(
-            "date_debut"
-        )
+        date_debut = cleaned_data.get("date_debut")
 
-        date_fin = cleaned_data.get(
-            "date_fin"
-        )
+        date_fin = cleaned_data.get("date_fin")
 
-        point_projet = cleaned_data.get(
-            "point_projet"
-        )
+        point_projet = cleaned_data.get("point_projet")
 
-        materiau_projet = cleaned_data.get(
-            "materiau_projet"
-        )
+        materiau_projet = cleaned_data.get("materiau_projet")
 
-        quantite = cleaned_data.get(
-            "quantite"
-        )
+        quantite = cleaned_data.get("quantite")
 
-        prix_unitaire = cleaned_data.get(
-            "prix_unitaire"
-        )
+        prix_unitaire = cleaned_data.get("prix_unitaire")
 
-        date_production = cleaned_data.get(
-            "date_production"
-        )
+        date_production = cleaned_data.get("date_production")
 
         # ====================================================
         # TYPE
@@ -2454,11 +2091,7 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
         if projet:
 
-            if (
-                date_debut
-                and projet.date_debut
-                and date_debut < projet.date_debut
-            ):
+            if date_debut and projet.date_debut and date_debut < projet.date_debut:
 
                 self.add_error(
                     "date_debut",
@@ -2466,16 +2099,11 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
                     "antérieure au début du projet.",
                 )
 
-            if (
-                date_fin
-                and projet.date_fin
-                and date_fin > projet.date_fin
-            ):
+            if date_fin and projet.date_fin and date_fin > projet.date_fin:
 
                 self.add_error(
                     "date_fin",
-                    "La date de fin ne peut pas dépasser "
-                    "la fin du projet.",
+                    "La date de fin ne peut pas dépasser " "la fin du projet.",
                 )
 
         # ====================================================
@@ -2505,8 +2133,7 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "point_projet",
-                    "Le point du projet est obligatoire "
-                    "pour un chef d'équipe.",
+                    "Le point du projet est obligatoire " "pour un chef d'équipe.",
                 )
 
             # ------------------------------------------------
@@ -2519,15 +2146,11 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
             # Montant obligatoire
             # ------------------------------------------------
 
-            if (
-                montant is None
-                or montant <= Decimal("0.00")
-            ):
+            if montant is None or montant <= Decimal("0.00"):
 
                 self.add_error(
                     "montant",
-                    "Le montant doit être supérieur à zéro "
-                    "pour un chef d'équipe.",
+                    "Le montant doit être supérieur à zéro " "pour un chef d'équipe.",
                 )
 
             # ------------------------------------------------
@@ -2548,16 +2171,14 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "date_debut",
-                    "La date de début est obligatoire "
-                    "pour un chef d'équipe.",
+                    "La date de début est obligatoire " "pour un chef d'équipe.",
                 )
 
             if not date_fin:
 
                 self.add_error(
                     "date_fin",
-                    "La date de fin est obligatoire "
-                    "pour un chef d'équipe.",
+                    "La date de fin est obligatoire " "pour un chef d'équipe.",
                 )
 
         # ====================================================
@@ -2580,8 +2201,7 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "materiau_projet",
-                    "Le matériau est obligatoire "
-                    "pour un minier.",
+                    "Le matériau est obligatoire " "pour un minier.",
                 )
 
             # ------------------------------------------------
@@ -2590,23 +2210,18 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
             if materiau_projet and projet:
 
-                if (
-                    materiau_projet.projet_id
-                    != projet.pk
-                ):
+                if materiau_projet.projet_id != projet.pk:
 
                     self.add_error(
                         "materiau_projet",
-                        "Le matériau sélectionné "
-                        "n'appartient pas à ce projet.",
+                        "Le matériau sélectionné " "n'appartient pas à ce projet.",
                     )
 
                 elif not materiau_projet.actif:
 
                     self.add_error(
                         "materiau_projet",
-                        "Le matériau sélectionné "
-                        "n'est plus actif pour ce projet.",
+                        "Le matériau sélectionné " "n'est plus actif pour ce projet.",
                     )
 
             # ------------------------------------------------
@@ -2617,16 +2232,14 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "quantite",
-                    "La quantité est obligatoire "
-                    "pour un minier.",
+                    "La quantité est obligatoire " "pour un minier.",
                 )
 
             elif quantite <= Decimal("0.00"):
 
                 self.add_error(
                     "quantite",
-                    "La quantité doit être "
-                    "supérieure à zéro.",
+                    "La quantité doit être " "supérieure à zéro.",
                 )
 
             # ------------------------------------------------
@@ -2637,16 +2250,14 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "prix_unitaire",
-                    "Le prix unitaire est obligatoire "
-                    "pour un minier.",
+                    "Le prix unitaire est obligatoire " "pour un minier.",
                 )
 
             elif prix_unitaire <= Decimal("0.00"):
 
                 self.add_error(
                     "prix_unitaire",
-                    "Le prix unitaire doit être "
-                    "supérieur à zéro.",
+                    "Le prix unitaire doit être " "supérieur à zéro.",
                 )
 
             # ------------------------------------------------
@@ -2657,8 +2268,7 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "date_production",
-                    "La date de production est obligatoire "
-                    "pour un minier.",
+                    "La date de production est obligatoire " "pour un minier.",
                 )
 
             # ------------------------------------------------
@@ -2667,10 +2277,7 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
             if projet and date_production:
 
-                if (
-                    projet.date_debut
-                    and date_production < projet.date_debut
-                ):
+                if projet.date_debut and date_production < projet.date_debut:
 
                     self.add_error(
                         "date_production",
@@ -2678,10 +2285,7 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
                         "être antérieure au début du projet.",
                     )
 
-                if (
-                    projet.date_fin
-                    and date_production > projet.date_fin
-                ):
+                if projet.date_fin and date_production > projet.date_fin:
 
                     self.add_error(
                         "date_production",
@@ -2763,9 +2367,7 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
         # COHÉRENCE POINT / PROJET
         # ====================================================
 
-        point_projet = cleaned_data.get(
-            "point_projet"
-        )
+        point_projet = cleaned_data.get("point_projet")
 
         if point_projet and projet:
 
@@ -2773,16 +2375,14 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "point_projet",
-                    "Le point sélectionné "
-                    "n'appartient pas à ce projet.",
+                    "Le point sélectionné " "n'appartient pas à ce projet.",
                 )
 
             elif not point_projet.actif:
 
                 self.add_error(
                     "point_projet",
-                    "Le point sélectionné "
-                    "n'est plus actif pour ce projet.",
+                    "Le point sélectionné " "n'est plus actif pour ce projet.",
                 )
 
         # ====================================================
@@ -2842,7 +2442,6 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 
             self.instance.date_production = None
 
-        
         # ====================================================
         # RETOUR
         # ====================================================
@@ -2853,6 +2452,7 @@ class PersonnelExecutionProjetForm(forms.ModelForm):
 # ============================================================
 # FORMULAIRE CHEF D'ÉQUIPE DU PROJET
 # ============================================================
+
 
 class ChefEquipeProjetForm(forms.ModelForm):
 
@@ -2873,15 +2473,10 @@ class ChefEquipeProjetForm(forms.ModelForm):
         ]
 
         widgets = {
-
             "projet": SELECT_WIDGET,
-
             "nom": TEXT_WIDGET,
-
             "type_class": SELECT_WIDGET,
-
             "montant": NUMBER_WIDGET,
-
             "date_debut": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
@@ -2889,7 +2484,6 @@ class ChefEquipeProjetForm(forms.ModelForm):
                     "type": "date",
                 },
             ),
-
             "date_fin": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
@@ -2897,32 +2491,20 @@ class ChefEquipeProjetForm(forms.ModelForm):
                     "type": "date",
                 },
             ),
-
             "photo": FILE_WIDGET,
-
             "point_projet": SELECT_WIDGET,
-
             "enregistre_par": SELECT_WIDGET,
         }
 
         labels = {
-
             "projet": "Projet",
-
             "nom": "Nom du chef d'équipe",
-
             "type_class": "Type",
-
             "montant": "Montant",
-
             "date_debut": "Date de début",
-
             "date_fin": "Date de fin",
-
             "photo": "Photo",
-
             "point_projet": "Point du projet",
-
             "enregistre_par": "Enregistré par",
         }
 
@@ -2948,9 +2530,7 @@ class ChefEquipeProjetForm(forms.ModelForm):
 
         if self.projet is not None:
 
-            self.fields["projet"].queryset = Projet.objects.filter(
-                pk=self.projet.pk
-            )
+            self.fields["projet"].queryset = Projet.objects.filter(pk=self.projet.pk)
 
             self.fields["projet"].initial = self.projet.pk
 
@@ -2975,16 +2555,10 @@ class ChefEquipeProjetForm(forms.ModelForm):
 
         if self.projet is not None:
 
-            self.fields[
-                "point_projet"
-            ].queryset = (
-                PointProjet.objects
-                .filter(
-                    projet=self.projet,
-                    actif=True,
-                )
-                .order_by("nom")
-            )
+            self.fields["point_projet"].queryset = PointProjet.objects.filter(
+                projet=self.projet,
+                actif=True,
+            ).order_by("nom")
 
         else:
 
@@ -2995,32 +2569,20 @@ class ChefEquipeProjetForm(forms.ModelForm):
 
             projet_id = None
 
-            if (
-                self.instance
-                and self.instance.pk
-                and self.instance.projet_id
-            ):
+            if self.instance and self.instance.pk and self.instance.projet_id:
 
                 projet_id = self.instance.projet_id
 
             if projet_id:
 
-                self.fields[
-                    "point_projet"
-                ].queryset = (
-                    PointProjet.objects
-                    .filter(
-                        projet_id=projet_id,
-                        actif=True,
-                    )
-                    .order_by("nom")
-                )
+                self.fields["point_projet"].queryset = PointProjet.objects.filter(
+                    projet_id=projet_id,
+                    actif=True,
+                ).order_by("nom")
 
             else:
 
-                self.fields[
-                    "point_projet"
-                ].queryset = PointProjet.objects.none()
+                self.fields["point_projet"].queryset = PointProjet.objects.none()
 
         # ----------------------------------------------------
         # Champs obligatoires
@@ -3159,11 +2721,7 @@ class ChefEquipeProjetForm(forms.ModelForm):
 
         if projet:
 
-            if (
-                date_debut
-                and projet.date_debut
-                and date_debut < projet.date_debut
-            ):
+            if date_debut and projet.date_debut and date_debut < projet.date_debut:
 
                 self.add_error(
                     "date_debut",
@@ -3172,11 +2730,7 @@ class ChefEquipeProjetForm(forms.ModelForm):
                     "au début du projet.",
                 )
 
-            if (
-                date_fin
-                and projet.date_fin
-                and date_fin > projet.date_fin
-            ):
+            if date_fin and projet.date_fin and date_fin > projet.date_fin:
 
                 self.add_error(
                     "date_fin",
@@ -3193,8 +2747,7 @@ class ChefEquipeProjetForm(forms.ModelForm):
 
             self.add_error(
                 "point_projet",
-                "Le point du projet est obligatoire "
-                "pour un chef d'équipe.",
+                "Le point du projet est obligatoire " "pour un chef d'équipe.",
             )
 
         elif projet:
@@ -3203,16 +2756,14 @@ class ChefEquipeProjetForm(forms.ModelForm):
 
                 self.add_error(
                     "point_projet",
-                    "Le point sélectionné "
-                    "n'appartient pas à ce projet.",
+                    "Le point sélectionné " "n'appartient pas à ce projet.",
                 )
 
             elif not point_projet.actif:
 
                 self.add_error(
                     "point_projet",
-                    "Le point sélectionné "
-                    "n'est plus actif pour ce projet.",
+                    "Le point sélectionné " "n'est plus actif pour ce projet.",
                 )
 
         # ====================================================
@@ -3305,6 +2856,7 @@ class ChefEquipeProjetForm(forms.ModelForm):
 
         return instance
 
+
 class FormulaireMateriauProjet(forms.ModelForm):
     """Planification des matériaux nécessaires au projet."""
 
@@ -3316,19 +2868,25 @@ class FormulaireMateriauProjet(forms.ModelForm):
             "quantite_prevue",
         ]
         widgets = {
-            "materiau": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Ex. : Ciment, sable, gravier...",
-            }),
-            "unite": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Ex. : sac, m³, kg, pièce...",
-            }),
-            "quantite_prevue": forms.NumberInput(attrs={
-                "class": "form-control",
-                "min": "0.001",
-                "step": "0.001",
-            }),
+            "materiau": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Ex. : Ciment, sable, gravier...",
+                }
+            ),
+            "unite": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Ex. : sac, m³, kg, pièce...",
+                }
+            ),
+            "quantite_prevue": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.001",
+                    "step": "0.001",
+                }
+            ),
         }
 
     def clean_quantite_prevue(self):
@@ -3357,32 +2915,44 @@ class AchatMateriauProjetForm(forms.ModelForm):
         ]
 
         widgets = {
-            "materiau_projet": forms.Select(attrs={
-                "class": "form-select",
-            }),
-            "fournisseur": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Nom du fournisseur",
-            }),
-            "date_achat": forms.DateInput(attrs={
-                "class": "form-control",
-                "type": "date",
-            }),
-            "quantite_achetee": forms.NumberInput(attrs={
-                "class": "form-control",
-                "min": "0.01",
-                "step": "0.01",
-            }),
-            "prix_unitaire": forms.NumberInput(attrs={
-                "class": "form-control",
-                "min": "0",
-                "step": "0.01",
-            }),
-            "observation": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 3,
-                "placeholder": "Observations éventuelles...",
-            }),
+            "materiau_projet": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+            "fournisseur": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom du fournisseur",
+                }
+            ),
+            "date_achat": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "quantite_achetee": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                }
+            ),
+            "prix_unitaire": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0",
+                    "step": "0.01",
+                }
+            ),
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Observations éventuelles...",
+                }
+            ),
         }
 
         labels = {
@@ -3401,15 +2971,11 @@ class AchatMateriauProjetForm(forms.ModelForm):
 
         # Limiter les matériaux à ceux du projet courant.
         if projet is not None:
-            self.fields["materiau_projet"].queryset = (
-                MateriauProjet.objects.filter(
-                    projet=projet
-                ).order_by("materiau")
-            )
+            self.fields["materiau_projet"].queryset = MateriauProjet.objects.filter(
+                projet=projet
+            ).order_by("materiau")
         else:
-            self.fields["materiau_projet"].queryset = (
-                MateriauProjet.objects.none()
-            )
+            self.fields["materiau_projet"].queryset = MateriauProjet.objects.none()
 
     def clean_quantite_achetee(self):
         quantite = self.cleaned_data.get("quantite_achetee")
@@ -3425,9 +2991,7 @@ class AchatMateriauProjetForm(forms.ModelForm):
         prix = self.cleaned_data.get("prix_unitaire")
 
         if prix is None or prix < Decimal("0"):
-            raise ValidationError(
-                "Le prix unitaire ne peut pas être négatif."
-            )
+            raise ValidationError("Le prix unitaire ne peut pas être négatif.")
 
         return prix
 
@@ -3451,25 +3015,20 @@ class AchatMateriauProjetForm(forms.ModelForm):
         if materiau and date_achat:
             projet_materiau = materiau.projet
 
-            if (
-                projet_materiau.date_debut
-                and date_achat < projet_materiau.date_debut
-            ):
+            if projet_materiau.date_debut and date_achat < projet_materiau.date_debut:
                 self.add_error(
                     "date_achat",
                     "La date d'achat ne peut pas précéder le début du projet.",
                 )
 
-            if (
-                projet_materiau.date_fin
-                and date_achat > projet_materiau.date_fin
-            ):
+            if projet_materiau.date_fin and date_achat > projet_materiau.date_fin:
                 self.add_error(
                     "date_achat",
                     "La date d'achat ne peut pas dépasser la fin du projet.",
                 )
 
         return cleaned_data
+
 
 class ReceptionMateriauProjetForm(forms.ModelForm):
     """Enregistrement d'une réception de matériaux pour le projet."""
@@ -3486,9 +3045,7 @@ class ReceptionMateriauProjetForm(forms.ModelForm):
         ]
 
         widgets = {
-            "materiau_projet": forms.Select(
-                attrs={"class": "form-select"}
-            ),
+            "materiau_projet": forms.Select(attrs={"class": "form-select"}),
             "date_reception": forms.DateInput(
                 attrs={"class": "form-control", "type": "date"}
             ),
@@ -3499,9 +3056,7 @@ class ReceptionMateriauProjetForm(forms.ModelForm):
                     "step": "0.01",
                 }
             ),
-            "point": forms.Select(
-                attrs={"class": "form-select", "id": "id_point"}
-            ),
+            "point": forms.Select(attrs={"class": "form-select", "id": "id_point"}),
             "piece_justificative": forms.ClearableFileInput(
                 attrs={
                     "class": "form-control",
@@ -3527,9 +3082,7 @@ class ReceptionMateriauProjetForm(forms.ModelForm):
         }
 
         help_texts = {
-            "piece_justificative": (
-                "Formats acceptés : PDF, JPG, JPEG, PNG et WEBP."
-            ),
+            "piece_justificative": ("Formats acceptés : PDF, JPG, JPEG, PNG et WEBP."),
         }
 
     def __init__(self, *args, projet=None, **kwargs):
@@ -3539,23 +3092,17 @@ class ReceptionMateriauProjetForm(forms.ModelForm):
         self.fields["point"].required = False
         self.fields["piece_justificative"].required = False
 
-        self.fields["materiau_projet"].queryset = (
-            MateriauProjet.objects.none()
-        )
+        self.fields["materiau_projet"].queryset = MateriauProjet.objects.none()
         self.fields["point"].queryset = PointProjet.objects.none()
 
         if projet is not None:
-            self.fields["materiau_projet"].queryset = (
-                MateriauProjet.objects.filter(
-                    projet=projet
-                ).order_by("materiau")
-            )
+            self.fields["materiau_projet"].queryset = MateriauProjet.objects.filter(
+                projet=projet
+            ).order_by("materiau")
 
-            self.fields["point"].queryset = (
-                PointProjet.objects.filter(
-                    projet=projet
-                ).order_by("nom")
-            )
+            self.fields["point"].queryset = PointProjet.objects.filter(
+                projet=projet
+            ).order_by("nom")
 
     def clean_quantite_recue(self):
         quantite = self.cleaned_data.get("quantite_recue")
@@ -3635,15 +3182,9 @@ class DistributionMateriauProjetForm(forms.ModelForm):
         ]
 
         widgets = {
-            "materiau_projet": forms.Select(
-                attrs={"class": "form-select"}
-            ),
-            "vehicule": forms.Select(
-                attrs={"class": "form-select"}
-            ),
-            "point": forms.Select(
-                attrs={"class": "form-select"}
-            ),
+            "materiau_projet": forms.Select(attrs={"class": "form-select"}),
+            "vehicule": forms.Select(attrs={"class": "form-select"}),
+            "point": forms.Select(attrs={"class": "form-select"}),
             "date_distribution": forms.DateInput(
                 attrs={
                     "class": "form-control",
@@ -3669,38 +3210,26 @@ class DistributionMateriauProjetForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.projet = projet
 
-        self.fields["materiau_projet"].queryset = (
-            MateriauProjet.objects.none()
-        )
-        self.fields["vehicule"].queryset = (
-            VehiculeProjet.objects.none()
-        )
-        self.fields["point"].queryset = (
-            PointProjet.objects.none()
-        )
+        self.fields["materiau_projet"].queryset = MateriauProjet.objects.none()
+        self.fields["vehicule"].queryset = VehiculeProjet.objects.none()
+        self.fields["point"].queryset = PointProjet.objects.none()
 
         self.fields["vehicule"].required = False
         self.fields["vehicule"].empty_label = "Aucun véhicule"
 
         if projet is not None:
-            self.fields["materiau_projet"].queryset = (
-                MateriauProjet.objects.filter(
-                    projet=projet
-                ).order_by("materiau", "id")
-            )
+            self.fields["materiau_projet"].queryset = MateriauProjet.objects.filter(
+                projet=projet
+            ).order_by("materiau", "id")
 
-            self.fields["vehicule"].queryset = (
-                VehiculeProjet.objects.filter(
-                    projet=projet,
-                    actif=True,
-                ).order_by("vehicule", "id")
-            )
+            self.fields["vehicule"].queryset = VehiculeProjet.objects.filter(
+                projet=projet,
+                actif=True,
+            ).order_by("vehicule", "id")
 
-            self.fields["point"].queryset = (
-                PointProjet.objects.filter(
-                    projet=projet
-                ).order_by("nom", "id")
-            )
+            self.fields["point"].queryset = PointProjet.objects.filter(
+                projet=projet
+            ).order_by("nom", "id")
 
     def clean_quantite(self):
         quantite = self.cleaned_data.get("quantite")
@@ -3745,7 +3274,6 @@ class DistributionMateriauProjetForm(forms.ModelForm):
         return cleaned_data
 
 
-
 class ConsommationMateriauProjetForm(forms.ModelForm):
     """Enregistrement de la consommation des matériaux du projet."""
 
@@ -3761,12 +3289,8 @@ class ConsommationMateriauProjetForm(forms.ModelForm):
         ]
 
         widgets = {
-            "distribution": forms.Select(
-                attrs={"class": "form-select"}
-            ),
-            "reception_directe": forms.Select(
-                attrs={"class": "form-select"}
-            ),
+            "distribution": forms.Select(attrs={"class": "form-select"}),
+            "reception_directe": forms.Select(attrs={"class": "form-select"}),
             "date_consommation": forms.DateInput(
                 attrs={
                     "class": "form-control",
@@ -3797,17 +3321,13 @@ class ConsommationMateriauProjetForm(forms.ModelForm):
         self.fields["distribution"].required = False
         self.fields["reception_directe"].required = False
 
-        self.fields["distribution"].queryset = (
-            DistributionMateriauProjet.objects.none()
-        )
+        self.fields["distribution"].queryset = DistributionMateriauProjet.objects.none()
 
         self.fields["reception_directe"].queryset = (
             ReceptionMateriauProjet.objects.none()
         )
 
-        self.fields["date_consommation"].input_formats = [
-            "%Y-%m-%d"
-        ]
+        self.fields["date_consommation"].input_formats = ["%Y-%m-%d"]
 
         self.fields["quantite_utilisee"].min_value = Decimal("0.01")
 
@@ -3859,10 +3379,7 @@ class ConsommationMateriauProjetForm(forms.ModelForm):
             )
 
         # Ne pas ajouter une seconde erreur si un champ est déjà invalide.
-        if (
-            "distribution" in self.errors
-            or "reception_directe" in self.errors
-        ):
+        if "distribution" in self.errors or "reception_directe" in self.errors:
             return cleaned_data
 
         # Une seule source doit être sélectionnée.
@@ -3910,15 +3427,14 @@ class ConsommationMateriauProjetForm(forms.ModelForm):
 
         return cleaned_data
 
+
 class RetourMateriauProjetForm(forms.ModelForm):
 
     materiau = forms.ChoiceField(
         label="Matériau",
         choices=[],
         required=True,
-        widget=forms.Select(
-            attrs={"class": "form-select"}
-        ),
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
 
     point = forms.ModelChoiceField(
@@ -3926,9 +3442,7 @@ class RetourMateriauProjetForm(forms.ModelForm):
         queryset=PointProjet.objects.none(),
         required=True,
         empty_label="Sélectionner un point",
-        widget=forms.Select(
-            attrs={"class": "form-select"}
-        ),
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
 
     class Meta:
@@ -3980,27 +3494,21 @@ class RetourMateriauProjetForm(forms.ModelForm):
         )
 
         materiaux = (
-            distributions
-            .values_list("materiau_projet__materiau", flat=True)
+            distributions.values_list("materiau_projet__materiau", flat=True)
             .distinct()
             .order_by("materiau_projet__materiau")
         )
 
-        self.fields["materiau"].choices = [
-            (nom, nom)
-            for nom in materiaux
-            if nom
-        ]
+        self.fields["materiau"].choices = [(nom, nom) for nom in materiaux if nom]
 
         points_ids = distributions.values_list(
             "point_id",
             flat=True,
         ).distinct()
 
-        self.fields["point"].queryset = (
-            PointProjet.objects.filter(pk__in=points_ids)
-            .order_by("nom")
-        )
+        self.fields["point"].queryset = PointProjet.objects.filter(
+            pk__in=points_ids
+        ).order_by("nom")
 
     def _distributions_concernees(self, verrouiller=False):
         """
@@ -4053,9 +3561,7 @@ class RetourMateriauProjetForm(forms.ModelForm):
         disponible = Decimal("0.00")
 
         for distribution in distributions:
-            deja_retournee = self._quantite_deja_retournee(
-                distribution
-            )
+            deja_retournee = self._quantite_deja_retournee(distribution)
 
             reste = distribution.quantite - deja_retournee
 
@@ -4117,25 +3623,17 @@ class RetourMateriauProjetForm(forms.ModelForm):
         """
 
         if not self.is_valid():
-            raise ValidationError(
-                "Le formulaire contient des erreurs."
-            )
+            raise ValidationError("Le formulaire contient des erreurs.")
 
         quantite_restante = self.cleaned_data["quantite"]
 
-        distributions = list(
-            self._distributions_concernees(verrouiller=True)
-        )
+        distributions = list(self._distributions_concernees(verrouiller=True))
 
         disponible = self._calculer_disponible(distributions)
 
         if quantite_restante > disponible:
             raise ValidationError(
-                {
-                    "quantite": (
-                        f"Quantité disponible insuffisante : {disponible}."
-                    )
-                }
+                {"quantite": (f"Quantité disponible insuffisante : {disponible}.")}
             )
 
         retours_crees = []
@@ -4144,13 +3642,9 @@ class RetourMateriauProjetForm(forms.ModelForm):
             if quantite_restante <= Decimal("0"):
                 break
 
-            deja_retournee = self._quantite_deja_retournee(
-                distribution
-            )
+            deja_retournee = self._quantite_deja_retournee(distribution)
 
-            reste_distribution = (
-                distribution.quantite - deja_retournee
-            )
+            reste_distribution = distribution.quantite - deja_retournee
 
             if reste_distribution <= Decimal("0"):
                 continue
@@ -4187,6 +3681,7 @@ class RetourMateriauProjetForm(forms.ModelForm):
 
         return retours_crees
 
+
 # ============================================================
 # FORMULAIRE MATÉRIAU DU PROJET
 # ============================================================
@@ -4208,21 +3703,18 @@ class MateriauProjetForm(forms.ModelForm):
                     "class": "form-select",
                 }
             ),
-
             "materiau": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Exemple : Ciment, sable, gravier...",
                 }
             ),
-
             "unite": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Exemple : m³, tonne, kg, litre...",
                 }
             ),
-
             "quantite_prevue": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -4252,11 +3744,7 @@ class MateriauProjetForm(forms.ModelForm):
 
         if self.projet is not None:
 
-            self.fields["projet"].queryset = (
-                Projet.objects.filter(
-                    pk=self.projet.pk
-                )
-            )
+            self.fields["projet"].queryset = Projet.objects.filter(pk=self.projet.pk)
 
             self.fields["projet"].initial = self.projet.pk
             self.fields["projet"].disabled = True
@@ -4267,17 +3755,10 @@ class MateriauProjetForm(forms.ModelForm):
 
     def clean_quantite_prevue(self):
 
-        quantite = self.cleaned_data.get(
-            "quantite_prevue"
-        )
+        quantite = self.cleaned_data.get("quantite_prevue")
 
-        if (
-            quantite is not None
-            and quantite < Decimal("0.00")
-        ):
-            raise forms.ValidationError(
-                "La quantité prévue ne peut pas être négative."
-            )
+        if quantite is not None and quantite < Decimal("0.00"):
+            raise forms.ValidationError("La quantité prévue ne peut pas être négative.")
 
         return quantite
 
@@ -4350,20 +3831,17 @@ class MinierProjetForm(forms.ModelForm):
         ]
 
         widgets = {
-
             "nom": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Nom du minier",
                 }
             ),
-
             "materiau_projet": forms.Select(
                 attrs={
                     "class": "form-select",
                 }
             ),
-
             "quantite": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -4372,7 +3850,6 @@ class MinierProjetForm(forms.ModelForm):
                     "placeholder": "Quantité produite",
                 }
             ),
-
             "prix_unitaire": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -4381,7 +3858,6 @@ class MinierProjetForm(forms.ModelForm):
                     "placeholder": "Prix unitaire",
                 }
             ),
-
             "date_production": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
@@ -4389,14 +3865,12 @@ class MinierProjetForm(forms.ModelForm):
                     "type": "date",
                 },
             ),
-
             "photo": forms.ClearableFileInput(
                 attrs={
                     "class": "form-control",
                     "accept": "image/*",
                 }
             ),
-
             "observation": forms.Textarea(
                 attrs={
                     "class": "form-control",
@@ -4407,19 +3881,12 @@ class MinierProjetForm(forms.ModelForm):
         }
 
         labels = {
-
             "nom": "Nom du minier",
-
             "materiau_projet": "Matériau",
-
             "quantite": "Quantité",
-
             "prix_unitaire": "Prix unitaire",
-
             "date_production": "Date de production",
-
             "photo": "Photo",
-
             "observation": "Observation",
         }
 
@@ -4427,17 +3894,9 @@ class MinierProjetForm(forms.ModelForm):
     # INITIALISATION
     # ========================================================
 
-    def __init__(
-        self,
-        *args,
-        projet=None,
-        **kwargs
-    ):
+    def __init__(self, *args, projet=None, **kwargs):
 
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
 
         self.projet = projet
 
@@ -4445,11 +3904,7 @@ class MinierProjetForm(forms.ModelForm):
         # Aucun matériau par défaut
         # ----------------------------------------------------
 
-        self.fields[
-            "materiau_projet"
-        ].queryset = (
-            MateriauProjet.objects.none()
-        )
+        self.fields["materiau_projet"].queryset = MateriauProjet.objects.none()
 
         # ----------------------------------------------------
         # Matériaux du projet
@@ -4457,35 +3912,17 @@ class MinierProjetForm(forms.ModelForm):
 
         if self.projet is not None:
 
-            self.fields[
-                "materiau_projet"
-            ].queryset = (
-
-                MateriauProjet.objects
-
-                .filter(
-                    projet=self.projet
-                )
-
-                .select_related(
-                    "projet"
-                )
-
-                .order_by(
-                    "materiau",
-                    "id"
-                )
+            self.fields["materiau_projet"].queryset = (
+                MateriauProjet.objects.filter(projet=self.projet)
+                .select_related("projet")
+                .order_by("materiau", "id")
             )
 
         # ----------------------------------------------------
         # Première option
         # ----------------------------------------------------
 
-        self.fields[
-            "materiau_projet"
-        ].empty_label = (
-            "Sélectionner un matériau"
-        )
+        self.fields["materiau_projet"].empty_label = "Sélectionner un matériau"
 
     # ========================================================
     # VALIDATION
@@ -4495,25 +3932,15 @@ class MinierProjetForm(forms.ModelForm):
 
         cleaned_data = super().clean()
 
-        nom = cleaned_data.get(
-            "nom"
-        )
+        nom = cleaned_data.get("nom")
 
-        materiau_projet = cleaned_data.get(
-            "materiau_projet"
-        )
+        materiau_projet = cleaned_data.get("materiau_projet")
 
-        quantite = cleaned_data.get(
-            "quantite"
-        )
+        quantite = cleaned_data.get("quantite")
 
-        prix_unitaire = cleaned_data.get(
-            "prix_unitaire"
-        )
+        prix_unitaire = cleaned_data.get("prix_unitaire")
 
-        date_production = cleaned_data.get(
-            "date_production"
-        )
+        date_production = cleaned_data.get("date_production")
 
         # ====================================================
         # PROJET OBLIGATOIRE
@@ -4522,8 +3949,7 @@ class MinierProjetForm(forms.ModelForm):
         if self.projet is None:
 
             raise forms.ValidationError(
-                "Le projet est obligatoire "
-                "pour enregistrer un minier."
+                "Le projet est obligatoire " "pour enregistrer un minier."
             )
 
         # ====================================================
@@ -4562,10 +3988,7 @@ class MinierProjetForm(forms.ModelForm):
 
         if not nom or not nom.strip():
 
-            self.add_error(
-                "nom",
-                "Le nom du minier est obligatoire."
-            )
+            self.add_error("nom", "Le nom du minier est obligatoire.")
 
         # ====================================================
         # MATÉRIAU
@@ -4574,9 +3997,7 @@ class MinierProjetForm(forms.ModelForm):
         if not materiau_projet:
 
             self.add_error(
-                "materiau_projet",
-                "Le matériau est obligatoire "
-                "pour un minier."
+                "materiau_projet", "Le matériau est obligatoire " "pour un minier."
             )
 
         else:
@@ -4585,15 +4006,11 @@ class MinierProjetForm(forms.ModelForm):
             # Le matériau doit appartenir au projet
             # ------------------------------------------------
 
-            if (
-                materiau_projet.projet_id
-                != self.projet.pk
-            ):
+            if materiau_projet.projet_id != self.projet.pk:
 
                 self.add_error(
                     "materiau_projet",
-                    "Le matériau sélectionné "
-                    "n'appartient pas à ce projet."
+                    "Le matériau sélectionné " "n'appartient pas à ce projet.",
                 )
 
         # ====================================================
@@ -4602,18 +4019,11 @@ class MinierProjetForm(forms.ModelForm):
 
         if quantite is None:
 
-            self.add_error(
-                "quantite",
-                "La quantité est obligatoire."
-            )
+            self.add_error("quantite", "La quantité est obligatoire.")
 
         elif quantite <= Decimal("0.00"):
 
-            self.add_error(
-                "quantite",
-                "La quantité doit être "
-                "supérieure à zéro."
-            )
+            self.add_error("quantite", "La quantité doit être " "supérieure à zéro.")
 
         # ====================================================
         # PRIX UNITAIRE
@@ -4621,17 +4031,12 @@ class MinierProjetForm(forms.ModelForm):
 
         if prix_unitaire is None:
 
-            self.add_error(
-                "prix_unitaire",
-                "Le prix unitaire est obligatoire."
-            )
+            self.add_error("prix_unitaire", "Le prix unitaire est obligatoire.")
 
         elif prix_unitaire <= Decimal("0.00"):
 
             self.add_error(
-                "prix_unitaire",
-                "Le prix unitaire doit être "
-                "supérieur à zéro."
+                "prix_unitaire", "Le prix unitaire doit être " "supérieur à zéro."
             )
 
         # ====================================================
@@ -4640,42 +4045,27 @@ class MinierProjetForm(forms.ModelForm):
 
         if not date_production:
 
-            self.add_error(
-                "date_production",
-                "La date de production est obligatoire."
-            )
+            self.add_error("date_production", "La date de production est obligatoire.")
 
         # ====================================================
         # DATE / PÉRIODE DU PROJET
         # ====================================================
 
-        if (
-            self.projet
-            and date_production
-        ):
+        if self.projet and date_production:
 
-            if (
-                self.projet.date_debut
-                and date_production
-                < self.projet.date_debut
-            ):
+            if self.projet.date_debut and date_production < self.projet.date_debut:
 
                 self.add_error(
                     "date_production",
                     "La date de production ne peut pas "
-                    "être antérieure au début du projet."
+                    "être antérieure au début du projet.",
                 )
 
-            if (
-                self.projet.date_fin
-                and date_production
-                > self.projet.date_fin
-            ):
+            if self.projet.date_fin and date_production > self.projet.date_fin:
 
                 self.add_error(
                     "date_production",
-                    "La date de production ne peut pas "
-                    "dépasser la fin du projet."
+                    "La date de production ne peut pas " "dépasser la fin du projet.",
                 )
 
         return cleaned_data
@@ -4684,14 +4074,9 @@ class MinierProjetForm(forms.ModelForm):
     # ENREGISTREMENT
     # ========================================================
 
-    def save(
-        self,
-        commit=True
-    ):
+    def save(self, commit=True):
 
-        instance = super().save(
-            commit=False
-        )
+        instance = super().save(commit=False)
 
         # ----------------------------------------------------
         # Projet
@@ -4721,9 +4106,7 @@ class MinierProjetForm(forms.ModelForm):
         # Montant forfaitaire
         # ----------------------------------------------------
 
-        instance.montant = Decimal(
-            "0.00"
-        )
+        instance.montant = Decimal("0.00")
 
         # ----------------------------------------------------
         # Sauvegarde
@@ -4739,6 +4122,7 @@ class MinierProjetForm(forms.ModelForm):
 # ============================================================
 # EQUIPAGE PROJET
 # ============================================================
+
 
 class EquipageProjetForm(forms.ModelForm):
 
@@ -4772,12 +4156,7 @@ class EquipageProjetForm(forms.ModelForm):
             "enregistre_par": "Enregistré par",
         }
 
-    def __init__(
-        self,
-        *args,
-        projet=None,
-        **kwargs
-    ):
+    def __init__(self, *args, projet=None, **kwargs):
 
         super().__init__(*args, **kwargs)
 
@@ -4785,83 +4164,44 @@ class EquipageProjetForm(forms.ModelForm):
 
         if projet:
 
-            self.fields[
-                "personnel_execution"
-            ].queryset = (
-                PersonnelExecutionProjet.objects
-                .filter(
-                    projet=projet
-                )
-                .order_by(
-                    "nom"
-                )
+            self.fields["personnel_execution"].queryset = (
+                PersonnelExecutionProjet.objects.filter(projet=projet).order_by("nom")
             )
 
-            self.fields[
-                "lieu"
-            ].queryset = (
-                PointProjet.objects
-                .filter(
-                    projet=projet
-                )
-                .order_by(
-                    "nom"
-                )
-            )
+            self.fields["lieu"].queryset = PointProjet.objects.filter(
+                projet=projet
+            ).order_by("nom")
 
         else:
 
-            self.fields[
-                "personnel_execution"
-            ].queryset = (
+            self.fields["personnel_execution"].queryset = (
                 PersonnelExecutionProjet.objects.none()
             )
 
-            self.fields[
-                "lieu"
-            ].queryset = (
-                PointProjet.objects.none()
-            )
+            self.fields["lieu"].queryset = PointProjet.objects.none()
 
     def clean(self):
 
         cleaned_data = super().clean()
 
-        personnel_execution = cleaned_data.get(
-            "personnel_execution"
-        )
+        personnel_execution = cleaned_data.get("personnel_execution")
 
-        lieu = cleaned_data.get(
-            "lieu"
-        )
+        lieu = cleaned_data.get("lieu")
 
-        montant = cleaned_data.get(
-            "montant"
-        )
+        montant = cleaned_data.get("montant")
 
-        date_debut = cleaned_data.get(
-            "date_debut"
-        )
+        date_debut = cleaned_data.get("date_debut")
 
-        date_fin = cleaned_data.get(
-            "date_fin"
-        )
+        date_fin = cleaned_data.get("date_fin")
 
-        if (
-            montant is not None
-            and montant < 0
-        ):
+        if montant is not None and montant < 0:
 
             self.add_error(
                 "montant",
                 "Le montant ne peut pas être négatif.",
             )
 
-        if (
-            date_debut
-            and date_fin
-            and date_fin < date_debut
-        ):
+        if date_debut and date_fin and date_fin < date_debut:
 
             self.add_error(
                 "date_fin",
@@ -4872,36 +4212,23 @@ class EquipageProjetForm(forms.ModelForm):
 
         if personnel_execution and lieu:
 
-            if (
-                personnel_execution.projet_id
-                != lieu.projet_id
-            ):
+            if personnel_execution.projet_id != lieu.projet_id:
 
                 self.add_error(
                     "lieu",
-                    "Le point et le personnel doivent "
-                    "appartenir au même projet.",
+                    "Le point et le personnel doivent " "appartenir au même projet.",
                 )
 
         if self.projet:
 
-            if (
-                personnel_execution
-                and personnel_execution.projet_id
-                != self.projet.pk
-            ):
+            if personnel_execution and personnel_execution.projet_id != self.projet.pk:
 
                 self.add_error(
                     "personnel_execution",
-                    "Ce personnel d'exécution "
-                    "n'appartient pas à ce projet.",
+                    "Ce personnel d'exécution " "n'appartient pas à ce projet.",
                 )
 
-            if (
-                lieu
-                and lieu.projet_id
-                != self.projet.pk
-            ):
+            if lieu and lieu.projet_id != self.projet.pk:
 
                 self.add_error(
                     "lieu",
@@ -4909,7 +4236,6 @@ class EquipageProjetForm(forms.ModelForm):
                 )
 
         return cleaned_data
-
 
 
 # ============================================================
@@ -4941,14 +4267,12 @@ class AvanceEquipeProjetForm(forms.ModelForm):
                     "id": "id_equipe_execution",
                 }
             ),
-
             "miniers_execution": forms.Select(
                 attrs={
                     "class": "form-select",
                     "id": "id_miniers_execution",
                 }
             ),
-
             "montant": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -4957,7 +4281,6 @@ class AvanceEquipeProjetForm(forms.ModelForm):
                     "placeholder": "Montant de l'avance",
                 }
             ),
-
             "date_avance": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
@@ -4986,46 +4309,52 @@ class AvanceEquipeProjetForm(forms.ModelForm):
         # ----------------------------------------------------
 
         if projet is None:
-            self.fields["equipe_execution"].queryset = (
-                EquipeProjet.objects.none()
-            )
+            self.fields["equipe_execution"].queryset = EquipeProjet.objects.none()
 
-            self.fields["miniers_execution"].queryset = (
-                EquipeProjet.objects.none()
-            )
+            self.fields["miniers_execution"].queryset = EquipeProjet.objects.none()
 
         else:
             # ------------------------------------------------
             # CHEFS D'ÉQUIPE DU PROJET
             # ------------------------------------------------
 
-            chefs = EquipeProjet.objects.filter(
-                projet_id=projet.pk,
-                fonction="CHEF_EQUIPE",
-            ).filter(
-                models.Q(personnel_execution__isnull=False)
-                | models.Q(personnel__isnull=False)
-            ).select_related(
-                "personnel",
-                "personnel_execution",
-                "projet",
-            ).order_by("id")
+            chefs = (
+                EquipeProjet.objects.filter(
+                    projet_id=projet.pk,
+                    fonction="CHEF_EQUIPE",
+                )
+                .filter(
+                    models.Q(personnel_execution__isnull=False)
+                    | models.Q(personnel__isnull=False)
+                )
+                .select_related(
+                    "personnel",
+                    "personnel_execution",
+                    "projet",
+                )
+                .order_by("id")
+            )
 
             # ------------------------------------------------
             # MINIERS DU PROJET
             # ------------------------------------------------
 
-            miniers = EquipeProjet.objects.filter(
-                projet_id=projet.pk,
-                fonction="MINIER",
-            ).filter(
-                models.Q(personnel_execution__isnull=False)
-                | models.Q(personnel__isnull=False)
-            ).select_related(
-                "personnel",
-                "personnel_execution",
-                "projet",
-            ).order_by("id")
+            miniers = (
+                EquipeProjet.objects.filter(
+                    projet_id=projet.pk,
+                    fonction="MINIER",
+                )
+                .filter(
+                    models.Q(personnel_execution__isnull=False)
+                    | models.Q(personnel__isnull=False)
+                )
+                .select_related(
+                    "personnel",
+                    "personnel_execution",
+                    "projet",
+                )
+                .order_by("id")
+            )
 
             # Les QuerySets sont évalués selon les besoins
             # lors du rendu du formulaire.
@@ -5039,13 +4368,9 @@ class AvanceEquipeProjetForm(forms.ModelForm):
         self.fields["equipe_execution"].label = "Chef d'équipe"
         self.fields["miniers_execution"].label = "Minier"
 
-        self.fields["equipe_execution"].empty_label = (
-            "— Choisir un chef d'équipe —"
-        )
+        self.fields["equipe_execution"].empty_label = "— Choisir un chef d'équipe —"
 
-        self.fields["miniers_execution"].empty_label = (
-            "— Choisir un minier —"
-        )
+        self.fields["miniers_execution"].empty_label = "— Choisir un minier —"
 
         self.fields["equipe_execution"].label_from_instance = (
             self._afficher_beneficiaire
@@ -5110,9 +4435,7 @@ class AvanceEquipeProjetForm(forms.ModelForm):
         montant = self.cleaned_data.get("montant")
 
         if montant is None or montant <= 0:
-            raise ValidationError(
-                "Le montant de l'avance doit être supérieur à zéro."
-            )
+            raise ValidationError("Le montant de l'avance doit être supérieur à zéro.")
 
         return montant
 
@@ -5124,9 +4447,7 @@ class AvanceEquipeProjetForm(forms.ModelForm):
         date_avance = self.cleaned_data.get("date_avance")
 
         if not date_avance:
-            raise ValidationError(
-                "Veuillez renseigner la date de l'avance."
-            )
+            raise ValidationError("Veuillez renseigner la date de l'avance.")
 
         return date_avance
 
@@ -5152,18 +4473,14 @@ class AvanceEquipeProjetForm(forms.ModelForm):
 
         if chef and minier:
             message = (
-                "Choisissez un seul bénéficiaire : "
-                "un chef d'équipe ou un minier."
+                "Choisissez un seul bénéficiaire : " "un chef d'équipe ou un minier."
             )
 
             self.add_error("equipe_execution", message)
             self.add_error("miniers_execution", message)
 
         elif not chef and not minier:
-            message = (
-                "Veuillez sélectionner un chef d'équipe "
-                "ou un minier."
-            )
+            message = "Veuillez sélectionner un chef d'équipe " "ou un minier."
 
             self.add_error("equipe_execution", message)
             self.add_error("miniers_execution", message)
@@ -5204,9 +4521,11 @@ class AvanceEquipeProjetForm(forms.ModelForm):
 
         return cleaned_data
 
+
 # ============================================================
 # EQUIPE MATERIAU PROJET
 # ============================================================
+
 
 class EquipeMateriauProjetForm(forms.ModelForm):
 
@@ -5246,180 +4565,110 @@ class EquipeMateriauProjetForm(forms.ModelForm):
             "enregistre_par": "Enregistré par",
         }
 
-    def __init__(
-        self,
-        *args,
-        projet=None,
-        **kwargs
-    ):
+    def __init__(self, *args, projet=None, **kwargs):
 
         super().__init__(*args, **kwargs)
 
         self.projet = projet
 
-        self.fields[
-            "typemateriaux"
-        ].queryset = (
-            Materiaux.objects
-            .all()
-            .order_by(
-                "libelle"
-            )
+        self.fields["typemateriaux"].queryset = Materiaux.objects.all().order_by(
+            "libelle"
         )
 
         if projet:
 
-            self.fields[
-                "personnel_execution"
-            ].queryset = (
-                PersonnelExecutionProjet.objects
-                .filter(
-                    projet=projet
-                )
-                .order_by(
-                    "nom"
-                )
+            self.fields["personnel_execution"].queryset = (
+                PersonnelExecutionProjet.objects.filter(projet=projet).order_by("nom")
             )
 
-            self.fields[
-                "point"
-            ].queryset = (
-                PointProjet.objects
-                .filter(
-                    projet=projet
-                )
-                .order_by(
-                    "nom"
-                )
-            )
+            self.fields["point"].queryset = PointProjet.objects.filter(
+                projet=projet
+            ).order_by("nom")
 
         else:
 
-            self.fields[
-                "personnel_execution"
-            ].queryset = (
+            self.fields["personnel_execution"].queryset = (
                 PersonnelExecutionProjet.objects.none()
             )
 
-            self.fields[
-                "point"
-            ].queryset = (
-                PointProjet.objects.none()
-            )
+            self.fields["point"].queryset = PointProjet.objects.none()
 
     def clean(self):
 
         cleaned_data = super().clean()
 
-        personnel_execution = cleaned_data.get(
-            "personnel_execution"
-        )
+        personnel_execution = cleaned_data.get("personnel_execution")
 
-        point = cleaned_data.get(
-            "point"
-        )
+        point = cleaned_data.get("point")
 
-        quantite = cleaned_data.get(
-            "quantite"
-        )
+        quantite = cleaned_data.get("quantite")
 
-        prix_unitaire = cleaned_data.get(
-            "prix_unitaire"
-        )
+        prix_unitaire = cleaned_data.get("prix_unitaire")
 
-        date_debut = cleaned_data.get(
-            "date_debut"
-        )
+        date_debut = cleaned_data.get("date_debut")
 
-        if (
-            quantite is not None
-            and quantite <= 0
-        ):
+        if quantite is not None and quantite <= 0:
 
             self.add_error(
                 "quantite",
-                "La quantité doit être "
-                "supérieure à zéro.",
+                "La quantité doit être " "supérieure à zéro.",
             )
 
-        if (
-            prix_unitaire is not None
-            and prix_unitaire < 0
-        ):
+        if prix_unitaire is not None and prix_unitaire < 0:
 
             self.add_error(
                 "prix_unitaire",
-                "Le prix unitaire ne peut "
-                "pas être négatif.",
+                "Le prix unitaire ne peut " "pas être négatif.",
             )
 
         if personnel_execution and point:
 
-            if (
-                personnel_execution.projet_id
-                != point.projet_id
-            ):
+            if personnel_execution.projet_id != point.projet_id:
 
                 self.add_error(
                     "point",
-                    "Le point et le personnel doivent "
-                    "appartenir au même projet.",
+                    "Le point et le personnel doivent " "appartenir au même projet.",
                 )
 
         if self.projet:
 
-            if (
-                personnel_execution
-                and personnel_execution.projet_id
-                != self.projet.pk
-            ):
+            if personnel_execution and personnel_execution.projet_id != self.projet.pk:
 
                 self.add_error(
                     "personnel_execution",
-                    "Ce travailleur n'appartient "
-                    "pas à ce projet.",
+                    "Ce travailleur n'appartient " "pas à ce projet.",
                 )
 
-            if (
-                point
-                and point.projet_id
-                != self.projet.pk
-            ):
+            if point and point.projet_id != self.projet.pk:
 
                 self.add_error(
                     "point",
-                    "Ce point n'appartient "
-                    "pas à ce projet.",
+                    "Ce point n'appartient " "pas à ce projet.",
                 )
 
             if (
                 date_debut
                 and self.projet.date_debut
-                and date_debut.date()
-                < self.projet.date_debut
+                and date_debut.date() < self.projet.date_debut
             ):
 
                 self.add_error(
                     "date_debut",
-                    "La date ne peut pas être "
-                    "avant le début du projet.",
+                    "La date ne peut pas être " "avant le début du projet.",
                 )
 
             if (
                 date_debut
                 and self.projet.date_fin
-                and date_debut.date()
-                > self.projet.date_fin
+                and date_debut.date() > self.projet.date_fin
             ):
 
                 self.add_error(
                     "date_debut",
-                    "La date ne peut pas dépasser "
-                    "la fin du projet.",
+                    "La date ne peut pas dépasser " "la fin du projet.",
                 )
 
         return cleaned_data
-
 
 
 # ============================================================
@@ -5443,21 +4692,11 @@ class MouvementMateriauProjetForm(forms.ModelForm):
         ]
 
         widgets = {
-            "type_mouvement": forms.Select(
-                attrs={"class": "form-select"}
-            ),
-            "materiau_projet": forms.Select(
-                attrs={"class": "form-select"}
-            ),
-            "point_depart": forms.Select(
-                attrs={"class": "form-select"}
-            ),
-            "point_arrivee": forms.Select(
-                attrs={"class": "form-select"}
-            ),
-            "vehicule_transport": forms.Select(
-                attrs={"class": "form-select"}
-            ),
+            "type_mouvement": forms.Select(attrs={"class": "form-select"}),
+            "materiau_projet": forms.Select(attrs={"class": "form-select"}),
+            "point_depart": forms.Select(attrs={"class": "form-select"}),
+            "point_arrivee": forms.Select(attrs={"class": "form-select"}),
+            "vehicule_transport": forms.Select(attrs={"class": "form-select"}),
             "date_mouvement": forms.DateInput(
                 attrs={
                     "class": "form-control",
@@ -5499,9 +4738,7 @@ class MouvementMateriauProjetForm(forms.ModelForm):
         self.fields["materiau_projet"].label = "Matériau"
         self.fields["point_depart"].label = "Point d'origine"
         self.fields["point_arrivee"].label = "Point de destination"
-        self.fields["vehicule_transport"].label = (
-            "Véhicule / Engin de transport"
-        )
+        self.fields["vehicule_transport"].label = "Véhicule / Engin de transport"
         self.fields["date_mouvement"].label = "Date du mouvement"
         self.fields["quantite"].label = "Quantité"
         self.fields["prix_unitaire"].label = "Prix unitaire (Ar)"
@@ -5518,49 +4755,33 @@ class MouvementMateriauProjetForm(forms.ModelForm):
             self.fields[champ].required = False
 
         # Querysets limités au projet
-        self.fields["materiau_projet"].queryset = (
-            MateriauProjet.objects.none()
-        )
+        self.fields["materiau_projet"].queryset = MateriauProjet.objects.none()
         self.fields["point_depart"].queryset = PointProjet.objects.none()
         self.fields["point_arrivee"].queryset = PointProjet.objects.none()
-        self.fields["vehicule_transport"].queryset = (
-            VehiculeProjet.objects.none()
-        )
+        self.fields["vehicule_transport"].queryset = VehiculeProjet.objects.none()
 
-        self.fields["vehicule_transport"].empty_label = (
-            "Aucun véhicule / engin"
-        )
-        self.fields["point_depart"].empty_label = (
-            "Sélectionner le point d'origine"
-        )
+        self.fields["vehicule_transport"].empty_label = "Aucun véhicule / engin"
+        self.fields["point_depart"].empty_label = "Sélectionner le point d'origine"
         self.fields["point_arrivee"].empty_label = (
             "Sélectionner le point de destination"
         )
 
         if projet is not None:
-            self.fields["materiau_projet"].queryset = (
-                MateriauProjet.objects
-                .filter(projet=projet)
-                .order_by("materiau", "id")
-            )
+            self.fields["materiau_projet"].queryset = MateriauProjet.objects.filter(
+                projet=projet
+            ).order_by("materiau", "id")
 
-            self.fields["point_depart"].queryset = (
-                PointProjet.objects
-                .filter(projet=projet)
-                .order_by("id")
-            )
+            self.fields["point_depart"].queryset = PointProjet.objects.filter(
+                projet=projet
+            ).order_by("id")
 
-            self.fields["point_arrivee"].queryset = (
-                PointProjet.objects
-                .filter(projet=projet)
-                .order_by("id")
-            )
+            self.fields["point_arrivee"].queryset = PointProjet.objects.filter(
+                projet=projet
+            ).order_by("id")
 
-            self.fields["vehicule_transport"].queryset = (
-                VehiculeProjet.objects
-                .filter(projet=projet, actif=True)
-                .order_by("vehicule", "id")
-            )
+            self.fields["vehicule_transport"].queryset = VehiculeProjet.objects.filter(
+                projet=projet, actif=True
+            ).order_by("vehicule", "id")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -5573,18 +4794,9 @@ class MouvementMateriauProjetForm(forms.ModelForm):
         quantite = cleaned_data.get("quantite")
         prix_unitaire = cleaned_data.get("prix_unitaire")
 
-        entree = (
-            type_mouvement
-            == MouvementMateriauProjet.TypeMouvement.ENTREE
-        )
-        sortie = (
-            type_mouvement
-            == MouvementMateriauProjet.TypeMouvement.SORTIE
-        )
-        retour = (
-            type_mouvement
-            == MouvementMateriauProjet.TypeMouvement.RETOUR
-        )
+        entree = type_mouvement == MouvementMateriauProjet.TypeMouvement.ENTREE
+        sortie = type_mouvement == MouvementMateriauProjet.TypeMouvement.SORTIE
+        retour = type_mouvement == MouvementMateriauProjet.TypeMouvement.RETOUR
 
         # Prix : obligatoire uniquement pour une entrée
         if entree:
@@ -5666,11 +4878,7 @@ class MouvementMateriauProjetForm(forms.ModelForm):
                     "Indiquez le point de destination du matériau.",
                 )
 
-            if (
-                point_depart
-                and point_arrivee
-                and point_depart.pk == point_arrivee.pk
-            ):
+            if point_depart and point_arrivee and point_depart.pk == point_arrivee.pk:
                 self.add_error(
                     "point_arrivee",
                     "L'origine et la destination doivent être différentes.",
@@ -5689,11 +4897,7 @@ class MouvementMateriauProjetForm(forms.ModelForm):
                     "Indiquez le point qui reçoit le retour.",
                 )
 
-            if (
-                point_depart
-                and point_arrivee
-                and point_depart.pk == point_arrivee.pk
-            ):
+            if point_depart and point_arrivee and point_depart.pk == point_arrivee.pk:
                 self.add_error(
                     "point_arrivee",
                     "L'origine et la destination doivent être différentes.",

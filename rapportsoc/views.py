@@ -5,28 +5,22 @@ from decimal import Decimal
 from django.contrib import messages
 from django.shortcuts import render
 
-from depotEntreprise.models import DepotSoc
-from recette.models import Recette, H_AppUser
-from depensesoc.models import DepenseSoc
-from salaire.models import Salaire, H_Salaire
 from avances.models import Avance, H_Avance
-
+from depensesoc.models import DepenseSoc
+from depotEntreprise.models import DepotSoc
+from recette.models import H_AppUser, Recette
+from salaire.models import H_Salaire, Salaire
 
 # ============================================================
 # CONSTRUCTION DU RAPPORT DE TRÉSORERIE SOCIÉTÉ
 # ============================================================
 
+
 def construire_rapport_tresorerie(request):
 
-    date_debut_str = request.GET.get(
-        "date_debut",
-        ""
-    ).strip()
+    date_debut_str = request.GET.get("date_debut", "").strip()
 
-    date_fin_str = request.GET.get(
-        "date_fin",
-        ""
-    ).strip()
+    date_fin_str = request.GET.get("date_fin", "").strip()
 
     date_debut = None
     date_fin = None
@@ -41,17 +35,11 @@ def construire_rapport_tresorerie(request):
 
         try:
 
-            date_debut = datetime.strptime(
-                date_debut_str,
-                "%Y-%m-%d"
-            ).date()
+            date_debut = datetime.strptime(date_debut_str, "%Y-%m-%d").date()
 
         except ValueError:
 
-            messages.error(
-                request,
-                "La date de début est invalide."
-            )
+            messages.error(request, "La date de début est invalide.")
 
             date_debut_str = ""
 
@@ -59,17 +47,11 @@ def construire_rapport_tresorerie(request):
 
         try:
 
-            date_fin = datetime.strptime(
-                date_fin_str,
-                "%Y-%m-%d"
-            ).date()
+            date_fin = datetime.strptime(date_fin_str, "%Y-%m-%d").date()
 
         except ValueError:
 
-            messages.error(
-                request,
-                "La date de fin est invalide."
-            )
+            messages.error(request, "La date de fin est invalide.")
 
             date_fin_str = ""
 
@@ -77,15 +59,10 @@ def construire_rapport_tresorerie(request):
     # VÉRIFICATION DE LA PÉRIODE
     # ========================================================
 
-    if (
-        date_debut
-        and date_fin
-        and date_fin < date_debut
-    ):
+    if date_debut and date_fin and date_fin < date_debut:
 
         messages.error(
-            request,
-            "La date de fin doit être supérieure ou égale à la date de début."
+            request, "La date de fin doit être supérieure ou égale à la date de début."
         )
 
         date_fin = None
@@ -105,26 +82,19 @@ def construire_rapport_tresorerie(request):
 
     for depot in depots:
 
-        operations.append({
-
-            "date": depot.date,
-
-            "piece": f"DEP-{depot.id}",
-
-            "description": "Dépôt",
-
-            "titre": "Dépôt société",
-
-            "depot": depot.montant or ZERO,
-
-            "recette": ZERO,
-
-            "depense": ZERO,
-
-            "source": "DepotSoc",
-
-            "objet": depot,
-        })
+        operations.append(
+            {
+                "date": depot.date,
+                "piece": f"DEP-{depot.id}",
+                "description": "Dépôt",
+                "titre": "Dépôt société",
+                "depot": depot.montant or ZERO,
+                "recette": ZERO,
+                "depense": ZERO,
+                "source": "DepotSoc",
+                "objet": depot,
+            }
+        )
 
     # ========================================================
     # 2. RECETTES
@@ -134,26 +104,19 @@ def construire_rapport_tresorerie(request):
 
     for recette in recettes:
 
-        operations.append({
-
-            "date": recette.date,
-
-            "piece": f"REC-{recette.id}",
-
-            "description": "Recette",
-
-            "titre": recette.source or "Recette",
-
-            "depot": ZERO,
-
-            "recette": recette.montant or ZERO,
-
-            "depense": ZERO,
-
-            "source": "Recette",
-
-            "objet": recette,
-        })
+        operations.append(
+            {
+                "date": recette.date,
+                "piece": f"REC-{recette.id}",
+                "description": "Recette",
+                "titre": recette.source or "Recette",
+                "depot": ZERO,
+                "recette": recette.montant or ZERO,
+                "depense": ZERO,
+                "source": "Recette",
+                "objet": recette,
+            }
+        )
 
     # ========================================================
     # 3. DÉPENSES SOCIÉTÉ
@@ -163,84 +126,55 @@ def construire_rapport_tresorerie(request):
 
     for depense in depenses:
 
-        operations.append({
-
-            "date": depense.date,
-
-            "piece": f"DEPENSE-{depense.id}",
-
-            "description": (
-                depense.description
-                or "Dépense"
-            ),
-
-            "titre": (
-                depense.titre
-                or "Dépense société"
-            ),
-
-            "depot": ZERO,
-
-            "recette": ZERO,
-
-            "depense": depense.montant or ZERO,
-
-            "source": "DepenseSoc",
-
-            "objet": depense,
-        })
+        operations.append(
+            {
+                "date": depense.date,
+                "piece": f"DEPENSE-{depense.id}",
+                "description": (depense.description or "Dépense"),
+                "titre": (depense.titre or "Dépense société"),
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": depense.montant or ZERO,
+                "source": "DepenseSoc",
+                "objet": depense,
+            }
+        )
 
     # ========================================================
     # 4. SALAIRES
     # ========================================================
 
-    salaires = Salaire.objects.select_related(
-        "personnel"
-    ).all()
+    salaires = Salaire.objects.select_related("personnel").all()
 
     for salaire in salaires:
 
         if salaire.personnel:
 
-            nom_personnel = (
-                f"{salaire.personnel.nom} "
-                f"{salaire.personnel.prenom}"
-            )
+            nom_personnel = f"{salaire.personnel.nom} " f"{salaire.personnel.prenom}"
 
         else:
 
-            nom_personnel = (
-                "Personnel non renseigné"
-            )
+            nom_personnel = "Personnel non renseigné"
 
-        operations.append({
-
-            "date": salaire.date,
-
-            "piece": f"SAL-{salaire.id}",
-
-            "description": "Salaire",
-
-            "titre": nom_personnel,
-
-            "depot": ZERO,
-
-            "recette": ZERO,
-
-            "depense": salaire.montant or ZERO,
-
-            "source": "Salaire",
-
-            "objet": salaire,
-        })
+        operations.append(
+            {
+                "date": salaire.date,
+                "piece": f"SAL-{salaire.id}",
+                "description": "Salaire",
+                "titre": nom_personnel,
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": salaire.montant or ZERO,
+                "source": "Salaire",
+                "objet": salaire,
+            }
+        )
 
     # ========================================================
     # 5. AVANCES PERSONNEL
     # ========================================================
 
-    avances = Avance.objects.select_related(
-        "personnel"
-    ).all()
+    avances = Avance.objects.select_related("personnel").all()
 
     for avance in avances:
 
@@ -251,51 +185,31 @@ def construire_rapport_tresorerie(request):
 
         if avance.personnel:
 
-            nom_personnel = (
-                f"{avance.personnel.nom} "
-                f"{avance.personnel.prenom}"
-            )
+            nom_personnel = f"{avance.personnel.nom} " f"{avance.personnel.prenom}"
 
         else:
 
-            nom_personnel = (
-                "Personnel non renseigné"
-            )
+            nom_personnel = "Personnel non renseigné"
 
-        operations.append({
-
-            "date": date_avance,
-
-            "piece": f"AV-{avance.id}",
-
-            "description": "Avance",
-
-            "titre": (
-                avance.motifAv
-                or nom_personnel
-            ),
-
-            "depot": ZERO,
-
-            "recette": ZERO,
-
-            "depense": avance.montantAv or ZERO,
-
-            "source": "Avance",
-
-            "objet": avance,
-        })
+        operations.append(
+            {
+                "date": date_avance,
+                "piece": f"AV-{avance.id}",
+                "description": "Avance",
+                "titre": (avance.motifAv or nom_personnel),
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": avance.montantAv or ZERO,
+                "source": "Avance",
+                "objet": avance,
+            }
+        )
 
     # ========================================================
     # TRI CHRONOLOGIQUE
     # ========================================================
 
-    operations.sort(
-        key=lambda operation: (
-            operation["date"],
-            operation["objet"].id
-        )
-    )
+    operations.sort(key=lambda operation: (operation["date"], operation["objet"].id))
 
     # ========================================================
     # CALCUL DU REPORT
@@ -309,14 +223,9 @@ def construire_rapport_tresorerie(request):
 
             if operation["date"] < date_debut:
 
-                solde_report += (
-                    operation["depot"]
-                    + operation["recette"]
-                )
+                solde_report += operation["depot"] + operation["recette"]
 
-                solde_report -= (
-                    operation["depense"]
-                )
+                solde_report -= operation["depense"]
 
     # ========================================================
     # FILTRAGE DE LA PÉRIODE
@@ -336,9 +245,7 @@ def construire_rapport_tresorerie(request):
             if operation["date"] > date_fin:
                 continue
 
-        operations_periode.append(
-            operation
-        )
+        operations_periode.append(operation)
 
     # ========================================================
     # REGROUPEMENT PAR DATE
@@ -348,9 +255,7 @@ def construire_rapport_tresorerie(request):
 
     for operation in operations_periode:
 
-        operations_par_date[
-            operation["date"]
-        ].append(operation)
+        operations_par_date[operation["date"]].append(operation)
 
     # ========================================================
     # CONSTRUCTION DU RAPPORT
@@ -364,15 +269,9 @@ def construire_rapport_tresorerie(request):
     total_recettes = ZERO
     total_depenses = ZERO
 
-    for date_operation in sorted(
-        operations_par_date.keys()
-    ):
+    for date_operation in sorted(operations_par_date.keys()):
 
-        operations_jour = (
-            operations_par_date[
-                date_operation
-            ]
-        )
+        operations_jour = operations_par_date[date_operation]
 
         # ----------------------------------------------------
         # TOTAUX DE LA JOURNÉE
@@ -402,23 +301,15 @@ def construire_rapport_tresorerie(request):
 
             # Pièce
 
-            pieces.append(
-                operation["piece"]
-            )
+            pieces.append(operation["piece"])
 
             # Description
 
-            descriptions.append(
-                operation["description"]
-                or "—"
-            )
+            descriptions.append(operation["description"] or "—")
 
             # Titre
 
-            titres.append(
-                operation["titre"]
-                or "—"
-            )
+            titres.append(operation["titre"] or "—")
 
         # ====================================================
         # CALCUL DU SOLDE
@@ -444,28 +335,19 @@ def construire_rapport_tresorerie(request):
         # LIGNE DU JOUR
         # ====================================================
 
-        operations_grouped.append({
-
-            "date": date_operation,
-
-            "pieces": pieces,
-
-            "descriptions": descriptions,
-
-            "titres": titres,
-
-            "depot": depot_jour,
-
-            "recette": recette_jour,
-
-            "depense": depense_jour,
-
-            "solde": solde,
-
-            "nombre_operations": len(
-                operations_jour
-            ),
-        })
+        operations_grouped.append(
+            {
+                "date": date_operation,
+                "pieces": pieces,
+                "descriptions": descriptions,
+                "titres": titres,
+                "depot": depot_jour,
+                "recette": recette_jour,
+                "depense": depense_jour,
+                "solde": solde,
+                "nombre_operations": len(operations_jour),
+            }
+        )
 
     # ========================================================
     # SOLDE FINAL
@@ -477,93 +359,54 @@ def construire_rapport_tresorerie(request):
     # STATISTIQUES
     # ========================================================
 
-    nombre_operations_total = len(
-        operations_periode
-    )
+    nombre_operations_total = len(operations_periode)
 
-    nombre_jours = len(
-        operations_grouped
-    )
+    nombre_jours = len(operations_grouped)
 
     # ========================================================
     # CONTEXT
     # ========================================================
 
     context = {
-
         # ----------------------------------------------------
         # OPÉRATIONS
         # ----------------------------------------------------
-
         "operations": operations_grouped,
-
         # ----------------------------------------------------
         # DATES
         # ----------------------------------------------------
-
         "date_debut": date_debut_str,
-
         "date_fin": date_fin_str,
-
-        "date_debut_affichage": (
-            date_debut.strftime("%d/%m/%Y")
-            if date_debut
-            else ""
-        ),
-
-        "date_fin_affichage": (
-            date_fin.strftime("%d/%m/%Y")
-            if date_fin
-            else ""
-        ),
-
+        "date_debut_affichage": (date_debut.strftime("%d/%m/%Y") if date_debut else ""),
+        "date_fin_affichage": (date_fin.strftime("%d/%m/%Y") if date_fin else ""),
         # ----------------------------------------------------
         # REPORT
         # ----------------------------------------------------
-
         "solde_report": solde_report,
-
         # ----------------------------------------------------
         # DÉPÔTS
         # ----------------------------------------------------
-
         "total_depots": total_depots,
-
         # ----------------------------------------------------
         # RECETTES
         # ----------------------------------------------------
-
         "total_recettes": total_recettes,
-
         # ----------------------------------------------------
         # ENTRÉES
         # ----------------------------------------------------
-
-        "total_entrees": (
-            total_depots
-            + total_recettes
-        ),
-
+        "total_entrees": (total_depots + total_recettes),
         # ----------------------------------------------------
         # DÉPENSES
         # ----------------------------------------------------
-
         "total_depenses": total_depenses,
-
         # ----------------------------------------------------
         # SOLDE FINAL
         # ----------------------------------------------------
-
         "solde_final": solde_final,
-
         # ----------------------------------------------------
         # STATISTIQUES
         # ----------------------------------------------------
-
-        "nombre_operations": (
-            nombre_operations_total
-        ),
-
+        "nombre_operations": (nombre_operations_total),
         "nombre_jours": nombre_jours,
     }
 
@@ -574,38 +417,27 @@ def construire_rapport_tresorerie(request):
 # RAPPORT DE TRÉSORERIE — AFFICHAGE
 # ============================================================
 
+
 def rapport_tresorerie(request):
 
-    context = construire_rapport_tresorerie(
-        request
-    )
+    context = construire_rapport_tresorerie(request)
 
-    return render(
-        request,
-        "rapportsoc/list.html",
-        context
-    )
+    return render(request, "rapportsoc/list.html", context)
 
 
 # ============================================================
 # RAPPORT DE TRÉSORERIE — IMPRESSION
 # ============================================================
 
+
 def rapport_tresorerie_print(request):
 
-    context = construire_rapport_tresorerie(
-        request
-    )
+    context = construire_rapport_tresorerie(request)
 
-    return render(
-        request,
-        "rapportsoc/rapport_tresorerie_print.html",
-        context
-    )
+    return render(request, "rapportsoc/rapport_tresorerie_print.html", context)
 
 
-
-#===================================================================
+# ===================================================================
 #
 #
 #
@@ -614,23 +446,18 @@ def rapport_tresorerie_print(request):
 #
 #
 #
-#==================================================================
+# ==================================================================
 
 # ============================================================
 # CONSTRUCTION DU RAPPORT DE TRÉSORERIE SOCIÉTÉ
 # ============================================================
 
+
 def h_construire_rapport_tresorerie(request):
 
-    date_debut_str = request.GET.get(
-        "date_debut",
-        ""
-    ).strip()
+    date_debut_str = request.GET.get("date_debut", "").strip()
 
-    date_fin_str = request.GET.get(
-        "date_fin",
-        ""
-    ).strip()
+    date_fin_str = request.GET.get("date_fin", "").strip()
 
     date_debut = None
     date_fin = None
@@ -645,17 +472,11 @@ def h_construire_rapport_tresorerie(request):
 
         try:
 
-            date_debut = datetime.strptime(
-                date_debut_str,
-                "%Y-%m-%d"
-            ).date()
+            date_debut = datetime.strptime(date_debut_str, "%Y-%m-%d").date()
 
         except ValueError:
 
-            messages.error(
-                request,
-                "La date de début est invalide."
-            )
+            messages.error(request, "La date de début est invalide.")
 
             date_debut_str = ""
 
@@ -663,17 +484,11 @@ def h_construire_rapport_tresorerie(request):
 
         try:
 
-            date_fin = datetime.strptime(
-                date_fin_str,
-                "%Y-%m-%d"
-            ).date()
+            date_fin = datetime.strptime(date_fin_str, "%Y-%m-%d").date()
 
         except ValueError:
 
-            messages.error(
-                request,
-                "La date de fin est invalide."
-            )
+            messages.error(request, "La date de fin est invalide.")
 
             date_fin_str = ""
 
@@ -681,15 +496,10 @@ def h_construire_rapport_tresorerie(request):
     # VÉRIFICATION DE LA PÉRIODE
     # ========================================================
 
-    if (
-        date_debut
-        and date_fin
-        and date_fin < date_debut
-    ):
+    if date_debut and date_fin and date_fin < date_debut:
 
         messages.error(
-            request,
-            "La date de fin doit être supérieure ou égale à la date de début."
+            request, "La date de fin doit être supérieure ou égale à la date de début."
         )
 
         date_fin = None
@@ -709,26 +519,19 @@ def h_construire_rapport_tresorerie(request):
 
     for depot in depots:
 
-        operations.append({
-
-            "date": depot.date,
-
-            "piece": f"DEP-{depot.id}",
-
-            "description": "Dépôt",
-
-            "titre": "Dépôt société",
-
-            "depot": depot.montant or ZERO,
-
-            "recette": ZERO,
-
-            "depense": ZERO,
-
-            "source": "DepotSoc",
-
-            "objet": depot,
-        })
+        operations.append(
+            {
+                "date": depot.date,
+                "piece": f"DEP-{depot.id}",
+                "description": "Dépôt",
+                "titre": "Dépôt société",
+                "depot": depot.montant or ZERO,
+                "recette": ZERO,
+                "depense": ZERO,
+                "source": "DepotSoc",
+                "objet": depot,
+            }
+        )
 
     # ========================================================
     # 2. RECETTES
@@ -738,26 +541,19 @@ def h_construire_rapport_tresorerie(request):
 
     for recette in recettes:
 
-        operations.append({
-
-            "date": recette.date,
-
-            "piece": f"REC-{recette.id}",
-
-            "description": "Recette",
-
-            "titre": recette.source or "Recette",
-
-            "depot": ZERO,
-
-            "recette": recette.montant or ZERO,
-
-            "depense": ZERO,
-
-            "source": "Recette",
-
-            "objet": recette,
-        })
+        operations.append(
+            {
+                "date": recette.date,
+                "piece": f"REC-{recette.id}",
+                "description": "Recette",
+                "titre": recette.source or "Recette",
+                "depot": ZERO,
+                "recette": recette.montant or ZERO,
+                "depense": ZERO,
+                "source": "Recette",
+                "objet": recette,
+            }
+        )
 
     # ========================================================
     # 3. DÉPENSES SOCIÉTÉ
@@ -767,84 +563,55 @@ def h_construire_rapport_tresorerie(request):
 
     for depense in depenses:
 
-        operations.append({
-
-            "date": depense.date,
-
-            "piece": f"DEPENSE-{depense.id}",
-
-            "description": (
-                depense.description
-                or "Dépense"
-            ),
-
-            "titre": (
-                depense.titre
-                or "Dépense société"
-            ),
-
-            "depot": ZERO,
-
-            "recette": ZERO,
-
-            "depense": depense.montant or ZERO,
-
-            "source": "DepenseSoc",
-
-            "objet": depense,
-        })
+        operations.append(
+            {
+                "date": depense.date,
+                "piece": f"DEPENSE-{depense.id}",
+                "description": (depense.description or "Dépense"),
+                "titre": (depense.titre or "Dépense société"),
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": depense.montant or ZERO,
+                "source": "DepenseSoc",
+                "objet": depense,
+            }
+        )
 
     # ========================================================
     # 4. SALAIRES
     # ========================================================
 
-    salaires = Salaire.objects.select_related(
-        "personnel"
-    ).all()
+    salaires = Salaire.objects.select_related("personnel").all()
 
     for salaire in salaires:
 
         if salaire.personnel:
 
-            nom_personnel = (
-                f"{salaire.personnel.nom} "
-                f"{salaire.personnel.prenom}"
-            )
+            nom_personnel = f"{salaire.personnel.nom} " f"{salaire.personnel.prenom}"
 
         else:
 
-            nom_personnel = (
-                "Personnel non renseigné"
-            )
+            nom_personnel = "Personnel non renseigné"
 
-        operations.append({
-
-            "date": salaire.date,
-
-            "piece": f"SAL-{salaire.id}",
-
-            "description": "Salaire",
-
-            "titre": nom_personnel,
-
-            "depot": ZERO,
-
-            "recette": ZERO,
-
-            "depense": salaire.montant or ZERO,
-
-            "source": "Salaire",
-
-            "objet": salaire,
-        })
+        operations.append(
+            {
+                "date": salaire.date,
+                "piece": f"SAL-{salaire.id}",
+                "description": "Salaire",
+                "titre": nom_personnel,
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": salaire.montant or ZERO,
+                "source": "Salaire",
+                "objet": salaire,
+            }
+        )
 
     # ========================================================
     # 5. AVANCES PERSONNEL
     # ========================================================
 
-    avances = Avance.objects.select_related(
-        "personnel"
-    ).all()
+    avances = Avance.objects.select_related("personnel").all()
 
     for avance in avances:
 
@@ -855,51 +622,31 @@ def h_construire_rapport_tresorerie(request):
 
         if avance.personnel:
 
-            nom_personnel = (
-                f"{avance.personnel.nom} "
-                f"{avance.personnel.prenom}"
-            )
+            nom_personnel = f"{avance.personnel.nom} " f"{avance.personnel.prenom}"
 
         else:
 
-            nom_personnel = (
-                "Personnel non renseigné"
-            )
+            nom_personnel = "Personnel non renseigné"
 
-        operations.append({
-
-            "date": date_avance,
-
-            "piece": f"AV-{avance.id}",
-
-            "description": "Avance",
-
-            "titre": (
-                avance.motifAv
-                or nom_personnel
-            ),
-
-            "depot": ZERO,
-
-            "recette": ZERO,
-
-            "depense": avance.montantAv or ZERO,
-
-            "source": "Avance",
-
-            "objet": avance,
-        })
+        operations.append(
+            {
+                "date": date_avance,
+                "piece": f"AV-{avance.id}",
+                "description": "Avance",
+                "titre": (avance.motifAv or nom_personnel),
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": avance.montantAv or ZERO,
+                "source": "Avance",
+                "objet": avance,
+            }
+        )
 
     # ========================================================
     # TRI CHRONOLOGIQUE
     # ========================================================
 
-    operations.sort(
-        key=lambda operation: (
-            operation["date"],
-            operation["objet"].id
-        )
-    )
+    operations.sort(key=lambda operation: (operation["date"], operation["objet"].id))
 
     # ========================================================
     # CALCUL DU REPORT
@@ -913,14 +660,9 @@ def h_construire_rapport_tresorerie(request):
 
             if operation["date"] < date_debut:
 
-                solde_report += (
-                    operation["depot"]
-                    + operation["recette"]
-                )
+                solde_report += operation["depot"] + operation["recette"]
 
-                solde_report -= (
-                    operation["depense"]
-                )
+                solde_report -= operation["depense"]
 
     # ========================================================
     # FILTRAGE DE LA PÉRIODE
@@ -940,9 +682,7 @@ def h_construire_rapport_tresorerie(request):
             if operation["date"] > date_fin:
                 continue
 
-        operations_periode.append(
-            operation
-        )
+        operations_periode.append(operation)
 
     # ========================================================
     # REGROUPEMENT PAR DATE
@@ -952,9 +692,7 @@ def h_construire_rapport_tresorerie(request):
 
     for operation in operations_periode:
 
-        operations_par_date[
-            operation["date"]
-        ].append(operation)
+        operations_par_date[operation["date"]].append(operation)
 
     # ========================================================
     # CONSTRUCTION DU RAPPORT
@@ -968,15 +706,9 @@ def h_construire_rapport_tresorerie(request):
     total_recettes = ZERO
     total_depenses = ZERO
 
-    for date_operation in sorted(
-        operations_par_date.keys()
-    ):
+    for date_operation in sorted(operations_par_date.keys()):
 
-        operations_jour = (
-            operations_par_date[
-                date_operation
-            ]
-        )
+        operations_jour = operations_par_date[date_operation]
 
         # ----------------------------------------------------
         # TOTAUX DE LA JOURNÉE
@@ -1006,23 +738,15 @@ def h_construire_rapport_tresorerie(request):
 
             # Pièce
 
-            pieces.append(
-                operation["piece"]
-            )
+            pieces.append(operation["piece"])
 
             # Description
 
-            descriptions.append(
-                operation["description"]
-                or "—"
-            )
+            descriptions.append(operation["description"] or "—")
 
             # Titre
 
-            titres.append(
-                operation["titre"]
-                or "—"
-            )
+            titres.append(operation["titre"] or "—")
 
         # ====================================================
         # CALCUL DU SOLDE
@@ -1048,28 +772,19 @@ def h_construire_rapport_tresorerie(request):
         # LIGNE DU JOUR
         # ====================================================
 
-        operations_grouped.append({
-
-            "date": date_operation,
-
-            "pieces": pieces,
-
-            "descriptions": descriptions,
-
-            "titres": titres,
-
-            "depot": depot_jour,
-
-            "recette": recette_jour,
-
-            "depense": depense_jour,
-
-            "solde": solde,
-
-            "nombre_operations": len(
-                operations_jour
-            ),
-        })
+        operations_grouped.append(
+            {
+                "date": date_operation,
+                "pieces": pieces,
+                "descriptions": descriptions,
+                "titres": titres,
+                "depot": depot_jour,
+                "recette": recette_jour,
+                "depense": depense_jour,
+                "solde": solde,
+                "nombre_operations": len(operations_jour),
+            }
+        )
 
     # ========================================================
     # SOLDE FINAL
@@ -1081,93 +796,54 @@ def h_construire_rapport_tresorerie(request):
     # STATISTIQUES
     # ========================================================
 
-    nombre_operations_total = len(
-        operations_periode
-    )
+    nombre_operations_total = len(operations_periode)
 
-    nombre_jours = len(
-        operations_grouped
-    )
+    nombre_jours = len(operations_grouped)
 
     # ========================================================
     # CONTEXT
     # ========================================================
 
     context = {
-
         # ----------------------------------------------------
         # OPÉRATIONS
         # ----------------------------------------------------
-
         "operations": operations_grouped,
-
         # ----------------------------------------------------
         # DATES
         # ----------------------------------------------------
-
         "date_debut": date_debut_str,
-
         "date_fin": date_fin_str,
-
-        "date_debut_affichage": (
-            date_debut.strftime("%d/%m/%Y")
-            if date_debut
-            else ""
-        ),
-
-        "date_fin_affichage": (
-            date_fin.strftime("%d/%m/%Y")
-            if date_fin
-            else ""
-        ),
-
+        "date_debut_affichage": (date_debut.strftime("%d/%m/%Y") if date_debut else ""),
+        "date_fin_affichage": (date_fin.strftime("%d/%m/%Y") if date_fin else ""),
         # ----------------------------------------------------
         # REPORT
         # ----------------------------------------------------
-
         "solde_report": solde_report,
-
         # ----------------------------------------------------
         # DÉPÔTS
         # ----------------------------------------------------
-
         "total_depots": total_depots,
-
         # ----------------------------------------------------
         # RECETTES
         # ----------------------------------------------------
-
         "total_recettes": total_recettes,
-
         # ----------------------------------------------------
         # ENTRÉES
         # ----------------------------------------------------
-
-        "total_entrees": (
-            total_depots
-            + total_recettes
-        ),
-
+        "total_entrees": (total_depots + total_recettes),
         # ----------------------------------------------------
         # DÉPENSES
         # ----------------------------------------------------
-
         "total_depenses": total_depenses,
-
         # ----------------------------------------------------
         # SOLDE FINAL
         # ----------------------------------------------------
-
         "solde_final": solde_final,
-
         # ----------------------------------------------------
         # STATISTIQUES
         # ----------------------------------------------------
-
-        "nombre_operations": (
-            nombre_operations_total
-        ),
-
+        "nombre_operations": (nombre_operations_total),
         "nombre_jours": nombre_jours,
     }
 
@@ -1178,31 +854,21 @@ def h_construire_rapport_tresorerie(request):
 # RAPPORT DE TRÉSORERIE — AFFICHAGE
 # ============================================================
 
+
 def h_rapport_tresorerie(request):
 
-    context = h_construire_rapport_tresorerie(
-        request
-    )
+    context = h_construire_rapport_tresorerie(request)
 
-    return render(
-        request,
-        "rapportsoc/h_list.html",
-        context
-    )
+    return render(request, "rapportsoc/h_list.html", context)
 
 
 # ============================================================
 # RAPPORT DE TRÉSORERIE — IMPRESSION
 # ============================================================
 
+
 def h_rapport_tresorerie_print(request):
 
-    context = h_construire_rapport_tresorerie(
-        request
-    )
+    context = h_construire_rapport_tresorerie(request)
 
-    return render(
-        request,
-        "rapportsoc/rapport_tresorerie_print.html",
-        context
-    )
+    return render(request, "rapportsoc/rapport_tresorerie_print.html", context)

@@ -7,19 +7,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materielsort', '0002_alter_materielsort_id_materiel_delete_materiels'),
+        ("materielsort", "0002_alter_materielsort_id_materiel_delete_materiels"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='materielsort',
-            name='dateEnregistreur',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="materielsort",
+            name="dateEnregistreur",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='materielsort',
-            name='dateSortie',
+            model_name="materielsort",
+            name="dateSortie",
             field=models.DateField(default=django.utils.timezone.localdate),
         ),
     ]

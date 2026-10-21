@@ -6,18 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materiaux', '0004_alter_paiementdocker_options_and_more'),
+        ("materiaux", "0004_alter_paiementdocker_options_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='reparationvehicule',
-            name='photo_piece_remplacante',
-            field=models.ImageField(blank=True, null=True, upload_to='reparations/pieces/', verbose_name='Photo pièce remplacante'),
+            model_name="reparationvehicule",
+            name="photo_piece_remplacante",
+            field=models.ImageField(
+                blank=True,
+                null=True,
+                upload_to="reparations/pieces/",
+                verbose_name="Photo pièce remplacante",
+            ),
         ),
         migrations.AddField(
-            model_name='reparationvehicule',
-            name='photo_piece_remplacee',
-            field=models.ImageField(blank=True, null=True, upload_to='reparations/pieces/', verbose_name='Photo pièce remplacée'),
+            model_name="reparationvehicule",
+            name="photo_piece_remplacee",
+            field=models.ImageField(
+                blank=True,
+                null=True,
+                upload_to="reparations/pieces/",
+                verbose_name="Photo pièce remplacée",
+            ),
         ),
     ]

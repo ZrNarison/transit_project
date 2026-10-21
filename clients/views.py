@@ -1,29 +1,23 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator
 from functools import wraps
-from .models import Client
-from .forms import ClientForm
 
-from audit.utils import enregistrer_action
-from django.shortcuts import render, get_object_or_404, redirect
-from django.core.paginator import Paginator
 from django.contrib import messages
-from users.models import AppUser
-from .models import Client
-from .forms import ClientForm
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.utils import enregistrer_action
 from users.decorators import (
-    get_current_user,
-    project_access_required,
-    user_can_manage_projects,
     get_current_personnel,
-    login_required_projet,mica_required,
-    project_manager_required,    
+    get_current_user,
+    login_required_projet,
+    mica_required,
+    project_access_required,
+    project_manager_required,
+    user_can_manage_projects,
 )
+from users.models import AppUser
 
-
-from django.shortcuts import redirect
+from .forms import ClientForm
+from .models import Client
 
 
 def orientation_utilisateur(request):
@@ -33,9 +27,7 @@ def orientation_utilisateur(request):
 
     # GALAXY / Mica
     if request.session.get("user_id"):
-        type_travail = (
-            request.session.get("typeTravail") or ""
-        ).strip().lower()
+        type_travail = (request.session.get("typeTravail") or "").strip().lower()
 
         if type_travail == "mica":
             return redirect("produit:p_produit_liste")
@@ -46,6 +38,7 @@ def orientation_utilisateur(request):
     # Utilisateur non connecté ou type inconnu :
     # conserver l'accès à la liste des clients.
     return redirect("clients:client_list")
+
 
 # =========================================================
 # LISTE
@@ -60,35 +53,21 @@ def client_list(request):
     contact = request.GET.get("contact", "").strip()
 
     if nom:
-        queryset = queryset.filter(
-            nom__icontains=nom
-        )
+        queryset = queryset.filter(nom__icontains=nom)
 
     if prenom:
-        queryset = queryset.filter(
-            prenom__icontains=prenom
-        )
+        queryset = queryset.filter(prenom__icontains=prenom)
 
     if contact:
-        queryset = queryset.filter(
-            contact__icontains=contact
-        )
+        queryset = queryset.filter(contact__icontains=contact)
 
-    paginator = Paginator(
-        queryset,
-        12
-    )
+    paginator = Paginator(queryset, 12)
 
-    page_obj = paginator.get_page(
-        request.GET.get("page")
-    )
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     query_params = request.GET.copy()
 
-    query_params.pop(
-        "page",
-        None
-    )
+    query_params.pop("page", None)
 
     return render(
         request,
@@ -100,7 +79,7 @@ def client_list(request):
             "nom": nom,
             "prenom": prenom,
             "contact": contact,
-        }
+        },
     )
 
 
@@ -110,10 +89,7 @@ def client_list(request):
 @mica_required
 def client_add(request):
 
-    form = ClientForm(
-        request.POST or None,
-        request.FILES or None
-    )
+    form = ClientForm(request.POST or None, request.FILES or None)
 
     if request.method == "POST" and form.is_valid():
 
@@ -125,8 +101,7 @@ def client_add(request):
         # Sécurité : vérifier qu'un utilisateur est connecté
         if not user_id:
             messages.error(
-                request,
-                "Votre session a expiré. Veuillez vous reconnecter."
+                request, "Votre session a expiré. Veuillez vous reconnecter."
             )
             return redirect("users:login")
 
@@ -148,9 +123,7 @@ def client_add(request):
             "nom": client.nom,
             "prenom": client.prenom,
             "date_naissance": (
-                client.date_naissance.isoformat()
-                if client.date_naissance
-                else None
+                client.date_naissance.isoformat() if client.date_naissance else None
             ),
             "lieu_naissance": client.lieu_naissance,
             "cin": client.cin,
@@ -158,11 +131,7 @@ def client_add(request):
             "nom_mere": client.nom_mere,
             "contact": client.contact,
             "adresse": client.adresse,
-            "photo": (
-                client.photo.name
-                if client.photo
-                else None
-            ),
+            "photo": (client.photo.name if client.photo else None),
             "enregistre_par": user_id,
         }
 
@@ -176,10 +145,7 @@ def client_add(request):
             objet_id=client.id,
             ancienne=None,
             nouvelle=nouvelle,
-            description=(
-                f"Création du client "
-                f"{client.nom} {client.prenom}"
-            )
+            description=(f"Création du client " f"{client.nom} {client.prenom}"),
         )
 
         # -------------------------------------------------
@@ -187,8 +153,7 @@ def client_add(request):
         # -------------------------------------------------
         messages.success(
             request,
-            f"Le client « {client.nom} {client.prenom} » "
-            "a été ajouté avec succès."
+            f"Le client « {client.nom} {client.prenom} » " "a été ajouté avec succès.",
         )
 
         # -------------------------------------------------
@@ -199,13 +164,7 @@ def client_add(request):
     # -----------------------------------------------------
     # Affichage du formulaire
     # -----------------------------------------------------
-    return render(
-        request,
-        "clients/form.html",
-        {
-            "form": form
-        }
-    )
+    return render(request, "clients/form.html", {"form": form})
 
 
 # =========================================================
@@ -214,39 +173,26 @@ def client_add(request):
 @mica_required
 def client_detail(request, id):
 
-    client = get_object_or_404(
-        Client,
-        id=id
-    )
+    client = get_object_or_404(Client, id=id)
 
-    return render(
-        request,
-        "clients/detail.html",
-        {
-            "client": client
-        }
-    )
+    return render(request, "clients/detail.html", {"client": client})
 
 
 # =========================================================
 # MODIFICATION
 # =========================================================
 
+
 def client_edit(request, id):
 
-    client = get_object_or_404(
-        Client,
-        id=id
-    )
+    client = get_object_or_404(Client, id=id)
 
     ancienne = {
         "id": client.id,
         "nom": client.nom,
         "prenom": client.prenom,
         "date_naissance": (
-            client.date_naissance.isoformat()
-            if client.date_naissance
-            else None
+            client.date_naissance.isoformat() if client.date_naissance else None
         ),
         "lieu_naissance": client.lieu_naissance,
         "cin": client.cin,
@@ -254,18 +200,10 @@ def client_edit(request, id):
         "nom_mere": client.nom_mere,
         "contact": client.contact,
         "adresse": client.adresse,
-        "photo": (
-            client.photo.name
-            if client.photo
-            else None
-        ),
+        "photo": (client.photo.name if client.photo else None),
     }
 
-    form = ClientForm(
-        request.POST or None,
-        request.FILES or None,
-        instance=client
-    )
+    form = ClientForm(request.POST or None, request.FILES or None, instance=client)
 
     if request.method == "POST" and form.is_valid():
 
@@ -276,9 +214,7 @@ def client_edit(request, id):
             "nom": client.nom,
             "prenom": client.prenom,
             "date_naissance": (
-                client.date_naissance.isoformat()
-                if client.date_naissance
-                else None
+                client.date_naissance.isoformat() if client.date_naissance else None
             ),
             "lieu_naissance": client.lieu_naissance,
             "cin": client.cin,
@@ -286,11 +222,7 @@ def client_edit(request, id):
             "nom_mere": client.nom_mere,
             "contact": client.contact,
             "adresse": client.adresse,
-            "photo": (
-                client.photo.name
-                if client.photo
-                else None
-            ),
+            "photo": (client.photo.name if client.photo else None),
         }
 
         enregistrer_action(
@@ -300,31 +232,23 @@ def client_edit(request, id):
             objet_id=client.id,
             ancienne=ancienne,
             nouvelle=nouvelle,
-            description="Modification d'un client"
+            description="Modification d'un client",
         )
 
         messages.success(
             request,
-            f"Le client « {client.nom} {client.prenom} » "
-            "a été modifié avec succès."
+            f"Le client « {client.nom} {client.prenom} » " "a été modifié avec succès.",
         )
 
-        return redirect(
-            "clients:client_list"
-        )
+        return redirect("clients:client_list")
 
-    return render(
-        request,
-        "clients/form.html",
-        {
-            "form": form
-        }
-    )
+    return render(request, "clients/form.html", {"form": form})
 
 
 # =========================================================
 # SUPPRESSION CLIENT + PHOTO
 # =========================================================
+
 
 def client_delete(request, id):
 
@@ -332,10 +256,7 @@ def client_delete(request, id):
     # Récupérer le client
     # -----------------------------------------------------
 
-    client = get_object_or_404(
-        Client,
-        id=id
-    )
+    client = get_object_or_404(Client, id=id)
 
     # -----------------------------------------------------
     # Vérifier l'utilisateur connecté
@@ -345,14 +266,9 @@ def client_delete(request, id):
 
     if not user_id:
 
-        messages.error(
-            request,
-            "Votre session a expiré. Veuillez vous reconnecter."
-        )
+        messages.error(request, "Votre session a expiré. Veuillez vous reconnecter.")
 
-        return redirect(
-            "users:login"
-        )
+        return redirect("users:login")
 
     # -----------------------------------------------------
     # Vérifier que l'utilisateur est le créateur
@@ -360,14 +276,9 @@ def client_delete(request, id):
 
     if str(client.enregistre_par_id) != str(user_id):
 
-        messages.error(
-            request,
-            "Vous n'êtes pas autorisé à supprimer ce client."
-        )
+        messages.error(request, "Vous n'êtes pas autorisé à supprimer ce client.")
 
-        return redirect(
-            "clients:client_list"
-        )
+        return redirect("clients:client_list")
 
     # =====================================================
     # SUPPRESSION
@@ -381,43 +292,25 @@ def client_delete(request, id):
 
         ancienne = {
             "id": client.id,
-
             "nom": client.nom,
-
             "prenom": client.prenom,
-
             "date_naissance": (
-                client.date_naissance.isoformat()
-                if client.date_naissance
-                else None
+                client.date_naissance.isoformat() if client.date_naissance else None
             ),
-
             "lieu_naissance": client.lieu_naissance,
-
             "cin": client.cin,
-
             "nom_pere": client.nom_pere,
-
             "nom_mere": client.nom_mere,
-
             "contact": client.contact,
-
             "adresse": client.adresse,
-
-            "photo": (
-                client.photo.name
-                if client.photo
-                else None
-            ),
+            "photo": (client.photo.name if client.photo else None),
         }
 
         # -------------------------------------------------
         # Nom du client
         # -------------------------------------------------
 
-        nom_client = (
-            f"{client.nom} {client.prenom}"
-        ).strip()
+        nom_client = (f"{client.nom} {client.prenom}").strip()
 
         client_id = client.id
 
@@ -439,9 +332,7 @@ def client_delete(request, id):
             objet_id=client_id,
             ancienne=ancienne,
             nouvelle=None,
-            description=(
-                f"Suppression du client {nom_client}"
-            )
+            description=(f"Suppression du client {nom_client}"),
         )
 
         # -------------------------------------------------
@@ -458,9 +349,7 @@ def client_delete(request, id):
 
             try:
 
-                photo.delete(
-                    save=False
-                )
+                photo.delete(save=False)
 
             except Exception:
 
@@ -474,26 +363,17 @@ def client_delete(request, id):
 
         messages.success(
             request,
-            f"Le client « {nom_client} » "
-            "et sa photo ont été supprimés avec succès."
+            f"Le client « {nom_client} » " "et sa photo ont été supprimés avec succès.",
         )
 
         # -------------------------------------------------
         # Retour à la liste
         # -------------------------------------------------
 
-        return redirect(
-            "clients:client_list"
-        )
+        return redirect("clients:client_list")
 
     # =====================================================
     # AFFICHAGE DE LA CONFIRMATION
     # =====================================================
 
-    return render(
-        request,
-        "clients/confirm_delete.html",
-        {
-            "client": client
-        }
-    )
+    return render(request, "clients/confirm_delete.html", {"client": client})

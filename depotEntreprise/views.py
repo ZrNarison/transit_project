@@ -3,22 +3,18 @@ from decimal import Decimal
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum
-from django.shortcuts import (
-    get_object_or_404,
-    redirect,
-    render,
-)
+from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import DepotSoc
-from .forms import DepotSocForm
-
-from users.models import AppUser
 from audit.utils import enregistrer_action
+from users.models import AppUser
 
+from .forms import DepotSocForm
+from .models import DepotSoc
 
 # ============================================================
 # UTILISATEUR CONNECTÉ
 # ============================================================
+
 
 def get_current_user(request):
 
@@ -29,9 +25,7 @@ def get_current_user(request):
 
     try:
 
-        return AppUser.objects.get(
-            id=int(user_id)
-        )
+        return AppUser.objects.get(id=int(user_id))
 
     except (
         AppUser.DoesNotExist,
@@ -46,16 +40,14 @@ def get_current_user(request):
 # VÉRIFICATION SESSION
 # ============================================================
 
+
 def check_session(request):
 
     user = get_current_user(request)
 
     if not user:
 
-        messages.error(
-            request,
-            "Votre session a expiré. Veuillez vous reconnecter."
-        )
+        messages.error(request, "Votre session a expiré. Veuillez vous reconnecter.")
 
         return None
 
@@ -66,22 +58,20 @@ def check_session(request):
 # VALEURS POUR AUDIT
 # ============================================================
 
+
 def depot_soc_values(depot):
 
     return {
         "montant": str(depot.montant),
         "date": str(depot.date),
-        "enregistreur": (
-            depot.enregistreur.username
-            if depot.enregistreur
-            else None
-        ),
+        "enregistreur": (depot.enregistreur.username if depot.enregistreur else None),
     }
 
 
 # ============================================================
 # LISTE DES DÉPÔTS SOCIÉTÉ
 # ============================================================
+
 
 def depot_soc_list(request):
 
@@ -91,65 +81,40 @@ def depot_soc_list(request):
         return redirect("users:login")
 
     depots = (
-        DepotSoc.objects
-        .select_related("enregistreur")
-        .all()
-        .order_by("-date", "-id")
+        DepotSoc.objects.select_related("enregistreur").all().order_by("-date", "-id")
     )
 
     # --------------------------------------------------------
     # FILTRES
     # --------------------------------------------------------
 
-    montant = request.GET.get(
-        "montant",
-        ""
-    ).strip()
+    montant = request.GET.get("montant", "").strip()
 
-    date = request.GET.get(
-        "date",
-        ""
-    ).strip()
+    date = request.GET.get("date", "").strip()
 
     if montant:
 
-        depots = depots.filter(
-            montant__icontains=montant
-        )
+        depots = depots.filter(montant__icontains=montant)
 
     if date:
 
-        depots = depots.filter(
-            date=date
-        )
+        depots = depots.filter(date=date)
 
     # --------------------------------------------------------
     # TOTAL
     # --------------------------------------------------------
 
-    total_depots = (
-        depots.aggregate(
-            total=Sum("montant")
-        )["total"]
-        or Decimal("0")
-    )
+    total_depots = depots.aggregate(total=Sum("montant"))["total"] or Decimal("0")
 
     # --------------------------------------------------------
     # PAGINATION
     # --------------------------------------------------------
 
-    paginator = Paginator(
-        depots,
-        12
-    )
+    paginator = Paginator(depots, 12)
 
-    page_number = request.GET.get(
-        "page"
-    )
+    page_number = request.GET.get("page")
 
-    page_obj = paginator.get_page(
-        page_number
-    )
+    page_obj = paginator.get_page(page_number)
 
     # --------------------------------------------------------
     # PARAMÈTRES POUR PAGINATION
@@ -166,36 +131,23 @@ def depot_soc_list(request):
     # --------------------------------------------------------
 
     context = {
-
         "depots": page_obj,
-
         "page_obj": page_obj,
-
         "montant": montant,
-
         "date": date,
-
         "total_depots": total_depots,
-
         "user": user,
-
-        "role": request.session.get(
-            "role"
-        ),
-
+        "role": request.session.get("role"),
         "query_params": query_params.urlencode(),
     }
 
-    return render(
-        request,
-        "depotEntreprise/list.html",
-        context
-    )
+    return render(request, "depotEntreprise/list.html", context)
 
 
 # ============================================================
 # AJOUT
 # ============================================================
+
 
 def depot_soc_add(request):
 
@@ -206,15 +158,11 @@ def depot_soc_add(request):
 
     if request.method == "POST":
 
-        form = DepotSocForm(
-            request.POST
-        )
+        form = DepotSocForm(request.POST)
 
         if form.is_valid():
 
-            depot = form.save(
-                commit=False
-            )
+            depot = form.save(commit=False)
 
             # Utilisateur connecté
             depot.enregistreur = user
@@ -225,9 +173,7 @@ def depot_soc_add(request):
             # AUDIT
             # ------------------------------------------------
 
-            nouvelle_valeur = depot_soc_values(
-                depot
-            )
+            nouvelle_valeur = depot_soc_values(depot)
 
             enregistrer_action(
                 request,
@@ -236,17 +182,12 @@ def depot_soc_add(request):
                 depot.id,
                 None,
                 nouvelle_valeur,
-                "Ajout d'un dépôt société"
+                "Ajout d'un dépôt société",
             )
 
-            messages.success(
-                request,
-                "Dépôt société ajouté avec succès."
-            )
+            messages.success(request, "Dépôt société ajouté avec succès.")
 
-            return redirect(
-                "depotSoc:depot_soc_list"
-            )
+            return redirect("depotSoc:depot_soc_list")
 
     else:
 
@@ -259,16 +200,15 @@ def depot_soc_add(request):
             "form": form,
             "action": "Ajouter",
             "user": user,
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "role": request.session.get("role"),
+        },
     )
 
 
 # ============================================================
 # DÉTAIL
 # ============================================================
+
 
 def depot_soc_detail(request, id):
 
@@ -277,12 +217,7 @@ def depot_soc_detail(request, id):
     if not user:
         return redirect("users:login")
 
-    depot = get_object_or_404(
-        DepotSoc.objects.select_related(
-            "enregistreur"
-        ),
-        id=id
-    )
+    depot = get_object_or_404(DepotSoc.objects.select_related("enregistreur"), id=id)
 
     return render(
         request,
@@ -290,16 +225,15 @@ def depot_soc_detail(request, id):
         {
             "depot": depot,
             "user": user,
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "role": request.session.get("role"),
+        },
     )
 
 
 # ============================================================
 # MODIFICATION
 # ============================================================
+
 
 def depot_soc_edit(request, id):
 
@@ -308,28 +242,18 @@ def depot_soc_edit(request, id):
     if not user:
         return redirect("users:login")
 
-    depot = get_object_or_404(
-        DepotSoc,
-        id=id
-    )
+    depot = get_object_or_404(DepotSoc, id=id)
 
     # Anciennes valeurs
-    ancienne_valeur = depot_soc_values(
-        depot
-    )
+    ancienne_valeur = depot_soc_values(depot)
 
     if request.method == "POST":
 
-        form = DepotSocForm(
-            request.POST,
-            instance=depot
-        )
+        form = DepotSocForm(request.POST, instance=depot)
 
         if form.is_valid():
 
-            depot = form.save(
-                commit=False
-            )
+            depot = form.save(commit=False)
 
             # L'utilisateur qui modifie
             depot.enregistreur = user
@@ -340,9 +264,7 @@ def depot_soc_edit(request, id):
             # NOUVELLES VALEURS
             # ------------------------------------------------
 
-            nouvelle_valeur = depot_soc_values(
-                depot
-            )
+            nouvelle_valeur = depot_soc_values(depot)
 
             # ------------------------------------------------
             # AUDIT
@@ -355,23 +277,16 @@ def depot_soc_edit(request, id):
                 depot.id,
                 ancienne_valeur,
                 nouvelle_valeur,
-                "Modification d'un dépôt société"
+                "Modification d'un dépôt société",
             )
 
-            messages.success(
-                request,
-                "Dépôt société modifié avec succès."
-            )
+            messages.success(request, "Dépôt société modifié avec succès.")
 
-            return redirect(
-                "depotSoc:depot_soc_list"
-            )
+            return redirect("depotSoc:depot_soc_list")
 
     else:
 
-        form = DepotSocForm(
-            instance=depot
-        )
+        form = DepotSocForm(instance=depot)
 
     return render(
         request,
@@ -381,16 +296,15 @@ def depot_soc_edit(request, id):
             "depot": depot,
             "action": "Modifier",
             "user": user,
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "role": request.session.get("role"),
+        },
     )
 
 
 # ============================================================
 # SUPPRESSION
 # ============================================================
+
 
 def depot_soc_delete(request, id):
 
@@ -399,10 +313,7 @@ def depot_soc_delete(request, id):
     if not user:
         return redirect("users:login")
 
-    depot = get_object_or_404(
-        DepotSoc,
-        id=id
-    )
+    depot = get_object_or_404(DepotSoc, id=id)
 
     if request.method == "POST":
 
@@ -410,9 +321,7 @@ def depot_soc_delete(request, id):
         # ANCIENNES VALEURS POUR AUDIT
         # ----------------------------------------------------
 
-        ancienne_valeur = depot_soc_values(
-            depot
-        )
+        ancienne_valeur = depot_soc_values(depot)
 
         depot_id = depot.id
 
@@ -427,7 +336,7 @@ def depot_soc_delete(request, id):
             depot_id,
             ancienne_valeur,
             None,
-            "Suppression d'un dépôt société"
+            "Suppression d'un dépôt société",
         )
 
         # ----------------------------------------------------
@@ -436,14 +345,9 @@ def depot_soc_delete(request, id):
 
         depot.delete()
 
-        messages.success(
-            request,
-            "Dépôt société supprimé avec succès."
-        )
+        messages.success(request, "Dépôt société supprimé avec succès.")
 
-        return redirect(
-            "depotSoc:depot_soc_list"
-        )
+        return redirect("depotSoc:depot_soc_list")
 
     return render(
         request,
@@ -451,18 +355,15 @@ def depot_soc_delete(request, id):
         {
             "depot": depot,
             "user": user,
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "role": request.session.get("role"),
+        },
     )
-
-
 
 
 # ============================================================
 # LISTE DES DÉPÔTS SOCIÉTÉ
 # ============================================================
+
 
 def h_depot_soc_list(request):
 
@@ -472,65 +373,40 @@ def h_depot_soc_list(request):
         return redirect("users:login")
 
     depots = (
-        DepotSoc.objects
-        .select_related("enregistreur")
-        .all()
-        .order_by("-date", "-id")
+        DepotSoc.objects.select_related("enregistreur").all().order_by("-date", "-id")
     )
 
     # --------------------------------------------------------
     # FILTRES
     # --------------------------------------------------------
 
-    montant = request.GET.get(
-        "montant",
-        ""
-    ).strip()
+    montant = request.GET.get("montant", "").strip()
 
-    date = request.GET.get(
-        "date",
-        ""
-    ).strip()
+    date = request.GET.get("date", "").strip()
 
     if montant:
 
-        depots = depots.filter(
-            montant__icontains=montant
-        )
+        depots = depots.filter(montant__icontains=montant)
 
     if date:
 
-        depots = depots.filter(
-            date=date
-        )
+        depots = depots.filter(date=date)
 
     # --------------------------------------------------------
     # TOTAL
     # --------------------------------------------------------
 
-    total_depots = (
-        depots.aggregate(
-            total=Sum("montant")
-        )["total"]
-        or Decimal("0")
-    )
+    total_depots = depots.aggregate(total=Sum("montant"))["total"] or Decimal("0")
 
     # --------------------------------------------------------
     # PAGINATION
     # --------------------------------------------------------
 
-    paginator = Paginator(
-        depots,
-        12
-    )
+    paginator = Paginator(depots, 12)
 
-    page_number = request.GET.get(
-        "page"
-    )
+    page_number = request.GET.get("page")
 
-    page_obj = paginator.get_page(
-        page_number
-    )
+    page_obj = paginator.get_page(page_number)
 
     # --------------------------------------------------------
     # PARAMÈTRES POUR PAGINATION
@@ -547,36 +423,23 @@ def h_depot_soc_list(request):
     # --------------------------------------------------------
 
     context = {
-
         "depots": page_obj,
-
         "page_obj": page_obj,
-
         "montant": montant,
-
         "date": date,
-
         "total_depots": total_depots,
-
         "user": user,
-
-        "role": request.session.get(
-            "role"
-        ),
-
+        "role": request.session.get("role"),
         "query_params": query_params.urlencode(),
     }
 
-    return render(
-        request,
-        "depotEntreprise/list.html",
-        context
-    )
+    return render(request, "depotEntreprise/list.html", context)
 
 
 # ============================================================
 # AJOUT
 # ============================================================
+
 
 def h_depot_soc_add(request):
 
@@ -587,15 +450,11 @@ def h_depot_soc_add(request):
 
     if request.method == "POST":
 
-        form = DepotSocForm(
-            request.POST
-        )
+        form = DepotSocForm(request.POST)
 
         if form.is_valid():
 
-            depot = form.save(
-                commit=False
-            )
+            depot = form.save(commit=False)
 
             # Utilisateur connecté
             depot.enregistreur = user
@@ -606,9 +465,7 @@ def h_depot_soc_add(request):
             # AUDIT
             # ------------------------------------------------
 
-            nouvelle_valeur = depot_soc_values(
-                depot
-            )
+            nouvelle_valeur = depot_soc_values(depot)
 
             enregistrer_action(
                 request,
@@ -617,17 +474,12 @@ def h_depot_soc_add(request):
                 depot.id,
                 None,
                 nouvelle_valeur,
-                "Ajout d'un dépôt société"
+                "Ajout d'un dépôt société",
             )
 
-            messages.success(
-                request,
-                "Dépôt société ajouté avec succès."
-            )
+            messages.success(request, "Dépôt société ajouté avec succès.")
 
-            return redirect(
-                "depotSoc:depot_soc_list"
-            )
+            return redirect("depotSoc:depot_soc_list")
 
     else:
 
@@ -640,16 +492,15 @@ def h_depot_soc_add(request):
             "form": form,
             "action": "Ajouter",
             "user": user,
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "role": request.session.get("role"),
+        },
     )
 
 
 # ============================================================
 # DÉTAIL
 # ============================================================
+
 
 def h_depot_soc_detail(request, id):
 
@@ -658,12 +509,7 @@ def h_depot_soc_detail(request, id):
     if not user:
         return redirect("users:login")
 
-    depot = get_object_or_404(
-        DepotSoc.objects.select_related(
-            "enregistreur"
-        ),
-        id=id
-    )
+    depot = get_object_or_404(DepotSoc.objects.select_related("enregistreur"), id=id)
 
     return render(
         request,
@@ -671,16 +517,15 @@ def h_depot_soc_detail(request, id):
         {
             "depot": depot,
             "user": user,
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "role": request.session.get("role"),
+        },
     )
 
 
 # ============================================================
 # MODIFICATION
 # ============================================================
+
 
 def h_depot_soc_edit(request, id):
 
@@ -689,28 +534,18 @@ def h_depot_soc_edit(request, id):
     if not user:
         return redirect("users:login")
 
-    depot = get_object_or_404(
-        DepotSoc,
-        id=id
-    )
+    depot = get_object_or_404(DepotSoc, id=id)
 
     # Anciennes valeurs
-    ancienne_valeur = depot_soc_values(
-        depot
-    )
+    ancienne_valeur = depot_soc_values(depot)
 
     if request.method == "POST":
 
-        form = DepotSocForm(
-            request.POST,
-            instance=depot
-        )
+        form = DepotSocForm(request.POST, instance=depot)
 
         if form.is_valid():
 
-            depot = form.save(
-                commit=False
-            )
+            depot = form.save(commit=False)
 
             # L'utilisateur qui modifie
             depot.enregistreur = user
@@ -721,9 +556,7 @@ def h_depot_soc_edit(request, id):
             # NOUVELLES VALEURS
             # ------------------------------------------------
 
-            nouvelle_valeur = depot_soc_values(
-                depot
-            )
+            nouvelle_valeur = depot_soc_values(depot)
 
             # ------------------------------------------------
             # AUDIT
@@ -736,23 +569,16 @@ def h_depot_soc_edit(request, id):
                 depot.id,
                 ancienne_valeur,
                 nouvelle_valeur,
-                "Modification d'un dépôt société"
+                "Modification d'un dépôt société",
             )
 
-            messages.success(
-                request,
-                "Dépôt société modifié avec succès."
-            )
+            messages.success(request, "Dépôt société modifié avec succès.")
 
-            return redirect(
-                "depotSoc:depot_soc_list"
-            )
+            return redirect("depotSoc:depot_soc_list")
 
     else:
 
-        form = DepotSocForm(
-            instance=depot
-        )
+        form = DepotSocForm(instance=depot)
 
     return render(
         request,
@@ -762,16 +588,15 @@ def h_depot_soc_edit(request, id):
             "depot": depot,
             "action": "Modifier",
             "user": user,
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "role": request.session.get("role"),
+        },
     )
 
 
 # ============================================================
 # SUPPRESSION
 # ============================================================
+
 
 def h_depot_soc_delete(request, id):
 
@@ -780,10 +605,7 @@ def h_depot_soc_delete(request, id):
     if not user:
         return redirect("users:login")
 
-    depot = get_object_or_404(
-        DepotSoc,
-        id=id
-    )
+    depot = get_object_or_404(DepotSoc, id=id)
 
     if request.method == "POST":
 
@@ -791,9 +613,7 @@ def h_depot_soc_delete(request, id):
         # ANCIENNES VALEURS POUR AUDIT
         # ----------------------------------------------------
 
-        ancienne_valeur = depot_soc_values(
-            depot
-        )
+        ancienne_valeur = depot_soc_values(depot)
 
         depot_id = depot.id
 
@@ -808,7 +628,7 @@ def h_depot_soc_delete(request, id):
             depot_id,
             ancienne_valeur,
             None,
-            "Suppression d'un dépôt société"
+            "Suppression d'un dépôt société",
         )
 
         # ----------------------------------------------------
@@ -817,14 +637,9 @@ def h_depot_soc_delete(request, id):
 
         depot.delete()
 
-        messages.success(
-            request,
-            "Dépôt société supprimé avec succès."
-        )
+        messages.success(request, "Dépôt société supprimé avec succès.")
 
-        return redirect(
-            "depotSoc:depot_soc_list"
-        )
+        return redirect("depotSoc:depot_soc_list")
 
     return render(
         request,
@@ -832,8 +647,6 @@ def h_depot_soc_delete(request, id):
         {
             "depot": depot,
             "user": user,
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "role": request.session.get("role"),
+        },
     )

@@ -17,7 +17,6 @@ class DepenseForm(forms.ModelForm):
         ]
 
         widgets = {
-
             # ==================================================
             # TITRE LIBRE
             # ==================================================
@@ -27,7 +26,6 @@ class DepenseForm(forms.ModelForm):
                     "placeholder": "Titre de la dépense",
                 }
             ),
-
             # ==================================================
             # MONTANT
             # ==================================================
@@ -39,7 +37,6 @@ class DepenseForm(forms.ModelForm):
                     "placeholder": "Montant",
                 }
             ),
-
             # ==================================================
             # DATE LIBRE
             # ==================================================
@@ -50,7 +47,6 @@ class DepenseForm(forms.ModelForm):
                     "type": "date",
                 },
             ),
-
             # ==================================================
             # DESCRIPTION
             # ==================================================
@@ -67,9 +63,7 @@ class DepenseForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # Format accepté par le champ HTML date
-        self.fields["date"].input_formats = [
-            "%Y-%m-%d"
-        ]
+        self.fields["date"].input_formats = ["%Y-%m-%d"]
 
         # ==================================================
         # NOUVELLE DÉPENSE

@@ -8,25 +8,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('depense', '0005_alter_depense_options'),
-        ('depot', '0002_alter_depot_montantg_alter_distribution_montant'),
+        ("depense", "0005_alter_depense_options"),
+        ("depot", "0002_alter_depot_montantg_alter_distribution_montant"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='depense',
-            name='description',
+            model_name="depense",
+            name="description",
             field=models.TextField(blank=True, default=django.utils.timezone.now),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='depense',
-            name='distribution',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='depenses', to='depot.distribution'),
+            model_name="depense",
+            name="distribution",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="depenses",
+                to="depot.distribution",
+            ),
         ),
         migrations.AlterField(
-            model_name='depense',
-            name='montant',
+            model_name="depense",
+            name="montant",
             field=models.DecimalField(decimal_places=2, max_digits=12),
         ),
     ]

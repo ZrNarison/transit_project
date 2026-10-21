@@ -1,4 +1,5 @@
 from django.urls import path
+
 from . import views
 
 app_name = "materiels"
@@ -12,7 +13,6 @@ urlpatterns = [
         views.materiels_list,
         name="materiels_list",
     ),
-
     # =========================================================
     # GALAXY — DÉTAIL D'UN GROUPE
     # =========================================================
@@ -21,7 +21,6 @@ urlpatterns = [
         views.materiels_mdetail,
         name="materiels_mdetail",
     ),
-
     # =========================================================
     # GALAXY — DÉTAIL CLASSIQUE
     # =========================================================
@@ -30,7 +29,6 @@ urlpatterns = [
         views.materiels_detail,
         name="materiels_detail",
     ),
-
     # =========================================================
     # GALAXY — AJOUTER
     # =========================================================
@@ -39,7 +37,6 @@ urlpatterns = [
         views.materiels_add,
         name="materiels_add",
     ),
-
     # =========================================================
     # GALAXY — MODIFIER
     # =========================================================
@@ -48,7 +45,6 @@ urlpatterns = [
         views.materiels_edit,
         name="materiels_edit",
     ),
-
     # =========================================================
     # GALAXY — SUPPRIMER
     # =========================================================
@@ -57,7 +53,6 @@ urlpatterns = [
         views.materiels_delete,
         name="materiels_delete",
     ),
-
     # =========================================================
     # GALAXY — SUPPRIMER LE STOCK INITIAL
     # =========================================================
@@ -66,7 +61,6 @@ urlpatterns = [
         views.supprimer_stock_initial,
         name="supprimer_stock_initial",
     ),
-
     # =========================================================
     # ENTREPRISE H — LISTE
     # =========================================================
@@ -75,7 +69,6 @@ urlpatterns = [
         views.h_materiels_list,
         name="h_materiels_list",
     ),
-
     # =========================================================
     # ENTREPRISE H — DÉTAIL D'UN GROUPE
     # =========================================================
@@ -84,7 +77,6 @@ urlpatterns = [
         views.h_materiels_mdetail,
         name="h_materiels_mdetail",
     ),
-
     # =========================================================
     # ENTREPRISE H — DÉTAIL CLASSIQUE
     # =========================================================
@@ -93,7 +85,6 @@ urlpatterns = [
         views.h_materiels_detail,
         name="h_materiels_detail",
     ),
-
     # =========================================================
     # ENTREPRISE H — AJOUTER
     # =========================================================
@@ -102,7 +93,6 @@ urlpatterns = [
         views.h_materiels_add,
         name="h_materiels_add",
     ),
-
     # =========================================================
     # ENTREPRISE H — MODIFIER
     # =========================================================
@@ -111,7 +101,6 @@ urlpatterns = [
         views.h_materiels_edit,
         name="h_materiels_edit",
     ),
-
     # =========================================================
     # ENTREPRISE H — SUPPRIMER
     # =========================================================
@@ -120,7 +109,6 @@ urlpatterns = [
         views.h_materiels_delete,
         name="h_materiels_delete",
     ),
-
     # =========================================================
     # ENTREPRISE H — SUPPRIMER LE STOCK INITIAL
     # =========================================================

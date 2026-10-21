@@ -6,29 +6,89 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('personnel', '0013_alter_personnel_typetravail'),
+        ("personnel", "0013_alter_personnel_typetravail"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='H_Personnel',
+            name="H_Personnel",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=100, verbose_name='Nom')),
-                ('prenom', models.CharField(blank=True, max_length=100, verbose_name='Prénom')),
-                ('adresse', models.CharField(blank=True, max_length=255, verbose_name='Adresse')),
-                ('salaire', models.DecimalField(decimal_places=2, default=0, max_digits=12, verbose_name='Salaire')),
-                ('cin', models.CharField(max_length=20, unique=True, verbose_name='CIN')),
-                ('telephone', models.CharField(max_length=15, verbose_name='Téléphone')),
-                ('typeContrat', models.CharField(choices=[('CDI', 'CDI'), ('CDD', 'CDD'), ('Journalier', 'Journalier'), ('Stage', 'Stage')], default='CDI', max_length=30, verbose_name='Type de contrat')),
-                ('debutContrat', models.DateField(verbose_name='Début du contrat')),
-                ('finContrat', models.DateField(blank=True, null=True, verbose_name='Fin du contrat')),
-                ('categorie', models.CharField(choices=[('DIRECTEUR', 'Administration'), ('COMPTABLE', 'Comptabilité'), ('MPIASA', 'Employé')], default='MPIASA', max_length=30, verbose_name='Catégorie')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nom", models.CharField(max_length=100, verbose_name="Nom")),
+                (
+                    "prenom",
+                    models.CharField(blank=True, max_length=100, verbose_name="Prénom"),
+                ),
+                (
+                    "adresse",
+                    models.CharField(
+                        blank=True, max_length=255, verbose_name="Adresse"
+                    ),
+                ),
+                (
+                    "salaire",
+                    models.DecimalField(
+                        decimal_places=2,
+                        default=0,
+                        max_digits=12,
+                        verbose_name="Salaire",
+                    ),
+                ),
+                (
+                    "cin",
+                    models.CharField(max_length=20, unique=True, verbose_name="CIN"),
+                ),
+                (
+                    "telephone",
+                    models.CharField(max_length=15, verbose_name="Téléphone"),
+                ),
+                (
+                    "typeContrat",
+                    models.CharField(
+                        choices=[
+                            ("CDI", "CDI"),
+                            ("CDD", "CDD"),
+                            ("Journalier", "Journalier"),
+                            ("Stage", "Stage"),
+                        ],
+                        default="CDI",
+                        max_length=30,
+                        verbose_name="Type de contrat",
+                    ),
+                ),
+                ("debutContrat", models.DateField(verbose_name="Début du contrat")),
+                (
+                    "finContrat",
+                    models.DateField(
+                        blank=True, null=True, verbose_name="Fin du contrat"
+                    ),
+                ),
+                (
+                    "categorie",
+                    models.CharField(
+                        choices=[
+                            ("DIRECTEUR", "Administration"),
+                            ("COMPTABLE", "Comptabilité"),
+                            ("MPIASA", "Employé"),
+                        ],
+                        default="MPIASA",
+                        max_length=30,
+                        verbose_name="Catégorie",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Personnel',
-                'verbose_name_plural': 'Personnels',
-                'ordering': ['nom', 'prenom'],
+                "verbose_name": "Personnel",
+                "verbose_name_plural": "Personnels",
+                "ordering": ["nom", "prenom"],
             },
         ),
     ]

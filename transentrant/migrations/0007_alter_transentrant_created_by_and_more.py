@@ -7,19 +7,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('transentrant', '0006_alter_transentrant_telephone'),
-        ('users', '0003_appuser_photo'),
+        ("transentrant", "0006_alter_transentrant_telephone"),
+        ("users", "0003_appuser_photo"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transentrant',
-            name='created_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='transentrants', to='users.appuser'),
+            model_name="transentrant",
+            name="created_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="transentrants",
+                to="users.appuser",
+            ),
         ),
         migrations.AlterField(
-            model_name='transentrant',
-            name='telephone',
+            model_name="transentrant",
+            name="telephone",
             field=models.CharField(max_length=20),
         ),
     ]

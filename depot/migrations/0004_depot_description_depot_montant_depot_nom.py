@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('depot', '0003_merge_20260805_0025'),
+        ("depot", "0003_merge_20260805_0025"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='depot',
-            name='description',
+            model_name="depot",
+            name="description",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='depot',
-            name='montant',
+            model_name="depot",
+            name="montant",
             field=models.DecimalField(decimal_places=2, default=0, max_digits=12),
         ),
         migrations.AddField(
-            model_name='depot',
-            name='nom',
-            field=models.CharField(blank=True, default='Dépôt', max_length=150),
+            model_name="depot",
+            name="nom",
+            field=models.CharField(blank=True, default="Dépôt", max_length=150),
         ),
     ]

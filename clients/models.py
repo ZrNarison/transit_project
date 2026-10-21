@@ -1,5 +1,7 @@
 from django.db import models
+
 from users.models import AppUser
+
 
 class Client(models.Model):
     nom = models.CharField(max_length=100)
@@ -11,14 +13,14 @@ class Client(models.Model):
     nom_mere = models.CharField(max_length=150, blank=True)
     contact = models.CharField(max_length=10, blank=True)
     adresse = models.TextField(blank=True)
-    photo = models.ImageField(upload_to='images/Clients/')
+    photo = models.ImageField(upload_to="images/Clients/")
 
     enregistre_par = models.ForeignKey(
         AppUser,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="clients_enregistres"
+        related_name="clients_enregistres",
     )
 
     def __str__(self):

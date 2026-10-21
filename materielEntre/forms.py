@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import MaterielEntre,H_MaterielEntre
+from .models import H_MaterielEntre, MaterielEntre
 
 
 class MaterielEntreForm(forms.ModelForm):
@@ -11,18 +11,13 @@ class MaterielEntreForm(forms.ModelForm):
         fields = [
             "id_MaterielSort",
             "Nb_Entre",
-            "dateEntre",              # <-- virgule importante
+            "dateEntre",  # <-- virgule importante
             "responsable_entree",
             "observation",
         ]
 
         widgets = {
-            "id_MaterielSort": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            ),
-
+            "id_MaterielSort": forms.Select(attrs={"class": "form-select"}),
             "Nb_Entre": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -31,21 +26,18 @@ class MaterielEntreForm(forms.ModelForm):
                     "placeholder": "Quantité entrée",
                 }
             ),
-
             "dateEntre": forms.DateInput(
                 attrs={
                     "class": "form-control",
                     "type": "date",
                 }
             ),
-
             "responsable_entree": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Responsable de l'entrée",
                 }
             ),
-
             "observation": forms.Textarea(
                 attrs={
                     "class": "form-control",
@@ -63,9 +55,7 @@ class MaterielEntreForm(forms.ModelForm):
         quantite = self.cleaned_data.get("Nb_Entre")
 
         if quantite is None or quantite <= 0:
-            raise forms.ValidationError(
-                "La quantité entrée doit être supérieure à 0."
-            )
+            raise forms.ValidationError("La quantité entrée doit être supérieure à 0.")
 
         return quantite
 
@@ -79,9 +69,7 @@ class MaterielEntreForm(forms.ModelForm):
         sortie = self.cleaned_data.get("id_MaterielSort")
 
         if not date_entre:
-            raise forms.ValidationError(
-                "La date d'entrée est obligatoire."
-            )
+            raise forms.ValidationError("La date d'entrée est obligatoire.")
 
         if not sortie:
             return date_entre
@@ -99,7 +87,6 @@ class MaterielEntreForm(forms.ModelForm):
         return date_entre
 
 
-
 class H_MaterielEntreForm(forms.ModelForm):
 
     class Meta:
@@ -108,18 +95,13 @@ class H_MaterielEntreForm(forms.ModelForm):
         fields = [
             "id_MaterielSort",
             "Nb_Entre",
-            "dateEntre",              # <-- virgule importante
+            "dateEntre",  # <-- virgule importante
             "responsable_entree",
             "observation",
         ]
 
         widgets = {
-            "id_MaterielSort": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            ),
-
+            "id_MaterielSort": forms.Select(attrs={"class": "form-select"}),
             "Nb_Entre": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -128,21 +110,18 @@ class H_MaterielEntreForm(forms.ModelForm):
                     "placeholder": "Quantité entrée",
                 }
             ),
-
             "dateEntre": forms.DateInput(
                 attrs={
                     "class": "form-control",
                     "type": "date",
                 }
             ),
-
             "responsable_entree": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Responsable de l'entrée",
                 }
             ),
-
             "observation": forms.Textarea(
                 attrs={
                     "class": "form-control",
@@ -160,9 +139,7 @@ class H_MaterielEntreForm(forms.ModelForm):
         quantite = self.cleaned_data.get("Nb_Entre")
 
         if quantite is None or quantite <= 0:
-            raise forms.ValidationError(
-                "La quantité entrée doit être supérieure à 0."
-            )
+            raise forms.ValidationError("La quantité entrée doit être supérieure à 0.")
 
         return quantite
 
@@ -176,9 +153,7 @@ class H_MaterielEntreForm(forms.ModelForm):
         sortie = self.cleaned_data.get("id_MaterielSort")
 
         if not date_entre:
-            raise forms.ValidationError(
-                "La date d'entrée est obligatoire."
-            )
+            raise forms.ValidationError("La date d'entrée est obligatoire.")
 
         if not sortie:
             return date_entre

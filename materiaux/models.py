@@ -1,11 +1,13 @@
 ﻿from decimal import Decimal
-from django.utils import timezone
+
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
-from decimal import Decimal
-from django.core.validators import MinValueValidator
+from django.utils import timezone
+
 from users.models import AppUser, H_AppUser
+
 
 # ============================================================
 # MAT├ëRIAUX
@@ -31,45 +33,25 @@ class Materiaux(models.Model):
 
     @property
     def total_entrees(self):
-        return (
-            self.entrees.aggregate(
-                total=Sum("entree")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.entrees.aggregate(total=Sum("entree"))["total"] or Decimal("0")
 
     @property
     def total_divisions(self):
-        return (
-            MateriauxDivision.objects.filter(
-                entree__materiau=self
-            ).aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return MateriauxDivision.objects.filter(entree__materiau=self).aggregate(
+            total=Sum("quantite")
+        )["total"] or Decimal("0")
 
     @property
     def total_sorties(self):
-        return (
-            MateriauxOut.objects.filter(
-                division__entree__materiau=self
-            ).aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return MateriauxOut.objects.filter(division__entree__materiau=self).aggregate(
+            total=Sum("quantite")
+        )["total"] or Decimal("0")
 
     @property
     def total_retours(self):
-        return (
-            MateriauxRetour.objects.filter(
-                sortie__division__entree__materiau=self
-            ).aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return MateriauxRetour.objects.filter(
+            sortie__division__entree__materiau=self
+        ).aggregate(total=Sum("quantite"))["total"] or Decimal("0")
 
     @property
     def stock_entrepot(self):
@@ -88,11 +70,7 @@ class Materiaux(models.Model):
         - sorties vers chantier
         + retours du chantier
         """
-        return (
-            self.total_divisions
-            - self.total_sorties
-            + self.total_retours
-        )
+        return self.total_divisions - self.total_sorties + self.total_retours
 
     @property
     def stock_total(self):
@@ -102,6 +80,7 @@ class Materiaux(models.Model):
 # ============================================================
 # ENTR├ëE ENTREP├öT
 # ============================================================
+
 
 class MateriauxEntree(models.Model):
     materiau = models.ForeignKey(
@@ -151,29 +130,24 @@ class MateriauxEntree(models.Model):
 
     def clean(self):
         if self.entree is None or self.entree <= 0:
-            raise ValidationError({
-                "entree": (
-                    "La quantit├® entr├®e doit ├¬tre sup├®rieure ├á z├®ro."
-                )
-            })
-
-        if self.pk:
-            total_divisions = (
-                self.divisions
-                .exclude(pk=self.pk)
-                .aggregate(
-                    total=Sum("quantite")
-                )["total"]
-                or Decimal("0")
+            raise ValidationError(
+                {"entree": ("La quantit├® entr├®e doit ├¬tre sup├®rieure ├á z├®ro.")}
             )
 
+        if self.pk:
+            total_divisions = self.divisions.exclude(pk=self.pk).aggregate(
+                total=Sum("quantite")
+            )["total"] or Decimal("0")
+
             if self.entree < total_divisions:
-                raise ValidationError({
-                    "entree": (
-                        "Impossible de diminuer cette entr├®e ├á cette "
-                        "quantit├® car une partie a d├®j├á ├®t├® divis├®e."
-                    )
-                })
+                raise ValidationError(
+                    {
+                        "entree": (
+                            "Impossible de diminuer cette entr├®e ├á cette "
+                            "quantit├® car une partie a d├®j├á ├®t├® divis├®e."
+                        )
+                    }
+                )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -181,12 +155,7 @@ class MateriauxEntree(models.Model):
 
     @property
     def quantite_divisee(self):
-        return (
-            self.divisions.aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.divisions.aggregate(total=Sum("quantite"))["total"] or Decimal("0")
 
     @property
     def stock_entrepot(self):
@@ -194,26 +163,18 @@ class MateriauxEntree(models.Model):
 
     @property
     def total_sorties(self):
-        return (
-            MateriauxOut.objects.filter(
-                division__entree=self
-            ).aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return MateriauxOut.objects.filter(division__entree=self).aggregate(
+            total=Sum("quantite")
+        )["total"] or Decimal("0")
 
     def __str__(self):
-        return (
-            f"{self.materiau.libelle} - "
-            f"{self.entree} "
-            f"{self.materiau.unite}"
-        )
+        return f"{self.materiau.libelle} - " f"{self.entree} " f"{self.materiau.unite}"
 
 
 # ============================================================
 # DIVISION ENTREP├öT ÔåÆ MAGASIN
 # ============================================================
+
 
 class MateriauxDivision(models.Model):
     entree = models.ForeignKey(
@@ -259,48 +220,41 @@ class MateriauxDivision(models.Model):
             return
 
         if self.quantite is None or self.quantite <= 0:
-            raise ValidationError({
-                "quantite": (
-                    "La quantit├® doit ├¬tre sup├®rieure ├á z├®ro."
-                )
-            })
+            raise ValidationError(
+                {"quantite": ("La quantit├® doit ├¬tre sup├®rieure ├á z├®ro.")}
+            )
 
-        divisions_existantes = (
-            self.entree.divisions
-            .exclude(pk=self.pk)
-            .aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        divisions_existantes = self.entree.divisions.exclude(pk=self.pk).aggregate(
+            total=Sum("quantite")
+        )["total"] or Decimal("0")
 
         disponible = self.entree.entree - divisions_existantes
 
         if self.quantite > disponible:
-            raise ValidationError({
-                "quantite": (
-                    f"Quantit├® insuffisante dans l'entrep├┤t. "
-                    f"Disponible : {disponible} "
-                    f"{self.entree.materiau.unite}."
-                )
-            })
+            raise ValidationError(
+                {
+                    "quantite": (
+                        f"Quantit├® insuffisante dans l'entrep├┤t. "
+                        f"Disponible : {disponible} "
+                        f"{self.entree.materiau.unite}."
+                    )
+                }
+            )
 
         if self.pk:
-            sorties = (
-                self.sorties
-                .aggregate(
-                    total=Sum("quantite")
-                )["total"]
-                or Decimal("0")
+            sorties = self.sorties.aggregate(total=Sum("quantite"))["total"] or Decimal(
+                "0"
             )
 
             if self.quantite < sorties:
-                raise ValidationError({
-                    "quantite": (
-                        "Impossible de r├®duire cette division en dessous "
-                        "des quantit├®s d├®j├á sorties."
-                    )
-                })
+                raise ValidationError(
+                    {
+                        "quantite": (
+                            "Impossible de r├®duire cette division en dessous "
+                            "des quantit├®s d├®j├á sorties."
+                        )
+                    }
+                )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -308,31 +262,17 @@ class MateriauxDivision(models.Model):
 
     @property
     def quantite_sortie(self):
-        return (
-            self.sorties.aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.sorties.aggregate(total=Sum("quantite"))["total"] or Decimal("0")
 
     @property
     def quantite_retour(self):
-        return (
-            MateriauxRetour.objects.filter(
-                sortie__division=self
-            ).aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return MateriauxRetour.objects.filter(sortie__division=self).aggregate(
+            total=Sum("quantite")
+        )["total"] or Decimal("0")
 
     @property
     def stock_restant(self):
-        return (
-            self.quantite
-            - self.quantite_sortie
-            + self.quantite_retour
-        )
+        return self.quantite - self.quantite_sortie + self.quantite_retour
 
     def __str__(self):
         return (
@@ -346,6 +286,7 @@ class MateriauxDivision(models.Model):
 # ============================================================
 # SORTIE MAGASIN ÔåÆ PROJET
 # ============================================================
+
 
 class MateriauxOut(models.Model):
     division = models.ForeignKey(
@@ -420,55 +361,42 @@ class MateriauxOut(models.Model):
             return
 
         if self.quantite is None or self.quantite <= 0:
-            raise ValidationError({
-                "quantite": (
-                    "La quantit├® doit ├¬tre sup├®rieure ├á z├®ro."
-                )
-            })
-
-        sorties_existantes = (
-            self.division.sorties
-            .exclude(pk=self.pk)
-            .aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
-
-        retours_existants = (
-            MateriauxRetour.objects.filter(
-                sortie__division=self.division
+            raise ValidationError(
+                {"quantite": ("La quantit├® doit ├¬tre sup├®rieure ├á z├®ro.")}
             )
-            .aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
 
-        disponible = (
-            self.division.quantite
-            - sorties_existantes
-            + retours_existants
-        )
+        sorties_existantes = self.division.sorties.exclude(pk=self.pk).aggregate(
+            total=Sum("quantite")
+        )["total"] or Decimal("0")
+
+        retours_existants = MateriauxRetour.objects.filter(
+            sortie__division=self.division
+        ).aggregate(total=Sum("quantite"))["total"] or Decimal("0")
+
+        disponible = self.division.quantite - sorties_existantes + retours_existants
 
         if self.quantite > disponible:
-            raise ValidationError({
-                "quantite": (
-                    f"Stock magasin insuffisant. "
-                    f"Disponible : {disponible} "
-                    f"{self.division.entree.materiau.unite}."
-                )
-            })
+            raise ValidationError(
+                {
+                    "quantite": (
+                        f"Stock magasin insuffisant. "
+                        f"Disponible : {disponible} "
+                        f"{self.division.entree.materiau.unite}."
+                    )
+                }
+            )
 
         # Le point doit appartenir au m├¬me projet.
         if self.point_projet_id and self.projet_id:
             if self.point_projet.projet_id != self.projet_id:
-                raise ValidationError({
-                    "point_projet": (
-                        "Le point de chantier doit appartenir "
-                        "au projet s├®lectionn├®."
-                    )
-                })
+                raise ValidationError(
+                    {
+                        "point_projet": (
+                            "Le point de chantier doit appartenir "
+                            "au projet s├®lectionn├®."
+                        )
+                    }
+                )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -476,14 +404,9 @@ class MateriauxOut(models.Model):
 
     @property
     def quantite_transportee(self):
-        return (
-            self.transports.filter(
-                type_transport=ActiviteTransport.MATERIAUX
-            ).aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.transports.filter(
+            type_transport=ActiviteTransport.MATERIAUX
+        ).aggregate(total=Sum("quantite"))["total"] or Decimal("0")
 
     @property
     def quantite_non_transportee(self):
@@ -494,12 +417,7 @@ class MateriauxOut(models.Model):
 
     @property
     def quantite_retournee(self):
-        return (
-            self.retours.aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.retours.aggregate(total=Sum("quantite"))["total"] or Decimal("0")
 
     def __str__(self):
         return (
@@ -512,6 +430,7 @@ class MateriauxOut(models.Model):
 # ============================================================
 # V├ëHICULE
 # ============================================================
+
 
 class Vehicule(models.Model):
     immatriculation = models.CharField(
@@ -555,11 +474,9 @@ class Vehicule(models.Model):
 
     def clean(self):
         if self.kilometrage is not None and self.kilometrage < 0:
-            raise ValidationError({
-                "kilometrage": (
-                    "Le kilom├®trage ne peut pas ├¬tre n├®gatif."
-                )
-            })
+            raise ValidationError(
+                {"kilometrage": ("Le kilom├®trage ne peut pas ├¬tre n├®gatif.")}
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -567,50 +484,31 @@ class Vehicule(models.Model):
 
     @property
     def total_gasoil(self):
-        return (
-            self.depenses_gasoil.aggregate(
-                total=Sum("total")
-            )["total"]
-            or Decimal("0")
+        return self.depenses_gasoil.aggregate(total=Sum("total"))["total"] or Decimal(
+            "0"
         )
 
     @property
     def total_litres_gasoil(self):
-        return (
-            self.depenses_gasoil.aggregate(
-                total=Sum("quantite_litre")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.depenses_gasoil.aggregate(total=Sum("quantite_litre"))[
+            "total"
+        ] or Decimal("0")
 
     @property
     def total_reparations(self):
-        return (
-            self.reparations.aggregate(
-                total=Sum("montant_total_calcule")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.reparations.aggregate(total=Sum("montant_total_calcule"))[
+            "total"
+        ] or Decimal("0")
 
     @property
     def total_depenses(self):
-        return (
-            self.depenses.aggregate(
-                total=Sum("montant")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.depenses.aggregate(total=Sum("montant"))["total"] or Decimal("0")
 
     @property
     def total_dockers(self):
-        return (
-            PaiementDocker.objects.filter(
-                activite__vehicule=self
-            ).aggregate(
-                total=Sum("montant")
-            )["total"]
-            or Decimal("0")
-        )
+        return PaiementDocker.objects.filter(activite__vehicule=self).aggregate(
+            total=Sum("montant")
+        )["total"] or Decimal("0")
 
     @property
     def cout_total(self):
@@ -628,6 +526,7 @@ class Vehicule(models.Model):
 # ============================================================
 # CAT├ëGORIE DE D├ëPENSE
 # ============================================================
+
 
 class CategorieDepense(models.Model):
     nom = models.CharField(
@@ -658,6 +557,7 @@ class CategorieDepense(models.Model):
 # ============================================================
 # ACTIVIT├ë DE TRANSPORT
 # ============================================================
+
 
 class ActiviteTransport(models.Model):
 
@@ -803,22 +703,14 @@ class ActiviteTransport(models.Model):
         errors = {}
 
         if self.quantite is not None and self.quantite < 0:
-            errors["quantite"] = (
-                "La quantit├® ne peut pas ├¬tre n├®gative."
-            )
+            errors["quantite"] = "La quantit├® ne peut pas ├¬tre n├®gative."
 
-        if (
-            self.kilometrage_depart is not None
-            and self.kilometrage_depart < 0
-        ):
+        if self.kilometrage_depart is not None and self.kilometrage_depart < 0:
             errors["kilometrage_depart"] = (
                 "Le kilom├®trage de d├®part ne peut pas ├¬tre n├®gatif."
             )
 
-        if (
-            self.kilometrage_arrivee is not None
-            and self.kilometrage_arrivee < 0
-        ):
+        if self.kilometrage_arrivee is not None and self.kilometrage_arrivee < 0:
             errors["kilometrage_arrivee"] = (
                 "Le kilom├®trage d'arriv├®e ne peut pas ├¬tre n├®gatif."
             )
@@ -837,28 +729,14 @@ class ActiviteTransport(models.Model):
         # Un transport de mat├®riaux doit ├¬tre li├® ├á une sortie.
         # ----------------------------------------------------
 
-        if (
-            self.type_transport == self.MATERIAUX
-            and self.sortie_materiau_id
-        ):
+        if self.type_transport == self.MATERIAUX and self.sortie_materiau_id:
             sortie = self.sortie_materiau
 
-            transports_existants = (
-                sortie.transports
-                .exclude(pk=self.pk)
-                .filter(
-                    type_transport=self.MATERIAUX
-                )
-                .aggregate(
-                    total=Sum("quantite")
-                )["total"]
-                or Decimal("0")
-            )
+            transports_existants = sortie.transports.exclude(pk=self.pk).filter(
+                type_transport=self.MATERIAUX
+            ).aggregate(total=Sum("quantite"))["total"] or Decimal("0")
 
-            disponible = (
-                sortie.quantite
-                - transports_existants
-            )
+            disponible = sortie.quantite - transports_existants
 
             if self.quantite > disponible:
                 errors["quantite"] = (
@@ -902,10 +780,7 @@ class ActiviteTransport(models.Model):
     @property
     def distance_km(self):
         return max(
-            (
-                self.kilometrage_arrivee
-                - self.kilometrage_depart
-            ),
+            (self.kilometrage_arrivee - self.kilometrage_depart),
             Decimal("0"),
         )
 
@@ -916,10 +791,7 @@ class ActiviteTransport(models.Model):
         return None
 
     def __str__(self):
-        designation = (
-            self.mission
-            or self.get_type_transport_display()
-        )
+        designation = self.mission or self.get_type_transport_display()
 
         return (
             f"{self.date_activite} - "
@@ -931,6 +803,7 @@ class ActiviteTransport(models.Model):
 # ============================================================
 # R├ëCEPTION DES MAT├ëRIAUX AU POINT DE CHANTIER
 # ============================================================
+
 
 class ReceptionMateriau(models.Model):
 
@@ -999,28 +872,16 @@ class ReceptionMateriau(models.Model):
 
             if transport.type_transport != ActiviteTransport.MATERIAUX:
                 errors["transport"] = (
-                    "Le transport s├®lectionn├® ne transporte pas "
-                    "des mat├®riaux."
+                    "Le transport s├®lectionn├® ne transporte pas " "des mat├®riaux."
                 )
 
-            receptions_existantes = (
-                transport.receptions_materiaux
-                .exclude(pk=self.pk)
-                .aggregate(
-                    total=Sum("quantite_recue")
-                )["total"]
-                or Decimal("0")
-            )
+            receptions_existantes = transport.receptions_materiaux.exclude(
+                pk=self.pk
+            ).aggregate(total=Sum("quantite_recue"))["total"] or Decimal("0")
 
-            disponible = (
-                transport.quantite
-                - receptions_existantes
-            )
+            disponible = transport.quantite - receptions_existantes
 
-            if (
-                self.quantite_recue is not None
-                and self.quantite_recue > disponible
-            ):
+            if self.quantite_recue is not None and self.quantite_recue > disponible:
                 errors["quantite_recue"] = (
                     f"Quantit├® re├ºue sup├®rieure ├á la quantit├® "
                     f"transport├®e. Disponible : {disponible}."
@@ -1028,18 +889,11 @@ class ReceptionMateriau(models.Model):
 
         if self.projet_id and self.point_id:
             if self.point.projet_id != self.projet_id:
-                errors["point"] = (
-                    "Le point n'appartient pas ├á ce projet."
-                )
+                errors["point"] = "Le point n'appartient pas ├á ce projet."
 
         if self.transport_id and self.projet_id:
-            if (
-                self.transport.projet_id
-                and self.transport.projet_id != self.projet_id
-            ):
-                errors["projet"] = (
-                    "Le transport appartient ├á un autre projet."
-                )
+            if self.transport.projet_id and self.transport.projet_id != self.projet_id:
+                errors["projet"] = "Le transport appartient ├á un autre projet."
 
         if errors:
             raise ValidationError(errors)
@@ -1050,40 +904,26 @@ class ReceptionMateriau(models.Model):
 
     @property
     def quantite_utilisee(self):
-        return (
-            self.utilisations.aggregate(
-                total=Sum("quantite_utilisee")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.utilisations.aggregate(total=Sum("quantite_utilisee"))[
+            "total"
+        ] or Decimal("0")
 
     @property
     def quantite_retournee(self):
-        return (
-            self.retours.aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        return self.retours.aggregate(total=Sum("quantite"))["total"] or Decimal("0")
 
     @property
     def quantite_restante(self):
-        return (
-            self.quantite_recue
-            - self.quantite_utilisee
-            - self.quantite_retournee
-        )
+        return self.quantite_recue - self.quantite_utilisee - self.quantite_retournee
 
     def __str__(self):
-        return (
-            f"{self.point} - "
-            f"{self.quantite_recue}"
-        )
+        return f"{self.point} - " f"{self.quantite_recue}"
 
 
 # ============================================================
 # UTILISATION DES MAT├ëRIAUX SUR LE CHANTIER
 # ============================================================
+
 
 class UtilisationMateriau(models.Model):
 
@@ -1129,62 +969,49 @@ class UtilisationMateriau(models.Model):
         if not self.reception_id:
             return
 
-        if (
-            self.quantite_utilisee is None
-            or self.quantite_utilisee <= 0
-        ):
-            raise ValidationError({
-                "quantite_utilisee": (
-                    "La quantit├® utilis├®e doit ├¬tre "
-                    "sup├®rieure ├á z├®ro."
-                )
-            })
+        if self.quantite_utilisee is None or self.quantite_utilisee <= 0:
+            raise ValidationError(
+                {
+                    "quantite_utilisee": (
+                        "La quantit├® utilis├®e doit ├¬tre " "sup├®rieure ├á z├®ro."
+                    )
+                }
+            )
 
-        utilisations_existantes = (
-            self.reception.utilisations
-            .exclude(pk=self.pk)
-            .aggregate(
-                total=Sum("quantite_utilisee")
-            )["total"]
-            or Decimal("0")
-        )
+        utilisations_existantes = self.reception.utilisations.exclude(
+            pk=self.pk
+        ).aggregate(total=Sum("quantite_utilisee"))["total"] or Decimal("0")
 
-        retours_existants = (
-            self.reception.retours
-            .aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0")
-        )
+        retours_existants = self.reception.retours.aggregate(total=Sum("quantite"))[
+            "total"
+        ] or Decimal("0")
 
         disponible = (
-            self.reception.quantite_recue
-            - utilisations_existantes
-            - retours_existants
+            self.reception.quantite_recue - utilisations_existantes - retours_existants
         )
 
         if self.quantite_utilisee > disponible:
-            raise ValidationError({
-                "quantite_utilisee": (
-                    f"Quantit├® insuffisante sur le chantier. "
-                    f"Disponible : {disponible}."
-                )
-            })
+            raise ValidationError(
+                {
+                    "quantite_utilisee": (
+                        f"Quantit├® insuffisante sur le chantier. "
+                        f"Disponible : {disponible}."
+                    )
+                }
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self):
-        return (
-            f"{self.reception} - "
-            f"{self.quantite_utilisee}"
-        )
+        return f"{self.reception} - " f"{self.quantite_utilisee}"
 
 
 # ============================================================
 # RETOUR DU RELIQUAT AU MAGASIN
 # ============================================================
+
 
 class MateriauxRetour(models.Model):
 
@@ -1244,24 +1071,13 @@ class MateriauxRetour(models.Model):
             )
 
         if self.sortie_id:
-            retours_existants = (
-                self.sortie.retours
-                .exclude(pk=self.pk)
-                .aggregate(
-                    total=Sum("quantite")
-                )["total"]
-                or Decimal("0")
-            )
+            retours_existants = self.sortie.retours.exclude(pk=self.pk).aggregate(
+                total=Sum("quantite")
+            )["total"] or Decimal("0")
 
-            disponible = (
-                self.sortie.quantite
-                - retours_existants
-            )
+            disponible = self.sortie.quantite - retours_existants
 
-            if (
-                self.quantite is not None
-                and self.quantite > disponible
-            ):
+            if self.quantite is not None and self.quantite > disponible:
                 errors["quantite"] = (
                     f"Quantit├® retourn├®e trop ├®lev├®e. "
                     f"Maximum disponible : {disponible}."
@@ -1274,41 +1090,25 @@ class MateriauxRetour(models.Model):
                 self.reception.transport_id
                 and self.sortie_id
                 and self.reception.transport.sortie_materiau_id
-                and self.reception.transport.sortie_materiau_id
-                != self.sortie_id
+                and self.reception.transport.sortie_materiau_id != self.sortie_id
             ):
                 errors["reception"] = (
-                    "La r├®ception ne correspond pas "
-                    "├á la sortie magasin."
+                    "La r├®ception ne correspond pas " "├á la sortie magasin."
                 )
 
-            retours_reception = (
-                self.reception.retours
-                .exclude(pk=self.pk)
-                .aggregate(
-                    total=Sum("quantite")
-                )["total"]
-                or Decimal("0")
-            )
+            retours_reception = self.reception.retours.exclude(pk=self.pk).aggregate(
+                total=Sum("quantite")
+            )["total"] or Decimal("0")
 
-            utilisations = (
-                self.reception.utilisations
-                .aggregate(
-                    total=Sum("quantite_utilisee")
-                )["total"]
-                or Decimal("0")
-            )
+            utilisations = self.reception.utilisations.aggregate(
+                total=Sum("quantite_utilisee")
+            )["total"] or Decimal("0")
 
             disponible_reception = (
-                self.reception.quantite_recue
-                - utilisations
-                - retours_reception
+                self.reception.quantite_recue - utilisations - retours_reception
             )
 
-            if (
-                self.quantite is not None
-                and self.quantite > disponible_reception
-            ):
+            if self.quantite is not None and self.quantite > disponible_reception:
                 errors["quantite"] = (
                     f"Le reliquat disponible au point est "
                     f"de {disponible_reception}."
@@ -1332,6 +1132,7 @@ class MateriauxRetour(models.Model):
 # ============================================================
 # PAIEMENT DOCKER
 # ============================================================
+
 
 class PaiementDocker(models.Model):
 
@@ -1387,18 +1188,12 @@ class PaiementDocker(models.Model):
         errors = {}
 
         if self.montant is None or self.montant <= 0:
-            errors["montant"] = (
-                "Le montant doit ├¬tre sup├®rieur ├á z├®ro."
-            )
+            errors["montant"] = "Le montant doit ├¬tre sup├®rieur ├á z├®ro."
 
         if self.activite_id and self.projet_id:
-            if (
-                self.activite.projet_id
-                and self.activite.projet_id != self.projet_id
-            ):
+            if self.activite.projet_id and self.activite.projet_id != self.projet_id:
                 errors["projet"] = (
-                    "Le projet ne correspond pas "
-                    "au projet de l'activit├®."
+                    "Le projet ne correspond pas " "au projet de l'activit├®."
                 )
 
         if errors:
@@ -1407,26 +1202,20 @@ class PaiementDocker(models.Model):
     def save(self, *args, **kwargs):
         # Si le projet n'est pas renseign├® mais que
         # l'activit├® est li├®e ├á un projet, on le r├®cup├¿re.
-        if (
-            not self.projet_id
-            and self.activite_id
-            and self.activite.projet_id
-        ):
+        if not self.projet_id and self.activite_id and self.activite.projet_id:
             self.projet_id = self.activite.projet_id
 
         self.full_clean()
         return super().save(*args, **kwargs)
 
     def __str__(self):
-        return (
-            f"{self.activite.vehicule.immatriculation} - "
-            f"{self.montant}"
-        )
+        return f"{self.activite.vehicule.immatriculation} - " f"{self.montant}"
 
 
 # ============================================================
 # D├ëPENSE G├ëN├ëRALE
 # ============================================================
+
 
 class Depense(models.Model):
 
@@ -1502,11 +1291,9 @@ class Depense(models.Model):
 
     def clean(self):
         if self.montant is None or self.montant <= 0:
-            raise ValidationError({
-                "montant": (
-                    "Le montant doit ├¬tre sup├®rieur ├á z├®ro."
-                )
-            })
+            raise ValidationError(
+                {"montant": ("Le montant doit ├¬tre sup├®rieur ├á z├®ro.")}
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -1519,6 +1306,7 @@ class Depense(models.Model):
 # ============================================================
 # GASOIL
 # ============================================================
+
 
 class DepenseGasoil(models.Model):
 
@@ -1582,31 +1370,19 @@ class DepenseGasoil(models.Model):
     def clean(self):
         errors = {}
 
-        if (
-            self.quantite_litre is None
-            or self.quantite_litre <= 0
-        ):
+        if self.quantite_litre is None or self.quantite_litre <= 0:
             errors["quantite_litre"] = (
-                "La quantit├® de gasoil doit ├¬tre "
-                "sup├®rieure ├á z├®ro."
+                "La quantit├® de gasoil doit ├¬tre " "sup├®rieure ├á z├®ro."
             )
 
-        if (
-            self.prix_unitaire is None
-            or self.prix_unitaire < 0
-        ):
-            errors["prix_unitaire"] = (
-                "Le prix unitaire ne peut pas ├¬tre n├®gatif."
-            )
+        if self.prix_unitaire is None or self.prix_unitaire < 0:
+            errors["prix_unitaire"] = "Le prix unitaire ne peut pas ├¬tre n├®gatif."
 
         if errors:
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        self.total = (
-            self.quantite_litre
-            * self.prix_unitaire
-        )
+        self.total = self.quantite_litre * self.prix_unitaire
 
         self.full_clean()
         return super().save(*args, **kwargs)
@@ -1622,6 +1398,7 @@ class DepenseGasoil(models.Model):
 # ============================================================
 # R├ëPARATION V├ëHICULE
 # ============================================================
+
 
 class ReparationVehicule(models.Model):
 
@@ -1768,20 +1545,11 @@ class ReparationVehicule(models.Model):
 
     @property
     def montant_piece(self):
-        return (
-            (self.quantite or Decimal("0"))
-            * (self.prix_unitaire or Decimal("0"))
-        )
+        return (self.quantite or Decimal("0")) * (self.prix_unitaire or Decimal("0"))
 
     @property
     def montant_total_calcule(self):
-        return (
-            self.montant_piece
-            + (
-                self.montant_main_oeuvre
-                or Decimal("0")
-            )
-        )
+        return self.montant_piece + (self.montant_main_oeuvre or Decimal("0"))
 
     @property
     def montant_total(self):
@@ -1791,30 +1559,18 @@ class ReparationVehicule(models.Model):
         errors = {}
 
         if self.quantite is None or self.quantite <= 0:
-            errors["quantite"] = (
-                "La quantit├® doit ├¬tre sup├®rieure ├á z├®ro."
-            )
+            errors["quantite"] = "La quantit├® doit ├¬tre sup├®rieure ├á z├®ro."
 
-        if (
-            self.prix_unitaire is None
-            or self.prix_unitaire < 0
-        ):
-            errors["prix_unitaire"] = (
-                "Le prix unitaire ne peut pas ├¬tre n├®gatif."
-            )
+        if self.prix_unitaire is None or self.prix_unitaire < 0:
+            errors["prix_unitaire"] = "Le prix unitaire ne peut pas ├¬tre n├®gatif."
 
-        if (
-            self.montant_main_oeuvre is None
-            or self.montant_main_oeuvre < 0
-        ):
+        if self.montant_main_oeuvre is None or self.montant_main_oeuvre < 0:
             errors["montant_main_oeuvre"] = (
                 "La main d'┼ôuvre ne peut pas ├¬tre n├®gative."
             )
 
         if self.Cout is not None and self.Cout < 0:
-            errors["Cout"] = (
-                "Le co├╗t ne peut pas ├¬tre n├®gatif."
-            )
+            errors["Cout"] = "Le co├╗t ne peut pas ├¬tre n├®gatif."
 
         if errors:
             raise ValidationError(errors)
@@ -1832,10 +1588,12 @@ class ReparationVehicule(models.Model):
             f"{self.montant_total_calcule}"
         )
 
+
 # ============================================================
 # MODÈLES INDÉPENDANTS POUR LE STOCK MCCR
 # Les modèles historiques GALAXY restent inchangés.
 # ============================================================
+
 
 class MateriauMCCR(models.Model):
     nom = models.CharField(
@@ -1880,36 +1638,21 @@ class MateriauMCCR(models.Model):
 
     @property
     def total_entrees(self):
-        return (
-            self.mouvements.filter(
-                type_mouvement=MouvementMateriauMCCR.TypeMouvement.ENTREE
-            ).aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0.00")
-        )
+        return self.mouvements.filter(
+            type_mouvement=MouvementMateriauMCCR.TypeMouvement.ENTREE
+        ).aggregate(total=Sum("quantite"))["total"] or Decimal("0.00")
 
     @property
     def total_sorties(self):
-        return (
-            self.mouvements.filter(
-                type_mouvement=MouvementMateriauMCCR.TypeMouvement.SORTIE
-            ).aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0.00")
-        )
+        return self.mouvements.filter(
+            type_mouvement=MouvementMateriauMCCR.TypeMouvement.SORTIE
+        ).aggregate(total=Sum("quantite"))["total"] or Decimal("0.00")
 
     @property
     def total_retours(self):
-        return (
-            self.mouvements.filter(
-                type_mouvement=MouvementMateriauMCCR.TypeMouvement.RETOUR
-            ).aggregate(
-                total=Sum("quantite")
-            )["total"]
-            or Decimal("0.00")
-        )
+        return self.mouvements.filter(
+            type_mouvement=MouvementMateriauMCCR.TypeMouvement.RETOUR
+        ).aggregate(total=Sum("quantite"))["total"] or Decimal("0.00")
 
     @property
     def stock_actuel(self):
@@ -1917,11 +1660,7 @@ class MateriauMCCR(models.Model):
         Stock MCCR :
         entrées + retours - sorties.
         """
-        return (
-            self.total_entrees
-            + self.total_retours
-            - self.total_sorties
-        )
+        return self.total_entrees + self.total_retours - self.total_sorties
 
 
 # ============================================================
@@ -2018,29 +1757,18 @@ class MouvementMateriauMCCR(models.Model):
         errors = {}
 
         # Quantité obligatoire et strictement positive
-        if (
-            self.quantite is None
-            or self.quantite <= Decimal("0.00")
-        ):
-            errors["quantite"] = (
-                "La quantité doit être supérieure à zéro."
-            )
+        if self.quantite is None or self.quantite <= Decimal("0.00"):
+            errors["quantite"] = "La quantité doit être supérieure à zéro."
 
         # Prix obligatoire et strictement positif
-        if (
-            self.prix_unitaire is None
-            or self.prix_unitaire <= Decimal("0.00")
-        ):
+        if self.prix_unitaire is None or self.prix_unitaire <= Decimal("0.00"):
             errors["prix_unitaire"] = (
-                "Le prix unitaire doit être supérieur à zéro "
-                "pour chaque mouvement."
+                "Le prix unitaire doit être supérieur à zéro " "pour chaque mouvement."
             )
 
         # Vérification du type de mouvement
         if self.type_mouvement not in self.TypeMouvement.values:
-            errors["type_mouvement"] = (
-                "Le type de mouvement est invalide."
-            )
+            errors["type_mouvement"] = "Le type de mouvement est invalide."
 
         if errors:
             raise ValidationError(errors)

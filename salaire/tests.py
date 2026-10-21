@@ -5,31 +5,60 @@ from django.urls import reverse
 
 from avances.models import Avance
 from personnel.models import Personnel
+
 from .models import Salaire
 
 
 class SalaireModuleTests(TestCase):
     def test_salaire_list_route_exists(self):
-        response = self.client.get(reverse('salaire:salaire_list'))
+        response = self.client.get(reverse("salaire:salaire_list"))
         self.assertEqual(response.status_code, 200)
 
     def test_salaire_search_filters_by_provided_fields(self):
-        personnel = Personnel.objects.create(nom='Rakoto', prenom='Jean', telephone='0320000000', fonction='Employé', categorie='User', photo='images/Personnel/default.png')
-        salaire = Salaire.objects.create(personnel=personnel, montant=Decimal('250.00'), reste=Decimal('50.00'))
-        other_personnel = Personnel.objects.create(nom='Rabe', prenom='Paul', telephone='0340000000', fonction='Employé', categorie='User', photo='images/Personnel/default.png')
-        Salaire.objects.create(personnel=other_personnel, montant=Decimal('300.00'), reste=Decimal('20.00'))
+        personnel = Personnel.objects.create(
+            nom="Rakoto",
+            prenom="Jean",
+            telephone="0320000000",
+            fonction="Employé",
+            categorie="User",
+            photo="images/Personnel/default.png",
+        )
+        salaire = Salaire.objects.create(
+            personnel=personnel, montant=Decimal("250.00"), reste=Decimal("50.00")
+        )
+        other_personnel = Personnel.objects.create(
+            nom="Rabe",
+            prenom="Paul",
+            telephone="0340000000",
+            fonction="Employé",
+            categorie="User",
+            photo="images/Personnel/default.png",
+        )
+        Salaire.objects.create(
+            personnel=other_personnel, montant=Decimal("300.00"), reste=Decimal("20.00")
+        )
 
-        response = self.client.get(reverse('salaire:salaire_list'), {'personnel': 'Rakoto', 'montant': '250', 'reste': '50'})
+        response = self.client.get(
+            reverse("salaire:salaire_list"),
+            {"personnel": "Rakoto", "montant": "250", "reste": "50"},
+        )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(list(response.context['salaires']), [salaire])
+        self.assertEqual(list(response.context["salaires"]), [salaire])
 
     def test_salaire_add_requires_personnel(self):
-        personnel = Personnel.objects.create(nom='Rajaona', prenom='Alice', telephone='0340000000', fonction='Employé', categorie='User', photo='images/Personnel/default.png')
+        personnel = Personnel.objects.create(
+            nom="Rajaona",
+            prenom="Alice",
+            telephone="0340000000",
+            fonction="Employé",
+            categorie="User",
+            photo="images/Personnel/default.png",
+        )
 
         response = self.client.post(
-            reverse('salaire:salaire_add'),
-            {'personnel': personnel.id, 'montant': '300'},
+            reverse("salaire:salaire_add"),
+            {"personnel": personnel.id, "montant": "300"},
         )
 
         self.assertEqual(response.status_code, 302)
@@ -37,9 +66,21 @@ class SalaireModuleTests(TestCase):
         self.assertEqual(salaire.personnel, personnel)
 
     def test_salaire_reste_is_calculated_from_avance(self):
-        personnel = Personnel.objects.create(nom='Rajaona', prenom='Alice', telephone='0340000000', fonction='Employé', categorie='User', photo='images/Personnel/default.png')
-        Avance.objects.create(personnel=personnel, motifAv='Avance', montantAv=Decimal('2.00'), typeAv='ESPECE')
+        personnel = Personnel.objects.create(
+            nom="Rajaona",
+            prenom="Alice",
+            telephone="0340000000",
+            fonction="Employé",
+            categorie="User",
+            photo="images/Personnel/default.png",
+        )
+        Avance.objects.create(
+            personnel=personnel,
+            motifAv="Avance",
+            montantAv=Decimal("2.00"),
+            typeAv="ESPECE",
+        )
 
-        salaire = Salaire.objects.create(personnel=personnel, montant=Decimal('10.00'))
+        salaire = Salaire.objects.create(personnel=personnel, montant=Decimal("10.00"))
 
-        self.assertEqual(salaire.reste, Decimal('8.00'))
+        self.assertEqual(salaire.reste, Decimal("8.00"))

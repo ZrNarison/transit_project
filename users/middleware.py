@@ -1,99 +1,98 @@
-
 from django.shortcuts import redirect
-from django.urls import resolve, Resolver404, reverse
+from django.urls import Resolver404, resolve, reverse
 
 
 class LoginRequiredMiddleware:
+    """
+    Middleware d'authentification pour TRANSIT_PROJECT.
+
+    GALAXY :
+        Session : user_id, username, role, photo, typeTravail
+
+    MCCR :
+        Session : h_user_id, h_username, h_role, h_photo
+
+    Les routes spécifiques à MCCR sont reconnues par leur namespace
+    ou par leur nom de route commençant par h_.
+    """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-
         path = request.path
 
-        # =====================================================
-        # ROUTES PUBLIQUES
-        # =====================================================
-
+        # --------------------------------------------------
+        # 1. Routes publiques
+        # --------------------------------------------------
         public_paths = {
             reverse("users:login"),
         }
 
-        if (
-            path in public_paths
-            or path.startswith(
-                ("/static/", "/media/", "/admin/")
-            )
-        ):
+        if path in public_paths or path.startswith(("/static/", "/media/", "/admin/")):
             return self.get_response(request)
 
-        # =====================================================
-        # RÉSOLUTION DE L'URL
-        # =====================================================
-
+        # --------------------------------------------------
+        # 2. Résolution de la route Django
+        # --------------------------------------------------
         try:
             match = resolve(request.path_info)
-
             namespace = match.namespace or ""
             view_name = match.view_name or ""
-
         except Resolver404:
+            # Laisser Django gérer normalement les URL inexistantes.
             return self.get_response(request)
 
-        # =====================================================
-        # SESSION ENTREPRISE H / MCCR
-        # =====================================================
-
+        # --------------------------------------------------
+        # 3. Sessions
+        # --------------------------------------------------
         h_user_id = request.session.get("h_user_id")
         h_role = request.session.get("h_role")
 
+        galaxy_user_id = request.session.get("user_id")
+
+        # --------------------------------------------------
+        # 4. Namespaces exclusivement réservés à MCCR
+        # --------------------------------------------------
         h_namespaces = {
-            "materiaux",
-            # "materiels",
-            # "materielEntre",
-            # "materielSort",
-            "depotSoc",
-            "salaire",
-            # "avances",
-            "mccr_materiaux", 
-            "categorie",
-            "depotSoc",
-            "audit",
-            "logs",
+            "mccr_materiaux",
         }
 
-        # =====================================================
-        # IDENTIFICATION DES ROUTES ENTREPRISE H
-        # =====================================================
-
-        is_h_route = (
-            namespace in h_namespaces
-            or view_name.startswith("users:h_")
-            or view_name.startswith("personnel:h_personnel_")
-            or view_name.startswith("salaire:h_salaire_")
-            or view_name.startswith("depotSoc:h_depot_soc_")
-            or view_name.startswith("materiels:h_salaire_")
-            or view_name.startswith("materielEntre:h_materielEntre_")
-            or view_name.startswith("materielsort:h_materielsort_")
+        # --------------------------------------------------
+        # 5. Routes spécifiques à MCCR
+        # --------------------------------------------------
+        h_route_prefixes = (
+            "users:h_",
+            "personnel:h_personnel_",
+            "salaire:h_salaire_",
+            "depotSoc:h_depot_soc_",
+            "audit:h_",
+            "logs:h_",
+            "materiels:h_materiels_",
+            "materielEntre:h_materielEntre_",
+            "materielsort:h_materielsort_",
+            "recette:h_recette_",
+            "rapportsoc:h_",
+            "avances:h_",
         )
 
-        # =====================================================
-        # CONTRÔLE SESSION ENTREPRISE H / MCCR
-        # =====================================================
+        is_h_route = namespace in h_namespaces or any(
+            view_name.startswith(prefix) for prefix in h_route_prefixes
+        )
 
+        # --------------------------------------------------
+        # 6. Protection des routes MCCR
+        # --------------------------------------------------
         if is_h_route:
-
             if not h_user_id or not h_role:
                 return redirect("users:login")
 
             return self.get_response(request)
 
-        # =====================================================
-        # CONTRÔLE SESSION GALAXY
-        # =====================================================
-
-        if not request.session.get("user_id"):
+        # --------------------------------------------------
+        # 7. Protection des routes GALAXY
+        # --------------------------------------------------
+        if not galaxy_user_id:
             return redirect("users:login")
 
         return self.get_response(request)

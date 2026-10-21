@@ -7,22 +7,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projet', '0027_remove_receptionmateriauprojet_achat_and_more'),
+        ("projet", "0027_remove_receptionmateriauprojet_achat_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='distributionmateriauprojet',
-            name='chef_equipe',
+            model_name="distributionmateriauprojet",
+            name="chef_equipe",
         ),
         migrations.AddField(
-            model_name='distributionmateriauprojet',
-            name='vehicule',
-            field=models.ForeignKey(blank=True, help_text="Facultatif : laisser vide si aucun véhicule n'est utilisé.", null=True, on_delete=django.db.models.deletion.PROTECT, related_name='distributions_materiaux', to='projet.vehiculeprojet', verbose_name='Véhicule / Engin'),
+            model_name="distributionmateriauprojet",
+            name="vehicule",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Facultatif : laisser vide si aucun véhicule n'est utilisé.",
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="distributions_materiaux",
+                to="projet.vehiculeprojet",
+                verbose_name="Véhicule / Engin",
+            ),
         ),
         migrations.AlterField(
-            model_name='distributionmateriauprojet',
-            name='observation',
-            field=models.TextField(blank=True, verbose_name='Observation'),
+            model_name="distributionmateriauprojet",
+            name="observation",
+            field=models.TextField(blank=True, verbose_name="Observation"),
         ),
     ]

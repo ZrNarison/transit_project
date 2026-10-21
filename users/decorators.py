@@ -1,16 +1,15 @@
-
 from functools import wraps
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from users.models import AppUser
-from django.contrib.auth import get_user_model
-from django.shortcuts import redirect
-from .models import H_AppUser
 
+from users.models import AppUser
+
+from .models import H_AppUser
 
 # ============================================================
 # RÔLES AUTORISÉS À GÉRER LES PROJETS GALAXY
@@ -50,13 +49,12 @@ MICA_MANAGER_ROLES = {
 # circulaires entre les applications Django.
 # ============================================================
 
+
 def _get_project_models():
     from personnel.models import Personnel
     from projet.models import EquipeProjet, Projet
 
     return Personnel, EquipeProjet, Projet
-
-
 
 
 def mica_required(view_func):
@@ -67,32 +65,21 @@ def mica_required(view_func):
         user_id = request.session.get("user_id")
 
         if not user_id:
-            messages.error(
-                request,
-                "Veuillez vous connecter."
-            )
+            messages.error(request, "Veuillez vous connecter.")
             return redirect("users:login")
 
-        user = (
-            AppUser.objects
-            .filter(pk=user_id)
-            .first()
-        )
+        user = AppUser.objects.filter(pk=user_id).first()
 
         if not user:
             request.session.flush()
             messages.error(
-                request,
-                "Votre session a expiré. Veuillez vous reconnecter."
+                request, "Votre session a expiré. Veuillez vous reconnecter."
             )
             return redirect("users:login")
 
         # Autoriser tous les rôles ayant accès au module Mica.
         if user.role not in MICA_ACCESS_ROLES:
-            messages.error(
-                request,
-                "Vous n'avez pas accès au module Mica."
-            )
+            messages.error(request, "Vous n'avez pas accès au module Mica.")
             return redirect("users:login")
 
         request.current_user = user
@@ -101,9 +88,11 @@ def mica_required(view_func):
 
     return wrapper
 
+
 # ============================================================
 # CONTRÔLE DES RÔLES DE SESSION
 # ============================================================
+
 
 def role_required(*roles):
     def decorator(view_func):
@@ -114,10 +103,7 @@ def role_required(*roles):
             user = get_current_user(request)
 
             if not user:
-                messages.error(
-                    request,
-                    "Veuillez vous connecter."
-                )
+                messages.error(request, "Veuillez vous connecter.")
                 return redirect("users:login")
 
             # Le rôle enregistré à la connexion est "role",
@@ -134,9 +120,12 @@ def role_required(*roles):
         return wrapper
 
     return decorator
+
+
 # ============================================================
 # UTILISATEUR CONNECTÉ
 # ============================================================
+
 
 def get_current_user(request):
 
@@ -145,17 +134,13 @@ def get_current_user(request):
     if not user_id:
         return None
 
-    return (
-        AppUser.objects
-        .select_related("personnel")
-        .filter(pk=user_id)
-        .first()
-    )
+    return AppUser.objects.select_related("personnel").filter(pk=user_id).first()
 
 
 # ============================================================
 # AUTHENTIFICATION PERSONNALISÉE
 # ============================================================
+
 
 def login_required_projet(view_func):
     @wraps(view_func)
@@ -181,6 +166,7 @@ def login_required_projet(view_func):
 # DROITS DE GESTION DES PROJETS
 # ============================================================
 
+
 def user_can_manage_projects(user):
     if not user:
         return False
@@ -188,11 +174,7 @@ def user_can_manage_projects(user):
     Personnel, _, _ = _get_project_models()
 
     if isinstance(user, Personnel):
-        user = (
-            AppUser.objects
-            .filter(personnel=user)
-            .first()
-        )
+        user = AppUser.objects.filter(personnel=user).first()
 
         if not user:
             return False
@@ -226,6 +208,7 @@ def project_manager_required(view_func):
 # PERSONNEL ASSOCIÉ À L'UTILISATEUR
 # ============================================================
 
+
 def get_current_personnel(request):
     user = getattr(request, "current_user", None)
 
@@ -241,6 +224,7 @@ def get_current_personnel(request):
 # ============================================================
 # DROITS DE GESTION DES MATÉRIAUX
 # ============================================================
+
 
 def user_can_manage_materiaux(user, projet=None):
     if not user or not projet:
@@ -281,15 +265,14 @@ def user_can_manage_materiaux(user, projet=None):
 # PRÉPARATION DU FORMULAIRE D'ÉQUIPE
 # ============================================================
 
+
 def prepare_equipe_form(form, projet=None, affectation=None):
     if "personnel" not in form.fields:
         return form
 
     Personnel, EquipeProjet, _ = _get_project_models()
 
-    form.fields["personnel"].label = (
-        "Personnel de l'entreprise"
-    )
+    form.fields["personnel"].label = "Personnel de l'entreprise"
 
     queryset = Personnel.objects.filter(
         typeTravail="Construction",
@@ -307,11 +290,9 @@ def prepare_equipe_form(form, projet=None, affectation=None):
                 pk=affectation.pk,
             )
 
-        personnels_deja_affectes = (
-            affectations.values_list(
-                "personnel_id",
-                flat=True,
-            )
+        personnels_deja_affectes = affectations.values_list(
+            "personnel_id",
+            flat=True,
         )
 
         queryset = queryset.exclude(
@@ -327,6 +308,7 @@ def prepare_equipe_form(form, projet=None, affectation=None):
 # VÉRIFICATION DE L'ACCÈS À UN PROJET
 # ============================================================
 
+
 def user_has_project_access(user, projet):
     if not user or not projet:
         return False
@@ -335,10 +317,7 @@ def user_has_project_access(user, projet):
 
     if isinstance(user, Personnel):
         user = (
-            AppUser.objects
-            .select_related("personnel")
-            .filter(personnel=user)
-            .first()
+            AppUser.objects.select_related("personnel").filter(personnel=user).first()
         )
 
         if not user:
@@ -369,6 +348,7 @@ def user_has_project_access(user, projet):
 # ============================================================
 # DÉCORATEUR D'ACCÈS À UN PROJET
 # ============================================================
+
 
 def project_access_required(view_func):
     @wraps(view_func)
@@ -403,9 +383,11 @@ def project_access_required(view_func):
 
     return wrapper
 
+
 # ============================================================
 # CONTRÔLE DES FONCTIONS DANS L'ÉQUIPE DU PROJET
 # ============================================================
+
 
 def user_has_project_function(user, projet, fonctions):
     if not user or not projet:
@@ -415,11 +397,7 @@ def user_has_project_function(user, projet, fonctions):
 
     if isinstance(user, Personnel):
         personnel = user
-        app_user = (
-            AppUser.objects
-            .filter(personnel=personnel)
-            .first()
-        )
+        app_user = AppUser.objects.filter(personnel=personnel).first()
 
         if app_user and user_can_manage_projects(app_user):
             return True
@@ -447,6 +425,7 @@ def user_has_project_function(user, projet, fonctions):
         fonction__in=fonctions,
     ).exists()
 
+
 # ============================================================
 # PROTECTION CONTRE L'ACCÈS APRÈS DÉCONNEXION
 # ============================================================
@@ -459,8 +438,7 @@ def session_login_required(view_func):
 
         if not user_id:
             messages.warning(
-                request,
-                "Votre session a expiré. Veuillez vous reconnecter."
+                request, "Votre session a expiré. Veuillez vous reconnecter."
             )
             return redirect("users:login")
 
@@ -470,8 +448,7 @@ def session_login_required(view_func):
         if not user:
             request.session.flush()
             messages.warning(
-                request,
-                "Votre session a expiré. Veuillez vous reconnecter."
+                request, "Votre session a expiré. Veuillez vous reconnecter."
             )
             return redirect("users:login")
 
@@ -480,8 +457,6 @@ def session_login_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return wrapper
-
-
 
 
 def h_role_required(*roles):
@@ -512,4 +487,5 @@ def h_role_required(*roles):
             return view_func(request, *args, **kwargs)
 
         return _wrapped_view
+
     return decorator

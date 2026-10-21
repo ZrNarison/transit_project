@@ -1,47 +1,30 @@
 from django.db import models
 from django.utils import timezone
-from materiels.models import Materiels, H_Materiels
+
+from materiels.models import H_Materiels, Materiels
 
 
 class MaterielSort(models.Model):
 
     id_Materiel = models.ForeignKey(
-        Materiels,
-        on_delete=models.CASCADE,
-        related_name="sorties"
+        Materiels, on_delete=models.CASCADE, related_name="sorties"
     )
 
-    demandeur = models.CharField(
-        max_length=100
-    )
+    demandeur = models.CharField(max_length=100)
 
-    responsable_sortie = models.CharField(
-        max_length=100
-    )
+    responsable_sortie = models.CharField(max_length=100)
 
-    Nb_MatSort = models.DecimalField(
-        max_digits=10,
-        decimal_places=0
-    )
+    Nb_MatSort = models.DecimalField(max_digits=10, decimal_places=0)
 
-    observation = models.TextField(
-        blank=True,
-        null=True
-    )
+    observation = models.TextField(blank=True, null=True)
 
-    avec_remise = models.BooleanField(
-        default=False
-    )
+    avec_remise = models.BooleanField(default=False)
 
     # Date de sortie du matériel
-    dateSortie = models.DateField(
-        default=timezone.localdate
-    )
+    dateSortie = models.DateField(default=timezone.localdate)
 
     # Date et heure d'enregistrement dans le système
-    dateEnregistreur = models.DateTimeField(
-        auto_now_add=True
-    )
+    dateEnregistreur = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-dateSortie"]
@@ -61,42 +44,24 @@ class MaterielSort(models.Model):
 class H_MaterielSort(models.Model):
 
     id_Materiel = models.ForeignKey(
-        H_Materiels,
-        on_delete=models.CASCADE,
-        related_name="sorties"
+        H_Materiels, on_delete=models.CASCADE, related_name="sorties"
     )
 
-    demandeur = models.CharField(
-        max_length=100
-    )
+    demandeur = models.CharField(max_length=100)
 
-    responsable_sortie = models.CharField(
-        max_length=100
-    )
+    responsable_sortie = models.CharField(max_length=100)
 
-    Nb_MatSort = models.DecimalField(
-        max_digits=10,
-        decimal_places=0
-    )
+    Nb_MatSort = models.DecimalField(max_digits=10, decimal_places=0)
 
-    observation = models.TextField(
-        blank=True,
-        null=True
-    )
+    observation = models.TextField(blank=True, null=True)
 
-    avec_remise = models.BooleanField(
-        default=False
-    )
+    avec_remise = models.BooleanField(default=False)
 
     # Date de sortie du matériel
-    dateSortie = models.DateField(
-        default=timezone.localdate
-    )
+    dateSortie = models.DateField(default=timezone.localdate)
 
     # Date et heure d'enregistrement dans le système
-    dateEnregistreur = models.DateTimeField(
-        auto_now_add=True
-    )
+    dateEnregistreur = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-dateSortie"]

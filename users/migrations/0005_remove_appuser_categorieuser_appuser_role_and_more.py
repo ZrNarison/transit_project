@@ -6,20 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0004_categorieuser_appuser_categorieuser'),
+        ("users", "0004_categorieuser_appuser_categorieuser"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='appuser',
-            name='categorieUser',
+            model_name="appuser",
+            name="categorieUser",
         ),
         migrations.AddField(
-            model_name='appuser',
-            name='role',
-            field=models.CharField(choices=[('Admin', 'Administrateur'), ('Superviseur', 'Super Viseur'), ('User', 'Utilisateur')], default='User', max_length=20),
+            model_name="appuser",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("Admin", "Administrateur"),
+                    ("Superviseur", "Super Viseur"),
+                    ("User", "Utilisateur"),
+                ],
+                default="User",
+                max_length=20,
+            ),
         ),
         migrations.DeleteModel(
-            name='CategorieUser',
+            name="CategorieUser",
         ),
     ]

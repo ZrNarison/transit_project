@@ -1,25 +1,22 @@
-
+from decimal import Decimal
 from functools import wraps
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import ProtectedError, Q, Sum
+from django.db.models import DecimalField, ExpressionWrapper, F, ProtectedError, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-from decimal import Decimal
 
-from django.db.models import Sum, Q, F, ExpressionWrapper, DecimalField
-from django.shortcuts import render
 from users.models import H_AppUser
 
 from .forms_mccr import MateriauxMCCRForm, MouvementMateriauMCCRForm
 from .models import MateriauMCCR, MouvementMateriauMCCR
 
-
 # ============================================================
 # AUTHENTIFICATION MCCR
 # ============================================================
+
 
 def mccr_required(view_func):
     @wraps(view_func)
@@ -64,11 +61,9 @@ def mccr_required(view_func):
 # OUTILS
 # ============================================================
 
+
 def est_enregistreur(objet, utilisateur):
-    return (
-        objet.enregistreur_id is not None
-        and objet.enregistreur_id == utilisateur.pk
-    )
+    return objet.enregistreur_id is not None and objet.enregistreur_id == utilisateur.pk
 
 
 def refuser_si_non_enregistreur(request, objet, destination):
@@ -99,16 +94,15 @@ def valeur_type(type_mouvement):
 # DASHBOARD MCCR
 # ============================================================
 
+
 @mccr_required
 def dashboard_mccr(request):
     materiaux = MateriauMCCR.objects.all().order_by("nom")
 
     # Le modèle MouvementMateriauMCCR ne possède pas
     # de relation "enregistreur".
-    mouvements = (
-        MouvementMateriauMCCR.objects
-        .select_related("materiau")
-        .order_by("-date_mouvement", "-pk")
+    mouvements = MouvementMateriauMCCR.objects.select_related("materiau").order_by(
+        "-date_mouvement", "-pk"
     )
 
     ZERO = Decimal("0.00")
@@ -190,23 +184,15 @@ def dashboard_mccr(request):
     # ---------------------------------------------------------
     contexte = {
         "nombre_materiaux": materiaux.count(),
-        "nombre_materiaux_actifs": materiaux.filter(
-            actif=True
-        ).count(),
-        "nombre_materiaux_inactifs": materiaux.filter(
-            actif=False
-        ).count(),
-
+        "nombre_materiaux_actifs": materiaux.filter(actif=True).count(),
+        "nombre_materiaux_inactifs": materiaux.filter(actif=False).count(),
         "nombre_mouvements": mouvements.count(),
-
         "total_entrees": total_entrees,
         "total_sorties": total_sorties,
         "total_retours": total_retours,
-
         "montant_achats": montant_achats,
         "montant_ventes": montant_ventes,
         "montant_retours": montant_retours,
-
         "materiaux": materiaux,
         "derniers_mouvements": derniers_mouvements,
     }
@@ -217,9 +203,11 @@ def dashboard_mccr(request):
         contexte,
     )
 
+
 # ============================================================
 # LISTE DES MATÉRIAUX
 # ============================================================
+
 
 @mccr_required
 def materiaux_mccr_list(request):
@@ -230,8 +218,7 @@ def materiaux_mccr_list(request):
 
     if recherche:
         materiaux = materiaux.filter(
-            Q(nom__icontains=recherche)
-            | Q(unite__icontains=recherche)
+            Q(nom__icontains=recherche) | Q(unite__icontains=recherche)
         )
 
     if statut == "actif":
@@ -253,6 +240,7 @@ def materiaux_mccr_list(request):
 # ============================================================
 # AJOUT D'UN MATÉRIAU
 # ============================================================
+
 
 @mccr_required
 def materiau_mccr_create(request):
@@ -294,6 +282,7 @@ def materiau_mccr_create(request):
 # ============================================================
 # MODIFICATION D'UN MATÉRIAU
 # ============================================================
+
 
 @mccr_required
 def materiau_mccr_update(request, pk):
@@ -350,6 +339,7 @@ def materiau_mccr_update(request, pk):
 # SUPPRESSION D'UN MATÉRIAU
 # ============================================================
 
+
 @mccr_required
 @require_POST
 def materiau_mccr_delete(request, pk):
@@ -381,6 +371,7 @@ def materiau_mccr_delete(request, pk):
 # LISTE DES MOUVEMENTS
 # ============================================================
 
+
 @mccr_required
 def mouvements_mccr_list(request):
     recherche = request.GET.get("q", "").strip()
@@ -399,9 +390,7 @@ def mouvements_mccr_list(request):
         )
 
     if type_mouvement in ("ENTREE", "SORTIE", "RETOUR"):
-        mouvements = mouvements.filter(
-            type_mouvement=type_mouvement
-        )
+        mouvements = mouvements.filter(type_mouvement=type_mouvement)
 
     return render(
         request,
@@ -417,6 +406,7 @@ def mouvements_mccr_list(request):
 # ============================================================
 # AJOUT D'UN MOUVEMENT
 # ============================================================
+
 
 @mccr_required
 def mouvement_mccr_create(request):
@@ -458,6 +448,7 @@ def mouvement_mccr_create(request):
 # ============================================================
 # MODIFICATION D'UN MOUVEMENT
 # ============================================================
+
 
 @mccr_required
 def mouvement_mccr_update(request, pk):
@@ -517,6 +508,7 @@ def mouvement_mccr_update(request, pk):
 # SUPPRESSION D'UN MOUVEMENT
 # ============================================================
 
+
 @mccr_required
 @require_POST
 def mouvement_mccr_delete(request, pk):
@@ -543,10 +535,10 @@ def mouvement_mccr_delete(request, pk):
     return redirect("mccr_materiaux:mouvements_list")
 
 
-
 # ============================================================
 # SUPPRESSION D'UN MATÉRIAU
 # ============================================================
+
 
 @mccr_required
 def materiau_mccr_delete(request, pk):
@@ -586,6 +578,7 @@ def materiau_mccr_delete(request, pk):
 # ============================================================
 # SUPPRESSION D'UN MOUVEMENT
 # ============================================================
+
 
 @mccr_required
 def mouvement_mccr_delete(request, pk):

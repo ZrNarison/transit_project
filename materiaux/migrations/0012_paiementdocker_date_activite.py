@@ -7,14 +7,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materiaux', '0011_alter_activitetransport_options_and_more'),
+        ("materiaux", "0011_alter_activitetransport_options_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='paiementdocker',
-            name='date_activite',
-            field=models.DateField(default=django.utils.timezone.now, verbose_name='Date'),
+            model_name="paiementdocker",
+            name="date_activite",
+            field=models.DateField(
+                default=django.utils.timezone.now, verbose_name="Date"
+            ),
             preserve_default=False,
         ),
     ]

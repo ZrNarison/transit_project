@@ -7,19 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('personnel', '0003_alter_personnel_photo'),
+        ("personnel", "0003_alter_personnel_photo"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='personnel',
-            name='psalaire',
+            model_name="personnel",
+            name="psalaire",
             field=models.CharField(default=django.utils.timezone.now, max_length=10),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='personnel',
-            name='telephone',
+            model_name="personnel",
+            name="telephone",
             field=models.CharField(max_length=10),
         ),
     ]

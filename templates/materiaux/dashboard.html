@@ -26,7 +26,8 @@
                 Matériaux
             </a>
 
-            <a href="{% url 'materiaux:mouvements_mccr_list' %}"
+            <a href="#"
+            {% comment %} <a href="{% url 'materiaux:mouvements_list' %}" {% endcomment %}
                class="btn btn-outline-primary">
                 <i class="fas fa-exchange-alt me-1"></i>
                 Mouvements
@@ -240,7 +241,7 @@
                     Dix derniers mouvements
                 </h5>
 
-                <a href="{% url 'materiaux:mouvements_mccr_list' %}"
+                <a href="{% url 'mccr_materiaux:mouvements_list' %}"
                    class="btn btn-sm btn-outline-primary">
                     Voir tous les mouvements
                     <i class="fas fa-arrow-right ms-1"></i>

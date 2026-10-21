@@ -1,6 +1,6 @@
 from django.urls import path
-from . import views
 
+from . import views
 
 app_name = "recette"
 
@@ -10,7 +10,6 @@ urlpatterns = [
     path("detail/<int:id>/", views.recette_detail, name="recette_detail"),
     path("edit/<int:id>/", views.recette_edit, name="recette_edit"),
     path("delete/<int:id>/", views.recette_delete, name="recette_delete"),
-
     # ============================================================
     # ENTREPRISE H
     # ============================================================

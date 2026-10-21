@@ -7,14 +7,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('vehiculesortant', '0004_rename_montant_transport_vehiculesortant_montant'),
+        ("vehiculesortant", "0004_rename_montant_transport_vehiculesortant_montant"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='vehiculesortant',
-            name='ticket',
-            field=models.CharField(default=django.utils.timezone.now, max_length=5, unique=True),
+            model_name="vehiculesortant",
+            name="ticket",
+            field=models.CharField(
+                default=django.utils.timezone.now, max_length=5, unique=True
+            ),
             preserve_default=False,
         ),
     ]

@@ -7,21 +7,35 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0003_appuser_photo'),
+        ("users", "0003_appuser_photo"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CategorieUser',
+            name="CategorieUser",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=50, unique=True)),
-                ('description', models.TextField(blank=True, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nom", models.CharField(max_length=50, unique=True)),
+                ("description", models.TextField(blank=True, null=True)),
             ],
         ),
         migrations.AddField(
-            model_name='appuser',
-            name='categorieUser',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='utilisateurs', to='users.categorieuser'),
+            model_name="appuser",
+            name="categorieUser",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="utilisateurs",
+                to="users.categorieuser",
+            ),
         ),
     ]

@@ -1,5 +1,5 @@
-
 import os
+
 import django
 
 os.environ.setdefault(
@@ -11,8 +11,7 @@ django.setup()
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from projet.models import PersonnelExecutionProjet, EquipeProjet
-
+from projet.models import EquipeProjet, PersonnelExecutionProjet
 
 TYPES_A_TRAITER = ["CHEF_EQUIPE", "MINIER"]
 
@@ -23,8 +22,7 @@ def creer_affectations():
     print("=" * 65)
 
     executions = (
-        PersonnelExecutionProjet.objects
-        .filter(type_class__in=TYPES_A_TRAITER)
+        PersonnelExecutionProjet.objects.filter(type_class__in=TYPES_A_TRAITER)
         .select_related("projet")
         .order_by("projet_id", "type_class", "id")
     )
@@ -36,8 +34,7 @@ def creer_affectations():
 
         print("-" * 65)
         print(
-            f"Personnel #{execution.pk} | {fonction} | "
-            f"{nom} | Projet #{projet.pk}"
+            f"Personnel #{execution.pk} | {fonction} | " f"{nom} | Projet #{projet.pk}"
         )
 
         existante = EquipeProjet.objects.filter(
@@ -47,16 +44,12 @@ def creer_affectations():
         ).first()
 
         if existante:
-            print(
-                f"EXISTANTE : affectation #{existante.pk}. "
-                "Aucune création."
-            )
+            print(f"EXISTANTE : affectation #{existante.pk}. " "Aucune création.")
             continue
 
         if not execution.date_debut:
             print(
-                "IGNORÉE : la date réelle de début du travail "
-                "n'est pas renseignée."
+                "IGNORÉE : la date réelle de début du travail " "n'est pas renseignée."
             )
             continue
 
@@ -76,10 +69,7 @@ def creer_affectations():
             continue
 
         if date_fin < execution.date_debut:
-            print(
-                "IGNORÉE : la date de fin est antérieure "
-                "à la date de début."
-            )
+            print("IGNORÉE : la date de fin est antérieure " "à la date de début.")
             continue
 
         try:
@@ -93,8 +83,7 @@ def creer_affectations():
 
                 if existante:
                     print(
-                        f"EXISTANTE : affectation #{existante.pk}. "
-                        "Aucune création."
+                        f"EXISTANTE : affectation #{existante.pk}. " "Aucune création."
                     )
                     continue
 
@@ -132,10 +121,7 @@ def creer_affectations():
                 print(f"  - {champ} : {', '.join(messages)}")
 
         except Exception as erreur:
-            print(
-                f"ERREUR pour {nom} : "
-                f"{type(erreur).__name__} : {erreur}"
-            )
+            print(f"ERREUR pour {nom} : " f"{type(erreur).__name__} : {erreur}")
 
     print()
     print("=" * 65)
@@ -143,9 +129,7 @@ def creer_affectations():
     print("=" * 65)
 
     for fonction in TYPES_A_TRAITER:
-        affectations = EquipeProjet.objects.filter(
-            fonction=fonction
-        ).select_related(
+        affectations = EquipeProjet.objects.filter(fonction=fonction).select_related(
             "projet",
             "personnel_execution",
         )

@@ -1,0 +1,25 @@
+﻿{
+    "editor.formatOnSave": true,
+
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    },
+
+    "[django-html]": {
+        "editor.defaultFormatter": "monosans.djlint",
+        "editor.formatOnSave": true
+    },
+
+    "[html]": {
+        "editor.formatOnSave": true
+    },
+
+    "black-formatter.args": [
+        "--line-length=88"
+    ],
+
+    "djlint.profile": "django",
+    "djlint.format_css": true,
+    "djlint.format_js": true
+}

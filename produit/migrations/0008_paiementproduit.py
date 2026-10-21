@@ -7,19 +7,41 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('depot', '0002_alter_depot_montantg_alter_distribution_montant'),
-        ('produit', '0007_alter_produit_montant_alter_produit_pourcentage'),
+        ("depot", "0002_alter_depot_montantg_alter_distribution_montant"),
+        ("produit", "0007_alter_produit_montant_alter_produit_pourcentage"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PaiementProduit',
+            name="PaiementProduit",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('montant', models.DecimalField(decimal_places=0, max_digits=15)),
-                ('date', models.DateTimeField(auto_now_add=True)),
-                ('distribution', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='paiements_produits', to='depot.distribution')),
-                ('produit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='paiements', to='produit.produit')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("montant", models.DecimalField(decimal_places=0, max_digits=15)),
+                ("date", models.DateTimeField(auto_now_add=True)),
+                (
+                    "distribution",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="paiements_produits",
+                        to="depot.distribution",
+                    ),
+                ),
+                (
+                    "produit",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="paiements",
+                        to="produit.produit",
+                    ),
+                ),
             ],
         ),
     ]

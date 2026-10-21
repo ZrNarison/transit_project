@@ -9,40 +9,48 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('transentrant', '0004_alter_transentrant_num_vehicule'),
+        ("transentrant", "0004_alter_transentrant_num_vehicule"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='transentrant',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="transentrant",
+            name="created_at",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='transentrant',
-            name='created_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='transentrants', to=settings.AUTH_USER_MODEL),
+            model_name="transentrant",
+            name="created_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="transentrants",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='transentrant',
-            name='adresse',
+            model_name="transentrant",
+            name="adresse",
             field=models.TextField(),
         ),
         migrations.AlterField(
-            model_name='transentrant',
-            name='permis',
+            model_name="transentrant",
+            name="permis",
             field=models.CharField(max_length=50),
         ),
         migrations.AlterField(
-            model_name='transentrant',
-            name='photo',
-            field=models.ImageField(blank=True, null=True, upload_to='transentrant/'),
+            model_name="transentrant",
+            name="photo",
+            field=models.ImageField(blank=True, null=True, upload_to="transentrant/"),
         ),
         migrations.AlterField(
-            model_name='transentrant',
-            name='telephone',
+            model_name="transentrant",
+            name="telephone",
             field=models.CharField(max_length=20),
         ),
     ]

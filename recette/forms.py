@@ -17,7 +17,6 @@ class RecetteForm(forms.ModelForm):
         ]
 
         widgets = {
-
             "montant": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -26,22 +25,19 @@ class RecetteForm(forms.ModelForm):
                     "step": "0.01",
                 }
             ),
-
             "type_virement": forms.Select(
                 attrs={
                     "class": "form-control",
                     "pardefaut": "Espece",
                 }
             ),
-
             "date": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
                     "class": "form-control",
                     "type": "date",
-                }
+                },
             ),
-
             "source": forms.TextInput(
                 attrs={
                     "class": "form-control",
@@ -61,6 +57,4 @@ class RecetteForm(forms.ModelForm):
 
         super().__init__(*args, **kwargs)
 
-        self.fields["date"].input_formats = [
-            "%Y-%m-%d"
-        ]
+        self.fields["date"].input_formats = ["%Y-%m-%d"]

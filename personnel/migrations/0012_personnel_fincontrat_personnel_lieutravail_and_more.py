@@ -6,28 +6,41 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('personnel', '0011_personnel_created_at'),
+        ("personnel", "0011_personnel_created_at"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='personnel',
-            name='finContrat',
+            model_name="personnel",
+            name="finContrat",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='personnel',
-            name='lieuTravail',
+            model_name="personnel",
+            name="lieuTravail",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.AddField(
-            model_name='personnel',
-            name='typeContrat',
-            field=models.CharField(choices=[('CDI', 'CDI'), ('CDD', 'CDD'), ('Journalier', 'Journalier'), ('Stage', 'Stage')], default='CDI', max_length=30),
+            model_name="personnel",
+            name="typeContrat",
+            field=models.CharField(
+                choices=[
+                    ("CDI", "CDI"),
+                    ("CDD", "CDD"),
+                    ("Journalier", "Journalier"),
+                    ("Stage", "Stage"),
+                ],
+                default="CDI",
+                max_length=30,
+            ),
         ),
         migrations.AddField(
-            model_name='personnel',
-            name='typeTravail',
-            field=models.CharField(choices=[('Mica', 'Mica'), ('Construction', 'Construction')], default='Mica', max_length=30),
+            model_name="personnel",
+            name="typeTravail",
+            field=models.CharField(
+                choices=[("Mica", "Mica"), ("Construction", "Construction")],
+                default="Mica",
+                max_length=30,
+            ),
         ),
     ]

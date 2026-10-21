@@ -1,18 +1,14 @@
 from decimal import Decimal
 
-from django.shortcuts import (
-    render,
-    redirect,
-    get_object_or_404,
-)
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Sum
+from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import MaterielSort, H_MaterielSort
-from .forms import MaterielSortForm,H_MaterielSortForm
-from materiels.models import Materiels, H_Materiels
+from materiels.models import H_Materiels, Materiels
 
+from .forms import H_MaterielSortForm, MaterielSortForm
+from .models import H_MaterielSort, MaterielSort
 
 # ============================================================
 # OUTIL :
@@ -20,6 +16,7 @@ from materiels.models import Materiels, H_Materiels
 #
 # Groupe = NOM + TYPE + CATÉGORIE
 # ============================================================
+
 
 def get_materiels_du_groupe(materiel):
     return Materiels.objects.filter(
@@ -37,6 +34,7 @@ def get_materiels_du_groupe(materiel):
 # + entrées/remises totales
 # ============================================================
 
+
 def get_stock_groupe(materiel):
 
     materiels = get_materiels_du_groupe(materiel)
@@ -45,52 +43,31 @@ def get_stock_groupe(materiel):
     # STOCK INITIAL TOTAL
     # --------------------------------------------------------
 
-    stock_initial = (
-        materiels.aggregate(
-            total=Sum("stock_initial")
-        )["total"]
-        or Decimal("0")
+    stock_initial = materiels.aggregate(total=Sum("stock_initial"))["total"] or Decimal(
+        "0"
     )
 
     # --------------------------------------------------------
     # SORTIES TOTALES
     # --------------------------------------------------------
 
-    sorties = (
-        MaterielSort.objects
-        .filter(
-            id_Materiel__in=materiels
-        )
-        .aggregate(
-            total=Sum("Nb_MatSort")
-        )["total"]
-        or Decimal("0")
-    )
+    sorties = MaterielSort.objects.filter(id_Materiel__in=materiels).aggregate(
+        total=Sum("Nb_MatSort")
+    )["total"] or Decimal("0")
 
     # --------------------------------------------------------
     # ENTRÉES / REMISES TOTALES
     # --------------------------------------------------------
 
-    entrees = (
-        MaterielSort.objects
-        .filter(
-            id_Materiel__in=materiels
-        )
-        .aggregate(
-            total=Sum("entrees__Nb_Entre")
-        )["total"]
-        or Decimal("0")
-    )
+    entrees = MaterielSort.objects.filter(id_Materiel__in=materiels).aggregate(
+        total=Sum("entrees__Nb_Entre")
+    )["total"] or Decimal("0")
 
     # --------------------------------------------------------
     # STOCK RESTANT
     # --------------------------------------------------------
 
-    stock_restant = (
-        stock_initial
-        - sorties
-        + entrees
-    )
+    stock_restant = stock_initial - sorties + entrees
 
     return {
         "stock_initial": stock_initial,
@@ -103,6 +80,7 @@ def get_stock_groupe(materiel):
 # ============================================================
 # AJOUT SORTIE
 # ============================================================
+
 
 @transaction.atomic
 def materielsort_add(request):
@@ -117,10 +95,7 @@ def materielsort_add(request):
 
             materiel = sortie.id_Materiel
 
-            quantite_sortie = (
-                sortie.Nb_MatSort
-                or Decimal("0")
-            )
+            quantite_sortie = sortie.Nb_MatSort or Decimal("0")
 
             # ------------------------------------------------
             # CONTRÔLE QUANTITÉ
@@ -129,13 +104,10 @@ def materielsort_add(request):
             if quantite_sortie <= 0:
 
                 messages.error(
-                    request,
-                    "❌ La quantité sortie doit être supérieure à 0."
+                    request, "❌ La quantité sortie doit être supérieure à 0."
                 )
 
-                return redirect(
-                    "materielsort:materielsort_add"
-                )
+                return redirect("materielsort:materielsort_add")
 
             # ------------------------------------------------
             # STOCK DU GROUPE
@@ -158,12 +130,10 @@ def materielsort_add(request):
                     f"{materiel.nom.upper()} | "
                     f"{materiel.typeMat.title()} | "
                     f"{materiel.catMat.title()} : "
-                    f"{stock_disponible}"
+                    f"{stock_disponible}",
                 )
 
-                return redirect(
-                    "materielsort:materielsort_add"
-                )
+                return redirect("materielsort:materielsort_add")
 
             # ------------------------------------------------
             # ENREGISTREMENT
@@ -171,14 +141,9 @@ def materielsort_add(request):
 
             sortie.save()
 
-            messages.success(
-                request,
-                "✅ Sortie enregistrée avec succès."
-            )
+            messages.success(request, "✅ Sortie enregistrée avec succès.")
 
-            return redirect(
-                "materielsort:materielsort_list"
-            )
+            return redirect("materielsort:materielsort_list")
 
     else:
 
@@ -189,7 +154,7 @@ def materielsort_add(request):
         "materielsort/form.html",
         {
             "form": form,
-        }
+        },
     )
 
 
@@ -197,29 +162,20 @@ def materielsort_add(request):
 # LISTE
 # ============================================================
 
+
 def materielsort_list(request):
 
     queryset = (
-        MaterielSort.objects
-        .select_related("id_Materiel")
+        MaterielSort.objects.select_related("id_Materiel")
         .prefetch_related("entrees")
         .order_by("-dateSortie", "-id")
     )
 
-    materiel = request.GET.get(
-        "materiel",
-        ""
-    ).strip()
+    materiel = request.GET.get("materiel", "").strip()
 
-    demandeur = request.GET.get(
-        "demandeur",
-        ""
-    ).strip()
+    demandeur = request.GET.get("demandeur", "").strip()
 
-    date = request.GET.get(
-        "date",
-        ""
-    ).strip()
+    date = request.GET.get("date", "").strip()
 
     # --------------------------------------------------------
     # RECHERCHE MATÉRIEL
@@ -227,9 +183,7 @@ def materielsort_list(request):
 
     if materiel:
 
-        queryset = queryset.filter(
-            id_Materiel__nom__icontains=materiel
-        )
+        queryset = queryset.filter(id_Materiel__nom__icontains=materiel)
 
     # --------------------------------------------------------
     # RECHERCHE DEMANDEUR
@@ -237,9 +191,7 @@ def materielsort_list(request):
 
     if demandeur:
 
-        queryset = queryset.filter(
-            demandeur__icontains=demandeur
-        )
+        queryset = queryset.filter(demandeur__icontains=demandeur)
 
     # --------------------------------------------------------
     # RECHERCHE DATE
@@ -247,9 +199,7 @@ def materielsort_list(request):
 
     if date:
 
-        queryset = queryset.filter(
-            dateSortie=date
-        )
+        queryset = queryset.filter(dateSortie=date)
 
     return render(
         request,
@@ -259,7 +209,7 @@ def materielsort_list(request):
             "materiel": materiel,
             "demandeur": demandeur,
             "date": date,
-        }
+        },
     )
 
 
@@ -267,13 +217,12 @@ def materielsort_list(request):
 # DETAIL
 # ============================================================
 
+
 def materielsort_detail(request, id):
 
     materielsort = get_object_or_404(
-        MaterielSort.objects
-        .select_related("id_Materiel")
-        .prefetch_related("entrees"),
-        id=id
+        MaterielSort.objects.select_related("id_Materiel").prefetch_related("entrees"),
+        id=id,
     )
 
     return render(
@@ -281,7 +230,7 @@ def materielsort_detail(request, id):
         "materielsort/detail.html",
         {
             "materielsort": materielsort,
-        }
+        },
     )
 
 
@@ -289,40 +238,28 @@ def materielsort_detail(request, id):
 # MODIFICATION
 # ============================================================
 
+
 @transaction.atomic
 def materielsort_edit(request, id):
 
     materielsort = get_object_or_404(
-        MaterielSort.objects
-        .select_related("id_Materiel")
-        .prefetch_related("entrees"),
-        id=id
+        MaterielSort.objects.select_related("id_Materiel").prefetch_related("entrees"),
+        id=id,
     )
 
     ancien_materiel = materielsort.id_Materiel
 
-    ancienne_quantite = (
-        materielsort.Nb_MatSort
-        or Decimal("0")
-    )
+    ancienne_quantite = materielsort.Nb_MatSort or Decimal("0")
 
     if request.method == "POST":
 
-        form = MaterielSortForm(
-            request.POST,
-            instance=materielsort
-        )
+        form = MaterielSortForm(request.POST, instance=materielsort)
 
         if form.is_valid():
 
-            nouveau_materiel = form.cleaned_data[
-                "id_Materiel"
-            ]
+            nouveau_materiel = form.cleaned_data["id_Materiel"]
 
-            nouvelle_quantite = (
-                form.cleaned_data["Nb_MatSort"]
-                or Decimal("0")
-            )
+            nouvelle_quantite = form.cleaned_data["Nb_MatSort"] or Decimal("0")
 
             # ------------------------------------------------
             # CONTRÔLE QUANTITÉ
@@ -331,14 +268,10 @@ def materielsort_edit(request, id):
             if nouvelle_quantite <= 0:
 
                 messages.error(
-                    request,
-                    "❌ La quantité sortie doit être supérieure à 0."
+                    request, "❌ La quantité sortie doit être supérieure à 0."
                 )
 
-                return redirect(
-                    "materielsort:materielsort_edit",
-                    id=id
-                )
+                return redirect("materielsort:materielsort_edit", id=id)
 
             # ------------------------------------------------
             # IDENTIFICATION DU GROUPE
@@ -365,14 +298,9 @@ def materielsort_edit(request, id):
 
             if ancien_groupe == nouveau_groupe:
 
-                stock = get_stock_groupe(
-                    nouveau_materiel
-                )
+                stock = get_stock_groupe(nouveau_materiel)
 
-                stock_disponible = (
-                    stock["stock_restant"]
-                    + ancienne_quantite
-                )
+                stock_disponible = stock["stock_restant"] + ancienne_quantite
 
             # ------------------------------------------------
             # NOUVEAU GROUPE
@@ -380,13 +308,9 @@ def materielsort_edit(request, id):
 
             else:
 
-                stock = get_stock_groupe(
-                    nouveau_materiel
-                )
+                stock = get_stock_groupe(nouveau_materiel)
 
-                stock_disponible = (
-                    stock["stock_restant"]
-                )
+                stock_disponible = stock["stock_restant"]
 
             # ------------------------------------------------
             # CONTRÔLE STOCK
@@ -401,13 +325,10 @@ def materielsort_edit(request, id):
                     f"{nouveau_materiel.nom.upper()} | "
                     f"{nouveau_materiel.typeMat.title()} | "
                     f"{nouveau_materiel.catMat.title()} : "
-                    f"{stock_disponible}"
+                    f"{stock_disponible}",
                 )
 
-                return redirect(
-                    "materielsort:materielsort_edit",
-                    id=id
-                )
+                return redirect("materielsort:materielsort_edit", id=id)
 
             # ------------------------------------------------
             # SAUVEGARDE
@@ -415,20 +336,13 @@ def materielsort_edit(request, id):
 
             form.save()
 
-            messages.success(
-                request,
-                "✅ Sortie modifiée avec succès."
-            )
+            messages.success(request, "✅ Sortie modifiée avec succès.")
 
-            return redirect(
-                "materielsort:materielsort_list"
-            )
+            return redirect("materielsort:materielsort_list")
 
     else:
 
-        form = MaterielSortForm(
-            instance=materielsort
-        )
+        form = MaterielSortForm(instance=materielsort)
 
     return render(
         request,
@@ -436,7 +350,7 @@ def materielsort_edit(request, id):
         {
             "form": form,
             "materielsort": materielsort,
-        }
+        },
     )
 
 
@@ -444,14 +358,13 @@ def materielsort_edit(request, id):
 # SUPPRESSION
 # ============================================================
 
+
 @transaction.atomic
 def materielsort_delete(request, id):
 
     sortie = get_object_or_404(
-        MaterielSort.objects
-        .select_related("id_Materiel")
-        .prefetch_related("entrees"),
-        id=id
+        MaterielSort.objects.select_related("id_Materiel").prefetch_related("entrees"),
+        id=id,
     )
 
     if request.method == "POST":
@@ -461,28 +374,25 @@ def materielsort_delete(request, id):
         messages.success(
             request,
             "✅ Sortie supprimée avec succès. "
-            "Le stock a été automatiquement rétabli."
+            "Le stock a été automatiquement rétabli.",
         )
 
-        return redirect(
-            "materielsort:materielsort_list"
-        )
+        return redirect("materielsort:materielsort_list")
 
     return render(
         request,
         "materielsort/confirmation.html",
         {
             "materielsort": sortie,
-        }
+        },
     )
 
 
-
-#========================================================
+# ========================================================
 
 # ENREPRISE H
 
-#=======================================================
+# =======================================================
 
 # ============================================================
 # OUTIL :
@@ -490,6 +400,7 @@ def materielsort_delete(request, id):
 #
 # Groupe = NOM + TYPE + CATÉGORIE
 # ============================================================
+
 
 def h_get_materiels_du_groupe(materiel):
     return H_Materiels.objects.filter(
@@ -507,6 +418,7 @@ def h_get_materiels_du_groupe(materiel):
 # + entrées/remises totales
 # ============================================================
 
+
 def h_get_stock_groupe(materiel):
 
     materiels = get_materiels_du_groupe(materiel)
@@ -515,52 +427,31 @@ def h_get_stock_groupe(materiel):
     # STOCK INITIAL TOTAL
     # --------------------------------------------------------
 
-    stock_initial = (
-        materiels.aggregate(
-            total=Sum("stock_initial")
-        )["total"]
-        or Decimal("0")
+    stock_initial = materiels.aggregate(total=Sum("stock_initial"))["total"] or Decimal(
+        "0"
     )
 
     # --------------------------------------------------------
     # SORTIES TOTALES
     # --------------------------------------------------------
 
-    sorties = (
-        H_MaterielSort.objects
-        .filter(
-            id_Materiel__in=materiels
-        )
-        .aggregate(
-            total=Sum("Nb_MatSort")
-        )["total"]
-        or Decimal("0")
-    )
+    sorties = H_MaterielSort.objects.filter(id_Materiel__in=materiels).aggregate(
+        total=Sum("Nb_MatSort")
+    )["total"] or Decimal("0")
 
     # --------------------------------------------------------
     # ENTRÉES / REMISES TOTALES
     # --------------------------------------------------------
 
-    entrees = (
-        H_MaterielSort.objects
-        .filter(
-            id_Materiel__in=materiels
-        )
-        .aggregate(
-            total=Sum("entrees__Nb_Entre")
-        )["total"]
-        or Decimal("0")
-    )
+    entrees = H_MaterielSort.objects.filter(id_Materiel__in=materiels).aggregate(
+        total=Sum("entrees__Nb_Entre")
+    )["total"] or Decimal("0")
 
     # --------------------------------------------------------
     # STOCK RESTANT
     # --------------------------------------------------------
 
-    stock_restant = (
-        stock_initial
-        - sorties
-        + entrees
-    )
+    stock_restant = stock_initial - sorties + entrees
 
     return {
         "stock_initial": stock_initial,
@@ -573,6 +464,7 @@ def h_get_stock_groupe(materiel):
 # ============================================================
 # AJOUT SORTIE
 # ============================================================
+
 
 @transaction.atomic
 def h_materielsort_add(request):
@@ -587,10 +479,7 @@ def h_materielsort_add(request):
 
             materiel = sortie.id_Materiel
 
-            quantite_sortie = (
-                sortie.Nb_MatSort
-                or Decimal("0")
-            )
+            quantite_sortie = sortie.Nb_MatSort or Decimal("0")
 
             # ------------------------------------------------
             # CONTRÔLE QUANTITÉ
@@ -599,13 +488,10 @@ def h_materielsort_add(request):
             if quantite_sortie <= 0:
 
                 messages.error(
-                    request,
-                    "❌ La quantité sortie doit être supérieure à 0."
+                    request, "❌ La quantité sortie doit être supérieure à 0."
                 )
 
-                return redirect(
-                    "materielsort:materielsort_add"
-                )
+                return redirect("materielsort:materielsort_add")
 
             # ------------------------------------------------
             # STOCK DU GROUPE
@@ -628,12 +514,10 @@ def h_materielsort_add(request):
                     f"{materiel.nom.upper()} | "
                     f"{materiel.typeMat.title()} | "
                     f"{materiel.catMat.title()} : "
-                    f"{stock_disponible}"
+                    f"{stock_disponible}",
                 )
 
-                return redirect(
-                    "materielsort:materielsort_add"
-                )
+                return redirect("materielsort:materielsort_add")
 
             # ------------------------------------------------
             # ENREGISTREMENT
@@ -641,14 +525,9 @@ def h_materielsort_add(request):
 
             sortie.save()
 
-            messages.success(
-                request,
-                "✅ Sortie enregistrée avec succès."
-            )
+            messages.success(request, "✅ Sortie enregistrée avec succès.")
 
-            return redirect(
-                "materielsort:materielsort_list"
-            )
+            return redirect("materielsort:materielsort_list")
 
     else:
 
@@ -659,7 +538,7 @@ def h_materielsort_add(request):
         "materielsort/form.html",
         {
             "form": form,
-        }
+        },
     )
 
 
@@ -667,29 +546,20 @@ def h_materielsort_add(request):
 # LISTE
 # ============================================================
 
+
 def h_materielsort_list(request):
 
     queryset = (
-        H_MaterielSort.objects
-        .select_related("id_Materiel")
+        H_MaterielSort.objects.select_related("id_Materiel")
         .prefetch_related("entrees")
         .order_by("-dateSortie", "-id")
     )
 
-    materiel = request.GET.get(
-        "materiel",
-        ""
-    ).strip()
+    materiel = request.GET.get("materiel", "").strip()
 
-    demandeur = request.GET.get(
-        "demandeur",
-        ""
-    ).strip()
+    demandeur = request.GET.get("demandeur", "").strip()
 
-    date = request.GET.get(
-        "date",
-        ""
-    ).strip()
+    date = request.GET.get("date", "").strip()
 
     # --------------------------------------------------------
     # RECHERCHE MATÉRIEL
@@ -697,9 +567,7 @@ def h_materielsort_list(request):
 
     if materiel:
 
-        queryset = queryset.filter(
-            id_Materiel__nom__icontains=materiel
-        )
+        queryset = queryset.filter(id_Materiel__nom__icontains=materiel)
 
     # --------------------------------------------------------
     # RECHERCHE DEMANDEUR
@@ -707,9 +575,7 @@ def h_materielsort_list(request):
 
     if demandeur:
 
-        queryset = queryset.filter(
-            demandeur__icontains=demandeur
-        )
+        queryset = queryset.filter(demandeur__icontains=demandeur)
 
     # --------------------------------------------------------
     # RECHERCHE DATE
@@ -717,9 +583,7 @@ def h_materielsort_list(request):
 
     if date:
 
-        queryset = queryset.filter(
-            dateSortie=date
-        )
+        queryset = queryset.filter(dateSortie=date)
 
     return render(
         request,
@@ -729,7 +593,7 @@ def h_materielsort_list(request):
             "materiel": materiel,
             "demandeur": demandeur,
             "date": date,
-        }
+        },
     )
 
 
@@ -737,13 +601,14 @@ def h_materielsort_list(request):
 # DETAIL
 # ============================================================
 
+
 def h_materielsort_detail(request, id):
 
     materielsort = get_object_or_404(
-        H_MaterielSort.objects
-        .select_related("id_Materiel")
-        .prefetch_related("entrees"),
-        id=id
+        H_MaterielSort.objects.select_related("id_Materiel").prefetch_related(
+            "entrees"
+        ),
+        id=id,
     )
 
     return render(
@@ -751,7 +616,7 @@ def h_materielsort_detail(request, id):
         "materielsort/detail.html",
         {
             "materielsort": materielsort,
-        }
+        },
     )
 
 
@@ -759,40 +624,30 @@ def h_materielsort_detail(request, id):
 # MODIFICATION
 # ============================================================
 
+
 @transaction.atomic
 def h_materielsort_edit(request, id):
 
     materielsort = get_object_or_404(
-        H_MaterielSort.objects
-        .select_related("id_Materiel")
-        .prefetch_related("entrees"),
-        id=id
+        H_MaterielSort.objects.select_related("id_Materiel").prefetch_related(
+            "entrees"
+        ),
+        id=id,
     )
 
     ancien_materiel = materielsort.id_Materiel
 
-    ancienne_quantite = (
-        materielsort.Nb_MatSort
-        or Decimal("0")
-    )
+    ancienne_quantite = materielsort.Nb_MatSort or Decimal("0")
 
     if request.method == "POST":
 
-        form = H_MaterielSortForm(
-            request.POST,
-            instance=materielsort
-        )
+        form = H_MaterielSortForm(request.POST, instance=materielsort)
 
         if form.is_valid():
 
-            nouveau_materiel = form.cleaned_data[
-                "id_Materiel"
-            ]
+            nouveau_materiel = form.cleaned_data["id_Materiel"]
 
-            nouvelle_quantite = (
-                form.cleaned_data["Nb_MatSort"]
-                or Decimal("0")
-            )
+            nouvelle_quantite = form.cleaned_data["Nb_MatSort"] or Decimal("0")
 
             # ------------------------------------------------
             # CONTRÔLE QUANTITÉ
@@ -801,14 +656,10 @@ def h_materielsort_edit(request, id):
             if nouvelle_quantite <= 0:
 
                 messages.error(
-                    request,
-                    "❌ La quantité sortie doit être supérieure à 0."
+                    request, "❌ La quantité sortie doit être supérieure à 0."
                 )
 
-                return redirect(
-                    "materielsort:materielsort_edit",
-                    id=id
-                )
+                return redirect("materielsort:materielsort_edit", id=id)
 
             # ------------------------------------------------
             # IDENTIFICATION DU GROUPE
@@ -835,14 +686,9 @@ def h_materielsort_edit(request, id):
 
             if ancien_groupe == nouveau_groupe:
 
-                stock = get_stock_groupe(
-                    nouveau_materiel
-                )
+                stock = get_stock_groupe(nouveau_materiel)
 
-                stock_disponible = (
-                    stock["stock_restant"]
-                    + ancienne_quantite
-                )
+                stock_disponible = stock["stock_restant"] + ancienne_quantite
 
             # ------------------------------------------------
             # NOUVEAU GROUPE
@@ -850,13 +696,9 @@ def h_materielsort_edit(request, id):
 
             else:
 
-                stock = get_stock_groupe(
-                    nouveau_materiel
-                )
+                stock = get_stock_groupe(nouveau_materiel)
 
-                stock_disponible = (
-                    stock["stock_restant"]
-                )
+                stock_disponible = stock["stock_restant"]
 
             # ------------------------------------------------
             # CONTRÔLE STOCK
@@ -871,13 +713,10 @@ def h_materielsort_edit(request, id):
                     f"{nouveau_materiel.nom.upper()} | "
                     f"{nouveau_materiel.typeMat.title()} | "
                     f"{nouveau_materiel.catMat.title()} : "
-                    f"{stock_disponible}"
+                    f"{stock_disponible}",
                 )
 
-                return redirect(
-                    "materielsort:materielsort_edit",
-                    id=id
-                )
+                return redirect("materielsort:materielsort_edit", id=id)
 
             # ------------------------------------------------
             # SAUVEGARDE
@@ -885,20 +724,13 @@ def h_materielsort_edit(request, id):
 
             form.save()
 
-            messages.success(
-                request,
-                "✅ Sortie modifiée avec succès."
-            )
+            messages.success(request, "✅ Sortie modifiée avec succès.")
 
-            return redirect(
-                "materielsort:materielsort_list"
-            )
+            return redirect("materielsort:materielsort_list")
 
     else:
 
-        form = H_MaterielSortForm(
-            instance=materielsort
-        )
+        form = H_MaterielSortForm(instance=materielsort)
 
     return render(
         request,
@@ -906,7 +738,7 @@ def h_materielsort_edit(request, id):
         {
             "form": form,
             "materielsort": materielsort,
-        }
+        },
     )
 
 
@@ -914,14 +746,15 @@ def h_materielsort_edit(request, id):
 # SUPPRESSION
 # ============================================================
 
+
 @transaction.atomic
 def h_materielsort_delete(request, id):
 
     sortie = get_object_or_404(
-        H_MaterielSort.objects
-        .select_related("id_Materiel")
-        .prefetch_related("entrees"),
-        id=id
+        H_MaterielSort.objects.select_related("id_Materiel").prefetch_related(
+            "entrees"
+        ),
+        id=id,
     )
 
     if request.method == "POST":
@@ -931,17 +764,15 @@ def h_materielsort_delete(request, id):
         messages.success(
             request,
             "✅ Sortie supprimée avec succès. "
-            "Le stock a été automatiquement rétabli."
+            "Le stock a été automatiquement rétabli.",
         )
 
-        return redirect(
-            "materielsort:materielsort_list"
-        )
+        return redirect("materielsort:materielsort_list")
 
     return render(
         request,
         "materielsort/confirmation.html",
         {
             "materielsort": sortie,
-        }
+        },
     )

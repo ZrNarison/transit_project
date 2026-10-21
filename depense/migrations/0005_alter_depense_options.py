@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('depense', '0004_alter_depense_description_and_more'),
+        ("depense", "0004_alter_depense_description_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='depense',
+            name="depense",
             options={},
         ),
     ]

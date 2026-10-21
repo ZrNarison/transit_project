@@ -1,22 +1,21 @@
 from django.contrib import messages
 from django.db import transaction
-from django.shortcuts import render, get_object_or_404, redirect
-
-from .models import MaterielEntre, H_MaterielEntre
-from .forms import MaterielEntreForm , H_MaterielEntreForm
+from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.utils import enregistrer_action
 
+from .forms import H_MaterielEntreForm, MaterielEntreForm
+from .models import H_MaterielEntre, MaterielEntre
 
 # ============================================================
 # LISTE
 # ============================================================
 
+
 def materielEntre_list(request):
 
     queryset = MaterielEntre.objects.select_related(
-        "id_MaterielSort",
-        "id_MaterielSort__id_Materiel"
+        "id_MaterielSort", "id_MaterielSort__id_Materiel"
     ).order_by("-dateEntre", "-id")
 
     materiel = request.GET.get("materiel", "").strip()
@@ -29,14 +28,10 @@ def materielEntre_list(request):
         )
 
     if demandeur:
-        queryset = queryset.filter(
-            id_MaterielSort__demandeur__icontains=demandeur
-        )
+        queryset = queryset.filter(id_MaterielSort__demandeur__icontains=demandeur)
 
     if date:
-        queryset = queryset.filter(
-            dateEntre=date
-        )
+        queryset = queryset.filter(dateEntre=date)
 
     return render(
         request,
@@ -46,7 +41,7 @@ def materielEntre_list(request):
             "materiel": materiel,
             "demandeur": demandeur,
             "date": date,
-        }
+        },
     )
 
 
@@ -54,28 +49,23 @@ def materielEntre_list(request):
 # DETAIL
 # ============================================================
 
+
 def materielEntre_detail(request, id):
 
     entree = get_object_or_404(
         MaterielEntre.objects.select_related(
-            "id_MaterielSort",
-            "id_MaterielSort__id_Materiel"
+            "id_MaterielSort", "id_MaterielSort__id_Materiel"
         ),
-        id=id
+        id=id,
     )
 
-    return render(
-        request,
-        "materielEntre/detail.html",
-        {
-            "entree": entree
-        }
-    )
+    return render(request, "materielEntre/detail.html", {"entree": entree})
 
 
 # ============================================================
 # AJOUT
 # ============================================================
+
 
 @transaction.atomic
 def materielEntre_add(request):
@@ -94,89 +84,52 @@ def materielEntre_add(request):
                 "Matériel Entrée",
                 entree.id,
                 nouvelle={
-                    "materiel": str(
-                        entree.id_MaterielSort.id_Materiel
-                    ),
-                    "demandeur": (
-                        entree.id_MaterielSort.demandeur
-                    ),
-                    "quantite": str(
-                        entree.Nb_Entre
-                    ),
-                    "responsable": (
-                        entree.responsable_entree
-                    ),
-                    "date": str(
-                        entree.dateEntre
-                    ),
+                    "materiel": str(entree.id_MaterielSort.id_Materiel),
+                    "demandeur": (entree.id_MaterielSort.demandeur),
+                    "quantite": str(entree.Nb_Entre),
+                    "responsable": (entree.responsable_entree),
+                    "date": str(entree.dateEntre),
                 },
-                description="Création d'une entrée matériel"
+                description="Création d'une entrée matériel",
             )
 
-            messages.success(
-                request,
-                "✅ Entrée matériel enregistrée avec succès."
-            )
+            messages.success(request, "✅ Entrée matériel enregistrée avec succès.")
 
-            return redirect(
-                "materielEntre:materielEntre_list"
-            )
+            return redirect("materielEntre:materielEntre_list")
 
         messages.error(
             request,
-            "❌ Impossible d'enregistrer l'entrée. "
-            "Veuillez corriger les erreurs."
+            "❌ Impossible d'enregistrer l'entrée. " "Veuillez corriger les erreurs.",
         )
 
     else:
 
         form = MaterielEntreForm()
 
-    return render(
-        request,
-        "materielEntre/form.html",
-        {
-            "form": form
-        }
-    )
+    return render(request, "materielEntre/form.html", {"form": form})
 
 
 # ============================================================
 # MODIFICATION
 # ============================================================
 
+
 @transaction.atomic
 def materielEntre_edit(request, id):
 
-    entree = get_object_or_404(
-        MaterielEntre,
-        id=id
-    )
+    entree = get_object_or_404(MaterielEntre, id=id)
 
     ancienne = {
-        "materiel": str(
-            entree.id_MaterielSort.id_Materiel
-        ),
-        "demandeur": (
-            entree.id_MaterielSort.demandeur
-        ),
-        "quantite": str(
-            entree.Nb_Entre
-        ),
-        "responsable": (
-            entree.responsable_entree
-        ),
-        "date": str(
-            entree.dateEntre
-        ),
+        "materiel": str(entree.id_MaterielSort.id_Materiel),
+        "demandeur": (entree.id_MaterielSort.demandeur),
+        "quantite": str(entree.Nb_Entre),
+        "responsable": (entree.responsable_entree),
+        "date": str(entree.dateEntre),
     }
 
     if request.method == "POST":
 
-        form = MaterielEntreForm(
-            request.POST,
-            instance=entree
-        )
+        form = MaterielEntreForm(request.POST, instance=entree)
 
         if form.is_valid():
 
@@ -189,45 +142,27 @@ def materielEntre_edit(request, id):
                 entree.id,
                 ancienne=ancienne,
                 nouvelle={
-                    "materiel": str(
-                        entree.id_MaterielSort.id_Materiel
-                    ),
-                    "demandeur": (
-                        entree.id_MaterielSort.demandeur
-                    ),
-                    "quantite": str(
-                        entree.Nb_Entre
-                    ),
-                    "responsable": (
-                        entree.responsable_entree
-                    ),
-                    "date": str(
-                        entree.dateEntre
-                    ),
+                    "materiel": str(entree.id_MaterielSort.id_Materiel),
+                    "demandeur": (entree.id_MaterielSort.demandeur),
+                    "quantite": str(entree.Nb_Entre),
+                    "responsable": (entree.responsable_entree),
+                    "date": str(entree.dateEntre),
                 },
-                description="Modification d'une entrée matériel"
+                description="Modification d'une entrée matériel",
             )
 
-            messages.success(
-                request,
-                "✅ Entrée matériel modifiée avec succès."
-            )
+            messages.success(request, "✅ Entrée matériel modifiée avec succès.")
 
-            return redirect(
-                "materielEntre:materielEntre_list"
-            )
+            return redirect("materielEntre:materielEntre_list")
 
         messages.error(
             request,
-            "❌ Impossible de modifier l'entrée. "
-            "Veuillez corriger les erreurs."
+            "❌ Impossible de modifier l'entrée. " "Veuillez corriger les erreurs.",
         )
 
     else:
 
-        form = MaterielEntreForm(
-            instance=entree
-        )
+        form = MaterielEntreForm(instance=entree)
 
     return render(
         request,
@@ -235,7 +170,7 @@ def materielEntre_edit(request, id):
         {
             "form": form,
             "entree": entree,
-        }
+        },
     )
 
 
@@ -243,33 +178,23 @@ def materielEntre_edit(request, id):
 # SUPPRESSION
 # ============================================================
 
+
 @transaction.atomic
 def materielEntre_delete(request, id):
 
     entree = get_object_or_404(
         MaterielEntre.objects.select_related(
-            "id_MaterielSort",
-            "id_MaterielSort__id_Materiel"
+            "id_MaterielSort", "id_MaterielSort__id_Materiel"
         ),
-        id=id
+        id=id,
     )
 
     ancienne = {
-        "materiel": str(
-            entree.id_MaterielSort.id_Materiel
-        ),
-        "demandeur": (
-            entree.id_MaterielSort.demandeur
-        ),
-        "quantite": str(
-            entree.Nb_Entre
-        ),
-        "responsable": (
-            entree.responsable_entree
-        ),
-        "date": str(
-            entree.dateEntre
-        ),
+        "materiel": str(entree.id_MaterielSort.id_Materiel),
+        "demandeur": (entree.id_MaterielSort.demandeur),
+        "quantite": str(entree.Nb_Entre),
+        "responsable": (entree.responsable_entree),
+        "date": str(entree.dateEntre),
     }
 
     if request.method == "POST":
@@ -280,39 +205,27 @@ def materielEntre_delete(request, id):
             "Matériel Entrée",
             entree.id,
             ancienne=ancienne,
-            description="Suppression d'une entrée matériel"
+            description="Suppression d'une entrée matériel",
         )
 
         entree.delete()
 
-        messages.success(
-            request,
-            "✅ Entrée matériel supprimée avec succès."
-        )
+        messages.success(request, "✅ Entrée matériel supprimée avec succès.")
 
-        return redirect(
-            "materielEntre:materielEntre_list"
-        )
+        return redirect("materielEntre:materielEntre_list")
 
-    return render(
-        request,
-        "materielEntre/confirm_delete.html",
-        {
-            "entree": entree
-        }
-    )
+    return render(request, "materielEntre/confirm_delete.html", {"entree": entree})
 
 
-
-#===============================================================
+# ===============================================================
 # ENTREPRISE H
-#==============================================================
+# ==============================================================
+
 
 def h_materielEntre_list(request):
 
     queryset = H_MaterielEntre.objects.select_related(
-        "id_MaterielSort",
-        "id_MaterielSort__id_Materiel"
+        "id_MaterielSort", "id_MaterielSort__id_Materiel"
     ).order_by("-dateEntre", "-id")
 
     materiel = request.GET.get("materiel", "").strip()
@@ -325,14 +238,10 @@ def h_materielEntre_list(request):
         )
 
     if demandeur:
-        queryset = queryset.filter(
-            id_MaterielSort__demandeur__icontains=demandeur
-        )
+        queryset = queryset.filter(id_MaterielSort__demandeur__icontains=demandeur)
 
     if date:
-        queryset = queryset.filter(
-            dateEntre=date
-        )
+        queryset = queryset.filter(dateEntre=date)
 
     return render(
         request,
@@ -342,7 +251,7 @@ def h_materielEntre_list(request):
             "materiel": materiel,
             "demandeur": demandeur,
             "date": date,
-        }
+        },
     )
 
 
@@ -350,28 +259,23 @@ def h_materielEntre_list(request):
 # DETAIL
 # ============================================================
 
+
 def h_materielEntre_detail(request, id):
 
     entree = get_object_or_404(
         H_MaterielEntre.objects.select_related(
-            "id_MaterielSort",
-            "id_MaterielSort__id_Materiel"
+            "id_MaterielSort", "id_MaterielSort__id_Materiel"
         ),
-        id=id
+        id=id,
     )
 
-    return render(
-        request,
-        "materielEntre/detail.html",
-        {
-            "entree": entree
-        }
-    )
+    return render(request, "materielEntre/detail.html", {"entree": entree})
 
 
 # ============================================================
 # AJOUT
 # ============================================================
+
 
 @transaction.atomic
 def h_materielEntre_add(request):
@@ -390,89 +294,52 @@ def h_materielEntre_add(request):
                 "Matériel Entrée",
                 entree.id,
                 nouvelle={
-                    "materiel": str(
-                        entree.id_MaterielSort.id_Materiel
-                    ),
-                    "demandeur": (
-                        entree.id_MaterielSort.demandeur
-                    ),
-                    "quantite": str(
-                        entree.Nb_Entre
-                    ),
-                    "responsable": (
-                        entree.responsable_entree
-                    ),
-                    "date": str(
-                        entree.dateEntre
-                    ),
+                    "materiel": str(entree.id_MaterielSort.id_Materiel),
+                    "demandeur": (entree.id_MaterielSort.demandeur),
+                    "quantite": str(entree.Nb_Entre),
+                    "responsable": (entree.responsable_entree),
+                    "date": str(entree.dateEntre),
                 },
-                description="Création d'une entrée matériel"
+                description="Création d'une entrée matériel",
             )
 
-            messages.success(
-                request,
-                "✅ Entrée matériel enregistrée avec succès."
-            )
+            messages.success(request, "✅ Entrée matériel enregistrée avec succès.")
 
-            return redirect(
-                "materielEntre:materielEntre_list"
-            )
+            return redirect("materielEntre:materielEntre_list")
 
         messages.error(
             request,
-            "❌ Impossible d'enregistrer l'entrée. "
-            "Veuillez corriger les erreurs."
+            "❌ Impossible d'enregistrer l'entrée. " "Veuillez corriger les erreurs.",
         )
 
     else:
 
         form = H_MaterielEntreForm()
 
-    return render(
-        request,
-        "materielEntre/form.html",
-        {
-            "form": form
-        }
-    )
+    return render(request, "materielEntre/form.html", {"form": form})
 
 
 # ============================================================
 # MODIFICATION
 # ============================================================
 
+
 @transaction.atomic
 def h_materielEntre_edit(request, id):
 
-    entree = get_object_or_404(
-        H_MaterielEntre,
-        id=id
-    )
+    entree = get_object_or_404(H_MaterielEntre, id=id)
 
     ancienne = {
-        "materiel": str(
-            entree.id_MaterielSort.id_Materiel
-        ),
-        "demandeur": (
-            entree.id_MaterielSort.demandeur
-        ),
-        "quantite": str(
-            entree.Nb_Entre
-        ),
-        "responsable": (
-            entree.responsable_entree
-        ),
-        "date": str(
-            entree.dateEntre
-        ),
+        "materiel": str(entree.id_MaterielSort.id_Materiel),
+        "demandeur": (entree.id_MaterielSort.demandeur),
+        "quantite": str(entree.Nb_Entre),
+        "responsable": (entree.responsable_entree),
+        "date": str(entree.dateEntre),
     }
 
     if request.method == "POST":
 
-        form = H_MaterielEntreForm(
-            request.POST,
-            instance=entree
-        )
+        form = H_MaterielEntreForm(request.POST, instance=entree)
 
         if form.is_valid():
 
@@ -485,45 +352,27 @@ def h_materielEntre_edit(request, id):
                 entree.id,
                 ancienne=ancienne,
                 nouvelle={
-                    "materiel": str(
-                        entree.id_MaterielSort.id_Materiel
-                    ),
-                    "demandeur": (
-                        entree.id_MaterielSort.demandeur
-                    ),
-                    "quantite": str(
-                        entree.Nb_Entre
-                    ),
-                    "responsable": (
-                        entree.responsable_entree
-                    ),
-                    "date": str(
-                        entree.dateEntre
-                    ),
+                    "materiel": str(entree.id_MaterielSort.id_Materiel),
+                    "demandeur": (entree.id_MaterielSort.demandeur),
+                    "quantite": str(entree.Nb_Entre),
+                    "responsable": (entree.responsable_entree),
+                    "date": str(entree.dateEntre),
                 },
-                description="Modification d'une entrée matériel"
+                description="Modification d'une entrée matériel",
             )
 
-            messages.success(
-                request,
-                "✅ Entrée matériel modifiée avec succès."
-            )
+            messages.success(request, "✅ Entrée matériel modifiée avec succès.")
 
-            return redirect(
-                "materielEntre:materielEntre_list"
-            )
+            return redirect("materielEntre:materielEntre_list")
 
         messages.error(
             request,
-            "❌ Impossible de modifier l'entrée. "
-            "Veuillez corriger les erreurs."
+            "❌ Impossible de modifier l'entrée. " "Veuillez corriger les erreurs.",
         )
 
     else:
 
-        form = H_MaterielEntreForm(
-            instance=entree
-        )
+        form = H_MaterielEntreForm(instance=entree)
 
     return render(
         request,
@@ -531,7 +380,7 @@ def h_materielEntre_edit(request, id):
         {
             "form": form,
             "entree": entree,
-        }
+        },
     )
 
 
@@ -539,33 +388,23 @@ def h_materielEntre_edit(request, id):
 # SUPPRESSION
 # ============================================================
 
+
 @transaction.atomic
 def h_materielEntre_delete(request, id):
 
     entree = get_object_or_404(
         H_MaterielEntre.objects.select_related(
-            "id_MaterielSort",
-            "id_MaterielSort__id_Materiel"
+            "id_MaterielSort", "id_MaterielSort__id_Materiel"
         ),
-        id=id
+        id=id,
     )
 
     ancienne = {
-        "materiel": str(
-            entree.id_MaterielSort.id_Materiel
-        ),
-        "demandeur": (
-            entree.id_MaterielSort.demandeur
-        ),
-        "quantite": str(
-            entree.Nb_Entre
-        ),
-        "responsable": (
-            entree.responsable_entree
-        ),
-        "date": str(
-            entree.dateEntre
-        ),
+        "materiel": str(entree.id_MaterielSort.id_Materiel),
+        "demandeur": (entree.id_MaterielSort.demandeur),
+        "quantite": str(entree.Nb_Entre),
+        "responsable": (entree.responsable_entree),
+        "date": str(entree.dateEntre),
     }
 
     if request.method == "POST":
@@ -576,24 +415,13 @@ def h_materielEntre_delete(request, id):
             "Matériel Entrée",
             entree.id,
             ancienne=ancienne,
-            description="Suppression d'une entrée matériel"
+            description="Suppression d'une entrée matériel",
         )
 
         entree.delete()
 
-        messages.success(
-            request,
-            "✅ Entrée matériel supprimée avec succès."
-        )
+        messages.success(request, "✅ Entrée matériel supprimée avec succès.")
 
-        return redirect(
-            "materielEntre:materielEntre_list"
-        )
+        return redirect("materielEntre:materielEntre_list")
 
-    return render(
-        request,
-        "materielEntre/confirm_delete.html",
-        {
-            "entree": entree
-        }
-    )
+    return render(request, "materielEntre/confirm_delete.html", {"entree": entree})

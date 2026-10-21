@@ -1,6 +1,7 @@
 from django.db import models
-from users.models import AppUser
+
 from depot.models import Distribution
+from users.models import AppUser
 
 
 class Depense(models.Model):
@@ -12,42 +13,34 @@ class Depense(models.Model):
         ("Triage", "Triage"),
     ]
 
-    titre = models.CharField( max_length=100 )
+    titre = models.CharField(max_length=100)
 
     distribution = models.ForeignKey(
         Distribution,
         on_delete=models.PROTECT,
         related_name="depenses",
         null=True,
-        blank=True
-    )
-
-    montant = models.DecimalField(
-        max_digits=12,
-        decimal_places=0
-    )
-
-    description = models.TextField(
         blank=True,
-        null=True
     )
+
+    montant = models.DecimalField(max_digits=12, decimal_places=0)
+
+    description = models.TextField(blank=True, null=True)
 
     date = models.DateField()
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     enregistre_par = models.ForeignKey(
         AppUser,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="depenses_enregistrees"
+        related_name="depenses_enregistrees",
     )
 
     class Meta:
-        ordering = ['-date', '-created_at']
+        ordering = ["-date", "-created_at"]
         verbose_name = "Dépense"
         verbose_name_plural = "Dépenses"
 

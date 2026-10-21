@@ -1,38 +1,24 @@
-from django.shortcuts import (
-    render,
-    redirect,
-    get_object_or_404
-)
-
 from django.contrib import messages
-
-from .models import Categorie
-from .forms import CategorieForm
+from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.utils import enregistrer_action
 
+from .forms import CategorieForm
+from .models import Categorie
 
 # ============================================================
 # LISTE DES CATÉGORIES
 # ============================================================
 
+
 def categorie_liste(request):
 
-    categories = (
-        Categorie.objects
-        .all()
-        .order_by("nom")
-    )
+    categories = Categorie.objects.all().order_by("nom")
 
-    nom = request.GET.get(
-        "nom",
-        ""
-    ).strip()
+    nom = request.GET.get("nom", "").strip()
 
     if nom:
-        categories = categories.filter(
-            nom__icontains=nom
-        )
+        categories = categories.filter(nom__icontains=nom)
 
     return render(
         request,
@@ -40,7 +26,7 @@ def categorie_liste(request):
         {
             "categories": categories,
             "nom": nom,
-        }
+        },
     )
 
 
@@ -48,11 +34,10 @@ def categorie_liste(request):
 # AJOUT D'UNE CATÉGORIE
 # ============================================================
 
+
 def categorie_add(request):
 
-    form = CategorieForm(
-        request.POST or None
-    )
+    form = CategorieForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
 
@@ -68,29 +53,16 @@ def categorie_add(request):
             table="Categorie",
             objet_id=categorie.id,
             ancienne=None,
-            nouvelle={
-                "nom": categorie.nom,
-                "description": categorie.description
-            },
-            description="Création d'une catégorie"
+            nouvelle={"nom": categorie.nom, "description": categorie.description},
+            description="Création d'une catégorie",
         )
 
-        messages.success(
-            request,
-            "Catégorie ajoutée avec succès."
-        )
+        messages.success(request, "Catégorie ajoutée avec succès.")
 
-        return redirect(
-            "categorie:categorie_liste"
-        )
+        return redirect("categorie:categorie_liste")
 
     return render(
-        request,
-        "categorie/form.html",
-        {
-            "form": form,
-            "titre": "Ajouter une catégorie"
-        }
+        request, "categorie/form.html", {"form": form, "titre": "Ajouter une catégorie"}
     )
 
 
@@ -98,26 +70,18 @@ def categorie_add(request):
 # MODIFICATION D'UNE CATÉGORIE
 # ============================================================
 
+
 def categorie_edit(request, id):
 
-    categorie = get_object_or_404(
-        Categorie,
-        id=id
-    )
+    categorie = get_object_or_404(Categorie, id=id)
 
     # --------------------------------------------------------
     # Anciennes valeurs
     # --------------------------------------------------------
 
-    ancienne = {
-        "nom": categorie.nom,
-        "description": categorie.description
-    }
+    ancienne = {"nom": categorie.nom, "description": categorie.description}
 
-    form = CategorieForm(
-        request.POST or None,
-        instance=categorie
-    )
+    form = CategorieForm(request.POST or None, instance=categorie)
 
     if request.method == "POST" and form.is_valid():
 
@@ -127,10 +91,7 @@ def categorie_edit(request, id):
         # Nouvelles valeurs
         # ----------------------------------------------------
 
-        nouvelle = {
-            "nom": categorie.nom,
-            "description": categorie.description
-        }
+        nouvelle = {"nom": categorie.nom, "description": categorie.description}
 
         # ----------------------------------------------------
         # AUDIT : MODIFICATION
@@ -143,25 +104,17 @@ def categorie_edit(request, id):
             objet_id=categorie.id,
             ancienne=ancienne,
             nouvelle=nouvelle,
-            description="Modification d'une catégorie"
+            description="Modification d'une catégorie",
         )
 
-        messages.success(
-            request,
-            "Catégorie modifiée avec succès."
-        )
+        messages.success(request, "Catégorie modifiée avec succès.")
 
-        return redirect(
-            "categorie:categorie_liste"
-        )
+        return redirect("categorie:categorie_liste")
 
     return render(
         request,
         "categorie/form.html",
-        {
-            "form": form,
-            "titre": "Modifier une catégorie"
-        }
+        {"form": form, "titre": "Modifier une catégorie"},
     )
 
 
@@ -169,12 +122,10 @@ def categorie_edit(request, id):
 # SUPPRESSION D'UNE CATÉGORIE
 # ============================================================
 
+
 def categorie_delete(request, id):
 
-    categorie = get_object_or_404(
-        Categorie,
-        id=id
-    )
+    categorie = get_object_or_404(Categorie, id=id)
 
     if request.method == "POST":
 
@@ -183,10 +134,7 @@ def categorie_delete(request, id):
         # AVANT suppression
         # ----------------------------------------------------
 
-        ancienne = {
-            "nom": categorie.nom,
-            "description": categorie.description
-        }
+        ancienne = {"nom": categorie.nom, "description": categorie.description}
 
         objet_id = categorie.id
 
@@ -207,22 +155,11 @@ def categorie_delete(request, id):
             objet_id=objet_id,
             ancienne=ancienne,
             nouvelle=None,
-            description="Suppression d'une catégorie"
+            description="Suppression d'une catégorie",
         )
 
-        messages.success(
-            request,
-            "Catégorie supprimée avec succès."
-        )
+        messages.success(request, "Catégorie supprimée avec succès.")
 
-        return redirect(
-            "categorie:categorie_liste"
-        )
+        return redirect("categorie:categorie_liste")
 
-    return render(
-        request,
-        "categorie/confirm_delete.html",
-        {
-            "categorie": categorie
-        }
-    )
+    return render(request, "categorie/confirm_delete.html", {"categorie": categorie})

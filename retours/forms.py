@@ -1,4 +1,5 @@
 from django import forms
+
 from .models import Retour
 
 
@@ -12,18 +13,11 @@ class RetourForm(forms.ModelForm):
         ]
 
         widgets = {
-
             "montant": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Montant du retour"
-                }
+                attrs={"class": "form-control", "placeholder": "Montant du retour"}
             ),
-
         }
 
         labels = {
-
             "montant": "Montant",
-
         }

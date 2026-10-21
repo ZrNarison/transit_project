@@ -9,106 +9,71 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('personnel', '0003_alter_personnel_photo'),
+        ("personnel", "0003_alter_personnel_photo"),
     ]
 
     operations = [
-
         migrations.CreateModel(
-            name='Depot',
+            name="Depot",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
                         auto_created=True,
                         primary_key=True,
                         serialize=False,
-                        verbose_name='ID'
-                    )
+                        verbose_name="ID",
+                    ),
                 ),
-
                 (
-                    'montantG',
-                    models.DecimalField(
-                        decimal_places=0,
-                        default=0,
-                        max_digits=15
-                    )
+                    "montantG",
+                    models.DecimalField(decimal_places=0, default=0, max_digits=15),
                 ),
-
                 (
-                    'deposant',
-                    models.CharField(
-                        default='BANK',
-                        editable=False,
-                        max_length=50
-                    )
+                    "deposant",
+                    models.CharField(default="BANK", editable=False, max_length=50),
                 ),
-
-                (
-                    'date',
-                    models.DateField(
-                        auto_now_add=True
-                    )
-                ),
-
-                (
-                    'created_at',
-                    models.DateTimeField(
-                        auto_now_add=True
-                    )
-                ),
+                ("date", models.DateField(auto_now_add=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
-
             options={
-                'verbose_name': 'Dépôt',
-                'verbose_name_plural': 'Dépôts',
-                'ordering': ['-date', '-created_at'],
+                "verbose_name": "Dépôt",
+                "verbose_name_plural": "Dépôts",
+                "ordering": ["-date", "-created_at"],
             },
         ),
-
-
         migrations.CreateModel(
-            name='Distribution',
+            name="Distribution",
             fields=[
-
                 (
-                    'id',
+                    "id",
                     models.BigAutoField(
                         auto_created=True,
                         primary_key=True,
                         serialize=False,
-                        verbose_name='ID'
-                    )
+                        verbose_name="ID",
+                    ),
                 ),
-
                 (
-                    'montant',
-                    models.DecimalField(
-                        decimal_places=0,
-                        default=0,
-                        max_digits=15
-                    )
+                    "montant",
+                    models.DecimalField(decimal_places=0, default=0, max_digits=15),
                 ),
-
                 (
-                    'depot',
+                    "depot",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='distributions',
-                        to='depot.depot'
-                    )
+                        related_name="distributions",
+                        to="depot.depot",
+                    ),
                 ),
-
                 (
-                    'distributeur',
+                    "distributeur",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name='distributions_recues',
-                        to='personnel.personnel'
-                    )
+                        related_name="distributions_recues",
+                        to="personnel.personnel",
+                    ),
                 ),
-
             ],
         ),
     ]

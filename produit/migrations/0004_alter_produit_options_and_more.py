@@ -7,58 +7,62 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('produit', '0003_produit_date_paiement'),
-        ('transentrant', '0002_rename_numveh_ent_transentrant_num_vehicule_and_more'),
+        ("produit", "0003_produit_date_paiement"),
+        ("transentrant", "0002_rename_numveh_ent_transentrant_num_vehicule_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='produit',
+            name="produit",
             options={},
         ),
         migrations.RenameField(
-            model_name='produit',
-            old_name='id_client',
-            new_name='client',
+            model_name="produit",
+            old_name="id_client",
+            new_name="client",
         ),
         migrations.RenameField(
-            model_name='produit',
-            old_name='Montant_Pro',
-            new_name='montant',
+            model_name="produit",
+            old_name="Montant_Pro",
+            new_name="montant",
         ),
         migrations.RenameField(
-            model_name='produit',
-            old_name='Pourcentage_Pro',
-            new_name='pourcentage',
+            model_name="produit",
+            old_name="Pourcentage_Pro",
+            new_name="pourcentage",
         ),
         migrations.RenameField(
-            model_name='produit',
-            old_name='Qte_Pro',
-            new_name='quantite',
+            model_name="produit",
+            old_name="Qte_Pro",
+            new_name="quantite",
         ),
         migrations.RenameField(
-            model_name='produit',
-            old_name='Source_Prod',
-            new_name='source',
+            model_name="produit",
+            old_name="Source_Prod",
+            new_name="source",
         ),
         migrations.RemoveField(
-            model_name='produit',
-            name='Nom_Prod',
+            model_name="produit",
+            name="Nom_Prod",
         ),
         migrations.RemoveField(
-            model_name='produit',
-            name='Type_Pro',
+            model_name="produit",
+            name="Type_Pro",
         ),
         migrations.AddField(
-            model_name='produit',
-            name='type_produit',
+            model_name="produit",
+            name="type_produit",
             field=models.CharField(default=0, max_length=20),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='produit',
-            name='vehicule',
-            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, to='transentrant.transentrant'),
+            model_name="produit",
+            name="vehicule",
+            field=models.ForeignKey(
+                default=0,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="transentrant.transentrant",
+            ),
             preserve_default=False,
         ),
     ]

@@ -6,33 +6,42 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('personnel', '0005_personnel_debutcontrat'),
+        ("personnel", "0005_personnel_debutcontrat"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='personnel',
-            name='categorie',
-            field=models.CharField(choices=[('Employe', 'Employé'), ('Chauffeur', 'Chauffeur'), ('Admin', 'Administrateur'), ('SuperAdmin', 'Superviseur')], default='Employe', max_length=20),
+            model_name="personnel",
+            name="categorie",
+            field=models.CharField(
+                choices=[
+                    ("Employe", "Employé"),
+                    ("Chauffeur", "Chauffeur"),
+                    ("Admin", "Administrateur"),
+                    ("SuperAdmin", "Superviseur"),
+                ],
+                default="Employe",
+                max_length=20,
+            ),
         ),
         migrations.AlterField(
-            model_name='personnel',
-            name='debutContrat',
+            model_name="personnel",
+            name="debutContrat",
             field=models.DateField(),
         ),
         migrations.AlterField(
-            model_name='personnel',
-            name='fonction',
-            field=models.CharField(default='Employé', max_length=50),
+            model_name="personnel",
+            name="fonction",
+            field=models.CharField(default="Employé", max_length=50),
         ),
         migrations.AlterField(
-            model_name='personnel',
-            name='photo',
-            field=models.ImageField(null=True, upload_to='images/Personnel/'),
+            model_name="personnel",
+            name="photo",
+            field=models.ImageField(null=True, upload_to="images/Personnel/"),
         ),
         migrations.AlterField(
-            model_name='personnel',
-            name='psalaire',
+            model_name="personnel",
+            name="psalaire",
             field=models.DecimalField(decimal_places=2, max_digits=10),
         ),
     ]

@@ -1,8 +1,10 @@
 from decimal import Decimal
+
 from django.db import models
+
 from clients.models import Client
-from transentrant.models import Transentrant
 from depot.models import Distribution
+from transentrant.models import Transentrant
 from users.models import AppUser
 
 
@@ -15,77 +17,44 @@ class Produit(models.Model):
     ]
 
     client = models.ForeignKey(
-        Client,
-        on_delete=models.CASCADE,
-        related_name="produits"
+        Client, on_delete=models.CASCADE, related_name="produits"
     )
 
     vehicule = models.ForeignKey(
-        Transentrant,
-        on_delete=models.CASCADE,
-        related_name="produits"
+        Transentrant, on_delete=models.CASCADE, related_name="produits"
     )
 
-    source = models.CharField(
-        max_length=100
-    )
+    source = models.CharField(max_length=100)
 
     type_produit = models.CharField(
-        max_length=20,
-        choices=TYPE_CHOICES,
-        default="ESPECE"
+        max_length=20, choices=TYPE_CHOICES, default="ESPECE"
     )
 
-    montant = models.DecimalField(
-        max_digits=15,
-        decimal_places=0
-    )
+    montant = models.DecimalField(max_digits=15, decimal_places=0)
 
-    quantite = models.DecimalField(
-        max_digits=15,
-        decimal_places=0
-    )
+    quantite = models.DecimalField(max_digits=15, decimal_places=0)
 
-    pourcentage = models.DecimalField(
-        max_digits=5,
-        decimal_places=2
-    )
+    pourcentage = models.DecimalField(max_digits=5, decimal_places=2)
 
-    photo = models.ImageField(
-        upload_to="images/Produits/",
-        null=False,
-        blank=False
-    )
+    photo = models.ImageField(upload_to="images/Produits/", null=False, blank=False)
 
     enregistre_par = models.ForeignKey(
         AppUser,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="produits_crees"
+        related_name="produits_crees",
     )
 
-    paye = models.BooleanField(
-        default=False
-    )
+    paye = models.BooleanField(default=False)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    date_paiement = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    date_paiement = models.DateTimeField(null=True, blank=True)
 
     @property
     def montant_net(self):
-        return (
-            self.montant
-            * self.quantite
-            * self.pourcentage
-            / Decimal("100")
-        )
+        return self.montant * self.quantite * self.pourcentage / Decimal("100")
 
     @property
     def montant_avance(self):
@@ -94,8 +63,7 @@ class Produit(models.Model):
         pour ce produit.
         """
         return sum(
-            utilisation.montant
-            for utilisation in self.utilisations_avance.all()
+            utilisation.montant for utilisation in self.utilisations_avance.all()
         )
 
     @property
@@ -104,17 +72,11 @@ class Produit(models.Model):
         Montant restant après déduction
         des avances client.
         """
-        return (
-            self.montant_net
-            - self.montant_avance
-        )
+        return self.montant_net - self.montant_avance
 
     class Meta:
 
-        ordering = [
-            "-created_at",
-            "-id"
-        ]
+        ordering = ["-created_at", "-id"]
 
         verbose_name = "Produit"
 
@@ -122,41 +84,26 @@ class Produit(models.Model):
 
     def __str__(self):
 
-        return (
-            f"{self.client.nom.upper()} "
-            f"- {self.vehicule.chauffeur.upper()}"
-        )
+        return f"{self.client.nom.upper()} " f"- {self.vehicule.chauffeur.upper()}"
 
 
 class PaiementProduit(models.Model):
 
     distribution = models.ForeignKey(
-        Distribution,
-        on_delete=models.CASCADE,
-        related_name="paiements_produits"
+        Distribution, on_delete=models.CASCADE, related_name="paiements_produits"
     )
 
     produit = models.ForeignKey(
-        Produit,
-        on_delete=models.CASCADE,
-        related_name="paiements"
+        Produit, on_delete=models.CASCADE, related_name="paiements"
     )
 
-    montant = models.DecimalField(
-        max_digits=15,
-        decimal_places=0
-    )
+    montant = models.DecimalField(max_digits=15, decimal_places=0)
 
-    date = models.DateTimeField(
-        auto_now_add=True
-    )
+    date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
 
-        ordering = [
-            "date",
-            "id"
-        ]
+        ordering = ["date", "id"]
 
         verbose_name = "Paiement produit"
 
@@ -164,11 +111,8 @@ class PaiementProduit(models.Model):
 
     def __str__(self):
 
-        return (
-            f"{self.distribution} -> "
-            f"{self.produit} "
-            f"({self.montant} Ar)"
-        )
+        return f"{self.distribution} -> " f"{self.produit} " f"({self.montant} Ar)"
+
 
 class HistoriqueProduit(models.Model):
     ACTION_CHOICES = [
@@ -178,9 +122,7 @@ class HistoriqueProduit(models.Model):
 
     # ID conservé sans ForeignKey : l'historique survit
     # à la suppression du produit.
-    produit_id_original = models.PositiveBigIntegerField(
-        db_index=True
-    )
+    produit_id_original = models.PositiveBigIntegerField(db_index=True)
 
     action = models.CharField(
         max_length=20,

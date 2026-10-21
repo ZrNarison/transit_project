@@ -7,24 +7,34 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Salaire',
+            name="Salaire",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('personnel', models.CharField(max_length=150)),
-                ('montant', models.DecimalField(decimal_places=2, max_digits=12)),
-                ('reste', models.DecimalField(decimal_places=2, default=0, max_digits=12)),
-                ('date', models.DateField(auto_now_add=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("personnel", models.CharField(max_length=150)),
+                ("montant", models.DecimalField(decimal_places=2, max_digits=12)),
+                (
+                    "reste",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=12),
+                ),
+                ("date", models.DateField(auto_now_add=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'verbose_name': 'Salaire',
-                'verbose_name_plural': 'Salaires',
-                'ordering': ['-date', '-created_at'],
+                "verbose_name": "Salaire",
+                "verbose_name_plural": "Salaires",
+                "ordering": ["-date", "-created_at"],
             },
         ),
     ]

@@ -7,24 +7,49 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('avanceclient', '0002_alter_avanceclient_options_and_more'),
-        ('produit', '0011_alter_paiementproduit_options_alter_produit_options_and_more'),
+        ("avanceclient", "0002_alter_avanceclient_options_and_more"),
+        (
+            "produit",
+            "0011_alter_paiementproduit_options_alter_produit_options_and_more",
+        ),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='UtilisationAvanceClient',
+            name="UtilisationAvanceClient",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('montant', models.DecimalField(decimal_places=0, max_digits=15)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('avance', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='utilisations', to='avanceclient.avanceclient')),
-                ('produit', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='utilisations_avance', to='produit.produit')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("montant", models.DecimalField(decimal_places=0, max_digits=15)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "avance",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="utilisations",
+                        to="avanceclient.avanceclient",
+                    ),
+                ),
+                (
+                    "produit",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="utilisations_avance",
+                        to="produit.produit",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': "Utilisation d'avance client",
-                'verbose_name_plural': "Utilisations d'avances clients",
-                'ordering': ['created_at', 'id'],
+                "verbose_name": "Utilisation d'avance client",
+                "verbose_name_plural": "Utilisations d'avances clients",
+                "ordering": ["created_at", "id"],
             },
         ),
     ]

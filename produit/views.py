@@ -1,82 +1,51 @@
 from decimal import Decimal
-from django.shortcuts import (
-    render,
-    redirect,
-    get_object_or_404
-)
-from avanceclient.models import (
-    AvanceClient,
-    UtilisationAvanceClient
-)
-from avances.models import Avance
-from avanceclient.models import AvanceClient
+
 from django.contrib import messages
-from django.db import transaction
-from django.utils import timezone
-from django.core.paginator import Paginator
-from .models import Produit, PaiementProduit
-from .forms import ProduitForm
-from retours.models import Retour
-from depot.models import Distribution
-from audit.utils import enregistrer_action
-from logs.utils import enregistrer_log
-from django.http import HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
-from .models import HistoriqueProduit
+from django.core.paginator import Paginator
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect
+from django.http import HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
+from audit.utils import enregistrer_action
+from avanceclient.models import AvanceClient, UtilisationAvanceClient
+from avances.models import Avance
+from depot.models import Distribution
+from logs.utils import enregistrer_log
+from retours.models import Retour
 
-
+from .forms import ProduitForm
+from .models import HistoriqueProduit, PaiementProduit, Produit
 
 # =========================
 # LISTE PRODUITS
 # =========================
 
+
 def produit_list(request):
-    queryset = (
-        Produit.objects
-        .select_related("client","vehicule")
-        .order_by("-created_at")
+    queryset = Produit.objects.select_related("client", "vehicule").order_by(
+        "-created_at"
     )
 
-    client = request.GET.get("client",""
-                             ).strip()
+    client = request.GET.get("client", "").strip()
 
-    source = request.GET.get(
-        "source",
-        ""
-    ).strip()
+    source = request.GET.get("source", "").strip()
 
-    vehicule = request.GET.get("vehicule",""
-                               ).strip()
+    vehicule = request.GET.get("vehicule", "").strip()
 
     if client:
-        queryset = queryset.filter(
-            client__nom__icontains=client
-        )
+        queryset = queryset.filter(client__nom__icontains=client)
 
     if source:
-        queryset = queryset.filter(
-            source__icontains=source
-        )
-
+        queryset = queryset.filter(source__icontains=source)
 
     if vehicule:
-        queryset = queryset.filter(
-            vehicule__num_vehicule__icontains=vehicule
-        )
-    #20 enregistrement par gage
-    paginator = Paginator(
-        queryset,
-        20
-    )
+        queryset = queryset.filter(vehicule__num_vehicule__icontains=vehicule)
+    # 20 enregistrement par gage
+    paginator = Paginator(queryset, 20)
 
-    page_obj = paginator.get_page(
-        request.GET.get("page")
-    )
-
-
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(
         request,
@@ -84,28 +53,23 @@ def produit_list(request):
         {
             "produits": page_obj,
             "page_obj": page_obj,
-
             "client": client,
             "source": source,
             "vehicule": vehicule,
-        }
+        },
     )
-
 
 
 # =========================
 # AJOUT
 # =========================
 def produit_add(request):
-    form = ProduitForm(
-        request.POST or None,
-        request.FILES or None
-    )
+    form = ProduitForm(request.POST or None, request.FILES or None)
 
     if request.method == "POST" and form.is_valid():
         produit = form.save()
 
-        #Audit et historique
+        # Audit et historique
         enregistrer_action(
             request,
             "CREATE",
@@ -114,28 +78,16 @@ def produit_add(request):
             nouvelle={
                 "montant": str(produit.montant),
                 "client": str(produit.client),
-                "source": produit.source
+                "source": produit.source,
             },
-            description="Création d'un produit"
+            description="Création d'un produit",
         )
 
-        messages.success(
-            request,
-            "Produit ajouté."
-        )
+        messages.success(request, "Produit ajouté.")
 
-        return redirect(
-            "produit:p_produit_add"
-        )
+        return redirect("produit:p_produit_add")
 
-    return render(
-        request,
-        "produit/form.html",
-        {
-            "form": form,
-            "action": "Ajouter"
-        }
-    )
+    return render(request, "produit/form.html", {"form": form, "action": "Ajouter"})
 
 
 # =========================
@@ -145,6 +97,7 @@ def produit_add(request):
 # =========================
 # MODIFICATION AVEC HISTORIQUE
 # =========================
+
 
 @transaction.atomic
 def produit_edit(request, pk):
@@ -248,27 +201,20 @@ def produit_delete(request, pk):
     user_id = utilisateur["id"]
 
     # Vérifier les droits de l'utilisateur.
-    est_enregistreur = (
-        user_id is not None
-        and str(produit.enregistre_par_id) == str(user_id)
+    est_enregistreur = user_id is not None and str(produit.enregistre_par_id) == str(
+        user_id
     )
 
     # Le SuperviseurMica peut supprimer.
     # Le UserMica peut supprimer uniquement son propre produit impayé.
-    autorise = (
-        role == "SuperviseurMica"
-        or (
-            role == "UserMica"
-            and est_enregistreur
-            and not produit.paye
-        )
+    autorise = role == "SuperviseurMica" or (
+        role == "UserMica" and est_enregistreur and not produit.paye
     )
 
     if not autorise:
         messages.error(
             request,
-            "Suppression refusée : vous ne disposez pas "
-            "des droits nécessaires.",
+            "Suppression refusée : vous ne disposez pas " "des droits nécessaires.",
         )
         return redirect("produit:p_produit_liste")
 
@@ -276,8 +222,7 @@ def produit_delete(request, pk):
     if produit.paye:
         messages.error(
             request,
-            "Suppression impossible : le paiement de ce produit "
-            "a déjà été validé.",
+            "Suppression impossible : le paiement de ce produit " "a déjà été validé.",
         )
         return redirect("produit:p_produit_liste")
 
@@ -317,10 +262,9 @@ def produit_delete(request, pk):
     return redirect("produit:p_produit_liste")
 
 
-
-#====================
+# ====================
 # VALIDATION PAIEMENT
-#====================
+# ====================
 @transaction.atomic
 def valider_paiement(request):
 
@@ -328,42 +272,21 @@ def valider_paiement(request):
         return redirect("produit:p_produit_liste")
 
     ids = request.POST.getlist("produits")
-    remboursement = request.POST.get(
-        "remboursement",
-        "AUCUN"
-    )
-    montant_retour_demande = Decimal(
-        request.POST.get("montant_retour", "0") or "0"
-    )
+    remboursement = request.POST.get("remboursement", "AUCUN")
+    montant_retour_demande = Decimal(request.POST.get("montant_retour", "0") or "0")
 
     if not ids:
-        messages.warning(
-            request,
-            "Aucun produit sélectionné."
-        )
+        messages.warning(request, "Aucun produit sélectionné.")
         return redirect("produit:p_produit_liste")
 
     user_id = request.session.get("user_id")
 
-    produits = (
-        Produit.objects
-        .filter(
-            id__in=ids,
-            paye=False
-        )
-        .select_related(
-            "client",
-            "vehicule"
-        )
+    produits = Produit.objects.filter(id__in=ids, paye=False).select_related(
+        "client", "vehicule"
     )
 
-    distributions = (
-        Distribution.objects
-        .select_related("depot")
-        .order_by(
-            "depot__date",
-            "id"
-        )
+    distributions = Distribution.objects.select_related("depot").order_by(
+        "depot__date", "id"
     )
 
     avances_courantes = {}
@@ -371,23 +294,18 @@ def valider_paiement(request):
     produits_non_payes = []
 
     if remboursement != "AUCUN":
-        client_ids = set(
-            produits
-            .values_list("client_id", flat=True)
-        )
+        client_ids = set(produits.values_list("client_id", flat=True))
 
         if len(client_ids) > 1:
             messages.warning(
                 request,
-                "Le remboursement ne peut être appliqué qu'à un seul client à la fois."
+                "Le remboursement ne peut être appliqué qu'à un seul client à la fois.",
             )
             return redirect("produit:p_produit_liste")
 
         for client_id in client_ids:
-            avances_client = (
-                AvanceClient.objects
-                .filter(client_id=client_id)
-                .order_by("date", "id")
+            avances_client = AvanceClient.objects.filter(client_id=client_id).order_by(
+                "date", "id"
             )
 
             avance_courante = None
@@ -399,7 +317,7 @@ def valider_paiement(request):
             if avance_courante is None:
                 messages.warning(
                     request,
-                    "Aucune avance en cours disponible pour remboursement pour ce client."
+                    "Aucune avance en cours disponible pour remboursement pour ce client.",
                 )
                 return redirect("produit:p_produit_liste")
 
@@ -407,14 +325,14 @@ def valider_paiement(request):
                 if montant_retour_demande <= 0:
                     messages.warning(
                         request,
-                        "Merci de saisir un montant de remboursement partiel supérieur à 0."
+                        "Merci de saisir un montant de remboursement partiel supérieur à 0.",
                     )
                     return redirect("produit:p_produit_liste")
 
                 if montant_retour_demande > avance_courante.reste:
                     messages.warning(
                         request,
-                        "Le montant de remboursement partiel dépasse le reste de l'avance en cours pour ce client."
+                        "Le montant de remboursement partiel dépasse le reste de l'avance en cours pour ce client.",
                     )
                     return redirect("produit:p_produit_liste")
 
@@ -428,10 +346,7 @@ def valider_paiement(request):
         montant_total = produit.montant_net
         reste = montant_total
 
-        ancienne = {
-            "paye": produit.paye,
-            "montant_net": str(montant_total)
-        }
+        ancienne = {"paye": produit.paye, "montant_net": str(montant_total)}
 
         montant_avance = Decimal("0")
         montant_distribution = Decimal("0")
@@ -439,15 +354,8 @@ def valider_paiement(request):
         # =========================================
         # 1 - CALCUL DU PAIEMENT SANS ENREGISTRER
         # =========================================
-        avances = (
-            AvanceClient.objects
-            .filter(
-                client=produit.client
-            )
-            .order_by(
-                "date",
-                "id"
-            )
+        avances = AvanceClient.objects.filter(client=produit.client).order_by(
+            "date", "id"
         )
 
         avance_usages = []
@@ -458,10 +366,7 @@ def valider_paiement(request):
             if disponible <= 0:
                 continue
 
-            utilisation = min(
-                disponible,
-                reste
-            )
+            utilisation = min(disponible, reste)
 
             if utilisation > 0:
                 avance_usages.append((avance, utilisation))
@@ -480,10 +385,7 @@ def valider_paiement(request):
                 if disponible <= 0:
                     continue
 
-                paiement = min(
-                    disponible,
-                    reste
-                )
+                paiement = min(disponible, reste)
 
                 if paiement <= 0:
                     continue
@@ -500,14 +402,9 @@ def valider_paiement(request):
         # =========================================
         total_paye = montant_avance + montant_distribution
         if total_paye < montant_total:
-            messages.warning(
-                request,
-                f"Produit {produit.id} reste {reste} Ar"
-            )
+            messages.warning(request, f"Produit {produit.id} reste {reste} Ar")
             enregistrer_log(
-                f"Produit {produit.id} incomplet reste {reste} Ar",
-                "WARNING",
-                "Produit"
+                f"Produit {produit.id} incomplet reste {reste} Ar", "WARNING", "Produit"
             )
             produits_non_payes.append(produit.id)
             any_product_incomplete = True
@@ -515,18 +412,14 @@ def valider_paiement(request):
 
         for avance, utilisation in avance_usages:
             UtilisationAvanceClient.objects.create(
-                avance=avance,
-                produit=produit,
-                montant=utilisation
+                avance=avance, produit=produit, montant=utilisation
             )
             avance.montant_utilise += utilisation
             avance.save()
 
         for distribution, paiement in distribution_payments:
             PaiementProduit.objects.create(
-                distribution=distribution,
-                produit=produit,
-                montant=paiement
+                distribution=distribution, produit=produit, montant=paiement
             )
 
         produit.paye = True
@@ -549,17 +442,12 @@ def valider_paiement(request):
                 "montant_net": str(montant_total),
                 "avance": str(montant_avance),
                 "distribution": str(montant_distribution),
-                "date_paiement": str(produit.date_paiement)
+                "date_paiement": str(produit.date_paiement),
             },
-            description=
-            "Validation paiement produit"
+            description="Validation paiement produit",
         )
 
-        enregistrer_log(
-            f"Produit {produit.id} payé",
-            "INFO",
-            "Produit"
-        )
+        enregistrer_log(f"Produit {produit.id} payé", "INFO", "Produit")
 
     # =========================================
     # 6 - REMBOURSEMENT AVANCE CLIENT
@@ -568,7 +456,7 @@ def valider_paiement(request):
         if remboursement == "PARTIEL" and len(clients_to_refund) != 1:
             messages.warning(
                 request,
-                "Le remboursement partiel ne peut être appliqué qu'à un seul client à la fois."
+                "Le remboursement partiel ne peut être appliqué qu'à un seul client à la fois.",
             )
         else:
             for client in clients_to_refund:
@@ -577,7 +465,7 @@ def valider_paiement(request):
                 if not avance_courante or avance_courante.reste <= 0:
                     messages.warning(
                         request,
-                        f"Aucune avance en cours disponible pour remboursement pour le client {client}."
+                        f"Aucune avance en cours disponible pour remboursement pour le client {client}.",
                     )
                     continue
 
@@ -588,22 +476,21 @@ def valider_paiement(request):
                     if montant_retour <= 0:
                         messages.warning(
                             request,
-                            "Veuillez saisir un montant de remboursement partiel supérieur à 0."
+                            "Veuillez saisir un montant de remboursement partiel supérieur à 0.",
                         )
                         continue
                     if montant_retour > avance_courante.reste:
                         messages.warning(
                             request,
-                            f"Le montant de remboursement partiel ({montant_retour} Ar) dépasse le reste de l'avance en cours ({avance_courante.reste} Ar) pour le client {client}."
+                            f"Le montant de remboursement partiel ({montant_retour} Ar) dépasse le reste de l'avance en cours ({avance_courante.reste} Ar) pour le client {client}.",
                         )
                         continue
 
                 retour = Retour.objects.create(
                     client=client,
                     montant=montant_retour,
-                    motif=
-                    "Remboursement avance client après paiement produit",
-                    enregistrer_par_id=user_id
+                    motif="Remboursement avance client après paiement produit",
+                    enregistrer_par_id=user_id,
                 )
 
                 avance_courante.montant_retour += montant_retour
@@ -612,31 +499,24 @@ def valider_paiement(request):
                 enregistrer_log(
                     f"Retour créé ID {retour.id} montant {montant_retour} Ar",
                     "INFO",
-                    "Retour"
+                    "Retour",
                 )
 
     if any_product_incomplete:
         if any_product_paid:
             messages.warning(
                 request,
-                "Validation partielle : certains produits restent impayés. Vérifiez les montants restants."
+                "Validation partielle : certains produits restent impayés. Vérifiez les montants restants.",
             )
         else:
             messages.warning(
                 request,
-                "Aucun produit n'a été entièrement payé. Vérifiez les montants restants."
+                "Aucun produit n'a été entièrement payé. Vérifiez les montants restants.",
             )
     else:
-        messages.success(
-            request,
-            "Validation paiement terminée avec succès."
-        )
+        messages.success(request, "Validation paiement terminée avec succès.")
 
-    return redirect(
-        "produit:p_produit_liste"
-    )
-
-
+    return redirect("produit:p_produit_liste")
 
 
 def instantane_produit(produit):
@@ -676,7 +556,7 @@ def historique_produits(request):
     role = utilisateur["role"]
 
     # Accès réservé à l'administration Mica.
-    if role not in ("Admin", "SuperviseurMica","UserMica"):
+    if role not in ("Admin", "SuperviseurMica", "UserMica"):
         messages.error(
             request,
             "Vous n'êtes pas autorisé à consulter cet historique.",
@@ -689,9 +569,7 @@ def historique_produits(request):
     produit_id = request.GET.get("produit_id", "").strip()
 
     if produit_id.isdigit():
-        historiques = historiques.filter(
-            produit_id_original=int(produit_id)
-        )
+        historiques = historiques.filter(produit_id_original=int(produit_id))
     elif produit_id:
         messages.warning(
             request,

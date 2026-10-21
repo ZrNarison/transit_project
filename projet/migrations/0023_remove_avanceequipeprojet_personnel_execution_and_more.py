@@ -7,22 +7,36 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projet', '0022_alter_mouvementvehiculeprojet_heures_finales_and_more'),
+        ("projet", "0022_alter_mouvementvehiculeprojet_heures_finales_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='avanceequipeprojet',
-            name='personnel_execution',
+            model_name="avanceequipeprojet",
+            name="personnel_execution",
         ),
         migrations.AddField(
-            model_name='avanceequipeprojet',
-            name='equipe_execution',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='avances_equipe', to='projet.equipeprojet', verbose_name="Équipe d'exécution"),
+            model_name="avanceequipeprojet",
+            name="equipe_execution",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="avances_equipe",
+                to="projet.equipeprojet",
+                verbose_name="Équipe d'exécution",
+            ),
         ),
         migrations.AddField(
-            model_name='avanceequipeprojet',
-            name='miniers_execution',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='avances_miniers', to='projet.equipeprojet', verbose_name='Équipe de miniers'),
+            model_name="avanceequipeprojet",
+            name="miniers_execution",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="avances_miniers",
+                to="projet.equipeprojet",
+                verbose_name="Équipe de miniers",
+            ),
         ),
     ]

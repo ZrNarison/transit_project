@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('categorie', '0002_categorie_description_alter_categorie_nom'),
-        ('personnel', '0009_alter_personnel_categorie'),
+        ("categorie", "0002_categorie_description_alter_categorie_nom"),
+        ("personnel", "0009_alter_personnel_categorie"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='personnel',
-            name='categorie',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='personnels', to='categorie.categorie'),
+            model_name="personnel",
+            name="categorie",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="personnels",
+                to="categorie.categorie",
+            ),
         ),
     ]

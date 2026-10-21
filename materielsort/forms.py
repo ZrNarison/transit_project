@@ -1,7 +1,8 @@
 from django import forms
 
-from .models import MaterielSort, H_MaterielSort
-from materiels.models import Materiels, H_Materiels
+from materiels.models import H_Materiels, Materiels
+
+from .models import H_MaterielSort, MaterielSort
 
 
 class MaterielSortForm(forms.ModelForm):
@@ -19,46 +20,31 @@ class MaterielSortForm(forms.ModelForm):
         ]
 
         widgets = {
-            "id_Materiel": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            ),
-
+            "id_Materiel": forms.Select(attrs={"class": "form-select"}),
             "demandeur": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Nom du demandeur"
-                }
+                attrs={"class": "form-control", "placeholder": "Nom du demandeur"}
             ),
-
             "responsable_sortie": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Responsable de la sortie du matériel"
+                    "placeholder": "Responsable de la sortie du matériel",
                 }
             ),
-
             "Nb_MatSort": forms.NumberInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Nombre de matériel à sortir",
-                    "min": "1"
+                    "min": "1",
                 }
             ),
-
             "dateSortie": forms.DateInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "date"
-                }
+                attrs={"class": "form-control", "type": "date"}
             ),
-
             "observation": forms.Textarea(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Observations éventuelles",
-                    "rows": 3
+                    "rows": 3,
                 }
             ),
         }
@@ -70,16 +56,7 @@ class MaterielSortForm(forms.ModelForm):
         # RÉCUPÉRATION DES MATÉRIELS
         # =====================================================
 
-        materiels = (
-            Materiels.objects
-            .all()
-            .order_by(
-                "nom",
-                "typeMat",
-                "catMat",
-                "id"
-            )
-        )
+        materiels = Materiels.objects.all().order_by("nom", "typeMat", "catMat", "id")
 
         # =====================================================
         # REGROUPEMENT
@@ -108,12 +85,7 @@ class MaterielSortForm(forms.ModelForm):
         # CONSTRUCTION DE LA LISTE DÉROULANTE
         # =====================================================
 
-        choix = [
-            (
-                "",
-                "--------- Sélectionner un matériel ---------"
-            )
-        ]
+        choix = [("", "--------- Sélectionner un matériel ---------")]
 
         for materiel in groupes.values():
 
@@ -122,17 +94,10 @@ class MaterielSortForm(forms.ModelForm):
             categorie = (materiel.catMat or "").strip()
 
             libelle = (
-                f"{nom.upper()} | "
-                f"{type_mat.title()} | "
-                f"{categorie.title()}"
+                f"{nom.upper()} | " f"{type_mat.title()} | " f"{categorie.title()}"
             )
 
-            choix.append(
-                (
-                    materiel.id,
-                    libelle
-                )
-            )
+            choix.append((materiel.id, libelle))
 
         self.fields["id_Materiel"].choices = choix
 
@@ -146,12 +111,9 @@ class MaterielSortForm(forms.ModelForm):
 
         if quantite is None or quantite <= 0:
 
-            raise forms.ValidationError(
-                "La quantité sortie doit être supérieure à 0."
-            )
+            raise forms.ValidationError("La quantité sortie doit être supérieure à 0.")
 
         return quantite
-
 
 
 class H_MaterielSortForm(forms.ModelForm):
@@ -169,46 +131,31 @@ class H_MaterielSortForm(forms.ModelForm):
         ]
 
         widgets = {
-            "id_Materiel": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            ),
-
+            "id_Materiel": forms.Select(attrs={"class": "form-select"}),
             "demandeur": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Nom du demandeur"
-                }
+                attrs={"class": "form-control", "placeholder": "Nom du demandeur"}
             ),
-
             "responsable_sortie": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Responsable de la sortie du matériel"
+                    "placeholder": "Responsable de la sortie du matériel",
                 }
             ),
-
             "Nb_MatSort": forms.NumberInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Nombre de matériel à sortir",
-                    "min": "1"
+                    "min": "1",
                 }
             ),
-
             "dateSortie": forms.DateInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "date"
-                }
+                attrs={"class": "form-control", "type": "date"}
             ),
-
             "observation": forms.Textarea(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Observations éventuelles",
-                    "rows": 3
+                    "rows": 3,
                 }
             ),
         }
@@ -220,16 +167,7 @@ class H_MaterielSortForm(forms.ModelForm):
         # RÉCUPÉRATION DES MATÉRIELS
         # =====================================================
 
-        materiels = (
-            H_Materiels.objects
-            .all()
-            .order_by(
-                "nom",
-                "typeMat",
-                "catMat",
-                "id"
-            )
-        )
+        materiels = H_Materiels.objects.all().order_by("nom", "typeMat", "catMat", "id")
 
         # =====================================================
         # REGROUPEMENT
@@ -258,12 +196,7 @@ class H_MaterielSortForm(forms.ModelForm):
         # CONSTRUCTION DE LA LISTE DÉROULANTE
         # =====================================================
 
-        choix = [
-            (
-                "",
-                "--------- Sélectionner un matériel ---------"
-            )
-        ]
+        choix = [("", "--------- Sélectionner un matériel ---------")]
 
         for materiel in groupes.values():
 
@@ -272,17 +205,10 @@ class H_MaterielSortForm(forms.ModelForm):
             categorie = (materiel.catMat or "").strip()
 
             libelle = (
-                f"{nom.upper()} | "
-                f"{type_mat.title()} | "
-                f"{categorie.title()}"
+                f"{nom.upper()} | " f"{type_mat.title()} | " f"{categorie.title()}"
             )
 
-            choix.append(
-                (
-                    materiel.id,
-                    libelle
-                )
-            )
+            choix.append((materiel.id, libelle))
 
         self.fields["id_Materiel"].choices = choix
 
@@ -296,8 +222,6 @@ class H_MaterielSortForm(forms.ModelForm):
 
         if quantite is None or quantite <= 0:
 
-            raise forms.ValidationError(
-                "La quantité sortie doit être supérieure à 0."
-            )
+            raise forms.ValidationError("La quantité sortie doit être supérieure à 0.")
 
         return quantite

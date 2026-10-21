@@ -1,5 +1,5 @@
-
 from django.urls import include, path
+
 from . import views_mccr
 
 app_name = "mccr_materiaux"
@@ -11,7 +11,6 @@ urlpatterns = [
         views_mccr.dashboard_mccr,
         name="dashboard_mccr",
     ),
-
     # CRUD des matériaux
     path(
         "materiaux/",
@@ -33,7 +32,6 @@ urlpatterns = [
         views_mccr.materiau_mccr_delete,
         name="materiau_delete",
     ),
-
     # CRUD des mouvements : entrées, sorties et retours
     path(
         "mouvements/",

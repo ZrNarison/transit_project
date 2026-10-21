@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Materiels,H_Materiels
+from .models import H_Materiels, Materiels
 
 
 class MaterielsForm(forms.ModelForm):
@@ -22,28 +22,24 @@ class MaterielsForm(forms.ModelForm):
                     "class": "form-control",
                 }
             ),
-
             "nom": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Nom du matériel",
                 }
             ),
-
             "typeMat": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Type matériel",
                 }
             ),
-
             "catMat": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Catégorie",
                 }
             ),
-
             "stock_initial": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -111,10 +107,7 @@ class MaterielsForm(forms.ModelForm):
 
     def clean_catMat(self):
 
-        categorie = self.cleaned_data.get(
-            "catMat",
-            ""
-        )
+        categorie = self.cleaned_data.get("catMat", "")
 
         # ========================================================
         # USER ENTREPRISE
@@ -137,7 +130,6 @@ class MaterielsForm(forms.ModelForm):
         return categorie.strip()
 
 
-
 class H_MaterielsForm(forms.ModelForm):
 
     class Meta:
@@ -157,28 +149,24 @@ class H_MaterielsForm(forms.ModelForm):
                     "class": "form-control",
                 }
             ),
-
             "nom": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Nom du matériel",
                 }
             ),
-
             "typeMat": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Type matériel",
                 }
             ),
-
             "catMat": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Catégorie",
                 }
             ),
-
             "stock_initial": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -246,10 +234,7 @@ class H_MaterielsForm(forms.ModelForm):
 
     def clean_catMat(self):
 
-        categorie = self.cleaned_data.get(
-            "catMat",
-            ""
-        )
+        categorie = self.cleaned_data.get("catMat", "")
 
         # ========================================================
         # USER ENTREPRISE

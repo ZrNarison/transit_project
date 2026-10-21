@@ -9,22 +9,46 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('materiels', '0001_initial'),
-        ('materielsort', '0001_initial'),
+        ("materiels", "0001_initial"),
+        ("materielsort", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='MaterielEntre',
+            name="MaterielEntre",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('Nb_Entre', models.DecimalField(decimal_places=0, max_digits=10)),
-                ('dateEntre', models.DateTimeField(auto_now_add=True)),
-                ('id_Materiel', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='entrees', to='materiels.materiels')),
-                ('id_MaterielSort', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='retours', to='materielsort.materielsort')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("Nb_Entre", models.DecimalField(decimal_places=0, max_digits=10)),
+                ("dateEntre", models.DateTimeField(auto_now_add=True)),
+                (
+                    "id_Materiel",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="entrees",
+                        to="materiels.materiels",
+                    ),
+                ),
+                (
+                    "id_MaterielSort",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="retours",
+                        to="materielsort.materielsort",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-dateEntre'],
+                "ordering": ["-dateEntre"],
             },
         ),
     ]

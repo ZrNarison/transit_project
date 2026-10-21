@@ -416,12 +416,12 @@ Chefs d'équipe - {{ projet.titre }}
                                     Enregistré par
                                 </th>
 
-                                {% if peut_gerer %}
+                                
 
                                     <th class="text-center">
                                         Actions
                                     </th>
-
+{% if peut_gerer %}
                                 {% endif %}
 
                             </tr>
@@ -673,7 +673,6 @@ Chefs d'équipe - {{ projet.titre }}
                                                 >
                                                     <i class="fas fa-trash"></i>
                                                 </button>
-
                                             {% else %}
 
                                                 <span

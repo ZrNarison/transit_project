@@ -1,7 +1,8 @@
 from django import forms
 
-from .models import Avance
 from personnel.models import Personnel
+
+from .models import Avance
 
 
 class AvanceForm(forms.ModelForm):
@@ -26,7 +27,6 @@ class AvanceForm(forms.ModelForm):
         }
 
         widgets = {
-
             # =================================================
             # PERSONNEL
             # =================================================
@@ -35,7 +35,6 @@ class AvanceForm(forms.ModelForm):
                     "class": "form-select",
                 }
             ),
-
             # =================================================
             # MOTIF
             # =================================================
@@ -45,7 +44,6 @@ class AvanceForm(forms.ModelForm):
                     "placeholder": "Motif de l'avance",
                 }
             ),
-
             # =================================================
             # MONTANT
             # =================================================
@@ -57,7 +55,6 @@ class AvanceForm(forms.ModelForm):
                     "step": "1",
                 }
             ),
-
             # =================================================
             # TYPE D'AVANCE
             # =================================================
@@ -66,7 +63,6 @@ class AvanceForm(forms.ModelForm):
                     "class": "form-select",
                 }
             ),
-
             # =================================================
             # DATE
             #
@@ -101,8 +97,7 @@ class AvanceForm(forms.ModelForm):
         # =====================================================
 
         queryset = (
-            Personnel.objects
-            .select_related("categorie")
+            Personnel.objects.select_related("categorie")
             .all()
             .order_by("nom", "prenom")
         )
@@ -113,9 +108,7 @@ class AvanceForm(forms.ModelForm):
 
         if role == "UserMica":
 
-            queryset = queryset.filter(
-                typeTravail="Mica"
-            )
+            queryset = queryset.filter(typeTravail="Mica")
 
         # -----------------------------------------------------
         # USER ENTREPRISE
@@ -123,9 +116,7 @@ class AvanceForm(forms.ModelForm):
 
         elif role == "UserEntreprise":
 
-            queryset = queryset.filter(
-                typeTravail="Construction"
-            )
+            queryset = queryset.filter(typeTravail="Construction")
 
         # -----------------------------------------------------
         # ADMIN / SUPERADMIN / SUPERVISEUR
@@ -157,9 +148,7 @@ class AvanceForm(forms.ModelForm):
 
             if self.instance.dateAv:
 
-                self.initial["dateAv"] = (
-                    self.instance.dateAv.strftime("%Y-%m-%d")
-                )
+                self.initial["dateAv"] = self.instance.dateAv.strftime("%Y-%m-%d")
 
     # =========================================================
     # VALIDATION MONTANT
@@ -170,14 +159,10 @@ class AvanceForm(forms.ModelForm):
         montant = self.cleaned_data.get("montantAv")
 
         if montant is None:
-            raise forms.ValidationError(
-                "Le montant est obligatoire."
-            )
+            raise forms.ValidationError("Le montant est obligatoire.")
 
         if montant <= 0:
-            raise forms.ValidationError(
-                "Le montant doit être supérieur à 0."
-            )
+            raise forms.ValidationError("Le montant doit être supérieur à 0.")
 
         return montant
 
@@ -190,9 +175,7 @@ class AvanceForm(forms.ModelForm):
         personnel = self.cleaned_data.get("personnel")
 
         if not personnel:
-            raise forms.ValidationError(
-                "Veuillez sélectionner un personnel."
-            )
+            raise forms.ValidationError("Veuillez sélectionner un personnel.")
 
         return personnel
 
@@ -206,9 +189,7 @@ class AvanceForm(forms.ModelForm):
 
         if not motif or not motif.strip():
 
-            raise forms.ValidationError(
-                "Veuillez renseigner le motif de l'avance."
-            )
+            raise forms.ValidationError("Veuillez renseigner le motif de l'avance.")
 
         return motif.strip()
 
@@ -222,8 +203,6 @@ class AvanceForm(forms.ModelForm):
 
         if not date_avance:
 
-            raise forms.ValidationError(
-                "Veuillez sélectionner une date."
-            )
+            raise forms.ValidationError("Veuillez sélectionner une date.")
 
         return date_avance

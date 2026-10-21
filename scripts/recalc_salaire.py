@@ -8,4 +8,4 @@ for s in Salaire.objects.all():
         s.save()
         updated += 1
 
-print('updated', updated)
+print("updated", updated)

@@ -7,24 +7,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projet', '0028_remove_distributionmateriauprojet_chef_equipe_and_more'),
-        ('users', '0014_alter_appuser_date_creation_alter_appuser_email_and_more'),
+        ("projet", "0028_remove_distributionmateriauprojet_chef_equipe_and_more"),
+        ("users", "0014_alter_appuser_date_creation_alter_appuser_email_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='materiauprojet',
-            name='enregistre_par',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='materiaux_projet_enregistres', to='users.appuser', verbose_name='Enregistré par'),
+            model_name="materiauprojet",
+            name="enregistre_par",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="materiaux_projet_enregistres",
+                to="users.appuser",
+                verbose_name="Enregistré par",
+            ),
         ),
         migrations.AlterField(
-            model_name='consommationmateriauprojet',
-            name='observation',
-            field=models.TextField(blank=True, verbose_name='Observation'),
+            model_name="consommationmateriauprojet",
+            name="observation",
+            field=models.TextField(blank=True, verbose_name="Observation"),
         ),
         migrations.AlterField(
-            model_name='retourmateriauprojet',
-            name='observation',
-            field=models.TextField(blank=True, verbose_name='Observation'),
+            model_name="retourmateriauprojet",
+            name="observation",
+            field=models.TextField(blank=True, verbose_name="Observation"),
         ),
     ]

@@ -8,42 +8,67 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Materiels',
+            name="Materiels",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nom', models.CharField(max_length=100)),
-                ('typeMat', models.CharField(max_length=100)),
-                ('catMat', models.CharField(max_length=100)),
-                ('stock_initial', models.DecimalField(decimal_places=0, default=0, max_digits=10)),
-                ('dateDepot', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nom", models.CharField(max_length=100)),
+                ("typeMat", models.CharField(max_length=100)),
+                ("catMat", models.CharField(max_length=100)),
+                (
+                    "stock_initial",
+                    models.DecimalField(decimal_places=0, default=0, max_digits=10),
+                ),
+                ("dateDepot", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'verbose_name': 'Matériel',
-                'verbose_name_plural': 'Matériels',
-                'ordering': ['nom'],
+                "verbose_name": "Matériel",
+                "verbose_name_plural": "Matériels",
+                "ordering": ["nom"],
             },
         ),
         migrations.CreateModel(
-            name='MaterielSort',
+            name="MaterielSort",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('demandeur', models.CharField(max_length=100)),
-                ('responsable_sortie', models.CharField(max_length=100)),
-                ('Nb_MatSort', models.DecimalField(decimal_places=0, max_digits=10)),
-                ('observation', models.TextField(blank=True, null=True)),
-                ('avec_remise', models.BooleanField(default=False)),
-                ('dateSortie', models.DateTimeField(auto_now_add=True)),
-                ('id_Materiel', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sorties', to='materielsort.materiels')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("demandeur", models.CharField(max_length=100)),
+                ("responsable_sortie", models.CharField(max_length=100)),
+                ("Nb_MatSort", models.DecimalField(decimal_places=0, max_digits=10)),
+                ("observation", models.TextField(blank=True, null=True)),
+                ("avec_remise", models.BooleanField(default=False)),
+                ("dateSortie", models.DateTimeField(auto_now_add=True)),
+                (
+                    "id_Materiel",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sorties",
+                        to="materielsort.materiels",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Sortie de matériel',
-                'verbose_name_plural': 'Sorties de matériel',
-                'ordering': ['-dateSortie'],
+                "verbose_name": "Sortie de matériel",
+                "verbose_name_plural": "Sorties de matériel",
+                "ordering": ["-dateSortie"],
             },
         ),
     ]

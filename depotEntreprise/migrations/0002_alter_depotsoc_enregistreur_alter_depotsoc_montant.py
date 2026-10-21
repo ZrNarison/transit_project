@@ -7,19 +7,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('depotEntreprise', '0001_initial'),
-        ('users', '0009_alter_appuser_role'),
+        ("depotEntreprise", "0001_initial"),
+        ("users", "0009_alter_appuser_role"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='depotsoc',
-            name='enregistreur',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='depots_soc_enregistres', to='users.appuser'),
+            model_name="depotsoc",
+            name="enregistreur",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="depots_soc_enregistres",
+                to="users.appuser",
+            ),
         ),
         migrations.AlterField(
-            model_name='depotsoc',
-            name='montant',
+            model_name="depotsoc",
+            name="montant",
             field=models.DecimalField(decimal_places=2, max_digits=50),
         ),
     ]

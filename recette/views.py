@@ -5,17 +5,16 @@ from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Recette
-from .forms import RecetteForm
-
+from audit.utils import enregistrer_action
 from users.models import AppUser
 
-from audit.utils import enregistrer_action
-
+from .forms import RecetteForm
+from .models import Recette
 
 # ============================================================
 # UTILISATEUR CONNECTÉ
 # ============================================================
+
 
 def get_current_user(request):
     """
@@ -38,6 +37,7 @@ def get_current_user(request):
 # VÉRIFICATION DE SESSION
 # ============================================================
 
+
 def check_session(request):
     """
     Vérifie que l'utilisateur possède une session valide.
@@ -46,10 +46,7 @@ def check_session(request):
     user = get_current_user(request)
 
     if not user:
-        messages.error(
-            request,
-            "Votre session a expiré. Veuillez vous reconnecter."
-        )
+        messages.error(request, "Votre session a expiré. Veuillez vous reconnecter.")
         return None
 
     return user
@@ -58,6 +55,7 @@ def check_session(request):
 # ============================================================
 # VÉRIFICATION DE PROPRIÉTÉ
 # ============================================================
+
 
 def is_recette_owner(recette, user):
     """
@@ -75,6 +73,7 @@ def is_recette_owner(recette, user):
 # LISTE DES RECETTES
 # ============================================================
 
+
 def recette_list(request):
 
     user = check_session(request)
@@ -87,81 +86,48 @@ def recette_list(request):
     # --------------------------------------------------------
 
     queryset = (
-        Recette.objects
-        .select_related("enregistreur")
-        .all()
-        .order_by("-date", "-id")
+        Recette.objects.select_related("enregistreur").all().order_by("-date", "-id")
     )
 
     # --------------------------------------------------------
     # FILTRES
     # --------------------------------------------------------
 
-    montant = request.GET.get(
-        "montant",
-        ""
-    ).strip()
+    montant = request.GET.get("montant", "").strip()
 
-    type_virement = request.GET.get(
-        "type_virement",
-        ""
-    ).strip()
+    type_virement = request.GET.get("type_virement", "").strip()
 
-    date = request.GET.get(
-        "date",
-        ""
-    ).strip()
+    date = request.GET.get("date", "").strip()
 
-    source = request.GET.get(
-        "source",
-        ""
-    ).strip()
+    source = request.GET.get("source", "").strip()
 
     if montant:
-        queryset = queryset.filter(
-            montant__icontains=montant
-        )
+        queryset = queryset.filter(montant__icontains=montant)
 
     if type_virement:
-        queryset = queryset.filter(
-            type_virement__icontains=type_virement
-        )
+        queryset = queryset.filter(type_virement__icontains=type_virement)
 
     if date:
-        queryset = queryset.filter(
-            date__icontains=date
-        )
+        queryset = queryset.filter(date__icontains=date)
 
     if source:
-        queryset = queryset.filter(
-            source__icontains=source
-        )
+        queryset = queryset.filter(source__icontains=source)
 
     # --------------------------------------------------------
     # TOTAL DES RECETTES
     # --------------------------------------------------------
 
-    total_recettes = (
-        queryset.aggregate(
-            total=Sum("montant")
-        )["total"]
-        or Decimal("0")
-    )
+    total_recettes = queryset.aggregate(total=Sum("montant"))["total"] or Decimal("0")
 
     # --------------------------------------------------------
     # PAGINATION
     # --------------------------------------------------------
 
-    paginator = Paginator(
-        queryset,
-        12
-    )
+    paginator = Paginator(queryset, 12)
 
     page_number = request.GET.get("page")
 
-    page_obj = paginator.get_page(
-        page_number
-    )
+    page_obj = paginator.get_page(page_number)
 
     # --------------------------------------------------------
     # CONSERVATION DES FILTRES
@@ -179,30 +145,23 @@ def recette_list(request):
     context = {
         "recettes": page_obj,
         "page_obj": page_obj,
-
         "montant": montant,
         "type_virement": type_virement,
         "date": date,
         "source": source,
-
         "total_recettes": total_recettes,
-
         "user": user,
         "role": request.session.get("role"),
-
         "query_params": query_params.urlencode(),
     }
 
-    return render(
-        request,
-        "recette/list.html",
-        context
-    )
+    return render(request, "recette/list.html", context)
 
 
 # ============================================================
 # AJOUT D'UNE RECETTE
 # ============================================================
+
 
 def recette_add(request):
 
@@ -217,15 +176,11 @@ def recette_add(request):
 
     if request.method == "POST":
 
-        form = RecetteForm(
-            request.POST
-        )
+        form = RecetteForm(request.POST)
 
         if form.is_valid():
 
-            recette = form.save(
-                commit=False
-            )
+            recette = form.save(commit=False)
 
             # ------------------------------------------------
             # ENREGISTREUR
@@ -240,27 +195,12 @@ def recette_add(request):
             # ------------------------------------------------
 
             nouvelle_valeur = {
-
-                "montant": str(
-                    recette.montant
-                ),
-
-                "type_virement": (
-                    recette.type_virement
-                ),
-
-                "date": str(
-                    recette.date
-                ),
-
-                "source": (
-                    recette.source
-                ),
-
+                "montant": str(recette.montant),
+                "type_virement": (recette.type_virement),
+                "date": str(recette.date),
+                "source": (recette.source),
                 "enregistreur": (
-                    recette.enregistreur.username
-                    if recette.enregistreur
-                    else None
+                    recette.enregistreur.username if recette.enregistreur else None
                 ),
             }
 
@@ -275,17 +215,12 @@ def recette_add(request):
                 recette.id,
                 None,
                 nouvelle_valeur,
-                "Ajout d'une recette"
+                "Ajout d'une recette",
             )
 
-            messages.success(
-                request,
-                "Recette ajoutée avec succès."
-            )
+            messages.success(request, "Recette ajoutée avec succès.")
 
-            return redirect(
-                "recette:recette_list"
-            )
+            return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # GET
@@ -303,13 +238,14 @@ def recette_add(request):
             "action": "Ajouter",
             "user": user,
             "role": request.session.get("role"),
-        }
+        },
     )
 
 
 # ============================================================
 # DÉTAIL D'UNE RECETTE
 # ============================================================
+
 
 def recette_detail(request, id):
 
@@ -318,12 +254,7 @@ def recette_detail(request, id):
     if not user:
         return redirect("users:login")
 
-    recette = get_object_or_404(
-        Recette.objects.select_related(
-            "enregistreur"
-        ),
-        id=id
-    )
+    recette = get_object_or_404(Recette.objects.select_related("enregistreur"), id=id)
 
     return render(
         request,
@@ -332,7 +263,7 @@ def recette_detail(request, id):
             "recette": recette,
             "user": user,
             "role": request.session.get("role"),
-        }
+        },
     )
 
 
@@ -341,6 +272,7 @@ def recette_detail(request, id):
 # SEUL L'ENREGISTREUR PEUT MODIFIER
 # ============================================================
 
+
 def recette_edit(request, id):
 
     user = check_session(request)
@@ -348,12 +280,7 @@ def recette_edit(request, id):
     if not user:
         return redirect("users:login")
 
-    recette = get_object_or_404(
-        Recette.objects.select_related(
-            "enregistreur"
-        ),
-        id=id
-    )
+    recette = get_object_or_404(Recette.objects.select_related("enregistreur"), id=id)
 
     # --------------------------------------------------------
     # VÉRIFICATION DU PROPRIÉTAIRE
@@ -364,39 +291,22 @@ def recette_edit(request, id):
         messages.error(
             request,
             "Vous n'êtes pas autorisé à modifier cette recette. "
-            "Seul son enregistreur peut la modifier."
+            "Seul son enregistreur peut la modifier.",
         )
 
-        return redirect(
-            "recette:recette_list"
-        )
+        return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # ANCIENNES VALEURS
     # --------------------------------------------------------
 
     ancienne_valeur = {
-
-        "montant": str(
-            recette.montant
-        ),
-
-        "type_virement": (
-            recette.type_virement
-        ),
-
-        "date": str(
-            recette.date
-        ),
-
-        "source": (
-            recette.source
-        ),
-
+        "montant": str(recette.montant),
+        "type_virement": (recette.type_virement),
+        "date": str(recette.date),
+        "source": (recette.source),
         "enregistreur": (
-            recette.enregistreur.username
-            if recette.enregistreur
-            else None
+            recette.enregistreur.username if recette.enregistreur else None
         ),
     }
 
@@ -406,16 +316,11 @@ def recette_edit(request, id):
 
     if request.method == "POST":
 
-        form = RecetteForm(
-            request.POST,
-            instance=recette
-        )
+        form = RecetteForm(request.POST, instance=recette)
 
         if form.is_valid():
 
-            recette = form.save(
-                commit=False
-            )
+            recette = form.save(commit=False)
 
             # ------------------------------------------------
             # IMPORTANT
@@ -435,27 +340,12 @@ def recette_edit(request, id):
             # ------------------------------------------------
 
             nouvelle_valeur = {
-
-                "montant": str(
-                    recette.montant
-                ),
-
-                "type_virement": (
-                    recette.type_virement
-                ),
-
-                "date": str(
-                    recette.date
-                ),
-
-                "source": (
-                    recette.source
-                ),
-
+                "montant": str(recette.montant),
+                "type_virement": (recette.type_virement),
+                "date": str(recette.date),
+                "source": (recette.source),
                 "enregistreur": (
-                    recette.enregistreur.username
-                    if recette.enregistreur
-                    else None
+                    recette.enregistreur.username if recette.enregistreur else None
                 ),
             }
 
@@ -470,17 +360,12 @@ def recette_edit(request, id):
                 recette.id,
                 ancienne_valeur,
                 nouvelle_valeur,
-                "Modification d'une recette"
+                "Modification d'une recette",
             )
 
-            messages.success(
-                request,
-                "Recette modifiée avec succès."
-            )
+            messages.success(request, "Recette modifiée avec succès.")
 
-            return redirect(
-                "recette:recette_list"
-            )
+            return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # GET
@@ -488,9 +373,7 @@ def recette_edit(request, id):
 
     else:
 
-        form = RecetteForm(
-            instance=recette
-        )
+        form = RecetteForm(instance=recette)
 
     return render(
         request,
@@ -501,7 +384,7 @@ def recette_edit(request, id):
             "action": "Modifier",
             "user": user,
             "role": request.session.get("role"),
-        }
+        },
     )
 
 
@@ -510,6 +393,7 @@ def recette_edit(request, id):
 # SEUL L'ENREGISTREUR PEUT SUPPRIMER
 # ============================================================
 
+
 def recette_delete(request, id):
 
     user = check_session(request)
@@ -517,12 +401,7 @@ def recette_delete(request, id):
     if not user:
         return redirect("users:login")
 
-    recette = get_object_or_404(
-        Recette.objects.select_related(
-            "enregistreur"
-        ),
-        id=id
-    )
+    recette = get_object_or_404(Recette.objects.select_related("enregistreur"), id=id)
 
     # --------------------------------------------------------
     # VÉRIFICATION DU PROPRIÉTAIRE
@@ -533,12 +412,10 @@ def recette_delete(request, id):
         messages.error(
             request,
             "Vous n'êtes pas autorisé à supprimer cette recette. "
-            "Seul son enregistreur peut la supprimer."
+            "Seul son enregistreur peut la supprimer.",
         )
 
-        return redirect(
-            "recette:recette_list"
-        )
+        return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # POST
@@ -551,27 +428,12 @@ def recette_delete(request, id):
         # ----------------------------------------------------
 
         ancienne_valeur = {
-
-            "montant": str(
-                recette.montant
-            ),
-
-            "type_virement": (
-                recette.type_virement
-            ),
-
-            "date": str(
-                recette.date
-            ),
-
-            "source": (
-                recette.source
-            ),
-
+            "montant": str(recette.montant),
+            "type_virement": (recette.type_virement),
+            "date": str(recette.date),
+            "source": (recette.source),
             "enregistreur": (
-                recette.enregistreur.username
-                if recette.enregistreur
-                else None
+                recette.enregistreur.username if recette.enregistreur else None
             ),
         }
 
@@ -588,7 +450,7 @@ def recette_delete(request, id):
             recette_id,
             ancienne_valeur,
             None,
-            "Suppression d'une recette"
+            "Suppression d'une recette",
         )
 
         # ----------------------------------------------------
@@ -597,14 +459,9 @@ def recette_delete(request, id):
 
         recette.delete()
 
-        messages.success(
-            request,
-            "Recette supprimée avec succès."
-        )
+        messages.success(request, "Recette supprimée avec succès.")
 
-        return redirect(
-            "recette:recette_list"
-        )
+        return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # CONFIRMATION
@@ -617,18 +474,14 @@ def recette_delete(request, id):
             "recette": recette,
             "user": user,
             "role": request.session.get("role"),
-        }
+        },
     )
-
-
-
-
-
 
 
 # ============================================================
 # LISTE DES RECETTES ENTREPRISE H
 # ============================================================
+
 
 def h_recette_list(request):
 
@@ -642,81 +495,48 @@ def h_recette_list(request):
     # --------------------------------------------------------
 
     queryset = (
-        Recette.objects
-        .select_related("enregistreur")
-        .all()
-        .order_by("-date", "-id")
+        Recette.objects.select_related("enregistreur").all().order_by("-date", "-id")
     )
 
     # --------------------------------------------------------
     # FILTRES
     # --------------------------------------------------------
 
-    montant = request.GET.get(
-        "montant",
-        ""
-    ).strip()
+    montant = request.GET.get("montant", "").strip()
 
-    type_virement = request.GET.get(
-        "type_virement",
-        ""
-    ).strip()
+    type_virement = request.GET.get("type_virement", "").strip()
 
-    date = request.GET.get(
-        "date",
-        ""
-    ).strip()
+    date = request.GET.get("date", "").strip()
 
-    source = request.GET.get(
-        "source",
-        ""
-    ).strip()
+    source = request.GET.get("source", "").strip()
 
     if montant:
-        queryset = queryset.filter(
-            montant__icontains=montant
-        )
+        queryset = queryset.filter(montant__icontains=montant)
 
     if type_virement:
-        queryset = queryset.filter(
-            type_virement__icontains=type_virement
-        )
+        queryset = queryset.filter(type_virement__icontains=type_virement)
 
     if date:
-        queryset = queryset.filter(
-            date__icontains=date
-        )
+        queryset = queryset.filter(date__icontains=date)
 
     if source:
-        queryset = queryset.filter(
-            source__icontains=source
-        )
+        queryset = queryset.filter(source__icontains=source)
 
     # --------------------------------------------------------
     # TOTAL DES RECETTES
     # --------------------------------------------------------
 
-    total_recettes = (
-        queryset.aggregate(
-            total=Sum("montant")
-        )["total"]
-        or Decimal("0")
-    )
+    total_recettes = queryset.aggregate(total=Sum("montant"))["total"] or Decimal("0")
 
     # --------------------------------------------------------
     # PAGINATION
     # --------------------------------------------------------
 
-    paginator = Paginator(
-        queryset,
-        12
-    )
+    paginator = Paginator(queryset, 12)
 
     page_number = request.GET.get("page")
 
-    page_obj = paginator.get_page(
-        page_number
-    )
+    page_obj = paginator.get_page(page_number)
 
     # --------------------------------------------------------
     # CONSERVATION DES FILTRES
@@ -734,30 +554,23 @@ def h_recette_list(request):
     context = {
         "recettes": page_obj,
         "page_obj": page_obj,
-
         "montant": montant,
         "type_virement": type_virement,
         "date": date,
         "source": source,
-
         "total_recettes": total_recettes,
-
         "user": user,
         "role": request.session.get("role"),
-
         "query_params": query_params.urlencode(),
     }
 
-    return render(
-        request,
-        "recette/list.html",
-        context
-    )
+    return render(request, "recette/list.html", context)
 
 
 # ============================================================
 # AJOUT D'UNE RECETTE
 # ============================================================
+
 
 def h_recette_add(request):
 
@@ -772,15 +585,11 @@ def h_recette_add(request):
 
     if request.method == "POST":
 
-        form = RecetteForm(
-            request.POST
-        )
+        form = RecetteForm(request.POST)
 
         if form.is_valid():
 
-            recette = form.save(
-                commit=False
-            )
+            recette = form.save(commit=False)
 
             # ------------------------------------------------
             # ENREGISTREUR
@@ -795,27 +604,12 @@ def h_recette_add(request):
             # ------------------------------------------------
 
             nouvelle_valeur = {
-
-                "montant": str(
-                    recette.montant
-                ),
-
-                "type_virement": (
-                    recette.type_virement
-                ),
-
-                "date": str(
-                    recette.date
-                ),
-
-                "source": (
-                    recette.source
-                ),
-
+                "montant": str(recette.montant),
+                "type_virement": (recette.type_virement),
+                "date": str(recette.date),
+                "source": (recette.source),
                 "enregistreur": (
-                    recette.enregistreur.username
-                    if recette.enregistreur
-                    else None
+                    recette.enregistreur.username if recette.enregistreur else None
                 ),
             }
 
@@ -830,17 +624,12 @@ def h_recette_add(request):
                 recette.id,
                 None,
                 nouvelle_valeur,
-                "Ajout d'une recette"
+                "Ajout d'une recette",
             )
 
-            messages.success(
-                request,
-                "Recette ajoutée avec succès."
-            )
+            messages.success(request, "Recette ajoutée avec succès.")
 
-            return redirect(
-                "recette:recette_list"
-            )
+            return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # GET
@@ -858,13 +647,14 @@ def h_recette_add(request):
             "action": "Ajouter",
             "user": user,
             "role": request.session.get("role"),
-        }
+        },
     )
 
 
 # ============================================================
 # DÉTAIL D'UNE RECETTE
 # ============================================================
+
 
 def h_recette_detail(request, id):
 
@@ -873,12 +663,7 @@ def h_recette_detail(request, id):
     if not user:
         return redirect("users:login")
 
-    recette = get_object_or_404(
-        Recette.objects.select_related(
-            "enregistreur"
-        ),
-        id=id
-    )
+    recette = get_object_or_404(Recette.objects.select_related("enregistreur"), id=id)
 
     return render(
         request,
@@ -887,7 +672,7 @@ def h_recette_detail(request, id):
             "recette": recette,
             "user": user,
             "role": request.session.get("role"),
-        }
+        },
     )
 
 
@@ -896,6 +681,7 @@ def h_recette_detail(request, id):
 # SEUL L'ENREGISTREUR PEUT MODIFIER
 # ============================================================
 
+
 def h_recette_edit(request, id):
 
     user = check_session(request)
@@ -903,12 +689,7 @@ def h_recette_edit(request, id):
     if not user:
         return redirect("users:login")
 
-    recette = get_object_or_404(
-        Recette.objects.select_related(
-            "enregistreur"
-        ),
-        id=id
-    )
+    recette = get_object_or_404(Recette.objects.select_related("enregistreur"), id=id)
 
     # --------------------------------------------------------
     # VÉRIFICATION DU PROPRIÉTAIRE
@@ -919,39 +700,22 @@ def h_recette_edit(request, id):
         messages.error(
             request,
             "Vous n'êtes pas autorisé à modifier cette recette. "
-            "Seul son enregistreur peut la modifier."
+            "Seul son enregistreur peut la modifier.",
         )
 
-        return redirect(
-            "recette:recette_list"
-        )
+        return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # ANCIENNES VALEURS
     # --------------------------------------------------------
 
     ancienne_valeur = {
-
-        "montant": str(
-            recette.montant
-        ),
-
-        "type_virement": (
-            recette.type_virement
-        ),
-
-        "date": str(
-            recette.date
-        ),
-
-        "source": (
-            recette.source
-        ),
-
+        "montant": str(recette.montant),
+        "type_virement": (recette.type_virement),
+        "date": str(recette.date),
+        "source": (recette.source),
         "enregistreur": (
-            recette.enregistreur.username
-            if recette.enregistreur
-            else None
+            recette.enregistreur.username if recette.enregistreur else None
         ),
     }
 
@@ -961,16 +725,11 @@ def h_recette_edit(request, id):
 
     if request.method == "POST":
 
-        form = RecetteForm(
-            request.POST,
-            instance=recette
-        )
+        form = RecetteForm(request.POST, instance=recette)
 
         if form.is_valid():
 
-            recette = form.save(
-                commit=False
-            )
+            recette = form.save(commit=False)
 
             # ------------------------------------------------
             # IMPORTANT
@@ -990,27 +749,12 @@ def h_recette_edit(request, id):
             # ------------------------------------------------
 
             nouvelle_valeur = {
-
-                "montant": str(
-                    recette.montant
-                ),
-
-                "type_virement": (
-                    recette.type_virement
-                ),
-
-                "date": str(
-                    recette.date
-                ),
-
-                "source": (
-                    recette.source
-                ),
-
+                "montant": str(recette.montant),
+                "type_virement": (recette.type_virement),
+                "date": str(recette.date),
+                "source": (recette.source),
                 "enregistreur": (
-                    recette.enregistreur.username
-                    if recette.enregistreur
-                    else None
+                    recette.enregistreur.username if recette.enregistreur else None
                 ),
             }
 
@@ -1025,17 +769,12 @@ def h_recette_edit(request, id):
                 recette.id,
                 ancienne_valeur,
                 nouvelle_valeur,
-                "Modification d'une recette"
+                "Modification d'une recette",
             )
 
-            messages.success(
-                request,
-                "Recette modifiée avec succès."
-            )
+            messages.success(request, "Recette modifiée avec succès.")
 
-            return redirect(
-                "recette:recette_list"
-            )
+            return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # GET
@@ -1043,9 +782,7 @@ def h_recette_edit(request, id):
 
     else:
 
-        form = RecetteForm(
-            instance=recette
-        )
+        form = RecetteForm(instance=recette)
 
     return render(
         request,
@@ -1056,7 +793,7 @@ def h_recette_edit(request, id):
             "action": "Modifier",
             "user": user,
             "role": request.session.get("role"),
-        }
+        },
     )
 
 
@@ -1073,12 +810,7 @@ def h_recette_delete(request, id):
     if not user:
         return redirect("users:login")
 
-    recette = get_object_or_404(
-        Recette.objects.select_related(
-            "enregistreur"
-        ),
-        id=id
-    )
+    recette = get_object_or_404(Recette.objects.select_related("enregistreur"), id=id)
 
     # --------------------------------------------------------
     # VÉRIFICATION DU PROPRIÉTAIRE
@@ -1089,12 +821,10 @@ def h_recette_delete(request, id):
         messages.error(
             request,
             "Vous n'êtes pas autorisé à supprimer cette recette. "
-            "Seul son enregistreur peut la supprimer."
+            "Seul son enregistreur peut la supprimer.",
         )
 
-        return redirect(
-            "recette:recette_list"
-        )
+        return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # POST
@@ -1107,27 +837,12 @@ def h_recette_delete(request, id):
         # ----------------------------------------------------
 
         ancienne_valeur = {
-
-            "montant": str(
-                recette.montant
-            ),
-
-            "type_virement": (
-                recette.type_virement
-            ),
-
-            "date": str(
-                recette.date
-            ),
-
-            "source": (
-                recette.source
-            ),
-
+            "montant": str(recette.montant),
+            "type_virement": (recette.type_virement),
+            "date": str(recette.date),
+            "source": (recette.source),
             "enregistreur": (
-                recette.enregistreur.username
-                if recette.enregistreur
-                else None
+                recette.enregistreur.username if recette.enregistreur else None
             ),
         }
 
@@ -1144,7 +859,7 @@ def h_recette_delete(request, id):
             recette_id,
             ancienne_valeur,
             None,
-            "Suppression d'une recette"
+            "Suppression d'une recette",
         )
 
         # ----------------------------------------------------
@@ -1153,14 +868,9 @@ def h_recette_delete(request, id):
 
         recette.delete()
 
-        messages.success(
-            request,
-            "Recette supprimée avec succès."
-        )
+        messages.success(request, "Recette supprimée avec succès.")
 
-        return redirect(
-            "recette:recette_list"
-        )
+        return redirect("recette:recette_list")
 
     # --------------------------------------------------------
     # CONFIRMATION
@@ -1173,8 +883,5 @@ def h_recette_delete(request, id):
             "recette": recette,
             "user": user,
             "role": request.session.get("role"),
-        }
+        },
     )
-
-
-

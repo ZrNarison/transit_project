@@ -1,27 +1,23 @@
 from decimal import Decimal
-from django.shortcuts import (
-    render,
-    redirect,
-    get_object_or_404,
-)
 
-from django.db.models import Sum
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-from .models import Depense
-from .forms import DepenseForm
 
+from audit.utils import enregistrer_action
 from depot.models import Distribution
 from personnel.models import Personnel
 from users.models import AppUser
 
-from audit.utils import enregistrer_action
-
+from .forms import DepenseForm
+from .models import Depense
 
 # ============================================================
 # LISTE DES DÉPENSES
 # ============================================================
+
 
 def depense_list(request):
 
@@ -34,50 +30,35 @@ def depense_list(request):
     # FILTRE TITRE
     # --------------------------------------------------------
 
-    titre = request.GET.get(
-        "titre",
-        ""
-    ).strip()
+    titre = request.GET.get("titre", "").strip()
 
     # --------------------------------------------------------
     # FILTRE MONTANT
     # --------------------------------------------------------
 
-    montant = request.GET.get(
-        "montant",
-        ""
-    ).strip()
+    montant = request.GET.get("montant", "").strip()
 
     # --------------------------------------------------------
     # Recherche par titre
     # --------------------------------------------------------
 
     if titre:
-        queryset = queryset.filter(
-            titre__icontains=titre
-        )
+        queryset = queryset.filter(titre__icontains=titre)
 
     # --------------------------------------------------------
     # Recherche par montant
     # --------------------------------------------------------
 
     if montant:
-        queryset = queryset.filter(
-            montant__icontains=montant
-        )
+        queryset = queryset.filter(montant__icontains=montant)
 
     # --------------------------------------------------------
     # Pagination
     # --------------------------------------------------------
 
-    paginator = Paginator(
-        queryset,
-        10
-    )
+    paginator = Paginator(queryset, 10)
 
-    page_obj = paginator.get_page(
-        request.GET.get("page")
-    )
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(
         request,
@@ -87,7 +68,7 @@ def depense_list(request):
             "page_obj": page_obj,
             "titre": titre,
             "montant": montant,
-        }
+        },
     )
 
 
@@ -95,13 +76,12 @@ def depense_list(request):
 # AJOUT D'UNE DÉPENSE
 # ============================================================
 
+
 def depense_add(request):
 
     if request.method == "POST":
 
-        form = DepenseForm(
-            request.POST
-        )
+        form = DepenseForm(request.POST)
 
         if form.is_valid():
 
@@ -109,27 +89,19 @@ def depense_add(request):
             # Création sans sauvegarde immédiate
             # ------------------------------------------------
 
-            depense = form.save(
-                commit=False
-            )
+            depense = form.save(commit=False)
 
             # =================================================
             # UTILISATEUR CONNECTÉ
             # =================================================
 
-            user_id = request.session.get(
-                "user_id"
-            )
+            user_id = request.session.get("user_id")
 
             if user_id:
 
                 try:
 
-                    depense.enregistre_par = (
-                        AppUser.objects.get(
-                            id=user_id
-                        )
-                    )
+                    depense.enregistre_par = AppUser.objects.get(id=user_id)
 
                 except AppUser.DoesNotExist:
 
@@ -141,15 +113,12 @@ def depense_add(request):
 
             try:
 
-                gege = Personnel.objects.get(
-                    id=1
-                )
+                gege = Personnel.objects.get(id=1)
 
             except Personnel.DoesNotExist:
 
                 messages.error(
-                    request,
-                    "Le personnel de référence (Gege) est introuvable."
+                    request, "Le personnel de référence (Gege) est introuvable."
                 )
 
                 return render(
@@ -158,7 +127,7 @@ def depense_add(request):
                     {
                         "form": form,
                         "action": "Ajouter",
-                    }
+                    },
                 )
 
             # =================================================
@@ -199,21 +168,15 @@ def depense_add(request):
                 # Total déjà dépensé sur cette distribution
                 # ------------------------------------------------
 
-                deja_depense = (
-                    distribution.depenses.aggregate(
-                        total=Sum("montant")
-                    )["total"]
-                    or Decimal("0")
-                )
+                deja_depense = distribution.depenses.aggregate(total=Sum("montant"))[
+                    "total"
+                ] or Decimal("0")
 
                 # ------------------------------------------------
                 # Montant encore disponible
                 # ------------------------------------------------
 
-                disponible = (
-                    distribution.montant
-                    - deja_depense
-                )
+                disponible = distribution.montant - deja_depense
 
                 if disponible <= 0:
                     continue
@@ -235,7 +198,7 @@ def depense_add(request):
 
                 messages.error(
                     request,
-                    "Montant disponible insuffisant pour la date de la dépense."
+                    "Montant disponible insuffisant pour la date de la dépense.",
                 )
 
                 return render(
@@ -244,7 +207,7 @@ def depense_add(request):
                     {
                         "form": form,
                         "action": "Ajouter",
-                    }
+                    },
                 )
 
             # =================================================
@@ -270,22 +233,15 @@ def depense_add(request):
                     "date": str(depense.date),
                     "description": depense.description,
                     "distribution": (
-                        depense.distribution_id
-                        if depense.distribution
-                        else None
+                        depense.distribution_id if depense.distribution else None
                     ),
                 },
                 description="Création d'une dépense",
             )
 
-            messages.success(
-                request,
-                "Dépense enregistrée avec succès."
-            )
+            messages.success(request, "Dépense enregistrée avec succès.")
 
-            return redirect(
-                "depense:depense_list"
-            )
+            return redirect("depense:depense_list")
 
     else:
 
@@ -301,7 +257,7 @@ def depense_add(request):
         {
             "form": form,
             "action": "Ajouter",
-        }
+        },
     )
 
 
@@ -309,34 +265,22 @@ def depense_add(request):
 # MODIFICATION D'UNE DÉPENSE
 # ============================================================
 
+
 def depense_edit(request, id):
 
-    depense = get_object_or_404(
-        Depense,
-        id=id
-    )
+    depense = get_object_or_404(Depense, id=id)
 
     # ========================================================
     # VÉRIFICATION DU PROPRIÉTAIRE
     # ========================================================
 
-    user_id = request.session.get(
-        "user_id"
-    )
+    user_id = request.session.get("user_id")
 
-    if (
-        not user_id
-        or depense.enregistre_par_id != int(user_id)
-    ):
+    if not user_id or depense.enregistre_par_id != int(user_id):
 
-        messages.error(
-            request,
-            "Vous ne pouvez pas modifier cette dépense."
-        )
+        messages.error(request, "Vous ne pouvez pas modifier cette dépense.")
 
-        return redirect(
-            "depense:depense_list"
-        )
+        return redirect("depense:depense_list")
 
     # ========================================================
     # ANCIENNES VALEURS
@@ -347,11 +291,7 @@ def depense_edit(request, id):
         "montant": str(depense.montant),
         "date": str(depense.date),
         "description": depense.description,
-        "distribution": (
-            depense.distribution_id
-            if depense.distribution
-            else None
-        ),
+        "distribution": (depense.distribution_id if depense.distribution else None),
     }
 
     # ========================================================
@@ -360,10 +300,7 @@ def depense_edit(request, id):
 
     if request.method == "POST":
 
-        form = DepenseForm(
-            request.POST,
-            instance=depense
-        )
+        form = DepenseForm(request.POST, instance=depense)
 
         if form.is_valid():
 
@@ -372,9 +309,7 @@ def depense_edit(request, id):
             # sans sauvegarder immédiatement
             # ------------------------------------------------
 
-            depense_modifiee = form.save(
-                commit=False
-            )
+            depense_modifiee = form.save(commit=False)
 
             # =================================================
             # PERSONNEL DE RÉFÉRENCE
@@ -382,15 +317,12 @@ def depense_edit(request, id):
 
             try:
 
-                gege = Personnel.objects.get(
-                    id=1
-                )
+                gege = Personnel.objects.get(id=1)
 
             except Personnel.DoesNotExist:
 
                 messages.error(
-                    request,
-                    "Le personnel de référence (Gege) est introuvable."
+                    request, "Le personnel de référence (Gege) est introuvable."
                 )
 
                 return render(
@@ -399,7 +331,7 @@ def depense_edit(request, id):
                     {
                         "form": form,
                         "action": "Modifier",
-                    }
+                    },
                 )
 
             # =================================================
@@ -433,21 +365,11 @@ def depense_edit(request, id):
                 # On exclut la dépense actuelle.
                 # ------------------------------------------------
 
-                deja_depense = (
-                    distribution.depenses
-                    .exclude(
-                        id=depense.id
-                    )
-                    .aggregate(
-                        total=Sum("montant")
-                    )["total"]
-                    or Decimal("0")
-                )
+                deja_depense = distribution.depenses.exclude(id=depense.id).aggregate(
+                    total=Sum("montant")
+                )["total"] or Decimal("0")
 
-                disponible = (
-                    distribution.montant
-                    - deja_depense
-                )
+                disponible = distribution.montant - deja_depense
 
                 if disponible <= 0:
                     continue
@@ -469,7 +391,7 @@ def depense_edit(request, id):
 
                 messages.error(
                     request,
-                    "Montant disponible insuffisant pour la nouvelle date ou le nouveau montant."
+                    "Montant disponible insuffisant pour la nouvelle date ou le nouveau montant.",
                 )
 
                 return render(
@@ -478,16 +400,14 @@ def depense_edit(request, id):
                     {
                         "form": form,
                         "action": "Modifier",
-                    }
+                    },
                 )
 
             # =================================================
             # NOUVELLE DISTRIBUTION
             # =================================================
 
-            depense_modifiee.distribution = (
-                distribution_trouvee
-            )
+            depense_modifiee.distribution = distribution_trouvee
 
             # =================================================
             # SAUVEGARDE
@@ -525,20 +445,13 @@ def depense_edit(request, id):
                 description="Modification d'une dépense",
             )
 
-            messages.success(
-                request,
-                "Dépense modifiée avec succès."
-            )
+            messages.success(request, "Dépense modifiée avec succès.")
 
-            return redirect(
-                "depense:depense_list"
-            )
+            return redirect("depense:depense_list")
 
     else:
 
-        form = DepenseForm(
-            instance=depense
-        )
+        form = DepenseForm(instance=depense)
 
     # =========================================================
     # AFFICHAGE DU FORMULAIRE
@@ -550,7 +463,7 @@ def depense_edit(request, id):
         {
             "form": form,
             "action": "Modifier",
-        }
+        },
     )
 
 
@@ -558,34 +471,22 @@ def depense_edit(request, id):
 # SUPPRESSION D'UNE DÉPENSE
 # ============================================================
 
+
 def depense_delete(request, id):
 
-    depense = get_object_or_404(
-        Depense,
-        id=id
-    )
+    depense = get_object_or_404(Depense, id=id)
 
     # ========================================================
     # VÉRIFICATION DU PROPRIÉTAIRE
     # ========================================================
 
-    user_id = request.session.get(
-        "user_id"
-    )
+    user_id = request.session.get("user_id")
 
-    if (
-        not user_id
-        or depense.enregistre_par_id != int(user_id)
-    ):
+    if not user_id or depense.enregistre_par_id != int(user_id):
 
-        messages.error(
-            request,
-            "Vous ne pouvez pas supprimer cette dépense."
-        )
+        messages.error(request, "Vous ne pouvez pas supprimer cette dépense.")
 
-        return redirect(
-            "depense:depense_list"
-        )
+        return redirect("depense:depense_list")
 
     # ========================================================
     # POST UNIQUEMENT
@@ -593,14 +494,9 @@ def depense_delete(request, id):
 
     if request.method != "POST":
 
-        messages.error(
-            request,
-            "Méthode de suppression invalide."
-        )
+        messages.error(request, "Méthode de suppression invalide.")
 
-        return redirect(
-            "depense:depense_list"
-        )
+        return redirect("depense:depense_list")
 
     # ========================================================
     # ANCIENNES INFORMATIONS
@@ -611,11 +507,7 @@ def depense_delete(request, id):
         "montant": str(depense.montant),
         "date": str(depense.date),
         "description": depense.description,
-        "distribution": (
-            depense.distribution_id
-            if depense.distribution
-            else None
-        ),
+        "distribution": (depense.distribution_id if depense.distribution else None),
     }
 
     objet_id = depense.id
@@ -640,12 +532,6 @@ def depense_delete(request, id):
         description="Suppression d'une dépense",
     )
 
-    messages.success(
-        request,
-        "Dépense supprimée avec succès."
-    )
+    messages.success(request, "Dépense supprimée avec succès.")
 
-    return redirect(
-        "depense:depense_list"
-    )
-
+    return redirect("depense:depense_list")

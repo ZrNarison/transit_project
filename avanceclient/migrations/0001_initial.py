@@ -9,22 +9,59 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('clients', '0009_alter_client_id'),
-        ('users', '0006_alter_appuser_email_alter_appuser_personnel_and_more'),
+        ("clients", "0009_alter_client_id"),
+        ("users", "0006_alter_appuser_email_alter_appuser_personnel_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='avanceclient',
+            name="avanceclient",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('montant', models.DecimalField(decimal_places=0, max_digits=15)),
-                ('utilise', models.DecimalField(decimal_places=0, default=0, max_digits=15)),
-                ('type_avance', models.CharField(choices=[('ESPECE', 'Espèce'), ('CHEQUE', 'Chèque'), ('MOBILE_MONEY', 'Mobile Money')], default='ESPECE', max_length=20)),
-                ('motif', models.CharField(default='Avance client', max_length=255)),
-                ('date', models.DateTimeField(auto_now_add=True)),
-                ('client', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='avances_client', to='clients.client')),
-                ('enregistrer_par', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='users.appuser')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("montant", models.DecimalField(decimal_places=0, max_digits=15)),
+                (
+                    "utilise",
+                    models.DecimalField(decimal_places=0, default=0, max_digits=15),
+                ),
+                (
+                    "type_avance",
+                    models.CharField(
+                        choices=[
+                            ("ESPECE", "Espèce"),
+                            ("CHEQUE", "Chèque"),
+                            ("MOBILE_MONEY", "Mobile Money"),
+                        ],
+                        default="ESPECE",
+                        max_length=20,
+                    ),
+                ),
+                ("motif", models.CharField(default="Avance client", max_length=255)),
+                ("date", models.DateTimeField(auto_now_add=True)),
+                (
+                    "client",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="avances_client",
+                        to="clients.client",
+                    ),
+                ),
+                (
+                    "enregistrer_par",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="users.appuser",
+                    ),
+                ),
             ],
         ),
     ]

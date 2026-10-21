@@ -4,10 +4,9 @@ from django.db import models, transaction
 from django.db.models import Sum
 from django.utils import timezone
 
-from personnel.models import Personnel,H_Personnel
 from avances.models import Avance, H_Avance
+from personnel.models import H_Personnel, Personnel
 from users.models import AppUser, H_AppUser
-
 
 ZERO = Decimal("0")
 
@@ -15,6 +14,7 @@ ZERO = Decimal("0")
 # =============================================================
 # SALAIRE
 # =============================================================
+
 
 class Salaire(models.Model):
 
@@ -148,9 +148,7 @@ class Salaire(models.Model):
         if not personnel:
             return ZERO
 
-        taux = Decimal(
-            str(personnel.psalaire or ZERO)
-        )
+        taux = Decimal(str(personnel.psalaire or ZERO))
 
         type_contrat = getattr(
             personnel,
@@ -176,11 +174,7 @@ class Salaire(models.Model):
     # =========================================================
 
     def montant_avances_affectees(self):
-        total = (
-            self.affectations_avances
-            .aggregate(total=Sum("montant"))
-            ["total"]
-        )
+        total = self.affectations_avances.aggregate(total=Sum("montant"))["total"]
 
         return total or ZERO
 
@@ -191,18 +185,9 @@ class Salaire(models.Model):
     # =========================================================
 
     def montant_total_recu(self):
-        avances = Decimal(
-            str(
-                self.montant_avances_affectees()
-                or ZERO
-            )
-        )
+        avances = Decimal(str(self.montant_avances_affectees() or ZERO))
 
-        salaire_paye = Decimal(
-            str(
-                self.montant or ZERO
-            )
-        )
+        salaire_paye = Decimal(str(self.montant or ZERO))
 
         return salaire_paye + avances
 
@@ -232,37 +217,15 @@ class Salaire(models.Model):
                   = -100 000
         """
 
-        contractuel = Decimal(
-            str(
-                self.salaire_contractuel
-                or ZERO
-            )
-        )
+        contractuel = Decimal(str(self.salaire_contractuel or ZERO))
 
-        salaire_paye = Decimal(
-            str(
-                self.montant or ZERO
-            )
-        )
+        salaire_paye = Decimal(str(self.montant or ZERO))
 
-        avances = Decimal(
-            str(
-                self.montant_avances_affectees()
-                or ZERO
-            )
-        )
+        avances = Decimal(str(self.montant_avances_affectees() or ZERO))
 
-        reste = (
-            contractuel
-            - salaire_paye
-            - avances
-        )
+        reste = contractuel - salaire_paye - avances
 
-        trop_percu = (
-            abs(reste)
-            if reste < ZERO
-            else ZERO
-        )
+        trop_percu = abs(reste) if reste < ZERO else ZERO
 
         return reste, trop_percu
 
@@ -272,13 +235,9 @@ class Salaire(models.Model):
 
     def recalculer_reste(self):
 
-        reste, trop_percu = (
-            self.calculer_situation()
-        )
+        reste, trop_percu = self.calculer_situation()
 
-        Salaire.objects.filter(
-            pk=self.pk
-        ).update(
+        Salaire.objects.filter(pk=self.pk).update(
             reste=reste,
             trop_percu=trop_percu,
         )
@@ -303,15 +262,10 @@ class Salaire(models.Model):
             # Calcul initial du salaire contractuel
             # -------------------------------------------------
 
-            if (
-                self._state.adding
-                or not self.salaire_contractuel
-            ):
-                self.salaire_contractuel = (
-                    self.calculer_salaire_contractuel(
-                        self.personnel,
-                        self.nombre_jours,
-                    )
+            if self._state.adding or not self.salaire_contractuel:
+                self.salaire_contractuel = self.calculer_salaire_contractuel(
+                    self.personnel,
+                    self.nombre_jours,
                 )
 
         # -----------------------------------------------------
@@ -330,40 +284,21 @@ class Salaire(models.Model):
 
         if self._state.adding:
 
-            contractuel = Decimal(
-                str(
-                    self.salaire_contractuel
-                    or ZERO
-                )
-            )
+            contractuel = Decimal(str(self.salaire_contractuel or ZERO))
 
-            salaire_paye = Decimal(
-                str(
-                    self.montant
-                    or ZERO
-                )
-            )
+            salaire_paye = Decimal(str(self.montant or ZERO))
 
-            self.reste = (
-                contractuel
-                - salaire_paye
-            )
+            self.reste = contractuel - salaire_paye
 
-            self.trop_percu = (
-                abs(self.reste)
-                if self.reste < ZERO
-                else ZERO
-            )
+            self.trop_percu = abs(self.reste) if self.reste < ZERO else ZERO
 
-        super().save(
-            *args,
-            **kwargs
-        )
+        super().save(*args, **kwargs)
 
 
 # =============================================================
 # AFFECTATION DES AVANCES AUX SALAIRES
 # =============================================================
+
 
 class PaiementAvanceSalaire(models.Model):
     """
@@ -402,13 +337,9 @@ class PaiementAvanceSalaire(models.Model):
     class Meta:
         ordering = ["id"]
 
-        verbose_name = (
-            "Affectation avance salaire"
-        )
+        verbose_name = "Affectation avance salaire"
 
-        verbose_name_plural = (
-            "Affectations avances salaires"
-        )
+        verbose_name_plural = "Affectations avances salaires"
 
         constraints = [
             models.UniqueConstraint(
@@ -432,8 +363,8 @@ class PaiementAvanceSalaire(models.Model):
 # RECALCUL COMPLET D'UN PERSONNEL
 # =============================================================
 
-def recalculer_situation_personnel(personnel):
 
+def recalculer_situation_personnel(personnel):
     """
     Recalcule toute la situation salariale d'un personnel.
 
@@ -468,11 +399,7 @@ def recalculer_situation_personnel(personnel):
         # =====================================================
 
         salaires = list(
-            Salaire.objects
-            .filter(
-                personnel=personnel
-            )
-            .order_by(
+            Salaire.objects.filter(personnel=personnel).order_by(
                 "date_paiement",
                 "date",
                 "created_at",
@@ -485,11 +412,7 @@ def recalculer_situation_personnel(personnel):
         # =====================================================
 
         avances = list(
-            Avance.objects
-            .filter(
-                personnel=personnel
-            )
-            .order_by(
+            Avance.objects.filter(personnel=personnel).order_by(
                 "dateAv",
                 "id",
             )
@@ -499,9 +422,7 @@ def recalculer_situation_personnel(personnel):
         # SUPPRESSION DES ANCIENNES AFFECTATIONS
         # =====================================================
 
-        PaiementAvanceSalaire.objects.filter(
-            salaire__personnel=personnel
-        ).delete()
+        PaiementAvanceSalaire.objects.filter(salaire__personnel=personnel).delete()
 
         # =====================================================
         # SOLDE INITIAL DE CHAQUE AVANCE
@@ -511,19 +432,12 @@ def recalculer_situation_personnel(personnel):
 
         for avance in avances:
 
-            montant = Decimal(
-                str(
-                    avance.montantAv
-                    or ZERO
-                )
-            )
+            montant = Decimal(str(avance.montantAv or ZERO))
 
             if montant < ZERO:
                 montant = ZERO
 
-            soldes_avances[
-                avance.id
-            ] = montant
+            soldes_avances[avance.id] = montant
 
         # =====================================================
         # TRAITEMENT DES SALAIRES
@@ -537,46 +451,28 @@ def recalculer_situation_personnel(personnel):
 
             if not salaire.salaire_contractuel:
 
-                salaire.salaire_contractuel = (
-                    Salaire.calculer_salaire_contractuel(
-                        salaire.personnel,
-                        salaire.nombre_jours,
-                    )
+                salaire.salaire_contractuel = Salaire.calculer_salaire_contractuel(
+                    salaire.personnel,
+                    salaire.nombre_jours,
                 )
 
-                Salaire.objects.filter(
-                    pk=salaire.pk
-                ).update(
-                    salaire_contractuel=(
-                        salaire.salaire_contractuel
-                    )
+                Salaire.objects.filter(pk=salaire.pk).update(
+                    salaire_contractuel=(salaire.salaire_contractuel)
                 )
 
-            salaire_contractuel = Decimal(
-                str(
-                    salaire.salaire_contractuel
-                    or ZERO
-                )
-            )
+            salaire_contractuel = Decimal(str(salaire.salaire_contractuel or ZERO))
 
             # =================================================
             # SALAIRE RÉELLEMENT PAYÉ
             # =================================================
 
-            salaire_paye = Decimal(
-                str(
-                    salaire.montant
-                    or ZERO
-                )
-            )
+            salaire_paye = Decimal(str(salaire.montant or ZERO))
 
             # =================================================
             # DATE DU SALAIRE
             # =================================================
 
-            date_paiement = (
-                salaire.date_paiement
-            )
+            date_paiement = salaire.date_paiement
 
             # =================================================
             # AFFECTATION DES AVANCES
@@ -609,10 +505,7 @@ def recalculer_situation_personnel(personnel):
 
                 date_avance = avance.dateAv
 
-                if hasattr(
-                    date_avance,
-                    "date"
-                ):
+                if hasattr(date_avance, "date"):
                     date_avance = date_avance.date()
 
                 # -------------------------------------------------
@@ -644,9 +537,7 @@ def recalculer_situation_personnel(personnel):
                 # => reste -100 000
                 # =================================================
 
-                montant_affecte = (
-                    solde_avance
-                )
+                montant_affecte = solde_avance
 
                 if montant_affecte <= ZERO:
                     continue
@@ -665,82 +556,54 @@ def recalculer_situation_personnel(personnel):
                 # L'avance est entièrement consommée
                 # -------------------------------------------------
 
-                soldes_avances[
-                    avance.id
-                ] = ZERO
+                soldes_avances[avance.id] = ZERO
 
             # =====================================================
             # TOTAL DES AVANCES AFFECTÉES
             # =====================================================
 
             avances_affectees = (
-                PaiementAvanceSalaire.objects
-                .filter(
-                    salaire=salaire
-                )
-                .aggregate(
+                PaiementAvanceSalaire.objects.filter(salaire=salaire).aggregate(
                     total=Sum("montant")
                 )["total"]
                 or ZERO
             )
 
-            avances_affectees = Decimal(
-                str(
-                    avances_affectees
-                )
-            )
+            avances_affectees = Decimal(str(avances_affectees))
 
             # =====================================================
             # TOTAL RÉELLEMENT REÇU
             # =====================================================
 
-            total_recu = (
-                salaire_paye
-                + avances_affectees
-            )
+            total_recu = salaire_paye + avances_affectees
 
             # =====================================================
             # RESTE SIGNÉ
             # =====================================================
 
-            reste = (
-                salaire_contractuel
-                - total_recu
-            )
+            reste = salaire_contractuel - total_recu
 
             # =====================================================
             # TROP-PERÇU
             # =====================================================
 
-            trop_percu = (
-                abs(reste)
-                if reste < ZERO
-                else ZERO
-            )
+            trop_percu = abs(reste) if reste < ZERO else ZERO
 
             # =====================================================
             # SAUVEGARDE
             # =====================================================
 
-            Salaire.objects.filter(
-                pk=salaire.pk
-            ).update(
-                salaire_contractuel=(
-                    salaire_contractuel
-                ),
+            Salaire.objects.filter(pk=salaire.pk).update(
+                salaire_contractuel=(salaire_contractuel),
                 reste=reste,
                 trop_percu=trop_percu,
             )
 
-            salaire.salaire_contractuel = (
-                salaire_contractuel
-            )
+            salaire.salaire_contractuel = salaire_contractuel
 
             salaire.reste = reste
 
-            salaire.trop_percu = (
-                trop_percu
-            )
+            salaire.trop_percu = trop_percu
 
         # =====================================================
         # MISE À JOUR DES AVANCES
@@ -748,12 +611,7 @@ def recalculer_situation_personnel(personnel):
 
         for avance in avances:
 
-            montant_avance = Decimal(
-                str(
-                    avance.montantAv
-                    or ZERO
-                )
-            )
+            montant_avance = Decimal(str(avance.montantAv or ZERO))
 
             solde = soldes_avances.get(
                 avance.id,
@@ -763,10 +621,7 @@ def recalculer_situation_personnel(personnel):
             if solde < ZERO:
                 solde = ZERO
 
-            montant_recupere = (
-                montant_avance
-                - solde
-            )
+            montant_recupere = montant_avance - solde
 
             if montant_recupere < ZERO:
                 montant_recupere = ZERO
@@ -775,20 +630,16 @@ def recalculer_situation_personnel(personnel):
             # Mise à jour de l'avance
             # -------------------------------------------------
 
-            Avance.objects.filter(
-                pk=avance.pk
-            ).update(
-                montant_recupere=(
-                    montant_recupere
-                ),
+            Avance.objects.filter(pk=avance.pk).update(
+                montant_recupere=(montant_recupere),
                 reste=solde,
             )
 
 
+# ======================================================
+# ENTREPRISE H
+# ======================================================
 
-#======================================================
-#ENTREPRISE H
-#======================================================
 
 class H_Salaire(models.Model):
 
@@ -922,9 +773,7 @@ class H_Salaire(models.Model):
         if not personnel:
             return ZERO
 
-        taux = Decimal(
-            str(personnel.psalaire or ZERO)
-        )
+        taux = Decimal(str(personnel.psalaire or ZERO))
 
         type_contrat = getattr(
             personnel,
@@ -950,11 +799,7 @@ class H_Salaire(models.Model):
     # =========================================================
 
     def montant_avances_affectees(self):
-        total = (
-            self.affectations_avances
-            .aggregate(total=Sum("montant"))
-            ["total"]
-        )
+        total = self.affectations_avances.aggregate(total=Sum("montant"))["total"]
 
         return total or ZERO
 
@@ -965,18 +810,9 @@ class H_Salaire(models.Model):
     # =========================================================
 
     def montant_total_recu(self):
-        avances = Decimal(
-            str(
-                self.montant_avances_affectees()
-                or ZERO
-            )
-        )
+        avances = Decimal(str(self.montant_avances_affectees() or ZERO))
 
-        salaire_paye = Decimal(
-            str(
-                self.montant or ZERO
-            )
-        )
+        salaire_paye = Decimal(str(self.montant or ZERO))
 
         return salaire_paye + avances
 
@@ -1006,37 +842,15 @@ class H_Salaire(models.Model):
                   = -100 000
         """
 
-        contractuel = Decimal(
-            str(
-                self.salaire_contractuel
-                or ZERO
-            )
-        )
+        contractuel = Decimal(str(self.salaire_contractuel or ZERO))
 
-        salaire_paye = Decimal(
-            str(
-                self.montant or ZERO
-            )
-        )
+        salaire_paye = Decimal(str(self.montant or ZERO))
 
-        avances = Decimal(
-            str(
-                self.montant_avances_affectees()
-                or ZERO
-            )
-        )
+        avances = Decimal(str(self.montant_avances_affectees() or ZERO))
 
-        reste = (
-            contractuel
-            - salaire_paye
-            - avances
-        )
+        reste = contractuel - salaire_paye - avances
 
-        trop_percu = (
-            abs(reste)
-            if reste < ZERO
-            else ZERO
-        )
+        trop_percu = abs(reste) if reste < ZERO else ZERO
 
         return reste, trop_percu
 
@@ -1046,13 +860,9 @@ class H_Salaire(models.Model):
 
     def recalculer_reste(self):
 
-        reste, trop_percu = (
-            self.calculer_situation()
-        )
+        reste, trop_percu = self.calculer_situation()
 
-        Salaire.objects.filter(
-            pk=self.pk
-        ).update(
+        Salaire.objects.filter(pk=self.pk).update(
             reste=reste,
             trop_percu=trop_percu,
         )
@@ -1077,15 +887,10 @@ class H_Salaire(models.Model):
             # Calcul initial du salaire contractuel
             # -------------------------------------------------
 
-            if (
-                self._state.adding
-                or not self.salaire_contractuel
-            ):
-                self.salaire_contractuel = (
-                    self.calculer_salaire_contractuel(
-                        self.personnel,
-                        self.nombre_jours,
-                    )
+            if self._state.adding or not self.salaire_contractuel:
+                self.salaire_contractuel = self.calculer_salaire_contractuel(
+                    self.personnel,
+                    self.nombre_jours,
                 )
 
         # -----------------------------------------------------
@@ -1104,40 +909,21 @@ class H_Salaire(models.Model):
 
         if self._state.adding:
 
-            contractuel = Decimal(
-                str(
-                    self.salaire_contractuel
-                    or ZERO
-                )
-            )
+            contractuel = Decimal(str(self.salaire_contractuel or ZERO))
 
-            salaire_paye = Decimal(
-                str(
-                    self.montant
-                    or ZERO
-                )
-            )
+            salaire_paye = Decimal(str(self.montant or ZERO))
 
-            self.reste = (
-                contractuel
-                - salaire_paye
-            )
+            self.reste = contractuel - salaire_paye
 
-            self.trop_percu = (
-                abs(self.reste)
-                if self.reste < ZERO
-                else ZERO
-            )
+            self.trop_percu = abs(self.reste) if self.reste < ZERO else ZERO
 
-        super().save(
-            *args,
-            **kwargs
-        )
+        super().save(*args, **kwargs)
 
 
 # =============================================================
 # AFFECTATION DES AVANCES AUX SALAIRES
 # =============================================================
+
 
 class H_PaiementAvanceSalaire(models.Model):
     """
@@ -1176,13 +962,9 @@ class H_PaiementAvanceSalaire(models.Model):
     class Meta:
         ordering = ["id"]
 
-        verbose_name = (
-            "Affectation avance salaire"
-        )
+        verbose_name = "Affectation avance salaire"
 
-        verbose_name_plural = (
-            "Affectations avances salaires"
-        )
+        verbose_name_plural = "Affectations avances salaires"
 
         constraints = [
             models.UniqueConstraint(
@@ -1206,8 +988,8 @@ class H_PaiementAvanceSalaire(models.Model):
 # RECALCUL COMPLET D'UN PERSONNEL
 # =============================================================
 
-def h_recalculer_situation_personnel(personnel):
 
+def h_recalculer_situation_personnel(personnel):
     """
     Recalcule toute la situation salariale d'un personnel.
 
@@ -1242,11 +1024,7 @@ def h_recalculer_situation_personnel(personnel):
         # =====================================================
 
         salaires = list(
-            H_Salaire.objects
-            .filter(
-                personnel=personnel
-            )
-            .order_by(
+            H_Salaire.objects.filter(personnel=personnel).order_by(
                 "date_paiement",
                 "date",
                 "created_at",
@@ -1259,11 +1037,7 @@ def h_recalculer_situation_personnel(personnel):
         # =====================================================
 
         avances = list(
-            H_Avance.objects
-            .filter(
-                personnel=personnel
-            )
-            .order_by(
+            H_Avance.objects.filter(personnel=personnel).order_by(
                 "dateAv",
                 "id",
             )
@@ -1273,9 +1047,7 @@ def h_recalculer_situation_personnel(personnel):
         # SUPPRESSION DES ANCIENNES AFFECTATIONS
         # =====================================================
 
-        H_PaiementAvanceSalaire.objects.filter(
-            salaire__personnel=personnel
-        ).delete()
+        H_PaiementAvanceSalaire.objects.filter(salaire__personnel=personnel).delete()
 
         # =====================================================
         # SOLDE INITIAL DE CHAQUE AVANCE
@@ -1285,19 +1057,12 @@ def h_recalculer_situation_personnel(personnel):
 
         for avance in avances:
 
-            montant = Decimal(
-                str(
-                    avance.montantAv
-                    or ZERO
-                )
-            )
+            montant = Decimal(str(avance.montantAv or ZERO))
 
             if montant < ZERO:
                 montant = ZERO
 
-            soldes_avances[
-                avance.id
-            ] = montant
+            soldes_avances[avance.id] = montant
 
         # =====================================================
         # TRAITEMENT DES SALAIRES
@@ -1311,46 +1076,28 @@ def h_recalculer_situation_personnel(personnel):
 
             if not salaire.salaire_contractuel:
 
-                salaire.salaire_contractuel = (
-                    H_Salaire.calculer_salaire_contractuel(
-                        salaire.personnel,
-                        salaire.nombre_jours,
-                    )
+                salaire.salaire_contractuel = H_Salaire.calculer_salaire_contractuel(
+                    salaire.personnel,
+                    salaire.nombre_jours,
                 )
 
-                H_Salaire.objects.filter(
-                    pk=salaire.pk
-                ).update(
-                    salaire_contractuel=(
-                        salaire.salaire_contractuel
-                    )
+                H_Salaire.objects.filter(pk=salaire.pk).update(
+                    salaire_contractuel=(salaire.salaire_contractuel)
                 )
 
-            salaire_contractuel = Decimal(
-                str(
-                    salaire.salaire_contractuel
-                    or ZERO
-                )
-            )
+            salaire_contractuel = Decimal(str(salaire.salaire_contractuel or ZERO))
 
             # =================================================
             # SALAIRE RÉELLEMENT PAYÉ
             # =================================================
 
-            salaire_paye = Decimal(
-                str(
-                    salaire.montant
-                    or ZERO
-                )
-            )
+            salaire_paye = Decimal(str(salaire.montant or ZERO))
 
             # =================================================
             # DATE DU SALAIRE
             # =================================================
 
-            date_paiement = (
-                salaire.date_paiement
-            )
+            date_paiement = salaire.date_paiement
 
             # =================================================
             # AFFECTATION DES AVANCES
@@ -1383,10 +1130,7 @@ def h_recalculer_situation_personnel(personnel):
 
                 date_avance = avance.dateAv
 
-                if hasattr(
-                    date_avance,
-                    "date"
-                ):
+                if hasattr(date_avance, "date"):
                     date_avance = date_avance.date()
 
                 # -------------------------------------------------
@@ -1418,9 +1162,7 @@ def h_recalculer_situation_personnel(personnel):
                 # => reste -100 000
                 # =================================================
 
-                montant_affecte = (
-                    solde_avance
-                )
+                montant_affecte = solde_avance
 
                 if montant_affecte <= ZERO:
                     continue
@@ -1439,82 +1181,54 @@ def h_recalculer_situation_personnel(personnel):
                 # L'avance est entièrement consommée
                 # -------------------------------------------------
 
-                soldes_avances[
-                    avance.id
-                ] = ZERO
+                soldes_avances[avance.id] = ZERO
 
             # =====================================================
             # TOTAL DES AVANCES AFFECTÉES
             # =====================================================
 
             avances_affectees = (
-                H_PaiementAvanceSalaire.objects
-                .filter(
-                    salaire=salaire
-                )
-                .aggregate(
+                H_PaiementAvanceSalaire.objects.filter(salaire=salaire).aggregate(
                     total=Sum("montant")
                 )["total"]
                 or ZERO
             )
 
-            avances_affectees = Decimal(
-                str(
-                    avances_affectees
-                )
-            )
+            avances_affectees = Decimal(str(avances_affectees))
 
             # =====================================================
             # TOTAL RÉELLEMENT REÇU
             # =====================================================
 
-            total_recu = (
-                salaire_paye
-                + avances_affectees
-            )
+            total_recu = salaire_paye + avances_affectees
 
             # =====================================================
             # RESTE SIGNÉ
             # =====================================================
 
-            reste = (
-                salaire_contractuel
-                - total_recu
-            )
+            reste = salaire_contractuel - total_recu
 
             # =====================================================
             # TROP-PERÇU
             # =====================================================
 
-            trop_percu = (
-                abs(reste)
-                if reste < ZERO
-                else ZERO
-            )
+            trop_percu = abs(reste) if reste < ZERO else ZERO
 
             # =====================================================
             # SAUVEGARDE
             # =====================================================
 
-            H_Salaire.objects.filter(
-                pk=salaire.pk
-            ).update(
-                salaire_contractuel=(
-                    salaire_contractuel
-                ),
+            H_Salaire.objects.filter(pk=salaire.pk).update(
+                salaire_contractuel=(salaire_contractuel),
                 reste=reste,
                 trop_percu=trop_percu,
             )
 
-            salaire.salaire_contractuel = (
-                salaire_contractuel
-            )
+            salaire.salaire_contractuel = salaire_contractuel
 
             salaire.reste = reste
 
-            salaire.trop_percu = (
-                trop_percu
-            )
+            salaire.trop_percu = trop_percu
 
         # =====================================================
         # MISE À JOUR DES AVANCES
@@ -1522,12 +1236,7 @@ def h_recalculer_situation_personnel(personnel):
 
         for avance in avances:
 
-            montant_avance = Decimal(
-                str(
-                    avance.montantAv
-                    or ZERO
-                )
-            )
+            montant_avance = Decimal(str(avance.montantAv or ZERO))
 
             solde = soldes_avances.get(
                 avance.id,
@@ -1537,10 +1246,7 @@ def h_recalculer_situation_personnel(personnel):
             if solde < ZERO:
                 solde = ZERO
 
-            montant_recupere = (
-                montant_avance
-                - solde
-            )
+            montant_recupere = montant_avance - solde
 
             if montant_recupere < ZERO:
                 montant_recupere = ZERO
@@ -1549,11 +1255,7 @@ def h_recalculer_situation_personnel(personnel):
             # Mise à jour de l'avance
             # -------------------------------------------------
 
-            H_Avance.objects.filter(
-                pk=avance.pk
-            ).update(
-                montant_recupere=(
-                    montant_recupere
-                ),
+            H_Avance.objects.filter(pk=avance.pk).update(
+                montant_recupere=(montant_recupere),
                 reste=solde,
             )

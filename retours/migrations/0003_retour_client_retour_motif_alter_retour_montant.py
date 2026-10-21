@@ -7,24 +7,32 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('clients', '0009_alter_client_id'),
-        ('retours', '0002_retour_enregistrer_par'),
+        ("clients", "0009_alter_client_id"),
+        ("retours", "0002_retour_enregistrer_par"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='retour',
-            name='client',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='retours', to='clients.client'),
+            model_name="retour",
+            name="client",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="retours",
+                to="clients.client",
+            ),
         ),
         migrations.AddField(
-            model_name='retour',
-            name='motif',
-            field=models.CharField(default='Remboursement avance client', max_length=255),
+            model_name="retour",
+            name="motif",
+            field=models.CharField(
+                default="Remboursement avance client", max_length=255
+            ),
         ),
         migrations.AlterField(
-            model_name='retour',
-            name='montant',
+            model_name="retour",
+            name="montant",
             field=models.DecimalField(decimal_places=0, max_digits=15),
         ),
     ]

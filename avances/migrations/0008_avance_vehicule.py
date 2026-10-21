@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('avances', '0007_avance_enregistre_par'),
-        ('transentrant', '0009_alter_transentrant_adresse_alter_transentrant_photo'),
+        ("avances", "0007_avance_enregistre_par"),
+        ("transentrant", "0009_alter_transentrant_adresse_alter_transentrant_photo"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='avance',
-            name='vehicule',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='avances', to='transentrant.transentrant'),
+            model_name="avance",
+            name="vehicule",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="avances",
+                to="transentrant.transentrant",
+            ),
         ),
     ]

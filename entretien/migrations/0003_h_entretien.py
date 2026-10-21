@@ -7,22 +7,55 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('entretien', '0002_entretien_observation'),
-        ('users', '0013_h_appuser'),
+        ("entretien", "0002_entretien_observation"),
+        ("users", "0013_h_appuser"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='h_Entretien',
+            name="h_Entretien",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('num_vehicule', models.CharField(max_length=8, verbose_name='Numéro véhicule')),
-                ('piece_acheter', models.CharField(max_length=150, verbose_name='Pièce achetée')),
-                ('nombre', models.PositiveIntegerField(default=1, verbose_name='Nombre')),
-                ('prix_du_piece', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='Prix de la pièce')),
-                ('observation', models.TextField(blank=True, null=True)),
-                ('date_cree', models.DateField(auto_now_add=True, verbose_name='Date création')),
-                ('enregistrer_par', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='entretiens', to='users.h_appuser', verbose_name='Enregistré par')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "num_vehicule",
+                    models.CharField(max_length=8, verbose_name="Numéro véhicule"),
+                ),
+                (
+                    "piece_acheter",
+                    models.CharField(max_length=150, verbose_name="Pièce achetée"),
+                ),
+                (
+                    "nombre",
+                    models.PositiveIntegerField(default=1, verbose_name="Nombre"),
+                ),
+                (
+                    "prix_du_piece",
+                    models.DecimalField(
+                        decimal_places=2, max_digits=12, verbose_name="Prix de la pièce"
+                    ),
+                ),
+                ("observation", models.TextField(blank=True, null=True)),
+                (
+                    "date_cree",
+                    models.DateField(auto_now_add=True, verbose_name="Date création"),
+                ),
+                (
+                    "enregistrer_par",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="entretiens",
+                        to="users.h_appuser",
+                        verbose_name="Enregistré par",
+                    ),
+                ),
             ],
         ),
     ]

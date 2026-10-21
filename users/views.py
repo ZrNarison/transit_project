@@ -1,22 +1,20 @@
-from functools import wraps
 
-from django import forms
 from django.contrib import messages
-from django.contrib.auth.hashers import make_password, check_password
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.hashers import check_password, make_password
+from django.core.exceptions import ImproperlyConfigured
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.forms import modelform_factory
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
-from .models import AppUser, H_AppUser
-from .forms import UserForm, H_UserForm
-from users.decorators import h_role_required
 from audit.utils import enregistrer_action
 from logs.utils import enregistrer_log
+from users.decorators import h_role_required
 
+from .forms import H_UserForm, UserForm
+from .models import AppUser, H_AppUser
 
 # ============================================================
 # CONSTANTES ET COMPTES PAR DEFAUT
@@ -33,17 +31,14 @@ H_ADMIN_PASSWORD = "ELPhBert"
 # OUTILS COMMUNS
 # ============================================================
 
+
 def _journaliser(message, level="INFO", module="AUTH", request=None):
     """Enregistre un événement dans le journal applicatif."""
     enregistrer_log(
         message=message,
         level=level,
         module=module,
-        ip_address=(
-            request.META.get("REMOTE_ADDR")
-            if request is not None
-            else None
-        ),
+        ip_address=(request.META.get("REMOTE_ADDR") if request is not None else None),
     )
 
 
@@ -95,6 +90,7 @@ def _render_profile_form(request, template, user):
 # ADMINISTRATEUR GALAXY
 # ============================================================
 
+
 @transaction.atomic
 def creer_admin_temporaire():
     """
@@ -107,9 +103,7 @@ def creer_admin_temporaire():
     if AppUser.objects.filter(role="Admin").exists():
         return None
 
-    user = AppUser.objects.filter(
-        username__iexact=ADMIN_USERNAME
-    ).first()
+    user = AppUser.objects.filter(username__iexact=ADMIN_USERNAME).first()
 
     if user:
         user.role = "Admin"
@@ -143,6 +137,7 @@ def verifier_admin_temporaire(request=None):
 # ADMINISTRATEUR ENTREPRISE H
 # ============================================================
 
+
 @transaction.atomic
 def creer_h_admin_par_defaut():
     """
@@ -152,9 +147,7 @@ def creer_h_admin_par_defaut():
     if H_AppUser.objects.filter(role="Dir").exists():
         return None
 
-    user = H_AppUser.objects.filter(
-        username__iexact=H_ADMIN_USERNAME
-    ).first()
+    user = H_AppUser.objects.filter(username__iexact=H_ADMIN_USERNAME).first()
 
     if user:
         user.role = "Dir"
@@ -173,6 +166,7 @@ def creer_h_admin_par_defaut():
 # ============================================================
 # FORMULAIRE ENTREPRISE H
 # ============================================================
+
 
 def get_h_user_form(*args, **kwargs):
     """
@@ -211,9 +205,7 @@ def get_h_user_form(*args, **kwargs):
 
     # Un ModelForm ne doit pas recevoir de champ inexistant
     # qui n'est pas déclaré explicitement dans le formulaire.
-    selected_fields = selected_fields.intersection(
-        model_fields | declared_fields
-    )
+    selected_fields = selected_fields.intersection(model_fields | declared_fields)
 
     if not selected_fields:
         raise ImproperlyConfigured(
@@ -234,10 +226,9 @@ def get_h_user_form(*args, **kwargs):
 # CONNEXION ENTREPRISE H
 # ============================================================
 
+
 def connexion_entreprise_h(request, username, password):
-    user = H_AppUser.objects.filter(
-        username__iexact=username
-    ).first()
+    user = H_AppUser.objects.filter(username__iexact=username).first()
 
     if user is None or not check_password(password, user.password):
         messages.error(
@@ -269,6 +260,7 @@ def connexion_entreprise_h(request, username, password):
 # ============================================================
 # REDIRECTION APRES CONNEXION GALAXY
 # ============================================================
+
 
 def redirection_apres_login(request, user):
 
@@ -312,8 +304,7 @@ def redirection_apres_login(request, user):
     # ROLE NON CONFIGURE
     # --------------------------------------------------------
     messages.error(
-        request,
-        f"Le rôle « {user.role} » n'a pas de page d'accueil configurée."
+        request, f"Le rôle « {user.role} » n'a pas de page d'accueil configurée."
     )
 
     request.session.flush()
@@ -323,6 +314,7 @@ def redirection_apres_login(request, user):
 # ============================================================
 # CONNEXION UNIQUE GALAXY / ENTREPRISE H
 # ============================================================
+
 
 @never_cache
 @require_http_methods(["GET", "POST"])
@@ -347,9 +339,7 @@ def users_login(request):
     # ENTREPRISE H
     # --------------------------------------------------------
     if entreprise == "H":
-        user = H_AppUser.objects.filter(
-            username__iexact=username
-        ).first()
+        user = H_AppUser.objects.filter(username__iexact=username).first()
 
         if user is None or not check_password(password, user.password):
             messages.error(
@@ -380,8 +370,7 @@ def users_login(request):
         return render(request, "users/login.html")
 
     user = (
-        AppUser.objects
-        .select_related("personnel")
+        AppUser.objects.select_related("personnel")
         .filter(username__iexact=username)
         .first()
     )
@@ -413,6 +402,7 @@ def users_login(request):
 # DECONNEXION GALAXY
 # ============================================================
 
+
 @never_cache
 @require_http_methods(["GET", "POST"])
 def users_logout(request):
@@ -442,6 +432,7 @@ def users_logout(request):
 # DECONNEXION ENTREPRISE H
 # ============================================================
 
+
 @never_cache
 @require_http_methods(["GET", "POST"])
 def h_logout(request):
@@ -463,6 +454,7 @@ def h_logout(request):
 # LIMITES DES COMPTES GALAXY
 # ============================================================
 
+
 def verifier_limite_utilisateur(role, personnel=None, instance=None):
     """
     Limites GALAXY :
@@ -479,8 +471,7 @@ def verifier_limite_utilisateur(role, personnel=None, instance=None):
     if role == "Admin":
         if queryset.filter(role="Admin").count() >= 2:
             return False, (
-                "Impossible de créer cet administrateur : "
-                "le maximum est de 2 Admin."
+                "Impossible de créer cet administrateur : " "le maximum est de 2 Admin."
             )
         return True, ""
 
@@ -491,9 +482,7 @@ def verifier_limite_utilisateur(role, personnel=None, instance=None):
         type_travail = getattr(personnel, "typeTravail", None)
 
         if type_travail not in ("Mica", "Construction"):
-            return False, (
-                "Le type de travail doit être Mica ou Construction."
-            )
+            return False, ("Le type de travail doit être Mica ou Construction.")
 
         nombre = queryset.filter(
             role="Superviseur",
@@ -501,9 +490,7 @@ def verifier_limite_utilisateur(role, personnel=None, instance=None):
         ).count()
 
         if nombre >= 2:
-            return False, (
-                f"Le maximum est de 2 Superviseurs pour {type_travail}."
-            )
+            return False, (f"Le maximum est de 2 Superviseurs pour {type_travail}.")
 
         return True, ""
 
@@ -520,10 +507,7 @@ def verifier_limite_utilisateur(role, personnel=None, instance=None):
         if queryset.filter(role="UserEntreprise").count() >= 10:
             return False, "Le maximum est de 10 UserEntreprise."
 
-        if (
-            personnel
-            and getattr(personnel, "typeTravail", None) != "Construction"
-        ):
+        if personnel and getattr(personnel, "typeTravail", None) != "Construction":
             return False, (
                 "Un UserEntreprise doit être lié à un personnel "
                 "de type Construction."
@@ -538,13 +522,10 @@ def verifier_limite_utilisateur(role, personnel=None, instance=None):
 # LISTE DES UTILISATEURS GALAXY
 # ============================================================
 
+
 def _users_list_queryset(request, model):
     """Prépare la pagination sans modifier la réponse HTTP."""
-    queryset = (
-        model.objects
-        .select_related("personnel")
-        .order_by("username")
-    )
+    queryset = model.objects.select_related("personnel").order_by("username")
 
     username = request.GET.get("username", "").strip()
     email = request.GET.get("email", "").strip()
@@ -560,14 +541,19 @@ def _users_list_queryset(request, model):
 
     return page_obj, username, email
 
+
 # ============================================================
 # LISTE GALAXY
 # ============================================================
 
-from users.decorators import role_required, get_current_user, project_access_required, user_can_manage_projects, user_has_project_access, get_current_personnel, login_required_projet, project_manager_required
+from users.decorators import (
+    role_required,
+)
+
 # ============================================================
 # LISTE DES UTILISATEURS GALAXY
 # ============================================================
+
 
 @role_required("Admin", "Superviseur")
 def users_list(request):
@@ -600,6 +586,7 @@ def users_list(request):
 # LISTE DES UTILISATEURS ENTREPRISE H
 # ============================================================
 
+
 @h_role_required("Dir", "Compta")
 def h_users_list(request):
     page_obj, username, email = _users_list_queryset(
@@ -624,9 +611,11 @@ def h_users_list(request):
         },
     )
 
+
 # ============================================================
 # AJOUT GALAXY
 # ============================================================
+
 
 @role_required("Admin")
 def users_add(request):
@@ -685,6 +674,7 @@ def users_add(request):
 # MODIFICATION GALAXY
 # ============================================================
 
+
 @role_required("Admin", "Superviseur")
 def users_edit(request, id):
     user = get_object_or_404(AppUser, pk=id)
@@ -732,7 +722,8 @@ def users_edit(request, id):
                         "role": user_modifie.role,
                         "personnel": (
                             str(user_modifie.personnel)
-                            if user_modifie.personnel else None
+                            if user_modifie.personnel
+                            else None
                         ),
                     },
                     description="Modification d'un utilisateur GALAXY",
@@ -761,6 +752,7 @@ def users_edit(request, id):
 # ============================================================
 # SUPPRESSION GALAXY
 # ============================================================
+
 
 @role_required("Admin")
 @require_http_methods(["GET", "POST"])
@@ -804,6 +796,7 @@ def users_delete(request, id):
 # PROFIL GALAXY : VERIFICATION D'ACCES
 # ============================================================
 
+
 def _verifier_acces_profil(request, user_id):
     return _profil_inaccessible(
         request,
@@ -818,6 +811,7 @@ def _verifier_acces_profil(request, user_id):
 # DETAIL PROFIL GALAXY
 # ============================================================
 
+
 def users_detail(request, id):
     user = _verifier_acces_profil(request, id)
 
@@ -830,6 +824,7 @@ def users_detail(request, id):
 # ============================================================
 # PHOTO PROFIL GALAXY
 # ============================================================
+
 
 @require_http_methods(["GET", "POST"])
 def change_photo(request, id):
@@ -871,6 +866,7 @@ def change_photo(request, id):
 # NOM UTILISATEUR GALAXY
 # ============================================================
 
+
 @require_http_methods(["GET", "POST"])
 def change_username(request, id):
     user = _verifier_acces_profil(request, id)
@@ -884,9 +880,11 @@ def change_username(request, id):
 
         if not username:
             messages.error(request, "Le nom utilisateur est obligatoire.")
-        elif AppUser.objects.filter(
-            username__iexact=username
-        ).exclude(pk=user.pk).exists():
+        elif (
+            AppUser.objects.filter(username__iexact=username)
+            .exclude(pk=user.pk)
+            .exists()
+        ):
             messages.error(request, "Ce nom utilisateur existe déjà.")
         else:
             user.username = username
@@ -914,6 +912,7 @@ def change_username(request, id):
 # ============================================================
 # MOT DE PASSE GALAXY
 # ============================================================
+
 
 @require_http_methods(["GET", "POST"])
 def change_password(request, id):
@@ -981,10 +980,7 @@ def h_users_add(request):
                     "username": user.username,
                     "email": user.email,
                     "role": user.role,
-                    "personnel": (
-                        str(user.personnel)
-                        if user.personnel else None
-                    ),
+                    "personnel": (str(user.personnel) if user.personnel else None),
                 },
                 description="Création d'un utilisateur Entreprise H",
             )
@@ -1014,6 +1010,7 @@ def h_users_add(request):
 # Source : H_Personnel uniquement
 # ============================================================
 
+
 @h_role_required("Dir", "Compta")
 def h_users_edit(request, id):
 
@@ -1023,10 +1020,7 @@ def h_users_edit(request, id):
         "username": user.username,
         "email": user.email,
         "role": user.role,
-        "personnel": (
-            str(user.personnel)
-            if user.personnel else None
-        ),
+        "personnel": (str(user.personnel) if user.personnel else None),
     }
 
     if request.method == "POST":
@@ -1059,8 +1053,7 @@ def h_users_edit(request, id):
                     "email": user_modifie.email,
                     "role": user_modifie.role,
                     "personnel": (
-                        str(user_modifie.personnel)
-                        if user_modifie.personnel else None
+                        str(user_modifie.personnel) if user_modifie.personnel else None
                     ),
                 },
                 description="Modification d'un utilisateur Entreprise H",
@@ -1093,9 +1086,11 @@ def h_users_edit(request, id):
         },
     )
 
+
 # ============================================================
 # SUPPRESSION UTILISATEUR ENTREPRISE H
 # ============================================================
+
 
 @h_role_required("Dir", "Compta")
 @require_http_methods(["GET", "POST"])
@@ -1106,8 +1101,7 @@ def h_users_delete(request, id):
         if user.role == "Dir" and H_AppUser.objects.filter(role="Dir").count() <= 1:
             messages.error(
                 request,
-                "Impossible de supprimer le dernier administrateur "
-                "d'Entreprise H.",
+                "Impossible de supprimer le dernier administrateur " "d'Entreprise H.",
             )
             return redirect("users:users_h_list")
 
@@ -1116,9 +1110,7 @@ def h_users_delete(request, id):
             "email": getattr(user, "email", None),
             "role": user.role,
             "personnel": (
-                str(user.personnel)
-                if getattr(user, "personnel", None)
-                else None
+                str(user.personnel) if getattr(user, "personnel", None) else None
             ),
         }
 
@@ -1146,6 +1138,7 @@ def h_users_delete(request, id):
 # PROFIL ENTREPRISE H : VERIFICATION D'ACCES
 # ============================================================
 
+
 def h_verifier_acces_profil(request, user_id):
     return _profil_inaccessible(
         request,
@@ -1160,6 +1153,7 @@ def h_verifier_acces_profil(request, user_id):
 # DETAIL PROFIL ENTREPRISE H
 # ============================================================
 
+
 def h_users_detail(request, id):
     user = h_verifier_acces_profil(request, id)
 
@@ -1172,6 +1166,7 @@ def h_users_detail(request, id):
 # ============================================================
 # PHOTO PROFIL ENTREPRISE H
 # ============================================================
+
 
 @require_http_methods(["GET", "POST"])
 def h_change_photo(request, id):
@@ -1213,6 +1208,7 @@ def h_change_photo(request, id):
 # NOM UTILISATEUR ENTREPRISE H
 # ============================================================
 
+
 @require_http_methods(["GET", "POST"])
 def h_change_username(request, id):
     user = h_verifier_acces_profil(request, id)
@@ -1226,9 +1222,11 @@ def h_change_username(request, id):
 
         if not username:
             messages.error(request, "Le nom utilisateur est obligatoire.")
-        elif H_AppUser.objects.filter(
-            username__iexact=username
-        ).exclude(pk=user.pk).exists():
+        elif (
+            H_AppUser.objects.filter(username__iexact=username)
+            .exclude(pk=user.pk)
+            .exists()
+        ):
             messages.error(request, "Ce nom utilisateur existe déjà.")
         else:
             user.username = username
@@ -1256,6 +1254,7 @@ def h_change_username(request, id):
 # ============================================================
 # MOT DE PASSE ENTREPRISE H
 # ============================================================
+
 
 @require_http_methods(["GET", "POST"])
 def h_change_password(request, id):

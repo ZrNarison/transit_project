@@ -7,18 +7,32 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projet', '0020_alter_mouvementvehiculeprojet_heures_finales_and_more'),
+        ("projet", "0020_alter_mouvementvehiculeprojet_heures_finales_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='mouvementvehiculeprojet',
-            name='engin_projet',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='mouvements', to='projet.enginprojet', verbose_name='Engin de chantier'),
+            model_name="mouvementvehiculeprojet",
+            name="engin_projet",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="mouvements",
+                to="projet.enginprojet",
+                verbose_name="Engin de chantier",
+            ),
         ),
         migrations.AlterField(
-            model_name='mouvementvehiculeprojet',
-            name='vehicule_projet',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='mouvements', to='projet.vehiculeprojet', verbose_name='Véhicule routier'),
+            model_name="mouvementvehiculeprojet",
+            name="vehicule_projet",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="mouvements",
+                to="projet.vehiculeprojet",
+                verbose_name="Véhicule routier",
+            ),
         ),
     ]

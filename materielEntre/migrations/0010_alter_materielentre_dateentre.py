@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materielEntre', '0009_alter_materielentre_options_and_more'),
+        ("materielEntre", "0009_alter_materielentre_options_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='materielentre',
-            name='dateEntre',
+            model_name="materielentre",
+            name="dateEntre",
             field=models.DateField(),
         ),
     ]

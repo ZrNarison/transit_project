@@ -1,4 +1,5 @@
 from django import forms
+
 from .models import Depot, Distribution
 
 
@@ -8,16 +9,12 @@ class DepotForm(forms.ModelForm):
         model = Depot
 
         fields = [
-            'montantG',
+            "montantG",
         ]
 
         widgets = {
-
-            'montantG': forms.NumberInput(
-                attrs={
-                    'class': 'form-control',
-                    'placeholder': 'Montant global'
-                }
+            "montantG": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "Montant global"}
             ),
         }
 
@@ -28,22 +25,13 @@ class DistributionForm(forms.ModelForm):
         model = Distribution
 
         fields = [
-            'distributeur',
-            'montant',
+            "distributeur",
+            "montant",
         ]
 
         widgets = {
-
-            'distributeur': forms.Select(
-                attrs={
-                    'class': 'form-control'
-                }
-            ),
-
-            'montant': forms.NumberInput(
-                attrs={
-                    'class': 'form-control',
-                    'placeholder': 'Montant reçu'
-                }
+            "distributeur": forms.Select(attrs={"class": "form-control"}),
+            "montant": forms.NumberInput(
+                attrs={"class": "form-control", "placeholder": "Montant reçu"}
             ),
         }

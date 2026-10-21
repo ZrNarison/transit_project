@@ -7,25 +7,51 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('avances', '0010_avance_dateenregistremeny_alter_avance_dateav'),
-        ('salaire', '0007_alter_salaire_date'),
+        ("avances", "0010_avance_dateenregistremeny_alter_avance_dateav"),
+        ("salaire", "0007_alter_salaire_date"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PaiementAvanceSalaire',
+            name="PaiementAvanceSalaire",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('montant', models.DecimalField(decimal_places=2, max_digits=12)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('avance', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='affectations_salaires', to='avances.avance')),
-                ('salaire', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='affectations_avances', to='salaire.salaire')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("montant", models.DecimalField(decimal_places=2, max_digits=12)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "avance",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="affectations_salaires",
+                        to="avances.avance",
+                    ),
+                ),
+                (
+                    "salaire",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="affectations_avances",
+                        to="salaire.salaire",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Affectation avance salaire',
-                'verbose_name_plural': 'Affectations avances salaires',
-                'ordering': ['id'],
-                'constraints': [models.UniqueConstraint(fields=('avance', 'salaire'), name='unique_avance_salaire')],
+                "verbose_name": "Affectation avance salaire",
+                "verbose_name_plural": "Affectations avances salaires",
+                "ordering": ["id"],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("avance", "salaire"), name="unique_avance_salaire"
+                    )
+                ],
             },
         ),
     ]

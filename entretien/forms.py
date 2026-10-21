@@ -1,5 +1,7 @@
 from django import forms
+
 from .models import Entretien, h_Entretien
+
 
 class EntretienForm(forms.ModelForm):
 
@@ -15,28 +17,38 @@ class EntretienForm(forms.ModelForm):
         ]
 
         widgets = {
-            "num_vehicule": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Ex: 1234 TAB",
-            }),
-            "piece_acheter": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Nom de la pièce",
-            }),
-            "nombre": forms.NumberInput(attrs={
-                "class": "form-control",
-                "min": 1,
-            }),
-            "prix_du_piece": forms.NumberInput(attrs={
-                "class": "form-control",
-                "step": "0.01",
-                "placeholder": "Prix",
-            }),
-            "observation": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 3,
-                "placeholder": "Observation...",
-            }),
+            "num_vehicule": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Ex: 1234 TAB",
+                }
+            ),
+            "piece_acheter": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom de la pièce",
+                }
+            ),
+            "nombre": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": 1,
+                }
+            ),
+            "prix_du_piece": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "placeholder": "Prix",
+                }
+            ),
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Observation...",
+                }
+            ),
         }
 
 
@@ -54,26 +66,36 @@ class H_EntretienForm(forms.ModelForm):
         ]
 
         widgets = {
-            "num_vehicule": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Ex: 1234 TAB",
-            }),
-            "piece_acheter": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Nom de la pièce",
-            }),
-            "nombre": forms.NumberInput(attrs={
-                "class": "form-control",
-                "min": 1,
-            }),
-            "prix_du_piece": forms.NumberInput(attrs={
-                "class": "form-control",
-                "step": "0.01",
-                "placeholder": "Prix",
-            }),
-            "observation": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 3,
-                "placeholder": "Observation...",
-            }),
+            "num_vehicule": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Ex: 1234 TAB",
+                }
+            ),
+            "piece_acheter": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom de la pièce",
+                }
+            ),
+            "nombre": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": 1,
+                }
+            ),
+            "prix_du_piece": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "placeholder": "Prix",
+                }
+            ),
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Observation...",
+                }
+            ),
         }

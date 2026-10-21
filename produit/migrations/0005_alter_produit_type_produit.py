@@ -6,13 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('produit', '0004_alter_produit_options_and_more'),
+        ("produit", "0004_alter_produit_options_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='produit',
-            name='type_produit',
-            field=models.CharField(choices=[('ESPECE', 'Espèce'), ('CHEQUE', 'Chèque'), ('MOBILE_MONEY', 'Mobile Money')], max_length=20),
+            model_name="produit",
+            name="type_produit",
+            field=models.CharField(
+                choices=[
+                    ("ESPECE", "Espèce"),
+                    ("CHEQUE", "Chèque"),
+                    ("MOBILE_MONEY", "Mobile Money"),
+                ],
+                max_length=20,
+            ),
         ),
     ]

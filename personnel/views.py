@@ -1,18 +1,16 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.core.paginator import Paginator
-from django.contrib import messages
-from django.db.models import Q
-from django.views.decorators.http import require_POST
-from .models import Personnel, H_Personnel
-from .forms import PersonnelForm, H_PersonnelForm
-from audit.utils import enregistrer_action
-
-
 from functools import wraps
-from django.shortcuts import redirect
-from django.contrib import messages
 
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
+
+from audit.utils import enregistrer_action
 from users.models import H_AppUser
+
+from .forms import H_PersonnelForm, PersonnelForm
+from .models import H_Personnel, Personnel
 
 
 def h_login_required(view_func):
@@ -24,10 +22,7 @@ def h_login_required(view_func):
         h_role = request.session.get("h_role")
 
         if not h_user_id or not h_role:
-            messages.warning(
-                request,
-                "Veuillez vous connecter à Entreprise H."
-            )
+            messages.warning(request, "Veuillez vous connecter à Entreprise H.")
             return redirect("users:login")
 
         utilisateur = H_AppUser.objects.filter(
@@ -44,10 +39,7 @@ def h_login_required(view_func):
             ):
                 request.session.pop(key, None)
 
-            messages.error(
-                request,
-                "Votre session Entreprise H est invalide."
-            )
+            messages.error(request, "Votre session Entreprise H est invalide.")
             return redirect("users:login")
 
         return view_func(request, *args, **kwargs)
@@ -71,9 +63,7 @@ def personnel_to_dict(personnel):
         "lieuTravail": getattr(personnel, "lieuTravail", None),
         "psalaire": str(personnel.psalaire),
         "debutContrat": (
-            personnel.debutContrat.isoformat()
-            if personnel.debutContrat
-            else None
+            personnel.debutContrat.isoformat() if personnel.debutContrat else None
         ),
         "finContrat": (
             personnel.finContrat.isoformat()
@@ -88,17 +78,12 @@ def personnel_to_dict(personnel):
             if personnel.categorie
             else None
         ),
-        "photo": (
-            personnel.photo.name
-            if personnel.photo
-            else None
-        ),
+        "photo": (personnel.photo.name if personnel.photo else None),
         "created_at": (
-            personnel.created_at.isoformat()
-            if personnel.created_at
-            else None
+            personnel.created_at.isoformat() if personnel.created_at else None
         ),
     }
+
 
 # =========================================================
 # LISTE DU PERSONNEL
@@ -122,9 +107,7 @@ def personnel_list(request):
 
     elif role in ("SuperviseurEntreprise", "UserEntreprise"):
         # Construction uniquement
-        queryset = Personnel.objects.filter(
-            typeTravail="Construction"
-        )
+        queryset = Personnel.objects.filter(typeTravail="Construction")
 
     else:
         # Aucun accès implicite pour les autres rôles
@@ -154,9 +137,7 @@ def personnel_list(request):
         type_travail = request.GET.get("typeTravail", "").strip()
 
         if type_travail in ("Mica", "Construction"):
-            queryset = queryset.filter(
-                typeTravail=type_travail
-            )
+            queryset = queryset.filter(typeTravail=type_travail)
         else:
             type_travail = ""
 
@@ -179,9 +160,7 @@ def personnel_list(request):
     )
 
     if type_contrat in contrats_valides:
-        queryset = queryset.filter(
-            typeContrat=type_contrat
-        )
+        queryset = queryset.filter(typeContrat=type_contrat)
     else:
         type_contrat = ""
 
@@ -223,15 +202,13 @@ def personnel_list(request):
         context,
     )
 
+
 # =========================================================
 # AJOUT PERSONNEL
 # =========================================================
 def personnel_add(request):
 
-    form = PersonnelForm(
-        request.POST or None,
-        request.FILES or None
-    )
+    form = PersonnelForm(request.POST or None, request.FILES or None)
 
     if request.method == "POST":
 
@@ -246,19 +223,13 @@ def personnel_add(request):
                 personnel.id,
                 nouvelle=personnel_to_dict(personnel),
                 description=(
-                    f"Ajout du personnel "
-                    f"{personnel.nom} {personnel.prenom}".strip()
-                )
+                    f"Ajout du personnel " f"{personnel.nom} {personnel.prenom}".strip()
+                ),
             )
 
-            messages.success(
-                request,
-                "Personnel ajouté avec succès."
-            )
+            messages.success(request, "Personnel ajouté avec succès.")
 
-            return redirect(
-                "personnel:personnel_list"
-            )
+            return redirect("personnel:personnel_list")
 
     return render(
         request,
@@ -266,7 +237,7 @@ def personnel_add(request):
         {
             "form": form,
             "action": "Ajouter",
-        }
+        },
     )
 
 
@@ -275,19 +246,14 @@ def personnel_add(request):
 # =========================================================
 def personnel_detail(request, id):
 
-    personnel = get_object_or_404(
-        Personnel.objects.select_related(
-            "categorie"
-        ),
-        id=id
-    )
+    personnel = get_object_or_404(Personnel.objects.select_related("categorie"), id=id)
 
     return render(
         request,
         "personnel/detail.html",
         {
             "personnel": personnel,
-        }
+        },
     )
 
 
@@ -296,19 +262,12 @@ def personnel_detail(request, id):
 # =========================================================
 def personnel_edit(request, id):
 
-    personnel = get_object_or_404(
-        Personnel,
-        id=id
-    )
+    personnel = get_object_or_404(Personnel, id=id)
 
-    ancienne = personnel_to_dict(
-        personnel
-    )
+    ancienne = personnel_to_dict(personnel)
 
     form = PersonnelForm(
-        request.POST or None,
-        request.FILES or None,
-        instance=personnel
+        request.POST or None, request.FILES or None, instance=personnel
     )
 
     if request.method == "POST":
@@ -317,9 +276,7 @@ def personnel_edit(request, id):
 
             personnel = form.save()
 
-            nouvelle = personnel_to_dict(
-                personnel
-            )
+            nouvelle = personnel_to_dict(personnel)
 
             enregistrer_action(
                 request,
@@ -331,17 +288,12 @@ def personnel_edit(request, id):
                 description=(
                     f"Modification du personnel "
                     f"{personnel.nom} {personnel.prenom}".strip()
-                )
+                ),
             )
 
-            messages.success(
-                request,
-                "Personnel modifié avec succès."
-            )
+            messages.success(request, "Personnel modifié avec succès.")
 
-            return redirect(
-                "personnel:personnel_list"
-            )
+            return redirect("personnel:personnel_list")
 
     return render(
         request,
@@ -350,7 +302,7 @@ def personnel_edit(request, id):
             "form": form,
             "action": "Modifier",
             "personnel": personnel,
-        }
+        },
     )
 
 
@@ -359,18 +311,11 @@ def personnel_edit(request, id):
 # =========================================================
 def personnel_delete(request, id):
 
-    personnel = get_object_or_404(
-        Personnel,
-        id=id
-    )
+    personnel = get_object_or_404(Personnel, id=id)
 
-    ancienne = personnel_to_dict(
-        personnel
-    )
+    ancienne = personnel_to_dict(personnel)
 
-    nom_personnel = (
-        f"{personnel.nom} {personnel.prenom}"
-    ).strip()
+    nom_personnel = (f"{personnel.nom} {personnel.prenom}").strip()
 
     if request.method == "POST":
 
@@ -381,33 +326,24 @@ def personnel_delete(request, id):
             personnel.id,
             ancienne=ancienne,
             nouvelle=None,
-            description=(
-                f"Suppression du personnel "
-                f"{nom_personnel}"
-            )
+            description=(f"Suppression du personnel " f"{nom_personnel}"),
         )
 
         personnel.delete()
 
         messages.success(
-            request,
-            f"Le personnel « {nom_personnel} » "
-            "a été supprimé avec succès."
+            request, f"Le personnel « {nom_personnel} » " "a été supprimé avec succès."
         )
 
-        return redirect(
-            "personnel:personnel_list"
-        )
+        return redirect("personnel:personnel_list")
 
     return render(
         request,
         "personnel/confirm_delete.html",
         {
             "personnel": personnel,
-        }
+        },
     )
-
-
 
 
 # ============================================================
@@ -449,6 +385,7 @@ def h_personnel_list(request):
         context,
     )
 
+
 # ============================================================
 # DÉTAIL D'UN PERSONNEL DE L'ENTREPRISE H
 # ============================================================
@@ -464,6 +401,8 @@ def h_personnel_detail(request, pk):
         "personnel/h_detail.html",
         {"personnel": personnel},
     )
+
+
 # ============================================================
 # AJOUT D'UN PERSONNEL DE L'ENTREPRISE H
 # ============================================================
@@ -551,6 +490,8 @@ def h_personnel_update(request, id):
             "action": "Enregistrer les modifications",
         },
     )
+
+
 # ============================================================
 # SUPPRESSION D'UN PERSONNEL DE L'ENTREPRISE H
 # POST UNIQUEMENT

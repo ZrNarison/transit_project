@@ -1,4 +1,5 @@
 from django.urls import path
+
 from . import views
 
 app_name = "salaire"
@@ -27,7 +28,6 @@ urlpatterns = [
         views.salaire_delete,
         name="salaire_delete",
     ),
-
     # ============================================================
     # ENTREPRISE H
     # ============================================================

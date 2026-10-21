@@ -1,7 +1,8 @@
 from django.shortcuts import render
 
-from .models import Log, H_Log
-from users.decorators import login_required_projet, h_role_required
+from users.decorators import h_role_required, login_required_projet
+
+from .models import H_Log, Log
 
 
 # ============================================================

@@ -6,13 +6,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('depense', '0010_alter_depense_options_remove_depense_depot'),
+        ("depense", "0010_alter_depense_options_remove_depense_depot"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='depense',
-            name='titre',
-            field=models.CharField(choices=[('Sakafo', 'Sakafo'), ('Docker', 'Docker'), ('Divers', 'Divers'), ('Triage', 'Triage')], max_length=50),
+            model_name="depense",
+            name="titre",
+            field=models.CharField(
+                choices=[
+                    ("Sakafo", "Sakafo"),
+                    ("Docker", "Docker"),
+                    ("Divers", "Divers"),
+                    ("Triage", "Triage"),
+                ],
+                max_length=50,
+            ),
         ),
     ]

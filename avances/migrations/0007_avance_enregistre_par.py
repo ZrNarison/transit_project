@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('avances', '0006_avance_distribution'),
-        ('users', '0005_remove_appuser_categorieuser_appuser_role_and_more'),
+        ("avances", "0006_avance_distribution"),
+        ("users", "0005_remove_appuser_categorieuser_appuser_role_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='avance',
-            name='enregistre_par',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='avances_enregistrees', to='users.appuser'),
+            model_name="avance",
+            name="enregistre_par",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="avances_enregistrees",
+                to="users.appuser",
+            ),
         ),
     ]

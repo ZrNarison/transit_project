@@ -7,31 +7,52 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projet', '0026_remove_achatmateriauprojet_numero_commande'),
+        ("projet", "0026_remove_achatmateriauprojet_numero_commande"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='receptionmateriauprojet',
-            name='achat',
+            model_name="receptionmateriauprojet",
+            name="achat",
         ),
         migrations.RemoveField(
-            model_name='receptionmateriauprojet',
-            name='destination',
+            model_name="receptionmateriauprojet",
+            name="destination",
         ),
         migrations.AlterField(
-            model_name='consommationmateriauprojet',
-            name='reception_directe',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='consommations_directes', to='projet.receptionmateriauprojet', verbose_name='Réception directe'),
+            model_name="consommationmateriauprojet",
+            name="reception_directe",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="consommations_directes",
+                to="projet.receptionmateriauprojet",
+                verbose_name="Réception directe",
+            ),
         ),
         migrations.AlterField(
-            model_name='receptionmateriauprojet',
-            name='point',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='receptions_materiaux_projet', to='projet.pointprojet', verbose_name='Point de réception / livraison'),
+            model_name="receptionmateriauprojet",
+            name="point",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="receptions_materiaux_projet",
+                to="projet.pointprojet",
+                verbose_name="Point de réception / livraison",
+            ),
         ),
         migrations.AlterField(
-            model_name='retourmateriauprojet',
-            name='reception_directe',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='retours_directs', to='projet.receptionmateriauprojet', verbose_name='Réception directe'),
+            model_name="retourmateriauprojet",
+            name="reception_directe",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="retours_directs",
+                to="projet.receptionmateriauprojet",
+                verbose_name="Réception directe",
+            ),
         ),
     ]

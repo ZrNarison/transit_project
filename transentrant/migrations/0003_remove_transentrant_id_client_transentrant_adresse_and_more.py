@@ -6,22 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('transentrant', '0002_rename_numveh_ent_transentrant_num_vehicule_and_more'),
+        ("transentrant", "0002_rename_numveh_ent_transentrant_num_vehicule_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='transentrant',
-            name='id_client',
+            model_name="transentrant",
+            name="id_client",
         ),
         migrations.AddField(
-            model_name='transentrant',
-            name='adresse',
+            model_name="transentrant",
+            name="adresse",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='transentrant',
-            name='cin',
+            model_name="transentrant",
+            name="cin",
             field=models.CharField(default=0, max_length=12),
             preserve_default=False,
         ),

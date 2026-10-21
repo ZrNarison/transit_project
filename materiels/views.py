@@ -5,15 +5,15 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.utils import enregistrer_action
-
-from .forms import MaterielsForm, H_MaterielsForm
-from .models import Materiels, H_Materiels
 from users.models import AppUser, H_AppUser
 
+from .forms import H_MaterielsForm, MaterielsForm
+from .models import H_Materiels, Materiels
 
 # ================================================================
 # UTILITAIRES
 # ================================================================
+
 
 def valeur_audit(valeur):
     """
@@ -36,14 +36,8 @@ def materiel_audit_data(materiel):
         "nom": materiel.nom,
         "type": materiel.typeMat,
         "categorie": materiel.catMat,
-        "stock_initial": valeur_audit(
-            materiel.stock_initial
-        ),
-        "photo": (
-            materiel.photo.name
-            if materiel.photo
-            else None
-        ),
+        "stock_initial": valeur_audit(materiel.stock_initial),
+        "photo": (materiel.photo.name if materiel.photo else None),
     }
 
 
@@ -68,8 +62,7 @@ def groupe_materiel_queryset(nom, typeMat, catMat):
     La comparaison est insensible à la casse.
     """
     return (
-        Materiels.objects
-        .filter(
+        Materiels.objects.filter(
             nom__iexact=(nom or "").strip(),
             typeMat__iexact=(typeMat or "").strip(),
             catMat__iexact=(catMat or "").strip(),
@@ -86,6 +79,7 @@ def groupe_materiel_queryset(nom, typeMat, catMat):
 # CALCUL STOCK D'UN MATERIEL
 # ================================================================
 
+
 def calcul_stock_materiel(materiel):
     """
     Calcule le stock d'un matériel individuel.
@@ -98,30 +92,17 @@ def calcul_stock_materiel(materiel):
             + Entrées
     """
 
-    stock_initial = (
-        materiel.stock_initial
-        or Decimal("0")
-    )
+    stock_initial = materiel.stock_initial or Decimal("0")
 
-    stock_sortie = (
-        materiel.sorties.aggregate(
-            total=Sum("Nb_MatSort")
-        )["total"]
-        or Decimal("0")
-    )
+    stock_sortie = materiel.sorties.aggregate(total=Sum("Nb_MatSort"))[
+        "total"
+    ] or Decimal("0")
 
-    stock_entree = (
-        materiel.sorties.aggregate(
-            total=Sum("entrees__Nb_Entre")
-        )["total"]
-        or Decimal("0")
-    )
+    stock_entree = materiel.sorties.aggregate(total=Sum("entrees__Nb_Entre"))[
+        "total"
+    ] or Decimal("0")
 
-    stock_restant = (
-        stock_initial
-        - stock_sortie
-        + stock_entree
-    )
+    stock_restant = stock_initial - stock_sortie + stock_entree
 
     return {
         "stock_initial": stock_initial,
@@ -134,6 +115,7 @@ def calcul_stock_materiel(materiel):
 # ================================================================
 # CALCUL STOCK D'UN GROUPE
 # ================================================================
+
 
 def calcul_stock_groupe(materiels):
     """
@@ -158,26 +140,13 @@ def calcul_stock_groupe(materiels):
 
     for materiel in materiels:
 
-        stock_initial += (
-            materiel.stock_initial
-            or Decimal("0")
-        )
+        stock_initial += materiel.stock_initial or Decimal("0")
 
-        stock_sortie += (
-            materiel.stock_sorti()
-            or Decimal("0")
-        )
+        stock_sortie += materiel.stock_sorti() or Decimal("0")
 
-        stock_entree += (
-            materiel.stock_entre()
-            or Decimal("0")
-        )
+        stock_entree += materiel.stock_entre() or Decimal("0")
 
-    stock_restant = (
-        stock_initial
-        - stock_sortie
-        + stock_entree
-    )
+    stock_restant = stock_initial - stock_sortie + stock_entree
 
     return {
         "stock_initial": stock_initial,
@@ -190,6 +159,7 @@ def calcul_stock_groupe(materiels):
 # ================================================================
 # VERIFICATION ROLE
 # ================================================================
+
 
 def role_autorise(request, roles):
     """
@@ -214,6 +184,7 @@ def role_autorise(request, roles):
 # ================================================================
 # VISIBILITE SELON LE ROLE
 # ================================================================
+
 
 def materiel_visible_pour_role(request, queryset):
     """
@@ -248,18 +219,12 @@ def materiel_visible_pour_role(request, queryset):
         return queryset
 
     if role == "UserEntreprise":
-        return queryset.exclude(
-            catMat__iexact="Mica"
-        )
+        return queryset.exclude(catMat__iexact="Mica")
 
     if role == "UserMica":
-        return queryset.filter(
-            catMat__iexact="Mica"
-        )
+        return queryset.filter(catMat__iexact="Mica")
 
-    return queryset.exclude(
-        catMat__iexact="Mica"
-    )
+    return queryset.exclude(catMat__iexact="Mica")
 
 
 # ================================================================
@@ -279,8 +244,7 @@ def materiels_list(request):
     """
 
     queryset = (
-        Materiels.objects
-        .all()
+        Materiels.objects.all()
         .prefetch_related(
             "sorties",
             "sorties__entrees",
@@ -302,28 +266,19 @@ def materiels_list(request):
     catMat = request.GET.get("catMat", "").strip()
 
     if nom:
-        queryset = queryset.filter(
-            nom__icontains=nom
-        )
+        queryset = queryset.filter(nom__icontains=nom)
 
     if typeMat:
-        queryset = queryset.filter(
-            typeMat__icontains=typeMat
-        )
+        queryset = queryset.filter(typeMat__icontains=typeMat)
 
     if catMat:
-        queryset = queryset.filter(
-            catMat__icontains=catMat
-        )
+        queryset = queryset.filter(catMat__icontains=catMat)
 
     # ============================================================
     # RESTRICTION PAR ROLE
     # ============================================================
 
-    queryset = materiel_visible_pour_role(
-        request,
-        queryset
-    )
+    queryset = materiel_visible_pour_role(request, queryset)
 
     # ============================================================
     # NOMBRE TOTAL D'ENREGISTREMENTS
@@ -348,28 +303,13 @@ def materiels_list(request):
         if cle not in groupes:
 
             groupes[cle] = {
-                "nom": (
-                    materiel.nom or ""
-                ).strip(),
-
-                "typeMat": (
-                    materiel.typeMat or ""
-                ).strip(),
-
-                "catMat": (
-                    materiel.catMat or ""
-                ).strip(),
-
-                "photo": (
-                    materiel.photo
-                    if materiel.photo
-                    else None
-                ),
-
+                "nom": (materiel.nom or "").strip(),
+                "typeMat": (materiel.typeMat or "").strip(),
+                "catMat": (materiel.catMat or "").strip(),
+                "photo": (materiel.photo if materiel.photo else None),
                 "stock_initial": Decimal("0"),
                 "stock_sorti": Decimal("0"),
                 "stock_entre": Decimal("0"),
-
                 # Nombre de lignes réelles
                 "nombre_enregistrements": 0,
             }
@@ -384,28 +324,19 @@ def materiels_list(request):
         # STOCK INITIAL
         # ========================================================
 
-        groupes[cle]["stock_initial"] += (
-            materiel.stock_initial
-            or Decimal("0")
-        )
+        groupes[cle]["stock_initial"] += materiel.stock_initial or Decimal("0")
 
         # ========================================================
         # SORTIES
         # ========================================================
 
-        groupes[cle]["stock_sorti"] += (
-            materiel.stock_sorti()
-            or Decimal("0")
-        )
+        groupes[cle]["stock_sorti"] += materiel.stock_sorti() or Decimal("0")
 
         # ========================================================
         # ENTREES
         # ========================================================
 
-        groupes[cle]["stock_entre"] += (
-            materiel.stock_entre()
-            or Decimal("0")
-        )
+        groupes[cle]["stock_entre"] += materiel.stock_entre() or Decimal("0")
 
     # ============================================================
     # LISTE FINALE DES GROUPES
@@ -416,9 +347,7 @@ def materiels_list(request):
     for cle, data in groupes.items():
 
         data["stock_restant"] = (
-            data["stock_initial"]
-            - data["stock_sorti"]
-            + data["stock_entre"]
+            data["stock_initial"] - data["stock_sorti"] + data["stock_entre"]
         )
 
         materiels.append(data)
@@ -441,37 +370,13 @@ def materiels_list(request):
 
     total_groupes = len(materiels)
 
-    total_stock_initial = sum(
-        (
-            m["stock_initial"]
-            for m in materiels
-        ),
-        Decimal("0")
-    )
+    total_stock_initial = sum((m["stock_initial"] for m in materiels), Decimal("0"))
 
-    total_sorties = sum(
-        (
-            m["stock_sorti"]
-            for m in materiels
-        ),
-        Decimal("0")
-    )
+    total_sorties = sum((m["stock_sorti"] for m in materiels), Decimal("0"))
 
-    total_entrees = sum(
-        (
-            m["stock_entre"]
-            for m in materiels
-        ),
-        Decimal("0")
-    )
+    total_entrees = sum((m["stock_entre"] for m in materiels), Decimal("0"))
 
-    total_stock_restant = sum(
-        (
-            m["stock_restant"]
-            for m in materiels
-        ),
-        Decimal("0")
-    )
+    total_stock_restant = sum((m["stock_restant"] for m in materiels), Decimal("0"))
 
     # ============================================================
     # AFFICHAGE
@@ -482,24 +387,20 @@ def materiels_list(request):
         "materiels/list.html",
         {
             "materiels": materiels,
-
             # Filtres
             "nom": nom,
             "typeMat": typeMat,
             "catMat": catMat,
-
             # Role
             "role": request.session.get("role"),
-
             # Totaux
             "total_groupes": total_groupes,
             "total_enregistrements": total_enregistrements,
-
             "total_stock_initial": total_stock_initial,
             "total_sorties": total_sorties,
             "total_entrees": total_entrees,
             "total_stock_restant": total_stock_restant,
-        }
+        },
     )
 
 
@@ -507,12 +408,8 @@ def materiels_list(request):
 # DETAIL D'UN GROUPE
 # ================================================================
 
-def materiels_mdetail(
-    request,
-    nom,
-    typeMat,
-    catMat
-):
+
+def materiels_mdetail(request, nom, typeMat, catMat):
     """
     Affiche le détail complet d'un groupe de matériels.
 
@@ -523,47 +420,33 @@ def materiels_mdetail(
     affiche tous les enregistrements du groupe.
     """
 
-    materiels = groupe_materiel_queryset(
-        nom,
-        typeMat,
-        catMat
-    )
+    materiels = groupe_materiel_queryset(nom, typeMat, catMat)
 
     # ============================================================
     # RESTRICTION ROLE
     # ============================================================
 
-    materiels = materiel_visible_pour_role(
-        request,
-        materiels
-    )
+    materiels = materiel_visible_pour_role(request, materiels)
 
     if not materiels.exists():
 
         messages.error(
-            request,
-            "Ce matériel n'existe pas ou vous n'avez pas accès à ce matériel."
+            request, "Ce matériel n'existe pas ou vous n'avez pas accès à ce matériel."
         )
 
-        return redirect(
-            "materiels:materiels_list"
-        )
+        return redirect("materiels:materiels_list")
 
     # ============================================================
     # LISTE DES MATERIELS
     # ============================================================
 
-    materiels_list_data = list(
-        materiels
-    )
+    materiels_list_data = list(materiels)
 
     # ============================================================
     # STOCK GLOBAL
     # ============================================================
 
-    stocks = calcul_stock_groupe(
-        materiels_list_data
-    )
+    stocks = calcul_stock_groupe(materiels_list_data)
 
     # ============================================================
     # STOCK INDIVIDUEL
@@ -573,25 +456,15 @@ def materiels_mdetail(
 
     for materiel in materiels_list_data:
 
-        stock = calcul_stock_materiel(
-            materiel
-        )
+        stock = calcul_stock_materiel(materiel)
 
         lignes.append(
             {
                 "materiel": materiel,
-                "stock_initial": stock[
-                    "stock_initial"
-                ],
-                "stock_sorti": stock[
-                    "stock_sorti"
-                ],
-                "stock_entre": stock[
-                    "stock_entre"
-                ],
-                "stock_restant": stock[
-                    "stock_restant"
-                ],
+                "stock_initial": stock["stock_initial"],
+                "stock_sorti": stock["stock_sorti"],
+                "stock_entre": stock["stock_entre"],
+                "stock_restant": stock["stock_restant"],
             }
         )
 
@@ -606,30 +479,14 @@ def materiels_mdetail(
             "nom": nom,
             "typeMat": typeMat,
             "catMat": catMat,
-
             "materiels": materiels_list_data,
             "lignes": lignes,
-
-            "total_stock_initial": stocks[
-                "stock_initial"
-            ],
-
-            "total_sorties": stocks[
-                "stock_sorti"
-            ],
-
-            "total_entrees": stocks[
-                "stock_entre"
-            ],
-
-            "stock_restant": stocks[
-                "stock_restant"
-            ],
-
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "total_stock_initial": stocks["stock_initial"],
+            "total_sorties": stocks["stock_sorti"],
+            "total_entrees": stocks["stock_entre"],
+            "stock_restant": stocks["stock_restant"],
+            "role": request.session.get("role"),
+        },
     )
 
 
@@ -637,12 +494,8 @@ def materiels_mdetail(
 # DETAIL MATERIEL
 # ================================================================
 
-def materiels_detail(
-    request,
-    nom,
-    typeMat,
-    catMat
-):
+
+def materiels_detail(request, nom, typeMat, catMat):
     """
     Affiche le détail classique d'un groupe.
 
@@ -650,47 +503,31 @@ def materiels_detail(
     comme objet principal.
     """
 
-    materiels = groupe_materiel_queryset(
-        nom,
-        typeMat,
-        catMat
-    )
+    materiels = groupe_materiel_queryset(nom, typeMat, catMat)
 
     # ============================================================
     # RESTRICTION ROLE
     # ============================================================
 
-    materiels = materiel_visible_pour_role(
-        request,
-        materiels
-    )
+    materiels = materiel_visible_pour_role(request, materiels)
 
     if not materiels.exists():
 
-        messages.error(
-            request,
-            "Matériel introuvable ou accès non autorisé."
-        )
+        messages.error(request, "Matériel introuvable ou accès non autorisé.")
 
-        return redirect(
-            "materiels:materiels_list"
-        )
+        return redirect("materiels:materiels_list")
 
     # ============================================================
     # LISTE
     # ============================================================
 
-    materiels_list_data = list(
-        materiels
-    )
+    materiels_list_data = list(materiels)
 
     # ============================================================
     # STOCK GLOBAL
     # ============================================================
 
-    stocks = calcul_stock_groupe(
-        materiels_list_data
-    )
+    stocks = calcul_stock_groupe(materiels_list_data)
 
     # ============================================================
     # PREMIER MATERIEL
@@ -708,31 +545,15 @@ def materiels_detail(
         {
             "materiel": materiel,
             "materiels": materiels_list_data,
-
             "nom": nom,
             "typeMat": typeMat,
             "catMat": catMat,
-
-            "stock_initial": stocks[
-                "stock_initial"
-            ],
-
-            "stock_sorti": stocks[
-                "stock_sorti"
-            ],
-
-            "stock_entre": stocks[
-                "stock_entre"
-            ],
-
-            "stock_restant": stocks[
-                "stock_restant"
-            ],
-
-            "role": request.session.get(
-                "role"
-            ),
-        }
+            "stock_initial": stocks["stock_initial"],
+            "stock_sorti": stocks["stock_sorti"],
+            "stock_entre": stocks["stock_entre"],
+            "stock_restant": stocks["stock_restant"],
+            "role": request.session.get("role"),
+        },
     )
 
 
@@ -789,14 +610,9 @@ def materiels_add(request):
     ]
 
     if not role_autorise(request, roles_autorises):
-        messages.error(
-            request,
-            "Vous n'êtes pas autorisé à ajouter un matériel."
-        )
+        messages.error(request, "Vous n'êtes pas autorisé à ajouter un matériel.")
 
-        return redirect(
-            "materiels:materiels_list"
-        )
+        return redirect("materiels:materiels_list")
 
     # ============================================================
     # ROLE CONNECTE
@@ -811,22 +627,14 @@ def materiels_add(request):
     user_id = request.session.get("user_id")
 
     if not user_id:
-        messages.error(
-            request,
-            "Session utilisateur invalide."
-        )
+        messages.error(request, "Session utilisateur invalide.")
 
         return redirect("users:login")
 
     try:
-        utilisateur = AppUser.objects.get(
-            id=user_id
-        )
+        utilisateur = AppUser.objects.get(id=user_id)
     except AppUser.DoesNotExist:
-        messages.error(
-            request,
-            "Utilisateur introuvable."
-        )
+        messages.error(request, "Utilisateur introuvable.")
 
         return redirect("users:login")
 
@@ -836,18 +644,12 @@ def materiels_add(request):
 
     if request.method == "POST":
 
-        form = MaterielsForm(
-            request.POST,
-            request.FILES,
-            role=role
-        )
+        form = MaterielsForm(request.POST, request.FILES, role=role)
 
         if form.is_valid():
 
             # Ne pas sauvegarder immédiatement
-            materiel = form.save(
-                commit=False
-            )
+            materiel = form.save(commit=False)
 
             # ====================================================
             # CATEGORIE AUTOMATIQUE
@@ -884,24 +686,17 @@ def materiels_add(request):
                 "CREATE",
                 "Matériels",
                 materiel.id,
-                nouvelle=materiel_audit_data(
-                    materiel
-                ),
-                description="Création d'un matériel"
+                nouvelle=materiel_audit_data(materiel),
+                description="Création d'un matériel",
             )
 
             # ====================================================
             # MESSAGE
             # ====================================================
 
-            messages.success(
-                request,
-                "Matériel ajouté avec succès."
-            )
+            messages.success(request, "Matériel ajouté avec succès.")
 
-            return redirect(
-                "materiels:materiels_list"
-            )
+            return redirect("materiels:materiels_list")
 
     # ============================================================
     # GET
@@ -909,9 +704,7 @@ def materiels_add(request):
 
     else:
 
-        form = MaterielsForm(
-            role=role
-        )
+        form = MaterielsForm(role=role)
 
         # ========================================================
         # VALEUR PAR DEFAUT
@@ -919,15 +712,11 @@ def materiels_add(request):
 
         if role == "UserEntreprise":
 
-            form.fields[
-                "catMat"
-            ].initial = "Chantier"
+            form.fields["catMat"].initial = "Chantier"
 
         elif role == "UserMica":
 
-            form.fields[
-                "catMat"
-            ].initial = "Mica"
+            form.fields["catMat"].initial = "Mica"
 
     # ============================================================
     # AFFICHAGE
@@ -940,12 +729,14 @@ def materiels_add(request):
             "form": form,
             "titre": "Nouveau matériel",
             "role": role,
-        }
+        },
     )
+
 
 # ================================================================
 # MODIFICATION MATERIEL
 # ================================================================
+
 
 def materiels_edit(request, pk):
     """
@@ -963,10 +754,7 @@ def materiels_edit(request, pk):
     user_id = request.session.get("user_id")
 
     if not user_id:
-        messages.error(
-            request,
-            "Votre session a expiré. Veuillez vous reconnecter."
-        )
+        messages.error(request, "Votre session a expiré. Veuillez vous reconnecter.")
 
         return redirect("users:login")
 
@@ -975,16 +763,11 @@ def materiels_edit(request, pk):
     # ============================================================
 
     try:
-        utilisateur = AppUser.objects.get(
-            id=user_id
-        )
+        utilisateur = AppUser.objects.get(id=user_id)
 
     except AppUser.DoesNotExist:
 
-        messages.error(
-            request,
-            "Utilisateur introuvable."
-        )
+        messages.error(request, "Utilisateur introuvable.")
 
         return redirect("users:login")
 
@@ -993,20 +776,13 @@ def materiels_edit(request, pk):
     # ============================================================
 
     try:
-        materiel = Materiels.objects.get(
-            id=pk
-        )
+        materiel = Materiels.objects.get(id=pk)
 
     except Materiels.DoesNotExist:
 
-        messages.error(
-            request,
-            "Matériel introuvable."
-        )
+        messages.error(request, "Matériel introuvable.")
 
-        return redirect(
-            "materiels:materiels_list"
-        )
+        return redirect("materiels:materiels_list")
 
     # ============================================================
     # VERIFICATION ENREGISTREUR
@@ -1017,12 +793,10 @@ def materiels_edit(request, pk):
         messages.error(
             request,
             "Vous n'êtes pas l'enregistreur de ce matériel. "
-            "Seul l'enregistreur peut le modifier."
+            "Seul l'enregistreur peut le modifier.",
         )
 
-        return redirect(
-            "materiels:materiels_list"
-        )
+        return redirect("materiels:materiels_list")
 
     # ============================================================
     # MODIFICATION
@@ -1030,22 +804,15 @@ def materiels_edit(request, pk):
 
     if request.method == "POST":
 
-        ancienne_valeur = materiel_audit_data(
-            materiel
-        )
+        ancienne_valeur = materiel_audit_data(materiel)
 
         form = MaterielsForm(
-            request.POST,
-            request.FILES,
-            instance=materiel,
-            role=utilisateur.role
+            request.POST, request.FILES, instance=materiel, role=utilisateur.role
         )
 
         if form.is_valid():
 
-            materiel = form.save(
-                commit=False
-            )
+            materiel = form.save(commit=False)
 
             # ====================================================
             # CATEGORIE AUTOMATIQUE
@@ -1083,26 +850,21 @@ def materiels_edit(request, pk):
                 "Matériels",
                 materiel.id,
                 ancienne=ancienne_valeur,
-                nouvelle=materiel_audit_data(
-                    materiel
-                ),
-                description="Modification d'un matériel"
+                nouvelle=materiel_audit_data(materiel),
+                description="Modification d'un matériel",
             )
 
             # ====================================================
             # MESSAGE
             # ====================================================
 
-            messages.success(
-                request,
-                "Matériel modifié avec succès."
-            )
+            messages.success(request, "Matériel modifié avec succès.")
 
             return redirect(
                 "materiels:materiels_detail",
                 materiel.nom,
                 materiel.typeMat,
-                materiel.catMat
+                materiel.catMat,
             )
 
     # ============================================================
@@ -1111,10 +873,7 @@ def materiels_edit(request, pk):
 
     else:
 
-        form = MaterielsForm(
-            instance=materiel,
-            role=utilisateur.role
-        )
+        form = MaterielsForm(instance=materiel, role=utilisateur.role)
 
     # ============================================================
     # AFFICHAGE
@@ -1128,19 +887,16 @@ def materiels_edit(request, pk):
             "titre": "Modifier le matériel",
             "materiel": materiel,
             "role": utilisateur.role,
-        }
+        },
     )
-
 
 
 # ================================================================
 # SUPPRESSION MATERIEL
 # ================================================================
 
-def materiels_delete(
-    request,
-    id
-):
+
+def materiels_delete(request, id):
     """
     Suppression définitive d'un matériel.
 
@@ -1159,10 +915,7 @@ def materiels_delete(
     # RECUPERATION
     # ============================================================
 
-    materiel = get_object_or_404(
-        Materiels,
-        id=id
-    )
+    materiel = get_object_or_404(Materiels, id=id)
 
     # ============================================================
     # AUTORISATION
@@ -1174,27 +927,17 @@ def materiels_delete(
         "Superviseur",
     ]
 
-    if not role_autorise(
-        request,
-        roles_autorises
-    ):
+    if not role_autorise(request, roles_autorises):
 
-        messages.error(
-            request,
-            "Vous n'êtes pas autorisé à supprimer ce matériel."
-        )
+        messages.error(request, "Vous n'êtes pas autorisé à supprimer ce matériel.")
 
-        return redirect(
-            "materiels:materiels_list"
-        )
+        return redirect("materiels:materiels_list")
 
     # ============================================================
     # ANCIENNES VALEURS
     # ============================================================
 
-    ancienne = materiel_audit_data(
-        materiel
-    )
+    ancienne = materiel_audit_data(materiel)
 
     # ============================================================
     # POST UNIQUEMENT
@@ -1218,11 +961,8 @@ def materiels_delete(
             materiel_id,
             ancienne=ancienne,
             description=(
-                "Suppression d'un matériel : "
-                f"{nom} | "
-                f"{type_mat} | "
-                f"{cat_mat}"
-            )
+                "Suppression d'un matériel : " f"{nom} | " f"{type_mat} | " f"{cat_mat}"
+            ),
         )
 
         # ========================================================
@@ -1231,36 +971,23 @@ def materiels_delete(
 
         materiel.delete()
 
-        messages.success(
-            request,
-            "Matériel supprimé avec succès."
-        )
+        messages.success(request, "Matériel supprimé avec succès.")
 
-        return redirect(
-            "materiels:materiels_list"
-        )
+        return redirect("materiels:materiels_list")
 
     # ============================================================
     # GET -> PAGE CONFIRMATION
     # ============================================================
 
-    return render(
-        request,
-        "materiels/confirm_delete.html",
-        {
-            "materiel": materiel
-        }
-    )
+    return render(request, "materiels/confirm_delete.html", {"materiel": materiel})
 
 
 # ================================================================
 # SUPPRIMER UNIQUEMENT LE STOCK INITIAL
 # ================================================================
 
-def supprimer_stock_initial(
-    request,
-    id
-):
+
+def supprimer_stock_initial(request, id):
     """
     Met uniquement le stock initial à zéro.
 
@@ -1281,10 +1008,7 @@ def supprimer_stock_initial(
     # RECUPERATION
     # ============================================================
 
-    materiel = get_object_or_404(
-        Materiels,
-        id=id
-    )
+    materiel = get_object_or_404(Materiels, id=id)
 
     # ============================================================
     # AUTORISATION
@@ -1296,19 +1020,11 @@ def supprimer_stock_initial(
         "Superviseur",
     ]
 
-    if not role_autorise(
-        request,
-        roles_autorises
-    ):
+    if not role_autorise(request, roles_autorises):
 
-        messages.error(
-            request,
-            "Vous n'êtes pas autorisé à modifier le stock initial."
-        )
+        messages.error(request, "Vous n'êtes pas autorisé à modifier le stock initial.")
 
-        return redirect(
-            "materiels:materiels_list"
-        )
+        return redirect("materiels:materiels_list")
 
     # ============================================================
     # POST UNIQUEMENT
@@ -1316,23 +1032,15 @@ def supprimer_stock_initial(
 
     if request.method != "POST":
 
-        messages.error(
-            request,
-            "Action non autorisée."
-        )
+        messages.error(request, "Action non autorisée.")
 
-        return redirect(
-            "materiels:materiels_list"
-        )
+        return redirect("materiels:materiels_list")
 
     # ============================================================
     # ANCIEN STOCK
     # ============================================================
 
-    ancien_stock = (
-        materiel.stock_initial
-        or Decimal("0")
-    )
+    ancien_stock = materiel.stock_initial or Decimal("0")
 
     # ============================================================
     # NOUVEAU STOCK
@@ -1340,11 +1048,7 @@ def supprimer_stock_initial(
 
     materiel.stock_initial = Decimal("0")
 
-    materiel.save(
-        update_fields=[
-            "stock_initial"
-        ]
-    )
+    materiel.save(update_fields=["stock_initial"])
 
     # ============================================================
     # AUDIT
@@ -1355,30 +1059,16 @@ def supprimer_stock_initial(
         "UPDATE",
         "Matériels",
         materiel.id,
-
-        ancienne={
-            "stock_initial": valeur_audit(
-                ancien_stock
-            )
-        },
-
-        nouvelle={
-            "stock_initial": "0"
-        },
-
-        description=(
-            "Suppression du stock initial"
-        )
+        ancienne={"stock_initial": valeur_audit(ancien_stock)},
+        nouvelle={"stock_initial": "0"},
+        description=("Suppression du stock initial"),
     )
 
     # ============================================================
     # MESSAGE
     # ============================================================
 
-    messages.success(
-        request,
-        "Le stock initial a été supprimé."
-    )
+    messages.success(request, "Le stock initial a été supprimé.")
 
     # ============================================================
     # RETOUR DETAIL GROUPE
@@ -1400,6 +1090,7 @@ def supprimer_stock_initial(
 # AUTORISATION ENTREPRISE H
 # ============================================================
 
+
 def h_role_autorise(request, roles):
     """Vérifie le rôle de l'utilisateur connecté à Entreprise H."""
     return request.session.get("h_role") in roles
@@ -1420,9 +1111,12 @@ def h_materiel_audit_data(materiel):
 # LISTE DES MATÉRIELS H
 # ============================================================
 
+
 def h_materiels_list(request):
     if not h_role_autorise(request, ["Dir", "Compta"]):
-        messages.error(request, "Vous n'avez pas accès aux matériels de l'Entreprise H.")
+        messages.error(
+            request, "Vous n'avez pas accès aux matériels de l'Entreprise H."
+        )
         return redirect("users:h_login")
 
     materiels = H_Materiels.objects.all().order_by("nom")
@@ -1441,6 +1135,7 @@ def h_materiels_list(request):
 # ============================================================
 # AJOUTER UN MATÉRIEL H
 # ============================================================
+
 
 def h_materiels_add(request):
     if not h_role_autorise(request, ["Dir", "Compta"]):
@@ -1493,6 +1188,7 @@ def h_materiels_add(request):
 # MODIFIER UN MATÉRIEL H
 # Seul l'enregistreur peut modifier
 # ============================================================
+
 
 def h_materiels_edit(request, pk):
     if not h_role_autorise(request, ["Dir", "Compta"]):
@@ -1559,6 +1255,7 @@ def h_materiels_edit(request, pk):
 # SUPPRIMER UN MATÉRIEL H
 # ============================================================
 
+
 def h_materiels_delete(request, pk):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Vous n'êtes pas autorisé à supprimer ce matériel.")
@@ -1608,6 +1305,7 @@ def h_materiels_delete(request, pk):
 # ENTREPRISE H — GROUPE DE MATÉRIELS
 # ================================================================
 
+
 def h_groupe_materiel_queryset(nom, typeMat, catMat):
     """Récupère les matériels H appartenant au même groupe."""
     return (
@@ -1625,17 +1323,13 @@ def h_calcul_stock_materiel(materiel):
     """Calcule le stock restant d'un matériel H."""
     stock_initial = materiel.stock_initial or Decimal("0")
 
-    stock_sorti = (
-        materiel.sorties.aggregate(
-            total=Sum("Nb_MatSort")
-        )["total"] or Decimal("0")
-    )
+    stock_sorti = materiel.sorties.aggregate(total=Sum("Nb_MatSort"))[
+        "total"
+    ] or Decimal("0")
 
-    stock_entre = (
-        materiel.sorties.aggregate(
-            total=Sum("entrees__Nb_Entre")
-        )["total"] or Decimal("0")
-    )
+    stock_entre = materiel.sorties.aggregate(total=Sum("entrees__Nb_Entre"))[
+        "total"
+    ] or Decimal("0")
 
     return {
         "stock_initial": stock_initial,
@@ -1669,6 +1363,7 @@ def h_calcul_stock_groupe(materiels):
 # ENTREPRISE H — DÉTAIL D'UN GROUPE
 # ================================================================
 
+
 def h_materiels_mdetail(request, nom, typeMat, catMat):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Accès refusé aux matériels de l'Entreprise H.")
@@ -1686,10 +1381,12 @@ def h_materiels_mdetail(request, nom, typeMat, catMat):
 
     for materiel in liste:
         stock = h_calcul_stock_materiel(materiel)
-        lignes.append({
-            "materiel": materiel,
-            **stock,
-        })
+        lignes.append(
+            {
+                "materiel": materiel,
+                **stock,
+            }
+        )
 
     return render(
         request,
@@ -1713,6 +1410,7 @@ def h_materiels_mdetail(request, nom, typeMat, catMat):
 # ================================================================
 # ENTREPRISE H — DÉTAIL CLASSIQUE
 # ================================================================
+
 
 def h_materiels_detail(request, nom, typeMat, catMat):
     if not h_role_autorise(request, ["Dir", "Compta"]):
@@ -1749,6 +1447,7 @@ def h_materiels_detail(request, nom, typeMat, catMat):
 # ================================================================
 # ENTREPRISE H — SUPPRIMER LE STOCK INITIAL D'UN GROUPE
 # ================================================================
+
 
 def h_supprimer_stock_initial(request, nom, typeMat, catMat):
     if not h_role_autorise(request, ["Dir", "Compta"]):

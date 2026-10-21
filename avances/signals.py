@@ -1,13 +1,14 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
-from .models import Avance
 from salaire.views import recalculer_situation_personnel
 
+from .models import Avance
 
 # ============================================================
 # APRÈS CRÉATION OU MODIFICATION D'UNE AVANCE
 # ============================================================
+
 
 @receiver(post_save, sender=Avance)
 def update_salaire_on_avance_save(sender, instance, **kwargs):
@@ -22,14 +23,13 @@ def update_salaire_on_avance_save(sender, instance, **kwargs):
     if not instance.personnel_id:
         return
 
-    recalculer_situation_personnel(
-        instance.personnel
-    )
+    recalculer_situation_personnel(instance.personnel)
 
 
 # ============================================================
 # APRÈS SUPPRESSION D'UNE AVANCE
 # ============================================================
+
 
 @receiver(post_delete, sender=Avance)
 def update_salaire_on_avance_delete(sender, instance, **kwargs):
@@ -41,7 +41,4 @@ def update_salaire_on_avance_delete(sender, instance, **kwargs):
     if not instance.personnel_id:
         return
 
-    recalculer_situation_personnel(
-        instance.personnel
-    )
-
+    recalculer_situation_personnel(instance.personnel)

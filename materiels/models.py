@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from django.db import models
 
 
@@ -10,25 +11,13 @@ class Materiels(models.Model):
 
     catMat = models.CharField(max_length=100)
 
-    photo = models.ImageField(
-        upload_to="images/materiaux/",
-        blank=True,
-        null=True
-    )
+    photo = models.ImageField(upload_to="images/materiaux/", blank=True, null=True)
 
-    stock_initial = models.DecimalField(
-        max_digits=10,
-        decimal_places=0,
-        default=0
-    )
+    stock_initial = models.DecimalField(max_digits=10, decimal_places=0, default=0)
 
     def stock_sorti(self):
         return sum(
-            (
-                s.Nb_MatSort or Decimal("0")
-                for s in self.sorties.all()
-            ),
-            Decimal("0")
+            (s.Nb_MatSort or Decimal("0") for s in self.sorties.all()), Decimal("0")
         )
 
     def stock_entre(self):
@@ -38,23 +27,14 @@ class Materiels(models.Model):
                 for s in self.sorties.all()
                 for e in s.entrees.all()
             ),
-            Decimal("0")
+            Decimal("0"),
         )
 
     def stock_restant(self):
-        return (
-            self.stock_initial
-            - self.stock_sorti()
-            + self.stock_entre()
-        )
+        return self.stock_initial - self.stock_sorti() + self.stock_entre()
 
     def __str__(self):
-        return (
-            f"{self.nom} | "
-            f"{self.typeMat} | "
-            f"{self.catMat}"
-        )
-
+        return f"{self.nom} | " f"{self.typeMat} | " f"{self.catMat}"
 
 
 class H_Materiels(models.Model):
@@ -65,25 +45,13 @@ class H_Materiels(models.Model):
 
     catMat = models.CharField(max_length=100)
 
-    photo = models.ImageField(
-        upload_to="images/materiaux/",
-        blank=True,
-        null=True
-    )
+    photo = models.ImageField(upload_to="images/materiaux/", blank=True, null=True)
 
-    stock_initial = models.DecimalField(
-        max_digits=10,
-        decimal_places=0,
-        default=0
-    )
+    stock_initial = models.DecimalField(max_digits=10, decimal_places=0, default=0)
 
     def stock_sorti(self):
         return sum(
-            (
-                s.Nb_MatSort or Decimal("0")
-                for s in self.sorties.all()
-            ),
-            Decimal("0")
+            (s.Nb_MatSort or Decimal("0") for s in self.sorties.all()), Decimal("0")
         )
 
     def stock_entre(self):
@@ -93,19 +61,11 @@ class H_Materiels(models.Model):
                 for s in self.sorties.all()
                 for e in s.entrees.all()
             ),
-            Decimal("0")
+            Decimal("0"),
         )
 
     def stock_restant(self):
-        return (
-            self.stock_initial
-            - self.stock_sorti()
-            + self.stock_entre()
-        )
+        return self.stock_initial - self.stock_sorti() + self.stock_entre()
 
     def __str__(self):
-        return (
-            f"{self.nom} | "
-            f"{self.typeMat} | "
-            f"{self.catMat}"
-        )
+        return f"{self.nom} | " f"{self.typeMat} | " f"{self.catMat}"

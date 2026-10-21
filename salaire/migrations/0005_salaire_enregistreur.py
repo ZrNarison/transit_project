@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('salaire', '0004_remove_salaire_client_remove_salaire_target_type'),
-        ('users', '0009_alter_appuser_role'),
+        ("salaire", "0004_remove_salaire_client_remove_salaire_target_type"),
+        ("users", "0009_alter_appuser_role"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='salaire',
-            name='enregistreur',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='salaires_enregistres', to='users.appuser'),
+            model_name="salaire",
+            name="enregistreur",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="salaires_enregistres",
+                to="users.appuser",
+            ),
         ),
     ]

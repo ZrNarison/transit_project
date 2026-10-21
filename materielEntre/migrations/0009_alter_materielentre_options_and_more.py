@@ -7,17 +7,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materielEntre', '0008_materielentre_dateenregistreur_and_more'),
+        ("materielEntre", "0008_materielentre_dateenregistreur_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='materielentre',
-            options={'ordering': ['-dateEntre', '-id'], 'verbose_name': 'Entrée de matériel', 'verbose_name_plural': 'Entrées de matériel'},
+            name="materielentre",
+            options={
+                "ordering": ["-dateEntre", "-id"],
+                "verbose_name": "Entrée de matériel",
+                "verbose_name_plural": "Entrées de matériel",
+            },
         ),
         migrations.AlterField(
-            model_name='materielentre',
-            name='dateEntre',
+            model_name="materielentre",
+            name="dateEntre",
             field=models.DateField(default=django.utils.timezone.localdate),
         ),
     ]

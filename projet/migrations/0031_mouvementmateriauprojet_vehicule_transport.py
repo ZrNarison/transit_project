@@ -7,13 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projet', '0030_mouvementmateriauprojet'),
+        ("projet", "0030_mouvementmateriauprojet"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='mouvementmateriauprojet',
-            name='vehicule_transport',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='mouvements_materiaux', to='projet.vehiculeprojet', verbose_name='Véhicule / Engin de transport'),
+            model_name="mouvementmateriauprojet",
+            name="vehicule_transport",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="mouvements_materiaux",
+                to="projet.vehiculeprojet",
+                verbose_name="Véhicule / Engin de transport",
+            ),
         ),
     ]

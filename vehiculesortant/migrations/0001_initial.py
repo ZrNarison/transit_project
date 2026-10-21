@@ -9,30 +9,52 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('users', '0007_alter_appuser_id'),
+        ("users", "0007_alter_appuser_id"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='VehiculeSortant',
+            name="VehiculeSortant",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('chauffeur', models.CharField(max_length=100)),
-                ('cin', models.CharField(max_length=12)),
-                ('num_vehicule', models.CharField(max_length=8)),
-                ('permis', models.CharField(max_length=50)),
-                ('telephone', models.CharField(max_length=10)),
-                ('adresse', models.TextField(blank=True)),
-                ('remorque', models.CharField(blank=True, max_length=50)),
-                ('ticket', models.CharField(blank=True, max_length=50)),
-                ('photo', models.ImageField(blank=True, null=True, upload_to='images/vehicules_sortants/')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='vehicules_sortants', to='users.appuser')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("chauffeur", models.CharField(max_length=100)),
+                ("cin", models.CharField(max_length=12)),
+                ("num_vehicule", models.CharField(max_length=8)),
+                ("permis", models.CharField(max_length=50)),
+                ("telephone", models.CharField(max_length=10)),
+                ("adresse", models.TextField(blank=True)),
+                ("remorque", models.CharField(blank=True, max_length=50)),
+                ("ticket", models.CharField(blank=True, max_length=50)),
+                (
+                    "photo",
+                    models.ImageField(
+                        blank=True, null=True, upload_to="images/vehicules_sortants/"
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="vehicules_sortants",
+                        to="users.appuser",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Véhicule sortant',
-                'verbose_name_plural': 'Véhicules sortants',
-                'ordering': ['-created_at'],
+                "verbose_name": "Véhicule sortant",
+                "verbose_name_plural": "Véhicules sortants",
+                "ordering": ["-created_at"],
             },
         ),
     ]

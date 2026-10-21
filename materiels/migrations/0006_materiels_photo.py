@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('materiels', '0005_alter_materiels_options_remove_materiels_datedepot'),
+        ("materiels", "0005_alter_materiels_options_remove_materiels_datedepot"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='materiels',
-            name='photo',
-            field=models.ImageField(blank=True, null=True, upload_to='images/materiaux/'),
+            model_name="materiels",
+            name="photo",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="images/materiaux/"
+            ),
         ),
     ]

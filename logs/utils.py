@@ -1,31 +1,15 @@
-from .models import Log, H_Log
+from .models import H_Log, Log
 
 
-def enregistrer_log(
-    message,
-    level="INFO",
-    module="",
-    ip_address=None
-):
+def enregistrer_log(message, level="INFO", module="", ip_address=None):
 
     Log.objects.create(
-        message=message,
-        level=level,
-        module=module,
-        ip_address=ip_address
+        message=message, level=level, module=module, ip_address=ip_address
     )
 
 
-def h_enregistrer_log(
-    message,
-    level="INFO",
-    module="",
-    ip_address=None
-):
+def h_enregistrer_log(message, level="INFO", module="", ip_address=None):
 
     Log.objects.create(
-        message=message,
-        level=level,
-        module=module,
-        ip_address=ip_address
+        message=message, level=level, module=module, ip_address=ip_address
     )

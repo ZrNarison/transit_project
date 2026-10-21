@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('clients', '0004_remove_client_telephone'),
+        ("clients", "0004_remove_client_telephone"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='client',
-            name='contact',
+            model_name="client",
+            name="contact",
             field=models.CharField(blank=True, max_length=150),
         ),
         migrations.AlterField(
-            model_name='client',
-            name='date_naissance',
+            model_name="client",
+            name="date_naissance",
             field=models.DateField(blank=True, null=True),
         ),
     ]

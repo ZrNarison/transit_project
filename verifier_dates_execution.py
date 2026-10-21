@@ -1,5 +1,5 @@
-
 import os
+
 import django
 
 os.environ.setdefault(
@@ -8,7 +8,7 @@ os.environ.setdefault(
 )
 django.setup()
 
-from projet.models import PersonnelExecutionProjet, EquipeProjet
+from projet.models import EquipeProjet, PersonnelExecutionProjet
 
 for execution in PersonnelExecutionProjet.objects.filter(
     type_class__in=["CHEF_EQUIPE", "MINIER"]
@@ -27,6 +27,7 @@ for execution in PersonnelExecutionProjet.objects.filter(
     )
 
     print("Affectations existantes :", affectations.count())
-    print("Affectations :", list(
-        affectations.values("id", "fonction", "date_debut", "date_fin")
-    ))
+    print(
+        "Affectations :",
+        list(affectations.values("id", "fonction", "date_debut", "date_fin")),
+    )

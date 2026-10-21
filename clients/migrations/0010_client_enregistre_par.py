@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('clients', '0009_alter_client_id'),
-        ('users', '0009_alter_appuser_role'),
+        ("clients", "0009_alter_client_id"),
+        ("users", "0009_alter_appuser_role"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='client',
-            name='enregistre_par',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='clients_enregistres', to='users.appuser'),
+            model_name="client",
+            name="enregistre_par",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="clients_enregistres",
+                to="users.appuser",
+            ),
         ),
     ]

@@ -15,7 +15,6 @@ class DepotSocForm(forms.ModelForm):
         ]
 
         widgets = {
-
             "montant": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -24,13 +23,12 @@ class DepotSocForm(forms.ModelForm):
                     "step": "0.01",
                 }
             ),
-
             "date": forms.DateInput(
                 format="%Y-%m-%d",
                 attrs={
                     "class": "form-control",
                     "type": "date",
-                }
+                },
             ),
         }
 
@@ -43,22 +41,16 @@ class DepotSocForm(forms.ModelForm):
 
         super().__init__(*args, **kwargs)
 
-        self.fields["date"].input_formats = [
-            "%Y-%m-%d"
-        ]
+        self.fields["date"].input_formats = ["%Y-%m-%d"]
 
     def clean_montant(self):
 
         montant = self.cleaned_data.get("montant")
 
         if montant is None:
-            raise forms.ValidationError(
-                "Le montant est obligatoire."
-            )
+            raise forms.ValidationError("Le montant est obligatoire.")
 
         if montant <= 0:
-            raise forms.ValidationError(
-                "Le montant doit être supérieur à zéro."
-            )
+            raise forms.ValidationError("Le montant doit être supérieur à zéro.")
 
         return montant
