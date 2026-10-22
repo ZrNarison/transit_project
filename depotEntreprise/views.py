@@ -1,134 +1,168 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.dateparse import parse_date
 
 from audit.utils import enregistrer_action
-from users.models import AppUser
+from users.models import AppUser, H_AppUser
 
-from .forms import DepotSocForm
-from .models import DepotSoc
+from .forms import DepotSocForm, H_DepotSocForm
+from .models import DepotSoc, H_DepotSoc
+
 
 # ============================================================
-# UTILISATEUR CONNECTÉ
+# UTILISATEUR CONNECTÉ GALAXY
 # ============================================================
-
-
 def get_current_user(request):
-
     user_id = request.session.get("user_id")
 
     if not user_id:
         return None
 
     try:
-
-        return AppUser.objects.get(id=int(user_id))
-
-    except (
-        AppUser.DoesNotExist,
-        ValueError,
-        TypeError,
-    ):
-
+        return AppUser.objects.filter(pk=int(user_id)).first()
+    except (ValueError, TypeError):
         return None
 
 
 # ============================================================
-# VÉRIFICATION SESSION
+# VÉRIFICATION SESSION GALAXY
 # ============================================================
-
-
 def check_session(request):
-
     user = get_current_user(request)
 
     if not user:
-
-        messages.error(request, "Votre session a expiré. Veuillez vous reconnecter.")
-
-        return None
+        messages.error(
+            request,
+            "Votre session a expiré. Veuillez vous reconnecter.",
+        )
 
     return user
 
 
 # ============================================================
-# VALEURS POUR AUDIT
+# UTILISATEUR CONNECTÉ MCCR
 # ============================================================
+def _h_depot_soc_user(request):
+    h_user_id = request.session.get("h_user_id")
+    h_role = request.session.get("h_role")
+
+    if not h_user_id or not h_role:
+        return None
+
+    try:
+        return H_AppUser.objects.filter(pk=int(h_user_id)).first()
+    except (ValueError, TypeError):
+        return None
 
 
+# ============================================================
+# VALEURS POUR AUDIT GALAXY
+# ============================================================
 def depot_soc_values(depot):
-
     return {
+        "id": depot.pk,
         "montant": str(depot.montant),
-        "date": str(depot.date),
-        "enregistreur": (depot.enregistreur.username if depot.enregistreur else None),
+        "date": depot.date.isoformat() if depot.date else None,
+        "enregistreur": (
+            str(depot.enregistreur)
+            if depot.enregistreur_id
+            else None
+        ),
     }
 
 
 # ============================================================
-# LISTE DES DÉPÔTS SOCIÉTÉ
+# VALEURS POUR AUDIT MCCR
 # ============================================================
+def h_depot_soc_values(depot):
+    return {
+        "id": depot.pk,
+        "montant": str(depot.montant),
+        "date": depot.date.isoformat() if depot.date else None,
+        "enregistreur": (
+            str(depot.enregistreur)
+            if depot.enregistreur_id
+            else None
+        ),
+    }
 
 
+# ============================================================
+# OUTIL : FILTRER LES DÉPÔTS PAR MONTANT ET PAR DATE
+# ============================================================
+def _filtrer_depots(request, queryset):
+    montant = request.GET.get("montant", "").strip()
+    date = request.GET.get("date", "").strip()
+
+    if montant:
+        try:
+            montant_decimal = Decimal(montant.replace(",", "."))
+
+            if not montant_decimal.is_finite():
+                raise InvalidOperation
+
+            queryset = queryset.filter(montant=montant_decimal)
+
+        except (InvalidOperation, ValueError):
+            messages.warning(
+                request,
+                "Le montant saisi dans le filtre est invalide.",
+            )
+
+    if date:
+        date_valide = parse_date(date)
+
+        if date_valide:
+            queryset = queryset.filter(date=date_valide)
+        else:
+            messages.warning(
+                request,
+                "La date saisie dans le filtre est invalide.",
+            )
+
+    return queryset, montant, date
+
+
+# ============================================================
+# OUTIL : PAGINATION ET PARAMÈTRES DE FILTRE
+# ============================================================
+def _paginer_depots(request, queryset, nombre_par_page=12):
+    paginator = Paginator(queryset, nombre_par_page)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+
+    return page_obj, query_params.urlencode()
+
+
+# ============================================================
+# GALAXY : LISTE DES DÉPÔTS
+# ============================================================
 def depot_soc_list(request):
-
     user = check_session(request)
 
     if not user:
         return redirect("users:login")
 
     depots = (
-        DepotSoc.objects.select_related("enregistreur").all().order_by("-date", "-id")
+        DepotSoc.objects
+        .select_related("enregistreur")
+        .order_by("-date", "-pk")
     )
 
-    # --------------------------------------------------------
-    # FILTRES
-    # --------------------------------------------------------
+    depots, montant, date = _filtrer_depots(request, depots)
 
-    montant = request.GET.get("montant", "").strip()
+    total_depots = (
+        depots.aggregate(total=Sum("montant"))["total"]
+        or Decimal("0.00")
+    )
 
-    date = request.GET.get("date", "").strip()
-
-    if montant:
-
-        depots = depots.filter(montant__icontains=montant)
-
-    if date:
-
-        depots = depots.filter(date=date)
-
-    # --------------------------------------------------------
-    # TOTAL
-    # --------------------------------------------------------
-
-    total_depots = depots.aggregate(total=Sum("montant"))["total"] or Decimal("0")
-
-    # --------------------------------------------------------
-    # PAGINATION
-    # --------------------------------------------------------
-
-    paginator = Paginator(depots, 12)
-
-    page_number = request.GET.get("page")
-
-    page_obj = paginator.get_page(page_number)
-
-    # --------------------------------------------------------
-    # PARAMÈTRES POUR PAGINATION
-    # --------------------------------------------------------
-
-    query_params = request.GET.copy()
-
-    if "page" in query_params:
-
-        query_params.pop("page")
-
-    # --------------------------------------------------------
-    # CONTEXT
-    # --------------------------------------------------------
+    page_obj, query_params = _paginer_depots(request, depots)
 
     context = {
         "depots": page_obj,
@@ -138,64 +172,56 @@ def depot_soc_list(request):
         "total_depots": total_depots,
         "user": user,
         "role": request.session.get("role"),
-        "query_params": query_params.urlencode(),
+        "query_params": query_params,
     }
 
-    return render(request, "depotEntreprise/list.html", context)
+    return render(
+        request,
+        "depot/list.html",
+        context,
+    )
 
 
 # ============================================================
-# AJOUT
+# GALAXY : AJOUT D'UN DÉPÔT
 # ============================================================
-
-
 def depot_soc_add(request):
-
     user = check_session(request)
 
     if not user:
         return redirect("users:login")
 
     if request.method == "POST":
-
         form = DepotSocForm(request.POST)
 
         if form.is_valid():
-
             depot = form.save(commit=False)
-
-            # Utilisateur connecté
             depot.enregistreur = user
-
             depot.save()
-
-            # ------------------------------------------------
-            # AUDIT
-            # ------------------------------------------------
-
-            nouvelle_valeur = depot_soc_values(depot)
 
             enregistrer_action(
                 request,
                 "CREATE",
                 "DepotSoc",
-                depot.id,
+                depot.pk,
                 None,
-                nouvelle_valeur,
-                "Ajout d'un dépôt société",
+                depot_soc_values(depot),
+                "Ajout d'un dépôt Banque Construction GALAXY",
             )
 
-            messages.success(request, "Dépôt société ajouté avec succès.")
+            messages.success(
+                request,
+                "Dépôt GALAXY ajouté avec succès.",
+            )
 
             return redirect("depotSoc:depot_soc_list")
 
     else:
-
         form = DepotSocForm()
 
     return render(
         request,
-        "depotEntreprise/form.html",
+        "depot/form.html",
         {
             "form": form,
             "action": "Ajouter",
@@ -206,22 +232,22 @@ def depot_soc_add(request):
 
 
 # ============================================================
-# DÉTAIL
+# GALAXY : DÉTAIL D'UN DÉPÔT
 # ============================================================
-
-
 def depot_soc_detail(request, id):
-
     user = check_session(request)
 
     if not user:
         return redirect("users:login")
 
-    depot = get_object_or_404(DepotSoc.objects.select_related("enregistreur"), id=id)
+    depot = get_object_or_404(
+        DepotSoc.objects.select_related("enregistreur"),
+        pk=id,
+    )
 
     return render(
         request,
-        "depotEntreprise/detail.html",
+        "depot/detail.html",
         {
             "depot": depot,
             "user": user,
@@ -231,66 +257,47 @@ def depot_soc_detail(request, id):
 
 
 # ============================================================
-# MODIFICATION
+# GALAXY : MODIFICATION D'UN DÉPÔT
 # ============================================================
-
-
 def depot_soc_edit(request, id):
-
     user = check_session(request)
 
     if not user:
         return redirect("users:login")
 
-    depot = get_object_or_404(DepotSoc, id=id)
-
-    # Anciennes valeurs
+    depot = get_object_or_404(DepotSoc, pk=id)
     ancienne_valeur = depot_soc_values(depot)
 
     if request.method == "POST":
-
         form = DepotSocForm(request.POST, instance=depot)
 
         if form.is_valid():
-
             depot = form.save(commit=False)
-
-            # L'utilisateur qui modifie
-            depot.enregistreur = user
-
             depot.save()
-
-            # ------------------------------------------------
-            # NOUVELLES VALEURS
-            # ------------------------------------------------
-
-            nouvelle_valeur = depot_soc_values(depot)
-
-            # ------------------------------------------------
-            # AUDIT
-            # ------------------------------------------------
 
             enregistrer_action(
                 request,
                 "UPDATE",
                 "DepotSoc",
-                depot.id,
+                depot.pk,
                 ancienne_valeur,
-                nouvelle_valeur,
-                "Modification d'un dépôt société",
+                depot_soc_values(depot),
+                "Modification d'un dépôt Banque Construction GALAXY",
             )
 
-            messages.success(request, "Dépôt société modifié avec succès.")
+            messages.success(
+                request,
+                "Dépôt GALAXY modifié avec succès.",
+            )
 
             return redirect("depotSoc:depot_soc_list")
 
     else:
-
         form = DepotSocForm(instance=depot)
 
     return render(
         request,
-        "depotEntreprise/form.html",
+        "depot/form.html",
         {
             "form": form,
             "depot": depot,
@@ -302,32 +309,19 @@ def depot_soc_edit(request, id):
 
 
 # ============================================================
-# SUPPRESSION
+# GALAXY : SUPPRESSION D'UN DÉPÔT
 # ============================================================
-
-
 def depot_soc_delete(request, id):
-
     user = check_session(request)
 
     if not user:
         return redirect("users:login")
 
-    depot = get_object_or_404(DepotSoc, id=id)
+    depot = get_object_or_404(DepotSoc, pk=id)
 
     if request.method == "POST":
-
-        # ----------------------------------------------------
-        # ANCIENNES VALEURS POUR AUDIT
-        # ----------------------------------------------------
-
         ancienne_valeur = depot_soc_values(depot)
-
-        depot_id = depot.id
-
-        # ----------------------------------------------------
-        # AUDIT
-        # ----------------------------------------------------
+        depot_id = depot.pk
 
         enregistrer_action(
             request,
@@ -336,22 +330,21 @@ def depot_soc_delete(request, id):
             depot_id,
             ancienne_valeur,
             None,
-            "Suppression d'un dépôt société",
+            "Suppression d'un dépôt Banque Construction GALAXY",
         )
-
-        # ----------------------------------------------------
-        # SUPPRESSION
-        # ----------------------------------------------------
 
         depot.delete()
 
-        messages.success(request, "Dépôt société supprimé avec succès.")
+        messages.success(
+            request,
+            "Dépôt GALAXY supprimé avec succès.",
+        )
 
         return redirect("depotSoc:depot_soc_list")
 
     return render(
         request,
-        "depotEntreprise/delete.html",
+        "depot/delete.html",
         {
             "depot": depot,
             "user": user,
@@ -361,292 +354,247 @@ def depot_soc_delete(request, id):
 
 
 # ============================================================
-# LISTE DES DÉPÔTS SOCIÉTÉ
+# MCCR : LISTE DES DÉPÔTS BANQUE CONSTRUCTION
 # ============================================================
-
-
 def h_depot_soc_list(request):
-
-    user = check_session(request)
+    user = _h_depot_soc_user(request)
 
     if not user:
+        messages.warning(
+            request,
+            "Votre session MCCR a expiré. Veuillez vous reconnecter.",
+        )
         return redirect("users:login")
 
-    depots = (
-        DepotSoc.objects.select_related("enregistreur").all().order_by("-date", "-id")
+    h_depots = (
+        H_DepotSoc.objects
+        .select_related("enregistreur")
+        .order_by("-date", "-pk")
     )
 
-    # --------------------------------------------------------
-    # FILTRES
-    # --------------------------------------------------------
+    h_depots, montant, date = _filtrer_depots(
+        request,
+        h_depots,
+    )
 
-    montant = request.GET.get("montant", "").strip()
+    total_montant = (
+        h_depots.aggregate(total=Sum("montant"))["total"]
+        or Decimal("0.00")
+    )
 
-    date = request.GET.get("date", "").strip()
-
-    if montant:
-
-        depots = depots.filter(montant__icontains=montant)
-
-    if date:
-
-        depots = depots.filter(date=date)
-
-    # --------------------------------------------------------
-    # TOTAL
-    # --------------------------------------------------------
-
-    total_depots = depots.aggregate(total=Sum("montant"))["total"] or Decimal("0")
-
-    # --------------------------------------------------------
-    # PAGINATION
-    # --------------------------------------------------------
-
-    paginator = Paginator(depots, 12)
-
-    page_number = request.GET.get("page")
-
-    page_obj = paginator.get_page(page_number)
-
-    # --------------------------------------------------------
-    # PARAMÈTRES POUR PAGINATION
-    # --------------------------------------------------------
-
-    query_params = request.GET.copy()
-
-    if "page" in query_params:
-
-        query_params.pop("page")
-
-    # --------------------------------------------------------
-    # CONTEXT
-    # --------------------------------------------------------
+    page_obj, query_params = _paginer_depots(
+        request,
+        h_depots,
+    )
 
     context = {
+        "h_depots": page_obj,
         "depots": page_obj,
         "page_obj": page_obj,
         "montant": montant,
         "date": date,
-        "total_depots": total_depots,
+        "total_montant": total_montant,
+        "total_depots": total_montant,
+        "query_params": query_params,
         "user": user,
-        "role": request.session.get("role"),
-        "query_params": query_params.urlencode(),
+        "role": request.session.get("h_role"),
     }
 
-    return render(request, "depotEntreprise/list.html", context)
+    return render(
+        request,
+        "depot/h_list.html",
+        context,
+    )
 
 
 # ============================================================
-# AJOUT
+# MCCR : AJOUT D'UN DÉPÔT
 # ============================================================
-
-
 def h_depot_soc_add(request):
-
-    user = check_session(request)
+    user = _h_depot_soc_user(request)
 
     if not user:
+        messages.warning(
+            request,
+            "Votre session MCCR a expiré. Veuillez vous reconnecter.",
+        )
         return redirect("users:login")
 
     if request.method == "POST":
-
-        form = DepotSocForm(request.POST)
+        form = H_DepotSocForm(request.POST)
 
         if form.is_valid():
-
-            depot = form.save(commit=False)
-
-            # Utilisateur connecté
-            depot.enregistreur = user
-
-            depot.save()
-
-            # ------------------------------------------------
-            # AUDIT
-            # ------------------------------------------------
-
-            nouvelle_valeur = depot_soc_values(depot)
+            h_depot = form.save(commit=False)
+            h_depot.enregistreur = user
+            h_depot.save()
 
             enregistrer_action(
                 request,
                 "CREATE",
-                "DepotSoc",
-                depot.id,
+                "H_DepotSoc",
+                h_depot.pk,
                 None,
-                nouvelle_valeur,
-                "Ajout d'un dépôt société",
+                h_depot_soc_values(h_depot),
+                "Ajout d'un dépôt Banque Construction MCCR",
             )
 
-            messages.success(request, "Dépôt société ajouté avec succès.")
+            messages.success(
+                request,
+                "Dépôt MCCR ajouté avec succès.",
+            )
 
-            return redirect("depotSoc:depot_soc_list")
+            return redirect("depotSoc:h_depot_soc_list")
 
     else:
-
-        form = DepotSocForm()
+        form = H_DepotSocForm()
 
     return render(
         request,
-        "depotEntreprise/form.html",
+        "depot/h_form.html",
         {
             "form": form,
             "action": "Ajouter",
             "user": user,
-            "role": request.session.get("role"),
+            "role": request.session.get("h_role"),
         },
     )
 
 
 # ============================================================
-# DÉTAIL
+# MCCR : DÉTAIL D'UN DÉPÔT
 # ============================================================
-
-
 def h_depot_soc_detail(request, id):
-
-    user = check_session(request)
+    user = _h_depot_soc_user(request)
 
     if not user:
+        messages.warning(
+            request,
+            "Votre session MCCR a expiré. Veuillez vous reconnecter.",
+        )
         return redirect("users:login")
 
-    depot = get_object_or_404(DepotSoc.objects.select_related("enregistreur"), id=id)
+    h_depot = get_object_or_404(
+        H_DepotSoc.objects.select_related("enregistreur"),
+        pk=id,
+    )
 
     return render(
         request,
-        "depotEntreprise/detail.html",
+        "depot/detail.html",
         {
-            "depot": depot,
+            "depot": h_depot,
             "user": user,
-            "role": request.session.get("role"),
+            "role": request.session.get("h_role"),
         },
     )
 
 
 # ============================================================
-# MODIFICATION
+# MCCR : MODIFICATION D'UN DÉPÔT
 # ============================================================
-
-
 def h_depot_soc_edit(request, id):
-
-    user = check_session(request)
+    user = _h_depot_soc_user(request)
 
     if not user:
+        messages.warning(
+            request,
+            "Votre session MCCR a expiré. Veuillez vous reconnecter.",
+        )
         return redirect("users:login")
 
-    depot = get_object_or_404(DepotSoc, id=id)
-
-    # Anciennes valeurs
-    ancienne_valeur = depot_soc_values(depot)
+    h_depot = get_object_or_404(H_DepotSoc, pk=id)
+    ancienne_valeur = h_depot_soc_values(h_depot)
 
     if request.method == "POST":
-
-        form = DepotSocForm(request.POST, instance=depot)
+        form = H_DepotSocForm(
+            request.POST,
+            instance=h_depot,
+        )
 
         if form.is_valid():
+            h_depot = form.save(commit=False)
 
-            depot = form.save(commit=False)
-
-            # L'utilisateur qui modifie
-            depot.enregistreur = user
-
-            depot.save()
-
-            # ------------------------------------------------
-            # NOUVELLES VALEURS
-            # ------------------------------------------------
-
-            nouvelle_valeur = depot_soc_values(depot)
-
-            # ------------------------------------------------
-            # AUDIT
-            # ------------------------------------------------
+            # Conserver l'enregistreur initial du dépôt.
+            # La modification ne remplace pas son créateur.
+            h_depot.save()
 
             enregistrer_action(
                 request,
                 "UPDATE",
-                "DepotSoc",
-                depot.id,
+                "H_DepotSoc",
+                h_depot.pk,
                 ancienne_valeur,
-                nouvelle_valeur,
-                "Modification d'un dépôt société",
+                h_depot_soc_values(h_depot),
+                "Modification d'un dépôt Banque Construction MCCR",
             )
 
-            messages.success(request, "Dépôt société modifié avec succès.")
+            messages.success(
+                request,
+                "Dépôt MCCR modifié avec succès.",
+            )
 
-            return redirect("depotSoc:depot_soc_list")
+            return redirect("depotSoc:h_depot_soc_list")
 
     else:
-
-        form = DepotSocForm(instance=depot)
+        form = H_DepotSocForm(instance=h_depot)
 
     return render(
         request,
-        "depotEntreprise/form.html",
+        "depot/h_form.html",
         {
             "form": form,
-            "depot": depot,
+            "depot": h_depot,
             "action": "Modifier",
             "user": user,
-            "role": request.session.get("role"),
+            "role": request.session.get("h_role"),
         },
     )
 
 
 # ============================================================
-# SUPPRESSION
+# MCCR : SUPPRESSION D'UN DÉPÔT
 # ============================================================
-
-
 def h_depot_soc_delete(request, id):
-
-    user = check_session(request)
+    user = _h_depot_soc_user(request)
 
     if not user:
+        messages.warning(
+            request,
+            "Votre session MCCR a expiré. Veuillez vous reconnecter.",
+        )
         return redirect("users:login")
 
-    depot = get_object_or_404(DepotSoc, id=id)
+    h_depot = get_object_or_404(H_DepotSoc, pk=id)
 
     if request.method == "POST":
-
-        # ----------------------------------------------------
-        # ANCIENNES VALEURS POUR AUDIT
-        # ----------------------------------------------------
-
-        ancienne_valeur = depot_soc_values(depot)
-
-        depot_id = depot.id
-
-        # ----------------------------------------------------
-        # AUDIT
-        # ----------------------------------------------------
+        ancienne_valeur = h_depot_soc_values(h_depot)
+        h_depot_id = h_depot.pk
 
         enregistrer_action(
             request,
             "DELETE",
-            "DepotSoc",
-            depot_id,
+            "H_DepotSoc",
+            h_depot_id,
             ancienne_valeur,
             None,
-            "Suppression d'un dépôt société",
+            "Suppression d'un dépôt Banque Construction MCCR",
         )
 
-        # ----------------------------------------------------
-        # SUPPRESSION
-        # ----------------------------------------------------
+        h_depot.delete()
 
-        depot.delete()
+        messages.success(
+            request,
+            "Dépôt MCCR supprimé avec succès.",
+        )
 
-        messages.success(request, "Dépôt société supprimé avec succès.")
-
-        return redirect("depotSoc:depot_soc_list")
+        return redirect("depotSoc:h_depot_soc_list")
 
     return render(
         request,
-        "depotEntreprise/delete.html",
+        "depot/delete.html",
         {
-            "depot": depot,
+            "depot": h_depot,
             "user": user,
-            "role": request.session.get("role"),
+            "role": request.session.get("h_role"),
         },
     )

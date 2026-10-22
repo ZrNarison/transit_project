@@ -36,10 +36,10 @@
                            aria-expanded="false">Finance</a>
                         <ul class="dropdown-menu shadow">
                             <li>
-                                <a class="dropdown-item" href="{% url 'avances:avance_list' %}">Avances</a>
+                                <a class="dropdown-item" href="{% url 'avances:h_avance_list' %}">Avances</a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="{% url 'materiaux:depenses_list' %}">Dépenses</a>
+                                <a class="dropdown-item" href="{% url 'depensesoc:h_soc_depense_list' %}">Dépenses</a>
                             </li>
                             <li>
                                 <a class="dropdown-item"
@@ -51,11 +51,10 @@
                             </li>
                             <li>
                                 <a class="dropdown-item"
-                                   href="{% url 'materiaux:reparations_list' %}">Entretien / RÃ©paration</a>
+                                   href="{% url 'materiaux:reparations_list' %}">Entretien / Réparation</a>
                             </li>
                             <li>
-                                <a class="dropdown-item"
-                                   href="{% url 'depotSoc:h_depot_soc_list' %}">Banque Construction</a>
+                                <a class="dropdown-item" href="{% url 'depotSoc:h_depot_soc_list' %}">Banque Construction</a>
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'salaire:h_salaire_list' %}">Salaire</a>
@@ -216,11 +215,7 @@
                         <!-- =================================================PERSONNES================================================= -->
                         {% if request.session.role == "UserMica" or request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "SuperviseurEntreprise" or request.session.role == "SuperviseurMica" or request.session.role == "Dir" or request.session.role == "Compta" %}
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle"
-                                   href="#"
-                                   role="button"
-                                   data-bs-toggle="dropdown"
-                                   aria-expanded="false">Personnes</a>
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Personnes</a>
                                 <ul class="dropdown-menu shadow">
                                     <!-- CLIENTS -->
                                     {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "SuperviseurMica" %}
@@ -466,7 +461,7 @@
                             {% if request.session.photo %}
                                 <img src="{{ request.session.photo }}" width="35" height="35" class="rounded-circle border border-light" style="object-fit: cover" alt="Photo utilisateur">
                             {% else %}
-                                <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center" style="width:35px; height:35px">ðŸ‘¤</span>
+                                <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center" style="width:35px; height:35px"></span>
                             {% endif %}
                             <!-- NOM -->
                             <span>{{ request.session.username|title }}</span>

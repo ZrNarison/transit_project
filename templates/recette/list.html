@@ -8,11 +8,11 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="mb-1">💰 Liste des recettes</h2>
+        <h2 class="mb-1">Liste des recettes</h2>
         <p class="text-muted mb-0">Gestion et suivi des recettes enregistrées</p>
     </div>
     {% if request.session.role == "UserEntreprise" %}
-    <a href="{% url 'recette:recette_add' %}" class="btn btn-primary">➕ Nouvelle recette</a>
+    <a href="{% url 'recette:recette_add' %}" class="btn btn-primary">Nouvelle recette</a>
     {% endif %}
 </div>
 <!-- =====================================================MESSAGES===================================================== -->

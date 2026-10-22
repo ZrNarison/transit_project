@@ -1,0 +1,58 @@
+ {# templates/recette/h_form.html #}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">{{ action }} une recette MCCR</h3>
+        <a href="{% url 'recette:h_recette_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+    </div>
+
+    <p class="text-muted">
+        Enregistrez une recette appartenant exclusivement à l'entreprise MCCR.
+    </p>
+
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="row g-3">
+            {% for field in form %}
+            <div class="col-md-6">
+                <label for="{{ field.id_for_label }}" class="form-label">
+                    {{ field.label }}
+                </label>
+
+                {{ field }}
+
+                {% if field.help_text %}
+                <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+
+                {% if field.errors %}
+                <div class="text-danger small mt-1">
+                    {{ field.errors }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-4 d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Enregistrer
+            </button>
+            <a href="{% url 'recette:h_recette_list' %}" class="btn btn-secondary">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

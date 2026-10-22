@@ -1,19 +1,18 @@
 from django.contrib import messages
 from django.core.paginator import Paginator
+from decimal import Decimal
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
-
-from users.models import AppUser
-
-from .forms import SalaireForm
-from .models import Salaire, recalculer_situation_personnel
+from users.models import AppUser, H_AppUser
+from personnel.models import Personnel, H_Personnel
+from .forms import SalaireForm, H_SalaireForm
+from .models import Salaire, H_Salaire, recalculer_situation_personnel,h_recalculer_situation_personnel
+from django.views.decorators.http import require_http_methods
 
 # =============================================================
 # UTILISATEUR CONNECTÉ
 # =============================================================
-
-
 def get_current_user(request):
 
     user_id = request.session.get("user_id")
@@ -27,8 +26,6 @@ def get_current_user(request):
 # =============================================================
 # VÉRIFICATION SESSION
 # =============================================================
-
-
 def check_session(request):
 
     user = get_current_user(request)
@@ -42,8 +39,6 @@ def check_session(request):
 # =============================================================
 # LISTE DES SALAIRES
 # =============================================================
-
-
 def salaire_list(request):
 
     utilisateur = check_session(request)
@@ -199,8 +194,6 @@ def salaire_list(request):
 # =============================================================
 # AJOUT SALAIRE
 # =============================================================
-
-
 def salaire_add(request):
 
     utilisateur = check_session(request)
@@ -273,24 +266,9 @@ def salaire_add(request):
 
 # =============================================================
 # MODIFICATION SALAIRE
-#
 # Compatible avec :
-#
-#     path(..., salaire_edit, ...)
-#     <int:id>
-#
-# ET :
-#
-#     <int:pk>
-#
 # =============================================================
-
-
-def salaire_edit(
-    request,
-    id=None,
-    pk=None,
-):
+def salaire_edit(request,id=None,pk=None,):
 
     utilisateur = check_session(request)
 
@@ -433,17 +411,9 @@ def salaire_edit(
 
 # =============================================================
 # SUPPRESSION SALAIRE
-#
 # Compatible avec id ET pk.
 # =============================================================
-
-
-def salaire_delete(
-    request,
-    id=None,
-    pk=None,
-):
-
+def salaire_delete(request,id=None,pk=None,):
     utilisateur = check_session(request)
 
     if not utilisateur:
@@ -526,229 +496,171 @@ def salaire_delete(
 
 
 # ===========================================================
-# ENTREPRISE H
+#  SALAIRE ENTREPRISE H
 # ===========================================================
 
-# =============================================================
-# LISTE DES SALAIRES
-# =============================================================
+def _get_h_salaire_user(request):
+    """Récupère exclusivement l'utilisateur MCCR connecté."""
+    h_user_id = request.session.get("h_user_id")
+
+    if not h_user_id:
+        return None
+
+    return H_AppUser.objects.filter(pk=h_user_id).first()
 
 
+# ===========================================================
+# LISTE DES SALAIRES MCCR
+# ===========================================================
 def h_salaire_list(request):
-
-    utilisateur = check_session(request)
+    utilisateur = _get_h_salaire_user(request)
 
     if not utilisateur:
-
+        messages.warning(
+            request,
+            "Votre session MCCR a expiré. Veuillez vous reconnecter.",
+        )
         return redirect("users:login")
 
-    role = request.session.get("role")
+    role = request.session.get("h_role", "")
 
-    # =========================================================
-    # SALAIRES
-    # =========================================================
-
-    salaires = Salaire.objects.select_related(
+    salaires = H_Salaire.objects.select_related(
         "personnel",
         "enregistreur",
     ).all()
 
-    # =========================================================
-    # FILTRE ROLE
-    # =========================================================
-
-    if role == "UserMica":
-
-        salaires = salaires.filter(personnel__typeTravail="Mica")
-
-    elif role == "UserEntreprise":
-
-        salaires = salaires.filter(personnel__typeTravail="Construction")
-
-    # =========================================================
+    # -------------------------------------------------------
     # FILTRE PERSONNEL
-    # =========================================================
+    # -------------------------------------------------------
 
     personnel_recherche = request.GET.get("personnel", "").strip()
 
     if personnel_recherche:
-
         salaires = salaires.filter(
-            Q(personnel__nom__icontains=(personnel_recherche))
-            | Q(personnel__prenom__icontains=(personnel_recherche))
+            Q(personnel__nom__icontains=personnel_recherche)
+            | Q(personnel__prenom__icontains=personnel_recherche)
         )
 
-    # =========================================================
+    # -------------------------------------------------------
     # FILTRE MONTANT
-    # =========================================================
+    # -------------------------------------------------------
 
     montant = request.GET.get("montant", "").strip()
 
     if montant:
-
         try:
+            montant_decimal = Decimal(montant.replace(",", "."))
+            salaires = salaires.filter(montant=montant_decimal)
+        except (InvalidOperation, ValueError, TypeError):
+            messages.warning(request, "Le montant du filtre est invalide.")
 
-            salaires = salaires.filter(montant=montant)
-
-        except (ValueError, TypeError):
-
-            pass
-
-    # =========================================================
-    # FILTRE DATE
-    # =========================================================
+    # -------------------------------------------------------
+    # FILTRE DATE DE PAIEMENT
+    # -------------------------------------------------------
 
     date = request.GET.get("date", "").strip()
 
     if date:
+        date_valide = parse_date(date)
 
-        salaires = salaires.filter(date_paiement=date)
+        if date_valide:
+            salaires = salaires.filter(date_paiement=date_valide)
+        else:
+            messages.warning(request, "La date du filtre est invalide.")
 
-    # =========================================================
-    # TOTAL SALAIRES
-    # =========================================================
+    # -------------------------------------------------------
+    # TOTAUX SUR LES RÉSULTATS FILTRÉS
+    # -------------------------------------------------------
 
-    total_salaires = salaires.aggregate(total=Sum("montant"))["total"] or 0
-
-    # =========================================================
-    # TOTAL RESTE
-    # =========================================================
-
-    total_reste = salaires.aggregate(total=Sum("reste"))["total"] or 0
-
-    # =========================================================
-    # TOTAL TROP-PERÇU
-    # =========================================================
-
-    total_trop_percu = salaires.aggregate(total=Sum("trop_percu"))["total"] or 0
-
-    # =========================================================
-    # PAGINATION
-    # =========================================================
-
-    paginator = Paginator(salaires, 10)
-
-    page_number = request.GET.get("page")
-
-    page_obj = paginator.get_page(page_number)
-
-    # =========================================================
-    # PERSONNELS POUR FILTRE
-    # =========================================================
-
-    from personnel.models import Personnel
-
-    personnels = Personnel.objects.all().order_by(
-        "nom",
-        "prenom",
+    totaux = salaires.aggregate(
+        total_salaires=Sum("montant"),
+        total_reste=Sum("reste"),
+        total_trop_percu=Sum("trop_percu"),
     )
 
-    if role == "UserMica":
+    total_salaires = totaux["total_salaires"] or Decimal("0")
+    total_reste = totaux["total_reste"] or Decimal("0")
+    total_trop_percu = totaux["total_trop_percu"] or Decimal("0")
 
-        personnels = personnels.filter(typeTravail="Mica")
+    # -------------------------------------------------------
+    # PAGINATION
+    # -------------------------------------------------------
 
-    elif role == "UserEntreprise":
+    paginator = Paginator(salaires, 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
 
-        personnels = personnels.filter(typeTravail="Construction")
+    # -------------------------------------------------------
+    # PERSONNELS MCCR UNIQUEMENT
+    # -------------------------------------------------------
 
-    # =========================================================
-    # PARAMÈTRES POUR PAGINATION
-    # =========================================================
+    personnels = H_Personnel.objects.all().order_by("nom", "prenom")
+
+    # -------------------------------------------------------
+    # PARAMÈTRES DE PAGINATION
+    # -------------------------------------------------------
 
     query_params = request.GET.copy()
-
-    if "page" in query_params:
-        query_params.pop("page")
-
+    query_params.pop("page", None)
     query_params = query_params.urlencode()
-
-    # =========================================================
-    # RENDU
-    # =========================================================
 
     return render(
         request,
-        "salaire/list.html",
+        "salaire/h_list.html",
         {
+            "h_salaires": page_obj,
             "salaires": page_obj,
             "page_obj": page_obj,
             "personnels": personnels,
-            "total_salaires": (total_salaires),
-            "total_reste": (total_reste),
-            "total_trop_percu": (total_trop_percu),
+            "total_salaires": total_salaires,
+            "total_reste": total_reste,
+            "total_trop_percu": total_trop_percu,
             "role": role,
             "utilisateur": utilisateur,
-            "personnel": (personnel_recherche),
+            "personnel": personnel_recherche,
+            "personnel_recherche": personnel_recherche,
             "montant": montant,
             "date": date,
-            "query_params": (query_params),
+            "query_params": query_params,
         },
     )
 
 
-# =============================================================
-# AJOUT SALAIRE
-# =============================================================
-
-
+# ===========================================================
+# AJOUT SALAIRE MCCR
+# ===========================================================
 def h_salaire_add(request):
-
-    utilisateur = check_session(request)
+    utilisateur = _get_h_salaire_user(request)
 
     if not utilisateur:
-
+        messages.warning(
+            request,
+            "Votre session MCCR a expiré. Veuillez vous reconnecter.",
+        )
         return redirect("users:login")
 
-    role = request.session.get("role")
-
-    # =========================================================
-    # POST
-    # =========================================================
+    role = request.session.get("h_role", "")
 
     if request.method == "POST":
-
-        form = SalaireForm(
-            request.POST,
-            role=role,
-        )
+        form = H_SalaireForm(request.POST, role=role)
 
         if form.is_valid():
-
             with transaction.atomic():
-
                 salaire = form.save(commit=False)
 
-                # ---------------------------------------------
-                # Enregistreur
-                # ---------------------------------------------
-
+                # Utilisateur MCCR, jamais AppUser GALAXY.
                 salaire.enregistreur = utilisateur
-
                 salaire.save()
 
-                # ---------------------------------------------
-                # Recalcul complet
-                # ---------------------------------------------
+                if salaire.personnel_id:
+                    h_recalculer_situation_personnel(salaire.personnel)
 
-                if salaire.personnel:
-
-                    recalculer_situation_personnel(salaire.personnel)
-
-            messages.success(request, "Le salaire a été enregistré avec succès.")
-
-            return redirect("salaire:salaire_list")
-
-    # =========================================================
-    # GET
-    # =========================================================
-
+            messages.success(
+                request,
+                "Le salaire MCCR a été enregistré avec succès.",
+            )
+            return redirect("salaire:h_salaire_list")
     else:
-
-        form = SalaireForm(role=role)
-
-    # =========================================================
-    # RENDU
-    # =========================================================
+        form = H_SalaireForm(role=role)
 
     return render(
         request,
@@ -757,259 +669,179 @@ def h_salaire_add(request):
             "form": form,
             "action": "Ajouter",
             "role": role,
+            "utilisateur": utilisateur,
         },
     )
 
 
-# =============================================================
-# MODIFICATION SALAIRE
-#
-# Compatible avec :
-#
-#     path(..., salaire_edit, ...)
-#     <int:id>
-#
-# ET :
-#
-#     <int:pk>
-#
-# =============================================================
-
-
-def h_salaire_edit(
-    request,
-    id=None,
-    pk=None,
-):
-
-    utilisateur = check_session(request)
+# ===========================================================
+# MODIFICATION SALAIRE MCCR
+# ===========================================================
+def h_salaire_edit(request, id=None, pk=None):
+    utilisateur = _get_h_salaire_user(request)
 
     if not utilisateur:
-
+        messages.warning(
+            request,
+            "Votre session MCCR a expiré. Veuillez vous reconnecter.",
+        )
         return redirect("users:login")
-
-    role = request.session.get("role")
-
-    # =========================================================
-    # IDENTIFIANT
-    # =========================================================
 
     salaire_id = id if id is not None else pk
 
     if salaire_id is None:
-
         messages.error(request, "Identifiant du salaire manquant.")
-
-        return redirect("salaire:salaire_list")
-
-    # =========================================================
-    # SALAIRE
-    # =========================================================
+        return redirect("salaire:h_salaire_list")
 
     salaire = get_object_or_404(
-        Salaire.objects.select_related(
-            "personnel",
-            "enregistreur",
-        ),
+        H_Salaire.objects.select_related("personnel", "enregistreur"),
         pk=salaire_id,
     )
 
-    # =========================================================
-    # AUTORISATION
-    #
-    # Seul l'enregistreur peut modifier.
-    # =========================================================
-
-    if salaire.enregistreur_id != utilisateur.id:
-
-        messages.error(request, "Vous n'êtes pas autorisé à modifier ce salaire.")
-
-        return redirect("salaire:salaire_list")
-
-    # =========================================================
-    # ANCIEN PERSONNEL
-    # =========================================================
+    # Seul l'enregistreur MCCR peut modifier ce salaire.
+    if salaire.enregistreur_id != utilisateur.pk:
+        messages.error(
+            request,
+            "Vous n'êtes pas autorisé à modifier ce salaire MCCR.",
+        )
+        return redirect("salaire:h_salaire_list")
 
     ancien_personnel = salaire.personnel
 
-    # =========================================================
-    # POST
-    # =========================================================
-
     if request.method == "POST":
-
-        form = SalaireForm(
+        form = H_SalaireForm(
             request.POST,
             instance=salaire,
-            role=role,
+            role=request.session.get("h_role", ""),
         )
 
         if form.is_valid():
-
             with transaction.atomic():
-
                 salaire_modifie = form.save(commit=False)
 
-                # ---------------------------------------------
-                # L'enregistreur ne change pas
-                # ---------------------------------------------
-
+                # L'enregistreur d'origine ne change pas.
                 salaire_modifie.enregistreur = utilisateur
-
                 salaire_modifie.save()
 
-                # ---------------------------------------------
-                # Nouveau personnel
-                # ---------------------------------------------
-
                 nouveau_personnel = salaire_modifie.personnel
-
-                # ---------------------------------------------
-                # Personnel inchangé
-                # ---------------------------------------------
 
                 if (
                     ancien_personnel
                     and nouveau_personnel
-                    and ancien_personnel.id == nouveau_personnel.id
+                    and ancien_personnel.pk == nouveau_personnel.pk
                 ):
-
-                    recalculer_situation_personnel(nouveau_personnel)
-
-                # ---------------------------------------------
-                # Personnel changé
-                # ---------------------------------------------
-
+                    h_recalculer_situation_personnel(nouveau_personnel)
                 else:
-
                     if ancien_personnel:
-
-                        recalculer_situation_personnel(ancien_personnel)
+                        h_recalculer_situation_personnel(ancien_personnel)
 
                     if nouveau_personnel:
+                        h_recalculer_situation_personnel(nouveau_personnel)
 
-                        recalculer_situation_personnel(nouveau_personnel)
-
-            messages.success(request, "Le salaire a été modifié avec succès.")
-
-            return redirect("salaire:salaire_list")
-
-    # =========================================================
-    # GET
-    # =========================================================
-
+            messages.success(
+                request,
+                "Le salaire MCCR a été modifié avec succès.",
+            )
+            return redirect("salaire:h_salaire_list")
     else:
-
-        form = SalaireForm(
+        form = H_SalaireForm(
             instance=salaire,
-            role=role,
+            role=request.session.get("h_role", ""),
         )
-
-    # =========================================================
-    # RENDU
-    # =========================================================
 
     return render(
         request,
-        "salaire/form.html",
+        "salaire/h_form.html",
         {
             "form": form,
             "action": "Modifier",
             "salaire": salaire,
-            "role": role,
+            "role": request.session.get("h_role", ""),
+            "utilisateur": utilisateur,
         },
     )
 
 
-# =============================================================
-# SUPPRESSION SALAIRE
-#
-# Compatible avec id ET pk.
-# =============================================================
-
-
-def h_salaire_delete(
-    request,
-    id=None,
-    pk=None,
-):
-
-    utilisateur = check_session(request)
+# ===========================================================
+# SUPPRESSION SALAIRE MCCR
+# Compatible avec id et pk
+# ===========================================================
+@require_http_methods(["GET", "POST"])
+def h_salaire_delete(request, id=None, pk=None):
+    # -------------------------------------------------------
+    # SESSION MCCR UNIQUEMENT
+    # -------------------------------------------------------
+    utilisateur = _get_h_salaire_user(request)
 
     if not utilisateur:
-
+        messages.warning(
+            request,
+            "Votre session MCCR a expiré. Veuillez vous reconnecter.",
+        )
         return redirect("users:login")
 
-    # =========================================================
+    # -------------------------------------------------------
     # IDENTIFIANT
-    # =========================================================
-
+    # -------------------------------------------------------
     salaire_id = id if id is not None else pk
 
     if salaire_id is None:
-
         messages.error(request, "Identifiant du salaire manquant.")
+        return redirect("salaire:h_salaire_list")
 
-        return redirect("salaire:salaire_list")
-
-    # =========================================================
-    # SALAIRE
-    # =========================================================
-
-    salaire = get_object_or_404(
-        Salaire.objects.select_related(
+    # -------------------------------------------------------
+    # RÉCUPÉRATION DU SALAIRE MCCR
+    # Le champ correct est « personnel ».
+    # -------------------------------------------------------
+    h_salaire = get_object_or_404(
+        H_Salaire.objects.select_related(
             "personnel",
             "enregistreur",
         ),
         pk=salaire_id,
     )
 
-    # =========================================================
+    # -------------------------------------------------------
     # AUTORISATION
-    # =========================================================
+    # Seul l'enregistreur de ce salaire peut le supprimer.
+    # -------------------------------------------------------
+    if h_salaire.enregistreur_id != utilisateur.pk:
+        messages.error(
+            request,
+            "Vous n'êtes pas autorisé à supprimer ce salaire MCCR.",
+        )
+        return redirect("salaire:h_salaire_list")
 
-    if salaire.enregistreur_id != utilisateur.id:
+    # -------------------------------------------------------
+    # PERSONNEL ASSOCIÉ
+    # -------------------------------------------------------
+    personnel = h_salaire.personnel
 
-        messages.error(request, "Vous n'êtes pas autorisé à supprimer ce salaire.")
-
-        return redirect("salaire:salaire_list")
-
-    # =========================================================
-    # PERSONNEL
-    # =========================================================
-
-    personnel = salaire.personnel
-
-    # =========================================================
-    # SUPPRESSION
-    # =========================================================
-
+    # -------------------------------------------------------
+    # SUPPRESSION ET RECALCUL
+    # -------------------------------------------------------
     if request.method == "POST":
-
         with transaction.atomic():
-
-            salaire.delete()
-
-            # ---------------------------------------------
-            # Recalcul après suppression
-            # ---------------------------------------------
+            h_salaire.delete()
 
             if personnel:
+                h_recalculer_situation_personnel(personnel)
 
-                recalculer_situation_personnel(personnel)
+        messages.success(
+            request,
+            "Le salaire MCCR a été supprimé avec succès.",
+        )
 
-        messages.success(request, "Le salaire a été supprimé avec succès.")
+        return redirect("salaire:h_salaire_list")
 
-        return redirect("salaire:salaire_list")
-
-    # =========================================================
+    # -------------------------------------------------------
     # CONFIRMATION
-    # =========================================================
-
+    # -------------------------------------------------------
     return render(
         request,
         "salaire/confirm_delete.html",
         {
-            "salaire": salaire,
+            "salaire": h_salaire,
+            "retour_url": "salaire:h_salaire_list",
         },
     )

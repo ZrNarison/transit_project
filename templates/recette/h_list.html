@@ -1,0 +1,298 @@
+{# templates/recette/h_list.html #}
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="page-card">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h3 class="mb-1">Recettes MCCR</h3>
+            <p class="text-muted mb-0">
+                Liste des recettes de l'entreprise MCCR.
+            </p>
+        </div>
+
+        <a href="{% url 'recette:h_recette_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Ajouter une recette
+        </a>
+    </div>
+
+    <!-- TOTAL -->
+    <div class="alert alert-info">
+        <strong>Total filtré :</strong>
+        {{ total_recettes|floatformat:2|intcomma }} Ar
+    </div>
+
+    <!-- FILTRES -->
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-md-3">
+            <input type="text"
+                   name="montant"
+                   class="form-control"
+                   placeholder="Montant"
+                   value="{{ montant }}">
+        </div>
+
+        <div class="col-md-3">
+            <select name="type_virement" class="form-select">
+                <option value="">Tous les modes de paiement</option>
+                <option value="Banque" {% if type_virement == "Banque" %}selected{% endif %}>
+                    Virement bancaire
+                </option>
+                <option value="Cheque" {% if type_virement == "Cheque" %}selected{% endif %}>
+                    Chèque
+                </option>
+                <option value="Espece" {% if type_virement == "Espece" %}selected{% endif %}>
+                    Espèces
+                </option>
+                <option value="Mobile" {% if type_virement == "Mobile" %}selected{% endif %}>
+                    Mobile money
+                </option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <input type="date"
+                   name="date"
+                   class="form-control"
+                   value="{{ date }}">
+        </div>
+
+        <div class="col-md-2">
+            <input type="text"
+                   name="source"
+                   class="form-control"
+                   placeholder="Source"
+                   value="{{ source }}">
+        </div>
+
+        <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-secondary"
+                    type="submit"
+                    title="Filtrer">
+                <i class="fas fa-search"></i>
+            </button>
+
+            <a href="{% url 'recette:h_recette_list' %}"
+               class="btn btn-outline-secondary"
+               title="Réinitialiser">
+                <i class="fas fa-undo"></i>
+            </a>
+        </div>
+    </form>
+
+    <!-- TABLEAU -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Source</th>
+                    <th>Mode de paiement</th>
+                    <th class="text-end">Montant</th>
+                    <th>Enregistreur</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for recette in recettes %}
+                <tr>
+                    <td>{{ recette.date|date:"d/m/Y" }}</td>
+
+                    <td>{{ recette.source }}</td>
+
+                    <td>{{ recette.get_type_virement_display }}</td>
+
+                    <td class="text-end">
+                        {{ recette.montant|floatformat:2|intcomma }} Ar
+                    </td>
+
+                    <td>
+                        {% if recette.enregistreur %}
+                            {{ recette.enregistreur }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    <td class="text-end text-nowrap">
+
+                        <!-- DÉTAIL -->
+                        <a href="{% url 'recette:h_recette_detail' recette.pk %}"
+                           class="btn btn-sm btn-outline-info"
+                           title="Détail">
+                            <i class="fas fa-eye"></i>
+                        </a>
+
+                        {% if recette.enregistreur_id == user.id %}
+
+                            <!-- MODIFIER -->
+                            <a href="{% url 'recette:h_recette_edit' recette.pk %}"
+                               class="btn btn-sm btn-outline-primary"
+                               title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </a>
+
+                            <!-- OUVRIR LA MODALE DE SUPPRESSION -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    title="Supprimer"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmationRecette{{ recette.pk }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        Aucune recette MCCR trouvée.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- PAGINATION -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Pagination des recettes">
+        <ul class="pagination justify-content-center flex-wrap">
+
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?{% if query_params %}{{ query_params }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">
+                    Précédent
+                </a>
+            </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">
+                    Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?{% if query_params %}{{ query_params }}&amp;{% endif %}page={{ page_obj.next_page_number }}">
+                    Suivant
+                </a>
+            </li>
+            {% endif %}
+
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+
+<!-- MODALES DE CONFIRMATION
+     Placées hors du tableau pour préserver sa structure HTML. -->
+
+{% for recette in recettes %}
+    {% if recette.enregistreur_id == user.id %}
+
+    <div class="modal fade"
+         id="confirmationRecette{{ recette.pk }}"
+         tabindex="-1"
+         aria-labelledby="titreConfirmationRecette{{ recette.pk }}"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+
+                <!-- EN-TÊTE DE LA MODALE -->
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"
+                        id="titreConfirmationRecette{{ recette.pk }}">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirmer la suppression
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                            aria-label="Fermer"></button>
+                </div>
+
+                <!-- CONTENU DE LA MODALE -->
+                <div class="modal-body text-center p-4">
+
+                    <i class="fas fa-trash-alt text-danger mb-3"
+                       style="font-size: 3.5rem;"></i>
+
+                    <h5 class="mb-3">
+                        Voulez-vous vraiment supprimer cette recette ?
+                    </h5>
+
+                    <div class="alert alert-warning text-start">
+
+                        <div class="mb-2">
+                            <strong>Date :</strong>
+                            {{ recette.date|date:"d/m/Y" }}
+                        </div>
+
+                        <div class="mb-2">
+                            <strong>Source :</strong>
+                            {{ recette.source }}
+                        </div>
+
+                        <div class="mb-2">
+                            <strong>Mode de paiement :</strong>
+                            {{ recette.get_type_virement_display }}
+                        </div>
+
+                        <div>
+                            <strong>Montant :</strong>
+                            {{ recette.montant|floatformat:2|intcomma }} Ar
+                        </div>
+
+                    </div>
+
+                    <p class="text-danger mb-0">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        <strong>Attention :</strong>
+                        cette action est irréversible.
+                    </p>
+                </div>
+
+                <!-- BOUTONS -->
+                <div class="modal-footer justify-content-center">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>
+                        Annuler
+                    </button>
+
+                    <form method="post"
+                        action="{% url 'recette:h_recette_delete' recette.pk %}"
+                        class="d-inline">
+                        {% csrf_token %}
+
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash me-1"></i>
+                            Confirmer la suppression
+                        </button>
+                    </form>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+{% endfor %}
+
+{% endblock %}

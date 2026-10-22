@@ -1,0 +1,191 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-3 rapport-impression">
+
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">MCCR</h2>
+        <h4>RAPPORT DE TRÉSORERIE</h4>
+        <p class="mb-1">
+            {% if date_debut_affichage or date_fin_affichage %}
+                Période :
+                {{ date_debut_affichage|default:"Depuis le début" }}
+                au
+                {{ date_fin_affichage|default:"Sans date de fin" }}
+            {% else %}
+                Toutes les opérations
+            {% endif %}
+        </p>
+        <p class="text-muted small">
+            Document généré le {% now "d/m/Y à H:i" %}
+        </p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="border rounded p-3">
+                <div class="small text-muted">Report antérieur</div>
+                <strong>{{ solde_report|floatformat:2 }} Ar</strong>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="border rounded p-3">
+                <div class="small text-muted">Dépôts</div>
+                <strong>{{ total_depots|floatformat:2 }} Ar</strong>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="border rounded p-3">
+                <div class="small text-muted">Recettes</div>
+                <strong>{{ total_recettes|floatformat:2 }} Ar</strong>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="border rounded p-3">
+                <div class="small text-muted">Dépenses</div>
+                <strong>{{ total_depenses|floatformat:2 }} Ar</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <strong>Total des entrées :</strong>
+        {{ total_entrees|floatformat:2 }} Ar
+        <span class="mx-2">|</span>
+        <strong>Solde final :</strong>
+        {{ solde_final|floatformat:2 }} Ar
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-sm align-middle">
+            <thead>
+                <tr class="table-light">
+                    <th>Date</th>
+                    <th>Pièces</th>
+                    <th>Descriptions</th>
+                    <th>Libellés</th>
+                    <th>Dépôts (Ar)</th>
+                    <th>Recettes (Ar)</th>
+                    <th>Dépenses (Ar)</th>
+                    <th>Solde (Ar)</th>
+                    <th>Opérations</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for operation in operations %}
+                    <tr>
+                        <td class="text-nowrap">{{ operation.date|date:"d/m/Y" }}</td>
+                        <td>
+                            {% for piece in operation.pieces %}
+                                <div>{{ piece }}</div>
+                            {% empty %}—{% endfor %}
+                        </td>
+                        <td>
+                            {% for description in operation.descriptions %}
+                                <div>{{ description }}</div>
+                            {% empty %}—{% endfor %}
+                        </td>
+                        <td>
+                            {% for titre in operation.titres %}
+                                <div>{{ titre }}</div>
+                            {% empty %}—{% endfor %}
+                        </td>
+                        <td class="text-end">{{ operation.depot|floatformat:2 }}</td>
+                        <td class="text-end">{{ operation.recette|floatformat:2 }}</td>
+                        <td class="text-end">{{ operation.depense|floatformat:2 }}</td>
+                        <td class="text-end">{{ operation.solde|floatformat:2 }}</td>
+                        <td class="text-center">{{ operation.nombre_operations }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center">
+                            Aucune opération MCCR pour cette période.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+
+            <tfoot>
+                <tr class="table-light fw-bold">
+                    <td colspan="4" class="text-end">Totaux</td>
+                    <td class="text-end">{{ total_depots|floatformat:2 }}</td>
+                    <td class="text-end">{{ total_recettes|floatformat:2 }}</td>
+                    <td class="text-end">{{ total_depenses|floatformat:2 }}</td>
+                    <td class="text-end">{{ solde_final|floatformat:2 }}</td>
+                    <td class="text-center">{{ nombre_operations }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-6 text-center">
+            <p>Le Responsable Financier</p>
+            <br><br>
+            <p>Signature : ____________________</p>
+        </div>
+        <div class="col-6 text-center">
+            <p>La Direction</p>
+            <br><br>
+            <p>Signature : ____________________</p>
+        </div>
+    </div>
+
+</div>
+
+<style>
+@media print {
+    nav, header, footer, .navbar, .sidebar, .no-print,
+    button, .btn {
+        display: none !important;
+    }
+
+    body {
+        background: #fff !important;
+        font-size: 10pt;
+    }
+
+    .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .rapport-impression {
+        color: #000 !important;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    th, td {
+        border: 1px solid #555 !important;
+        padding: 4px !important;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    tr {
+        break-inside: avoid;
+    }
+
+    @page {
+        size: landscape;
+        margin: 10mm;
+    }
+}
+</style>
+
+<script>
+window.addEventListener("load", function () {
+    window.print();
+});
+</script>
+{% endblock %}

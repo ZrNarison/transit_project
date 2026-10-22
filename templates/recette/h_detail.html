@@ -1,0 +1,13 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recette</title>
+</head>
+<body>
+    <h1>Détails de la recette</h1>
+    <p><strong>Montant:</strong> {{ recette.montant }}</p>
+    <p><strong>Date:</strong> {{ recette.date }}</p>
+    <a href="{% url 'recette:recette_list' %}">Retour à la liste</a>
+</body>
+</html>

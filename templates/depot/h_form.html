@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container py-4">
+
+    {# En-tête #}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-university me-2"></i>
+                Banque Construction — MCCR
+            </h3>
+            <p class="text-muted mb-0">
+                {{ action|default:"Enregistrer" }} un dépôt de la société MCCR.
+            </p>
+        </div>
+
+        <a href="{% url 'depotSoc:h_depot_soc_list' %}"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la liste
+        </a>
+    </div>
+
+    {# Messages Django #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8 col-xl-7">
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>
+                        Informations du dépôt MCCR
+                    </h5>
+                </div>
+
+                <div class="card-body p-4">
+
+                    {# Erreurs générales du formulaire #}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    <form method="post"
+                          action="{% if action == 'Modifier' %}{{ request.path }}{% else %}{% url 'depotSoc:h_depot_soc_add' %}{% endif %}"
+                          novalidate>
+                        {% csrf_token %}
+
+                        {# Montant du dépôt #}
+                        <div class="mb-4">
+                            <label for="{{ form.montant.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                Montant du dépôt
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <div class="input-group">
+                                {{ form.montant }}
+                                <span class="input-group-text">Ar</span>
+                            </div>
+
+                            {% for error in form.montant.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+
+                            {% if form.montant.help_text %}
+                                <div class="form-text">
+                                    {{ form.montant.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {# Date du dépôt #}
+                        <div class="mb-4">
+                            <label for="{{ form.date.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                Date du dépôt
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            {{ form.date }}
+
+                            {% for error in form.date.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+
+                            {% if form.date.help_text %}
+                                <div class="form-text">
+                                    {{ form.date.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if user %}
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">
+                                    Enregistré par
+                                </label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       value="{{ user }}"
+                                       readonly>
+                            </div>
+                        {% endif %}
+
+                        <hr class="my-4">
+
+                        {# Boutons d'action #}
+                        <div class="d-flex flex-wrap justify-content-end gap-2">
+                            <a href="{% url 'depotSoc:h_depot_soc_list' %}"
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                Annuler
+                            </a>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                {{ action|default:"Enregistrer" }} le dépôt
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -91,9 +91,7 @@ class LoginRequiredMiddleware:
             return self.get_response(request)
 
         # --------------------------------------------------
-        # 7. Protection des routes GALAXY
+        # 7. Autres routes
         # --------------------------------------------------
-        if not galaxy_user_id:
-            return redirect("users:login")
-
+        # Les autres vues conservent leurs propres règles d'accès.
         return self.get_response(request)

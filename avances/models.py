@@ -2,9 +2,27 @@ from decimal import Decimal
 
 from django.db import models
 from django.db.models import Sum
-
 from personnel.models import H_Personnel, Personnel
 from users.models import AppUser, H_AppUser
+
+
+def recalculer_reste(self):
+    """Recalcule le montant récupéré et le solde de l'avance MCCR."""
+    total = self.affectations_salaires.aggregate(total=Sum("montant"))["total"]
+
+    total = total or Decimal("0")
+    montant = Decimal(str(self.montantAv or 0))
+
+    self.montant_recupere = total
+    self.reste = max(Decimal("0"), montant - total)
+
+    if self.pk:
+        H_Avance.objects.filter(pk=self.pk).update(
+            montant_recupere=self.montant_recupere,
+            reste=self.reste,
+        )
+
+    return self.reste
 
 
 class Avance(models.Model):
@@ -244,7 +262,7 @@ class H_Avance(models.Model):
 
         self.reste = reste
 
-        Avance.objects.filter(pk=self.pk).update(
+        H_Avance.objects.filter(pk=self.pk).update(
             montant_recupere=self.montant_recupere, reste=self.reste
         )
 

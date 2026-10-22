@@ -1,1 +1,250 @@
 {% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-wallet me-2"></i>
+                Rapport de trésorerie — MCCR
+            </h3>
+            <p class="text-muted mb-0">
+                Suivi des dépôts, recettes, dépenses et soldes de l'entreprise MCCR.
+            </p>
+        </div>
+
+        <a href="{% url 'rapportsoc:h_rapport_tresorerie_print' %}?date_debut={{ date_debut|urlencode }}&date_fin={{ date_fin|urlencode }}"
+           target="_blank"
+           class="btn btn-outline-dark">
+            <i class="fas fa-print me-1"></i> Imprimer
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- FILTRES -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <strong><i class="fas fa-filter me-2"></i>Filtrer la période</strong>
+        </div>
+
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="date_debut" class="form-label">Date de début</label>
+                    <input type="date"
+                           id="date_debut"
+                           name="date_debut"
+                           class="form-control"
+                           value="{{ date_debut }}">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="date_fin" class="form-label">Date de fin</label>
+                    <input type="date"
+                           id="date_fin"
+                           name="date_fin"
+                           class="form-control"
+                           value="{{ date_fin }}">
+                </div>
+
+                <div class="col-md-4 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i> Filtrer
+                    </button>
+                    <a href="{% url 'rapportsoc:h_rapport_tresorerie' %}"
+                       class="btn btn-outline-secondary">
+                        Réinitialiser
+                    </a>
+                </div>
+            </form>
+
+            {% if date_debut_affichage or date_fin_affichage %}
+                <p class="text-muted mt-3 mb-0">
+                    Période :
+                    <strong>{{ date_debut_affichage|default:"Depuis le début" }}</strong>
+                    au
+                    <strong>{{ date_fin_affichage|default:"Sans date de fin" }}</strong>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- INDICATEURS -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-start border-4 border-primary">
+                <div class="card-body">
+                    <div class="text-muted small">Report antérieur</div>
+                    <div class="fs-5 fw-bold">
+                        {{ solde_report|floatformat:2 }} Ar
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-start border-4 border-info">
+                <div class="card-body">
+                    <div class="text-muted small">Total des dépôts</div>
+                    <div class="fs-5 fw-bold">
+                        {{ total_depots|floatformat:2 }} Ar
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-start border-4 border-success">
+                <div class="card-body">
+                    <div class="text-muted small">Total des recettes</div>
+                    <div class="fs-5 fw-bold">
+                        {{ total_recettes|floatformat:2 }} Ar
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="card shadow-sm h-100 border-start border-4 border-danger">
+                <div class="card-body">
+                    <div class="text-muted small">Total des dépenses</div>
+                    <div class="fs-5 fw-bold">
+                        {{ total_depenses|floatformat:2 }} Ar
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOLDE FINAL -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <div class="text-muted">Total des entrées de la période</div>
+                <div class="fs-5 fw-bold text-success">
+                    {{ total_entrees|floatformat:2 }} Ar
+                </div>
+            </div>
+
+            <div>
+                <div class="text-muted">Solde final de trésorerie</div>
+                <div class="fs-3 fw-bold {% if solde_final < 0 %}text-danger{% else %}text-success{% endif %}">
+                    {{ solde_final|floatformat:2 }} Ar
+                </div>
+            </div>
+
+            <div>
+                <div class="text-muted">Opérations</div>
+                <div class="fs-5 fw-bold">{{ nombre_operations }}</div>
+                <div class="text-muted small">{{ nombre_jours }} jour(s) avec activité</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU DU RAPPORT -->
+    <div class="card shadow-sm">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <strong>
+                <i class="fas fa-table me-2"></i>
+                Journal de trésorerie MCCR
+            </strong>
+            <span class="badge bg-secondary">{{ nombre_operations }} opération(s)</span>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover table-striped align-middle mb-0">
+                    <thead class="table-dark text-center text-white">
+                        <tr>
+                            <th>Date</th>
+                            <th>Pièces</th>
+                            <th>Descriptions</th>
+                            <th>Libellés</th>
+                            <th>Dépôts (Ar)</th>
+                            <th>Recettes (Ar)</th>
+                            <th>Dépenses (Ar)</th>
+                            <th>Solde cumulé (Ar)</th>
+                            <th>Nombre</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for operation in operations %}
+                            <tr>
+                                <td class="text-nowrap">
+                                    {{ operation.date|date:"d/m/Y" }}
+                                </td>
+                                <td>
+                                    {% for piece in operation.pieces %}
+                                        <div>{{ piece }}</div>
+                                    {% empty %}
+                                        —
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% for description in operation.descriptions %}
+                                        <div>{{ description }}</div>
+                                    {% empty %}
+                                        —
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    {% for titre in operation.titres %}
+                                        <div>{{ titre }}</div>
+                                    {% empty %}
+                                        —
+                                    {% endfor %}
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    {{ operation.depot|floatformat:2 }}
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    {{ operation.recette|floatformat:2 }}
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    {{ operation.depense|floatformat:2 }}
+                                </td>
+                                <td class="text-end text-nowrap fw-bold">
+                                    {{ operation.solde|floatformat:2 }}
+                                </td>
+                                <td class="text-center">
+                                    {{ operation.nombre_operations }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4 text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Aucune opération MCCR pour cette période.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td colspan="4" class="text-end">Totaux de la période</td>
+                            <td class="text-end">{{ total_depots|floatformat:2 }}</td>
+                            <td class="text-end">{{ total_recettes|floatformat:2 }}</td>
+                            <td class="text-end">{{ total_depenses|floatformat:2 }}</td>
+                            <td class="text-end">{{ solde_final|floatformat:2 }}</td>
+                            <td class="text-center">{{ nombre_operations }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

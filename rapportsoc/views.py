@@ -6,16 +6,15 @@ from django.contrib import messages
 from django.shortcuts import render
 
 from avances.models import Avance, H_Avance
-from depensesoc.models import DepenseSoc
-from depotEntreprise.models import DepotSoc
-from recette.models import H_AppUser, Recette
+from depensesoc.models import DepenseSoc, H_DepenseSoc
+from depotEntreprise.models import DepotSoc, H_DepotSoc
+from users.models import H_AppUser, AppUser
+from recette.models import H_Recette, Recette
 from salaire.models import H_Salaire, Salaire
 
 # ============================================================
 # CONSTRUCTION DU RAPPORT DE TRÉSORERIE SOCIÉTÉ
 # ============================================================
-
-
 def construire_rapport_tresorerie(request):
 
     date_debut_str = request.GET.get("date_debut", "").strip()
@@ -416,8 +415,6 @@ def construire_rapport_tresorerie(request):
 # ============================================================
 # RAPPORT DE TRÉSORERIE — AFFICHAGE
 # ============================================================
-
-
 def rapport_tresorerie(request):
 
     context = construire_rapport_tresorerie(request)
@@ -428,8 +425,6 @@ def rapport_tresorerie(request):
 # ============================================================
 # RAPPORT DE TRÉSORERIE — IMPRESSION
 # ============================================================
-
-
 def rapport_tresorerie_print(request):
 
     context = construire_rapport_tresorerie(request)
@@ -437,160 +432,158 @@ def rapport_tresorerie_print(request):
     return render(request, "rapportsoc/rapport_tresorerie_print.html", context)
 
 
+
 # ===================================================================
 #
+# ENTREPRISE H — MCCR
 #
-#
-#
-# ENTREPRISE H
-#
-#
-#
-# ==================================================================
+# ===================================================================
 
 # ============================================================
-# CONSTRUCTION DU RAPPORT DE TRÉSORERIE SOCIÉTÉ
+# CONSTRUCTION DU RAPPORT DE TRÉSORERIE MCCR
 # ============================================================
-
 
 def h_construire_rapport_tresorerie(request):
+    """
+    Construit le rapport de trésorerie de MCCR exclusivement
+    à partir des modèles H_.
+
+    Le solde final est calculé ainsi :
+        Solde reporté + Dépôts + Recettes - Dépenses
+    """
 
     date_debut_str = request.GET.get("date_debut", "").strip()
-
     date_fin_str = request.GET.get("date_fin", "").strip()
 
     date_debut = None
     date_fin = None
-
     ZERO = Decimal("0")
 
     # ========================================================
-    # CONVERSION DES DATES
+    # 1. CONVERSION ET VALIDATION DES DATES
     # ========================================================
 
     if date_debut_str:
-
         try:
-
-            date_debut = datetime.strptime(date_debut_str, "%Y-%m-%d").date()
-
+            date_debut = datetime.strptime(
+                date_debut_str, "%Y-%m-%d"
+            ).date()
         except ValueError:
-
             messages.error(request, "La date de début est invalide.")
-
             date_debut_str = ""
 
     if date_fin_str:
-
         try:
-
-            date_fin = datetime.strptime(date_fin_str, "%Y-%m-%d").date()
-
+            date_fin = datetime.strptime(
+                date_fin_str, "%Y-%m-%d"
+            ).date()
         except ValueError:
-
             messages.error(request, "La date de fin est invalide.")
-
             date_fin_str = ""
 
-    # ========================================================
-    # VÉRIFICATION DE LA PÉRIODE
-    # ========================================================
-
     if date_debut and date_fin and date_fin < date_debut:
-
         messages.error(
-            request, "La date de fin doit être supérieure ou égale à la date de début."
+            request,
+            "La date de fin doit être supérieure ou égale "
+            "à la date de début.",
         )
-
         date_fin = None
         date_fin_str = ""
 
     # ========================================================
-    # TOUTES LES OPÉRATIONS
+    # 2. COLLECTE DES OPÉRATIONS MCCR UNIQUEMENT
     # ========================================================
 
     operations = []
 
-    # ========================================================
-    # 1. DÉPÔTS SOCIÉTÉ
-    # ========================================================
+    # --------------------------------------------------------
+    # 2.1. DÉPÔTS SOCIÉTÉ MCCR
+    # --------------------------------------------------------
 
-    depots = DepotSoc.objects.all()
+    depots = H_DepotSoc.objects.all()
 
     for depot in depots:
+        if not depot.date:
+            continue
 
         operations.append(
             {
                 "date": depot.date,
                 "piece": f"DEP-{depot.id}",
                 "description": "Dépôt",
-                "titre": "Dépôt société",
+                "titre": "Dépôt société MCCR",
                 "depot": depot.montant or ZERO,
                 "recette": ZERO,
                 "depense": ZERO,
-                "source": "DepotSoc",
+                "source": "H_DepotSoc",
                 "objet": depot,
             }
         )
 
-    # ========================================================
-    # 2. RECETTES
-    # ========================================================
+    # --------------------------------------------------------
+    # 2.2. RECETTES MCCR
+    # --------------------------------------------------------
 
-    recettes = Recette.objects.all()
+    recettes = H_Recette.objects.all()
 
     for recette in recettes:
+        if not recette.date:
+            continue
 
         operations.append(
             {
                 "date": recette.date,
                 "piece": f"REC-{recette.id}",
                 "description": "Recette",
-                "titre": recette.source or "Recette",
+                "titre": recette.source or "Recette MCCR",
                 "depot": ZERO,
                 "recette": recette.montant or ZERO,
                 "depense": ZERO,
-                "source": "Recette",
+                "source": "H_Recette",
                 "objet": recette,
             }
         )
 
-    # ========================================================
-    # 3. DÉPENSES SOCIÉTÉ
-    # ========================================================
+    # --------------------------------------------------------
+    # 2.3. DÉPENSES SOCIÉTÉ MCCR
+    # --------------------------------------------------------
 
-    depenses = DepenseSoc.objects.all()
+    depenses = H_DepenseSoc.objects.all()
 
     for depense in depenses:
+        if not depense.date:
+            continue
 
         operations.append(
             {
                 "date": depense.date,
                 "piece": f"DEPENSE-{depense.id}",
-                "description": (depense.description or "Dépense"),
-                "titre": (depense.titre or "Dépense société"),
+                "description": depense.description or "Dépense",
+                "titre": depense.titre or "Dépense société MCCR",
                 "depot": ZERO,
                 "recette": ZERO,
                 "depense": depense.montant or ZERO,
-                "source": "DepenseSoc",
+                "source": "H_DepenseSoc",
                 "objet": depense,
             }
         )
 
-    # ========================================================
-    # 4. SALAIRES
-    # ========================================================
+    # --------------------------------------------------------
+    # 2.4. SALAIRES MCCR
+    # --------------------------------------------------------
 
-    salaires = Salaire.objects.select_related("personnel").all()
+    salaires = H_Salaire.objects.select_related("personnel").all()
 
     for salaire in salaires:
+        if not salaire.date:
+            continue
 
         if salaire.personnel:
-
-            nom_personnel = f"{salaire.personnel.nom} " f"{salaire.personnel.prenom}"
-
+            nom_personnel = (
+                f"{salaire.personnel.nom or ''} "
+                f"{salaire.personnel.prenom or ''}"
+            ).strip()
         else:
-
             nom_personnel = "Personnel non renseigné"
 
         operations.append(
@@ -602,100 +595,97 @@ def h_construire_rapport_tresorerie(request):
                 "depot": ZERO,
                 "recette": ZERO,
                 "depense": salaire.montant or ZERO,
-                "source": "Salaire",
+                "source": "H_Salaire",
                 "objet": salaire,
             }
         )
 
-    # ========================================================
-    # 5. AVANCES PERSONNEL
-    # ========================================================
+    # --------------------------------------------------------
+    # 2.5. AVANCES AU PERSONNEL MCCR
+    # --------------------------------------------------------
 
-    avances = Avance.objects.select_related("personnel").all()
+    avances = H_Avance.objects.select_related("personnel").all()
 
     for avance in avances:
-
         if not avance.dateAv:
             continue
 
-        date_avance = avance.dateAv
-
         if avance.personnel:
-
-            nom_personnel = f"{avance.personnel.nom} " f"{avance.personnel.prenom}"
-
+            nom_personnel = (
+                f"{avance.personnel.nom or ''} "
+                f"{avance.personnel.prenom or ''}"
+            ).strip()
         else:
-
             nom_personnel = "Personnel non renseigné"
 
         operations.append(
             {
-                "date": date_avance,
+                "date": avance.dateAv,
                 "piece": f"AV-{avance.id}",
-                "description": "Avance",
-                "titre": (avance.motifAv or nom_personnel),
+                "description": "Avance au personnel",
+                "titre": avance.motifAv or nom_personnel,
                 "depot": ZERO,
                 "recette": ZERO,
                 "depense": avance.montantAv or ZERO,
-                "source": "Avance",
+                "source": "H_Avance",
                 "objet": avance,
             }
         )
 
     # ========================================================
-    # TRI CHRONOLOGIQUE
+    # 3. TRI CHRONOLOGIQUE
     # ========================================================
 
-    operations.sort(key=lambda operation: (operation["date"], operation["objet"].id))
+    operations.sort(
+        key=lambda operation: (
+            operation["date"],
+            operation["piece"],
+        )
+    )
 
     # ========================================================
-    # CALCUL DU REPORT
+    # 4. CALCUL DU SOLDE REPORTÉ AVANT LA PÉRIODE
     # ========================================================
 
     solde_report = ZERO
 
     if date_debut:
-
         for operation in operations:
-
             if operation["date"] < date_debut:
-
-                solde_report += operation["depot"] + operation["recette"]
-
-                solde_report -= operation["depense"]
+                solde_report += (
+                    operation["depot"]
+                    + operation["recette"]
+                    - operation["depense"]
+                )
 
     # ========================================================
-    # FILTRAGE DE LA PÉRIODE
+    # 5. FILTRAGE DES OPÉRATIONS DE LA PÉRIODE
     # ========================================================
 
     operations_periode = []
 
     for operation in operations:
+        date_operation = operation["date"]
 
-        if date_debut:
+        if date_debut and date_operation < date_debut:
+            continue
 
-            if operation["date"] < date_debut:
-                continue
-
-        if date_fin:
-
-            if operation["date"] > date_fin:
-                continue
+        if date_fin and date_operation > date_fin:
+            continue
 
         operations_periode.append(operation)
 
     # ========================================================
-    # REGROUPEMENT PAR DATE
+    # 6. REGROUPEMENT DES OPÉRATIONS PAR JOUR
     # ========================================================
 
     operations_par_date = defaultdict(list)
 
     for operation in operations_periode:
-
         operations_par_date[operation["date"]].append(operation)
 
     # ========================================================
-    # CONSTRUCTION DU RAPPORT
+    # 7. CONSTRUCTION DU RAPPORT JOURNALIER
     # ========================================================
 
     operations_grouped = []
@@ -707,70 +697,31 @@ def h_construire_rapport_tresorerie(request):
     total_depenses = ZERO
 
     for date_operation in sorted(operations_par_date.keys()):
-
         operations_jour = operations_par_date[date_operation]
-
-        # ----------------------------------------------------
-        # TOTAUX DE LA JOURNÉE
-        # ----------------------------------------------------
 
         depot_jour = ZERO
         recette_jour = ZERO
         depense_jour = ZERO
-
-        # ----------------------------------------------------
-        # INFORMATIONS
-        # ----------------------------------------------------
 
         pieces = []
         descriptions = []
         titres = []
 
         for operation in operations_jour:
-
-            # Montants
-
             depot_jour += operation["depot"]
-
             recette_jour += operation["recette"]
-
             depense_jour += operation["depense"]
 
-            # Pièce
-
             pieces.append(operation["piece"])
-
-            # Description
-
             descriptions.append(operation["description"] or "—")
-
-            # Titre
-
             titres.append(operation["titre"] or "—")
 
-        # ====================================================
-        # CALCUL DU SOLDE
-        # ====================================================
-
-        solde += depot_jour
-
-        solde += recette_jour
-
-        solde -= depense_jour
-
-        # ====================================================
-        # TOTAUX
-        # ====================================================
+        # Solde cumulé après les opérations de la journée.
+        solde += depot_jour + recette_jour - depense_jour
 
         total_depots += depot_jour
-
         total_recettes += recette_jour
-
         total_depenses += depense_jour
-
-        # ====================================================
-        # LIGNE DU JOUR
-        # ====================================================
 
         operations_grouped.append(
             {
@@ -787,63 +738,49 @@ def h_construire_rapport_tresorerie(request):
         )
 
     # ========================================================
-    # SOLDE FINAL
+    # 8. SOLDE FINAL
     # ========================================================
 
     solde_final = solde
 
     # ========================================================
-    # STATISTIQUES
+    # 9. STATISTIQUES
     # ========================================================
 
     nombre_operations_total = len(operations_periode)
-
     nombre_jours = len(operations_grouped)
 
     # ========================================================
-    # CONTEXT
+    # 10. CONTEXTE POUR LES TEMPLATES MCCR
     # ========================================================
 
     context = {
-        # ----------------------------------------------------
-        # OPÉRATIONS
-        # ----------------------------------------------------
         "operations": operations_grouped,
-        # ----------------------------------------------------
-        # DATES
-        # ----------------------------------------------------
+
         "date_debut": date_debut_str,
         "date_fin": date_fin_str,
-        "date_debut_affichage": (date_debut.strftime("%d/%m/%Y") if date_debut else ""),
-        "date_fin_affichage": (date_fin.strftime("%d/%m/%Y") if date_fin else ""),
-        # ----------------------------------------------------
-        # REPORT
-        # ----------------------------------------------------
+
+        "date_debut_affichage": (
+            date_debut.strftime("%d/%m/%Y")
+            if date_debut
+            else ""
+        ),
+        "date_fin_affichage": (
+            date_fin.strftime("%d/%m/%Y")
+            if date_fin
+            else ""
+        ),
+
         "solde_report": solde_report,
-        # ----------------------------------------------------
-        # DÉPÔTS
-        # ----------------------------------------------------
+
         "total_depots": total_depots,
-        # ----------------------------------------------------
-        # RECETTES
-        # ----------------------------------------------------
         "total_recettes": total_recettes,
-        # ----------------------------------------------------
-        # ENTRÉES
-        # ----------------------------------------------------
-        "total_entrees": (total_depots + total_recettes),
-        # ----------------------------------------------------
-        # DÉPENSES
-        # ----------------------------------------------------
+        "total_entrees": total_depots + total_recettes,
         "total_depenses": total_depenses,
-        # ----------------------------------------------------
-        # SOLDE FINAL
-        # ----------------------------------------------------
+
         "solde_final": solde_final,
-        # ----------------------------------------------------
-        # STATISTIQUES
-        # ----------------------------------------------------
-        "nombre_operations": (nombre_operations_total),
+
+        "nombre_operations": nombre_operations_total,
         "nombre_jours": nombre_jours,
     }
 
@@ -851,24 +788,28 @@ def h_construire_rapport_tresorerie(request):
 
 
 # ============================================================
-# RAPPORT DE TRÉSORERIE — AFFICHAGE
+# RAPPORT DE TRÉSORERIE MCCR — AFFICHAGE
 # ============================================================
-
 
 def h_rapport_tresorerie(request):
-
     context = h_construire_rapport_tresorerie(request)
 
-    return render(request, "rapportsoc/h_list.html", context)
+    return render(
+        request,
+        "rapportsoc/h_list.html",
+        context,
+    )
 
 
 # ============================================================
-# RAPPORT DE TRÉSORERIE — IMPRESSION
+# RAPPORT DE TRÉSORERIE MCCR — IMPRESSION
 # ============================================================
-
 
 def h_rapport_tresorerie_print(request):
-
     context = h_construire_rapport_tresorerie(request)
 
-    return render(request, "rapportsoc/rapport_tresorerie_print.html", context)
+    return render(
+        request,
+        "rapportsoc/h_rapport_tresorerie_print.html",
+        context,
+    )

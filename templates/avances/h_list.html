@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    {# En-tête #}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-hand-holding-usd me-2"></i>
+                Gestion des avances MCCR
+            </h3>
+            <p class="text-muted mb-0">
+                Consultation et gestion des avances du personnel MCCR.
+            </p>
+        </div>
+
+        <a href="{% url 'avances:h_avance_add' %}"
+           class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            Nouvelle avance
+        </a>
+    </div>
+
+    {# Messages Django #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {# Filtres #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-2"></i>
+                Recherche et filtres
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <form method="get"
+                  action="{% url 'avances:h_avance_list' %}">
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-12 col-md-4">
+                        <label for="id_personnel" class="form-label">
+                            Personnel
+                        </label>
+                        <input
+                            type="text"
+                            name="personnel"
+                            id="id_personnel"
+                            class="form-control"
+                            value="{{ h_personnel|default:'' }}"
+                            placeholder="Nom ou prénom">
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label for="id_date_debut" class="form-label">
+                            Date de début
+                        </label>
+                        <input
+                            type="date"
+                            name="date_debut"
+                            id="id_date_debut"
+                            class="form-control"
+                            value="{{ h_date_debut|default:'' }}">
+                    </div>
+
+                    <div class="col-12 col-md-3">
+                        <label for="id_date_fin" class="form-label">
+                            Date de fin
+                        </label>
+                        <input
+                            type="date"
+                            name="date_fin"
+                            id="id_date_fin"
+                            class="form-control"
+                            value="{{ h_date_fin|default:'' }}">
+                    </div>
+
+                    <div class="col-12 col-md-2 d-flex gap-2">
+                        <button type="submit"
+                                class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-search me-1"></i>
+                            Filtrer
+                        </button>
+
+                        <a href="{% url 'avances:h_avance_list' %}"
+                           class="btn btn-outline-secondary"
+                           title="Réinitialiser les filtres"
+                           aria-label="Réinitialiser les filtres">
+                            <i class="fas fa-redo"></i>
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Tableau des avances #}
+    <div class="card shadow-sm">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Liste des avances
+            </h5>
+
+            <span class="badge bg-secondary">
+                {{ page_obj.paginator.count|default:h_avances|length }}
+                résultat(s)
+            </span>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle mb-0">
+                    <thead class="table-dark text-white">
+                        <tr>
+                            <th class="text-nowrap">N°</th>
+                            <th>Personnel</th>
+                            <th>Motif</th>
+                            <th class="text-end text-nowrap">Montant</th>
+                            <th class="text-end text-nowrap">Récupéré</th>
+                            <th class="text-end text-nowrap">Reste</th>
+                            <th>Type</th>
+                            <th class="text-nowrap">Date</th>
+                            <th>Enregistré par</th>
+                            <th class="text-center text-nowrap">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for avance in h_avances %}
+                            <tr>
+                                <td>{{ avance.pk }}</td>
+
+                                <td>
+                                    {% if avance.personnel %}
+                                        <strong>{{ avance.personnel }}</strong>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            Personnel non renseigné
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ avance.motifAv|default:"—" }}
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    {{ avance.montantAv|floatformat:2 }}
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    {{ avance.montant_recupere|default_if_none:0|floatformat:2 }}
+                                </td>
+
+                                <td class="text-end text-nowrap">
+                                    <strong>
+                                        {{ avance.reste|default_if_none:0|floatformat:2 }}
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    {% if avance.typeAv %}
+                                        <span class="badge bg-info text-dark">
+                                            {{ avance.typeAv }}
+                                        </span>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-nowrap">
+                                    {{ avance.dateAv|date:"d/m/Y"|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {% if avance.enregistre_par %}
+                                        {# Adaptez username si le champ de H_AppUser porte un autre nom. #}
+                                        {{ avance.enregistre_par.username|default:"Utilisateur MCCR" }}
+                                    {% else %}
+                                        <span class="text-muted">
+                                            Non renseigné
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-center text-nowrap">
+                                    {% if utilisateur and avance.enregistre_par_id == utilisateur.pk %}
+                                        <a href="{% url 'avances:h_avance_edit' avance.pk %}"
+                                           class="btn btn-sm btn-warning"
+                                           title="Modifier cette avance"
+                                           aria-label="Modifier l'avance {{ avance.pk }}">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteAvance{{ avance.pk }}"
+                                                title="Supprimer cette avance"
+                                                aria-label="Supprimer l'avance {{ avance.pk }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted"
+                                              title="Seul l'enregistreur peut modifier ou supprimer cette avance">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                        {% empty %}
+                            <tr>
+                                <td colspan="10"
+                                    class="text-center py-5">
+                                    <i class="fas fa-folder-open fa-2x text-muted mb-3"></i>
+                                    <p class="mb-0 text-muted">
+                                        Aucune avance MCCR trouvée.
+                                    </p>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {# Pagination #}
+        {% if page_obj and page_obj.paginator.num_pages > 1 %}
+            <div class="card-footer">
+                <nav aria-label="Pagination des avances">
+                    <ul class="pagination justify-content-center flex-wrap mb-0">
+
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?{% if query_params %}{{ query_params }}&{% endif %}page=1">
+                                    Première
+                                </a>
+                            </li>
+
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                    Précédente
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Première</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">Précédente</span>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ page_obj.number }}
+                                / {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                    Suivante
+                                </a>
+                            </li>
+
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.paginator.num_pages }}">
+                                    Dernière
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Suivante</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">Dernière</span>
+                            </li>
+                        {% endif %}
+
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+
+    {# Modales de confirmation de suppression #}
+    {% for avance in h_avances %}
+        {% if utilisateur and avance.enregistre_par_id == utilisateur.pk %}
+            <div class="modal fade"
+                 id="deleteAvance{{ avance.pk }}"
+                 tabindex="-1"
+                 aria-labelledby="deleteAvanceLabel{{ avance.pk }}"
+                 aria-hidden="true">
+
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title"
+                                id="deleteAvanceLabel{{ avance.pk }}">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Confirmer la suppression
+                            </h5>
+
+                            <button type="button"
+                                    class="btn-close btn-close-white"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Fermer"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <p>
+                                Voulez-vous vraiment supprimer cette avance MCCR ?
+                            </p>
+
+                            <ul class="mb-0">
+                                <li>
+                                    <strong>Personnel :</strong>
+                                    {{ avance.personnel|default:"Non renseigné" }}
+                                </li>
+                                <li>
+                                    <strong>Montant :</strong>
+                                    {{ avance.montantAv|floatformat:2 }}
+                                </li>
+                                <li>
+                                    <strong>Date :</strong>
+                                    {{ avance.dateAv|date:"d/m/Y"|default:"—" }}
+                                </li>
+                            </ul>
+
+                            <p class="text-danger mt-3 mb-0">
+                                Cette action est définitive.
+                            </p>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal">
+                                Annuler
+                            </button>
+
+                            <form method="post"
+                                  action="{% url 'avances:h_avance_delete' avance.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt me-1"></i>
+                                    Confirmer la suppression
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+
+</div>
+{% endblock %}

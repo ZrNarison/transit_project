@@ -1,9 +1,7 @@
 from django import forms
 
-from personnel.models import Personnel
-
-from .models import Avance
-
+from personnel.models import H_Personnel, Personnel
+from .models import Avance, H_Avance
 
 class AvanceForm(forms.ModelForm):
 
@@ -204,5 +202,109 @@ class AvanceForm(forms.ModelForm):
         if not date_avance:
 
             raise forms.ValidationError("Veuillez sélectionner une date.")
+
+        return date_avance
+
+
+
+class H_AvanceForm(forms.ModelForm):
+    """Formulaire des avances réservé aux personnels MCCR."""
+
+    class Meta:
+        model = H_Avance
+        fields = [
+            "personnel",
+            "motifAv",
+            "montantAv",
+            "typeAv",
+            "dateAv",
+        ]
+
+        labels = {
+            "personnel": "Personnel MCCR",
+            "motifAv": "Motif",
+            "montantAv": "Montant (Ar)",
+            "typeAv": "Type d'avance",
+            "dateAv": "Date de l'avance",
+        }
+
+        widgets = {
+            "personnel": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "motifAv": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Motif de l'avance",
+                }
+            ),
+            "montantAv": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Montant",
+                    "min": "1",
+                    "step": "1",
+                }
+            ),
+            "typeAv": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "dateAv": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["personnel"].queryset = (
+            H_Personnel.objects.all().order_by("nom", "prenom")
+        )
+
+        if self.instance and self.instance.pk and self.instance.dateAv:
+            self.initial["dateAv"] = self.instance.dateAv.strftime(
+                "%Y-%m-%d"
+            )
+
+    def clean_montantAv(self):
+        montant = self.cleaned_data.get("montantAv")
+
+        if montant is None or montant <= 0:
+            raise forms.ValidationError(
+                "Le montant doit être supérieur à 0."
+            )
+
+        return montant
+
+    def clean_personnel(self):
+        personnel = self.cleaned_data.get("personnel")
+
+        if not personnel:
+            raise forms.ValidationError(
+                "Veuillez sélectionner un personnel MCCR."
+            )
+
+        return personnel
+
+    def clean_motifAv(self):
+        motif = self.cleaned_data.get("motifAv", "")
+
+        if not motif.strip():
+            raise forms.ValidationError(
+                "Veuillez renseigner le motif de l'avance."
+            )
+
+        return motif.strip()
+
+    def clean_dateAv(self):
+        date_avance = self.cleaned_data.get("dateAv")
+
+        if not date_avance:
+            raise forms.ValidationError(
+                "Veuillez sélectionner une date."
+            )
 
         return date_avance

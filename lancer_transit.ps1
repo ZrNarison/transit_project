@@ -1,5 +1,4 @@
-```powershell
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 # ============================================================
 # CONFIGURATION
@@ -14,14 +13,14 @@ Write-Host "  DEMARRAGE DE TRANSIT_PROJECT" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Vérifier le dossier du projet
+# VÃ©rifier le dossier du projet
 if (-not (Test-Path $ManagePy)) {
     Write-Host "ERREUR : manage.py introuvable dans $Projet" -ForegroundColor Red
     Read-Host "Appuyez sur Entree pour fermer"
     exit 1
 }
 
-# Vérifier l'environnement virtuel
+# VÃ©rifier l'environnement virtuel
 if (-not (Test-Path $PythonVenv)) {
     Write-Host "ERREUR : Python du venv introuvable :" -ForegroundColor Red
     Write-Host $PythonVenv
@@ -57,4 +56,3 @@ Write-Host ""
 & $PythonVenv manage.py runserver 0.0.0.0:8000
 
 Read-Host "Le serveur est arrete. Appuyez sur Entree pour fermer"
-```

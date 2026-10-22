@@ -56,13 +56,13 @@ def mccr_required(view_func):
         user_id = request.session.get("h_user_id")
         if not user_id:
             messages.warning(request, "Veuillez vous connecter à votre espace MCCR.")
-            return redirect("users:h_login")
+            return redirect("users:login")
         try:
             request.h_current_user = H_AppUser.objects.get(pk=user_id)
         except H_AppUser.DoesNotExist:
             request.session.flush()
             messages.error(request, "Session MCCR invalide. Veuillez vous reconnecter.")
-            return redirect("users:h_login")
+            return redirect("users:login")
         return view_func(request, *args, **kwargs)
 
     return wrapper

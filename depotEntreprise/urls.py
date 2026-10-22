@@ -28,8 +28,8 @@ urlpatterns = [
     # ENTREPRISE H
     # ============================================================
     path("h/", views.h_depot_soc_list, name="h_depot_soc_list"),
-    path("h/add/", views.h_depot_soc_add, name="h_depot_soc_add"),
+    path("h/ajouter/", views.h_depot_soc_add, name="h_depot_soc_add"),
     path("h/<int:id>/", views.h_depot_soc_detail, name="h_depot_soc_detail"),
-    path("h/<int:id>/edit/", views.h_depot_soc_edit, name="h_depot_soc_edit"),
-    path("h/<int:id>/delete/", views.h_depot_soc_delete, name="h_depot_soc_delete"),
+    path("h/<int:id>/modifier/", views.h_depot_soc_edit, name="h_depot_soc_edit"),
+    path("h/<int:id>/supprimer/", views.h_depot_soc_delete, name="h_depot_soc_delete"),
 ]

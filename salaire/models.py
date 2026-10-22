@@ -1,5 +1,4 @@
 from decimal import Decimal
-
 from django.db import models, transaction
 from django.db.models import Sum
 from django.utils import timezone
@@ -14,8 +13,6 @@ ZERO = Decimal("0")
 # =============================================================
 # SALAIRE
 # =============================================================
-
-
 class Salaire(models.Model):
 
     class Meta:
@@ -298,8 +295,6 @@ class Salaire(models.Model):
 # =============================================================
 # AFFECTATION DES AVANCES AUX SALAIRES
 # =============================================================
-
-
 class PaiementAvanceSalaire(models.Model):
     """
     Lie une avance à un salaire.
@@ -362,8 +357,6 @@ class PaiementAvanceSalaire(models.Model):
 # =============================================================
 # RECALCUL COMPLET D'UN PERSONNEL
 # =============================================================
-
-
 def recalculer_situation_personnel(personnel):
     """
     Recalcule toute la situation salariale d'un personnel.
@@ -639,8 +632,6 @@ def recalculer_situation_personnel(personnel):
 # ======================================================
 # ENTREPRISE H
 # ======================================================
-
-
 class H_Salaire(models.Model):
 
     class Meta:
@@ -773,7 +764,7 @@ class H_Salaire(models.Model):
         if not personnel:
             return ZERO
 
-        taux = Decimal(str(personnel.psalaire or ZERO))
+        taux = Decimal(str(personnel.salaire or ZERO))
 
         type_contrat = getattr(
             personnel,
@@ -857,12 +848,10 @@ class H_Salaire(models.Model):
     # =========================================================
     # RECALCUL DU RESTE
     # =========================================================
-
     def recalculer_reste(self):
-
         reste, trop_percu = self.calculer_situation()
 
-        Salaire.objects.filter(pk=self.pk).update(
+        H_Salaire.objects.filter(pk=self.pk).update(
             reste=reste,
             trop_percu=trop_percu,
         )
@@ -923,8 +912,6 @@ class H_Salaire(models.Model):
 # =============================================================
 # AFFECTATION DES AVANCES AUX SALAIRES
 # =============================================================
-
-
 class H_PaiementAvanceSalaire(models.Model):
     """
     Lie une avance à un salaire.
@@ -987,31 +974,9 @@ class H_PaiementAvanceSalaire(models.Model):
 # =============================================================
 # RECALCUL COMPLET D'UN PERSONNEL
 # =============================================================
-
-
 def h_recalculer_situation_personnel(personnel):
     """
     Recalcule toute la situation salariale d'un personnel.
-
-    LOGIQUE EXACTE :
-
-    1. Tous les salaires du personnel sont récupérés.
-    2. Toutes ses avances sont récupérées.
-    3. Les anciennes affectations sont supprimées.
-    4. Les salaires sont traités dans l'ordre chronologique.
-    5. Une avance n'est disponible que si :
-           avance.dateAv <= salaire.date_paiement
-    6. Lorsqu'une avance devient disponible pour un salaire,
-       SON MONTANT COMPLET est affecté.
-    7. Une avance déjà affectée n'est plus disponible.
-    8. Le salaire payé est toujours compté séparément.
-    9. Le reste est :
-
-           contractuel
-           - salaire payé
-           - avances affectées
-
-    10. Un reste négatif est un trop-perçu.
     """
 
     if not personnel:

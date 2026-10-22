@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- EN-TÊTE -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-university me-2"></i>
+                Banque Construction
+            </h3>
+            <p class="text-muted mb-0">
+                Gestion des dépôts bancaires de la société MCCR.
+            </p>
+        </div>
+
+        <a href="{% url 'depotSoc:h_depot_soc_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            Nouveau dépôt
+        </a>
+    </div>
+
+    <!-- NOTIFICATIONS DJANGO -->
+    {% if messages %}
+        <div class="position-fixed top-50 start-50 translate-middle"
+             style="z-index: 2000; width: min(92vw, 450px);">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-lg text-center"
+                     role="alert">
+                    <div class="mb-2">
+                        {% if 'success' in message.tags %}
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        {% elif 'error' in message.tags %}
+                            <i class="fas fa-times-circle fa-2x"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle fa-2x"></i>
+                        {% endif %}
+                    </div>
+
+                    <div>{{ message }}</div>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"
+                            aria-label="Fermer"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- RÉSUMÉ -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3 text-primary">
+                        <i class="fas fa-wallet fa-2x"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Nombre de dépôts</div>
+                        <h4 class="mb-0">{{ h_depots|length }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3 text-success">
+                        <i class="fas fa-money-bill-wave fa-2x"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Montant total des dépôts</div>
+                        <h4 class="mb-0 text-success">
+                            {{ total_montant|default:0|floatformat:2|intcomma }} Ar
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Liste des dépôts MCCR
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th style="width: 70px;">N°</th>
+                            <th>Date du dépôt</th>
+                            <th class="text-end">Montant</th>
+                            <th>Enregistré par</th>
+                            <th>Date d'enregistrement</th>
+                            <th style="min-width: 190px;">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for depot in h_depots %}
+                            <tr>
+                                <td class="text-center">{{ depot.pk }}</td>
+
+                                <td class="text-center">
+                                    {{ depot.date|date:"d/m/Y" }}
+                                </td>
+
+                                <td class="text-end fw-bold text-success">
+                                    {{ depot.montant|floatformat:2|intcomma }} Ar
+                                </td>
+
+                                <td>
+                                    {% if depot.enregistreur %}
+                                        {{ depot.enregistreur }}
+                                    {% else %}
+                                        <span class="text-muted">Non renseigné</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                    {% if depot.date_enregistrement %}
+                                        {{ depot.date_enregistrement|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-center">
+                                    <div class="d-flex flex-wrap justify-content-center gap-1">
+
+                                        <a href="{% url 'depotSoc:h_depot_soc_detail' depot.pk %}"
+                                           class="btn btn-info btn-sm"
+                                           title="Consulter">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+
+                                        <a href="{% url 'depotSoc:h_depot_soc_edit' depot.pk %}"
+                                           class="btn btn-warning btn-sm"
+                                           title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        <!-- OUVRIR LA MODALE -->
+                                        <button type="button"
+                                                class="btn btn-danger btn-sm"
+                                                title="Supprimer"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#confirmationSuppression{{ depot.pk }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- MODALE DE CONFIRMATION CENTRÉE -->
+                            <div class="modal fade"
+                                 id="confirmationSuppression{{ depot.pk }}"
+                                 tabindex="-1"
+                                 aria-labelledby="titreSuppression{{ depot.pk }}"
+                                 aria-hidden="true">
+
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow-lg">
+
+                                        <div class="modal-header bg-danger text-white">
+                                            <h5 class="modal-title"
+                                                id="titreSuppression{{ depot.pk }}">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                Confirmer la suppression
+                                            </h5>
+
+                                            <button type="button"
+                                                    class="btn-close btn-close-white"
+                                                    data-bs-dismiss="modal"
+                                                    aria-label="Fermer"></button>
+                                        </div>
+
+                                        <div class="modal-body text-center p-4">
+                                            <i class="fas fa-trash-alt text-danger mb-3"
+                                               style="font-size: 3.5rem;"></i>
+
+                                            <h5 class="mb-3">
+                                                Voulez-vous vraiment supprimer ce dépôt ?
+                                            </h5>
+
+                                            <div class="alert alert-warning">
+                                                <div>
+                                                    <strong>Numéro :</strong>
+                                                    {{ depot.pk }}
+                                                </div>
+
+                                                <div>
+                                                    <strong>Date :</strong>
+                                                    {{ depot.date|date:"d/m/Y" }}
+                                                </div>
+
+                                                <div>
+                                                    <strong>Montant :</strong>
+                                                    {{ depot.montant|floatformat:2|intcomma }} Ar
+                                                </div>
+                                            </div>
+
+                                            <p class="text-danger mb-0">
+                                                <i class="fas fa-exclamation-circle me-1"></i>
+                                                Cette action est irréversible.
+                                            </p>
+                                        </div>
+
+                                        <div class="modal-footer justify-content-center">
+                                            <button type="button"
+                                                    class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">
+                                                <i class="fas fa-times me-1"></i>
+                                                Annuler
+                                            </button>
+
+                                            <!-- POST : SUPPRESSION MCCR -->
+                                            <form method="post"
+                                                  action="{% url 'depotSoc:h_depot_soc_delete' depot.pk %}">
+                                                {% csrf_token %}
+
+                                                <button type="submit"
+                                                        class="btn btn-danger">
+                                                    <i class="fas fa-trash-alt me-1"></i>
+                                                    Confirmer la suppression
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        {% empty %}
+                            <tr>
+                                <td colspan="6"
+                                    class="text-center text-muted py-5">
+                                    <i class="fas fa-inbox fa-2x mb-3 d-block"></i>
+                                    Aucun dépôt MCCR enregistré.
+
+                                    <div class="mt-3">
+                                        <a href="{% url 'depotSoc:h_depot_soc_add' %}"
+                                           class="btn btn-primary btn-sm">
+                                            <i class="fas fa-plus me-1"></i>
+                                            Ajouter le premier dépôt
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                    {% if h_depots %}
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="2" class="text-end">TOTAL</th>
+                                <th class="text-end text-success">
+                                    {{ total_montant|default:0|floatformat:2|intcomma }} Ar
+                                </th>
+                                <th colspan="3"></th>
+                            </tr>
+                        </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -17,14 +17,21 @@ urlpatterns = [
     path("materielEntre/", include("materielEntre.urls")),
     path(
         "vehicule/sortant/",
-        include(("vehiculesortant.urls", "vehiculesortant"),
-                namespace="vehiculesortant"),
+        include(
+            ("vehiculesortant.urls", "vehiculesortant"),
+            namespace="vehiculesortant",
+        ),
     ),
-    path("depense/", include(("depense.urls", "depense"), namespace="depense")),
+    path(
+        "depense/",
+        include(("depense.urls", "depense"), namespace="depense"),
+    ),
     path(
         "depotEntreprise/",
-        include(("depotEntreprise.urls", "depotEntreprise"),
-                namespace="depotEntreprise"),
+        include(
+            ("depotEntreprise.urls", "depotEntreprise"),
+            namespace="depotEntreprise",
+        ),
     ),
     path("depot/", include(("depot.urls", "depot"), namespace="depot")),
     path(
