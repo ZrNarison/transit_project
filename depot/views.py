@@ -7,7 +7,7 @@ from django.db.models import Sum
 from django.forms import inlineformset_factory
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-
+from datetime import datetime
 from audit.utils import enregistrer_action
 from personnel.models import Personnel
 from users.models import AppUser
@@ -164,8 +164,6 @@ def depot_list(request):
 # ============================================================
 # IMPRESSION DES DÉPÔTS
 # ============================================================
-
-
 def depot_print(request):
     """
     Prépare l'impression des dépôts en conservant les filtres
@@ -177,9 +175,7 @@ def depot_print(request):
             "personnel_2",
             "enregistre_par",
         )
-        .prefetch_related(
-            "distributions__distributeur",
-        )
+        .prefetch_related("distributions__distributeur")
         .order_by("-date", "-id")
     )
 
@@ -188,7 +184,9 @@ def depot_print(request):
     date_fin = request.GET.get("date_fin", "").strip()
 
     if personnel:
-        depots = depots.filter(distributions__distributeur_id=personnel).distinct()
+        depots = depots.filter(
+            distributions__distributeur_id=personnel
+        ).distinct()
 
     if date_debut:
         depots = depots.filter(date__gte=date_debut)
@@ -196,23 +194,47 @@ def depot_print(request):
     if date_fin:
         depots = depots.filter(date__lte=date_fin)
 
-    total_montant = depots.aggregate(total=Sum("montantG"))["total"] or Decimal("0.00")
+    total_montant = (
+        depots.aggregate(total=Sum("montantG"))["total"]
+        or Decimal("0.00")
+    )
 
-    total_distribution = Distribution.objects.filter(depot__in=depots).aggregate(
-        total=Sum("montant")
-    )["total"] or Decimal("0.00")
+    total_distribution = (
+        Distribution.objects.filter(depot__in=depots)
+        .aggregate(total=Sum("montant"))["total"]
+        or Decimal("0.00")
+    )
+
+    # Convertir les chaînes en objets date pour l'affichage.
+    date_debut_affichage = None
+    date_fin_affichage = None
+
+    if date_debut:
+        try:
+            date_debut_affichage = datetime.strptime(
+                date_debut, "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            date_debut_affichage = None
+
+    if date_fin:
+        try:
+            date_fin_affichage = datetime.strptime(
+                date_fin, "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            date_fin_affichage = None
 
     context = {
         "depots": depots,
-        "date_debut": date_debut,
-        "date_fin": date_fin,
+        "date_debut": date_debut_affichage,
+        "date_fin": date_fin_affichage,
         "personnel": personnel,
         "total_montant": total_montant,
         "total_distribution": total_distribution,
     }
 
     return render(request, "depot/print.html", context)
-
 
 # ============================================================
 # AJOUT D'UN DÉPÔT

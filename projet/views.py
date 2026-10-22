@@ -397,7 +397,7 @@ def chef_equipe_create(
             "projet": projet,
             "chef": None,
             "mode": "ajout",
-            "titre_page": "Ajouter un chef d'Ã©quipe",
+            "titre_page": "Ajouter un chef d'équipe",
             "user": request.current_user,
         },
     )
@@ -432,8 +432,7 @@ def chef_equipe_update(
         messages.error(
             request,
             (
-                "Vous ne pouvez modifier que les chefs "
-                "d'Ã©quipe que vous avez enregistrÃ©s."
+                "Vous ne pouvez modifier que les chefs d'équipe que vous avez enregistrés."
             ),
         )
 
@@ -479,7 +478,7 @@ def chef_equipe_update(
             "projet": projet,
             "chef": chef,
             "mode": "modification",
-            "titre_page": "Modifier le chef d'Ã©quipe",
+            "titre_page": "Modifier le chef d'équipe",
             "user": request.current_user,
         },
     )
@@ -562,23 +561,21 @@ def chef_equipe_delete(request, projet_id, pk):
 
         messages.success(
             request,
-            f"Le chef d'Ã©quipe Â« {nom} Â» et ses "
-            "affectations inutilisÃ©es ont Ã©tÃ© supprimÃ©s.",
+            f"Le chef d'équipe Â« {nom} Â» et ses affectations inutilisés ont étés supprimés.",
         )
 
     except ProtectedError:
         messages.error(
             request,
-            "Impossible de supprimer ce chef d'Ã©quipe : "
-            "d'autres donnÃ©es du projet utilisent encore "
-            "ce chef ou l'une de ses affectations. "
-            "Aucune suppression partielle n'a Ã©tÃ© conservÃ©e.",
+            "Impossible de supprimer ce chef d'équipe : "
+            "d'autres donnÃ©es du projet utilisent encore ce chef ou l'une de ses affectations. "
+            "Aucune suppression partielle n'a étés conservée.",
         )
 
     except PersonnelExecutionProjet.DoesNotExist:
         messages.error(
             request,
-            "Ce chef d'Ã©quipe n'existe plus ou a dÃ©jÃ  Ã©tÃ© supprimÃ©.",
+            "Ce chef d'équipe n'existe plus ou a déjà supprimé.",
         )
 
     return redirect(
@@ -627,7 +624,7 @@ def utilisateur_projet_create(
         messages.warning(
             request,
             (
-                f"{personnel} possÃ¨de dÃ©jÃ  un compte "
+                f"{personnel} poste de déjà un compte "
                 f"utilisateur Â« {compte_existant.username} Â»."
             ),
         )
@@ -679,7 +676,7 @@ def utilisateur_projet_create(
 
             messages.error(
                 request,
-                (f"Le nom d'utilisateur " f"Â« {username} Â» existe dÃ©jÃ ."),
+                (f"Le nom d'utilisateur " f"Â« {username} Â» existe déjà."),
             )
 
         else:
@@ -694,8 +691,7 @@ def utilisateur_projet_create(
             messages.success(
                 request,
                 (
-                    f"Le compte Â« {utilisateur.username} Â» "
-                    f"a Ã©tÃ© crÃ©Ã© pour {personnel}."
+                    f"Le compte Â« {utilisateur.username} Â» a été crée pour {personnel}."
                 ),
             )
 
@@ -1526,8 +1522,7 @@ def equipe_create(request, projet_id):
             messages.success(
                 request,
                 (
-                    f"{affectation.personnel} a Ã©tÃ© affectÃ© "
-                    f"au projet Â« {projet.titre} Â» comme "
+                    f"{affectation.personnel} a été affecté au projet Â« {projet.titre} Â» comme "
                     f"{affectation.get_fonction_display()}."
                 ),
             )
@@ -1590,9 +1585,7 @@ def equipe_update(request, projet_id, equipe_id):
             messages.success(
                 request,
                 (
-                    f"L'affectation de "
-                    f"{affectation_modifiee.personnel} "
-                    "a été modifiée avec succès."
+                    f"L'affectation de {affectation_modifiee.personnel} a été modifiée avec succès."
                 ),
             )
 
@@ -1660,7 +1653,7 @@ def equipe_delete(
 
         messages.success(
             request,
-            (f"L'affectation de {personnel} a Ã©tÃ© supprimÃ©e du projet."),
+            (f"L'affectation de {personnel} a été supprimée du projet."),
         )
 
     except ProtectedError:
@@ -1668,7 +1661,7 @@ def equipe_delete(
         messages.error(
             request,
             (
-                "Cette affectation est utilisÃ©e par des donnÃ©es historiques et ne peut pas Ãªtre supprimÃ©e."
+                "Cette affectation est utilisée par des données historiques et ne peut pas être supprimee."
             ),
         )
 
@@ -1875,7 +1868,7 @@ def point_create(request, projet_id):
 
             messages.success(
                 request,
-                f"Le point Â« {point.nom} Â» a Ã©tÃ© crÃ©Ã© avec succÃ¨s.",
+                f"Le point Â« {point.nom} Â» a été créer avec succées.",
             )
 
             return redirect(
@@ -1995,7 +1988,7 @@ def point_update(request, projet_id, point_id):
 
             messages.success(
                 request,
-                f"Le point Â« {point.nom} Â» a Ã©tÃ© modifiÃ© avec succÃ¨s.",
+                f"Le point Â« {point.nom} Â» a été modifié avec succés.",
             )
 
             return redirect(
@@ -2099,15 +2092,14 @@ def point_delete(request, projet_id, point_id):
 
         messages.success(
             request,
-            f"Le point Â« {nom_point} Â» a Ã©tÃ© supprimÃ© avec succÃ¨s.",
+            f"Le point Â« {nom_point} Â» a été supprimé avec succés.",
         )
 
     except ProtectedError:
         messages.error(
             request,
             (
-                "Impossible de supprimer ce point, car il est "
-                "utilisÃ© par des donnÃ©es du projet."
+                "Impossible de supprimer ce point, car il est utilisé par des données du projet."
             ),
         )
 
@@ -3084,9 +3076,7 @@ def vehicule_projet_create(
             messages.success(
                 request,
                 (
-                    f"Le vÃ©hicule / engin "
-                    f"Â« {affectation.vehicule} Â» "
-                    f"a Ã©tÃ© affectÃ© au projet "
+                    f"Le véhicule / engin  Â« {affectation.vehicule} Â» a été affecté au projet "
                     f"Â« {projet.titre} Â»."
                 ),
             )
@@ -3190,9 +3180,7 @@ def vehicule_projet_update(
             messages.success(
                 request,
                 (
-                    f"L'affectation du vÃ©hicule "
-                    f"Â« {affectation_modifiee.vehicule} Â» "
-                    f"a Ã©tÃ© modifiÃ©e avec succÃ¨s."
+                    f"L'affectation du véhicule Â« {affectation_modifiee.vehicule} Â» a été modifiée avec succés."
                 ),
             )
 
@@ -3271,9 +3259,9 @@ def vehicule_projet_delete(
             messages.success(
                 request,
                 (
-                    f"L'affectation du vÃ©hicule / engin "
+                    f"L'affectation du véhicule / engin "
                     f"Â« {vehicule} Â» "
-                    f"a Ã©tÃ© supprimÃ©e avec succÃ¨s."
+                    f"a été supprimée avec succés."
                 ),
             )
 
@@ -3282,8 +3270,7 @@ def vehicule_projet_delete(
             messages.error(
                 request,
                 (
-                    "Impossible de supprimer cette affectation "
-                    "car elle est utilisÃ©e par d'autres donnÃ©es."
+                    "Impossible de supprimer cette affectation car elle est utilisée par d'autres données."
                 ),
             )
 
@@ -3569,7 +3556,7 @@ def engin_create(
 
             messages.success(
                 request,
-                (f"L'engin Â« {engin.engin} Â» " "a Ã©tÃ© ajoutÃ© au projet."),
+                (f"L'engin Â« {engin.engin} Â» " "a été ajouté au projet."),
             )
 
             return redirect(
@@ -3631,7 +3618,7 @@ def engin_update(
     ):
         messages.error(
             request,
-            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+            "Votre accés à ce projet n'est pas actif.",
         )
 
         return redirect("projet:projet_list")
@@ -3682,7 +3669,7 @@ def engin_update(
 
             messages.success(
                 request,
-                (f"L'engin Â« {engin.engin} Â» " "a Ã©tÃ© modifiÃ©."),
+                (f"L'engin Â« {engin.engin} Â» " "a été modifié."),
             )
 
             return redirect(
@@ -3745,7 +3732,7 @@ def engin_delete(
     ):
         messages.error(
             request,
-            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+            "Votre accés à ce projet n'est pas actif.",
         )
 
         return redirect("projet:projet_list")
@@ -3787,7 +3774,7 @@ def engin_delete(
 
         messages.success(
             request,
-            (f"L'engin Â« {nom_engin} Â» " "a Ã©tÃ© supprimÃ©."),
+            (f"L'engin Â« {nom_engin} Â» " "a été supprimé."),
         )
 
         return redirect(
@@ -3817,16 +3804,15 @@ def _peut_modifier_mouvement_materiau(
     mouvement,
 ):
     """
-    Autorise la modification d'un mouvement de matÃ©riau
-    uniquement Ã  son enregistreur initial.
+    Autorise la modification d'un mouvement de matériau
+    uniquement à son enregistreur initial.
 
-    VÃ©rifie Ã©galement que le mouvement appartient au projet
-    demandÃ© et que l'utilisateur est identifiÃ©.
+    Vérifie également que le mouvement appartient au projet
+    demandé et que l'utilisateur est identifié.
     """
     if not request or not projet or not mouvement:
         return False
 
-    # VÃ©rifier que le mouvement appartient au projet concernÃ©.
     projet_mouvement_id = getattr(
         mouvement,
         "projet_id",
@@ -3837,13 +3823,11 @@ def _peut_modifier_mouvement_materiau(
         if projet_mouvement_id != projet.pk:
             return False
 
-    # RÃ©cupÃ©rer l'utilisateur applicatif connectÃ©.
     current_user = get_current_user(request)
 
     if not current_user:
         return False
 
-    # L'enregistreur initial ne doit pas Ãªtre remplacÃ©.
     enregistreur_id = getattr(
         mouvement,
         "enregistre_par_id",
@@ -4129,8 +4113,7 @@ def materiau_create(request, projet_id):
 
                 messages.success(
                     request,
-                    f"Le matÃ©riau Â« {materiau_projet.materiau} Â» "
-                    "a Ã©tÃ© ajoutÃ© au projet.",
+                    f"Le matériau Â« {materiau_projet.materiau} Â» a été ajouté au projet.",
                 )
 
                 return redirect(
@@ -4387,7 +4370,7 @@ def materiau_delete(request, projet_id, pk):
 
         messages.success(
             request,
-            f"Le matÃ©riau Â« {nom_materiau} Â» " "a Ã©tÃ© supprimÃ© du projet.",
+            f"Le matériau Â« {nom_materiau} Â» " "a été supprimé du projet.",
         )
 
         return redirect(
@@ -4659,7 +4642,7 @@ def minier_create(request, projet_id):
 
             messages.success(
                 request,
-                f"Le minier Â« {minier.nom} Â» a Ã©tÃ© ajoutÃ© " f"avec succÃ¨s.",
+                f"Le minier Â« {minier.nom} Â» a été ajouté " f"avec succés.",
             )
 
             # ----------------------------------------------------
@@ -4872,7 +4855,7 @@ def minier_update(
 
             messages.success(
                 request,
-                (f"Le minier Â« {minier.nom} Â» " "a Ã©tÃ© modifiÃ© avec succÃ¨s."),
+                (f"Le minier Â« {minier.nom} Â» " "a été modifié avec succés."),
             )
 
             return redirect(
@@ -5080,23 +5063,22 @@ def minier_delete(request, projet_id, pk):
 
         messages.success(
             request,
-            f"Le minier Â« {nom_minier} Â» et ses "
-            "affectations inutilisÃ©es ont Ã©tÃ© supprimÃ©s.",
+            f"Le minier Â« {nom_minier} Â» et ses affectations inutilisées ont été supprimés.",
         )
 
     except ProtectedError:
         messages.error(
             request,
             "Impossible de supprimer ce minier : "
-            "d'autres donnÃ©es du projet utilisent encore "
+            "d'autres données du projet utilisent encore "
             "ce minier. Aucune suppression partielle "
-            "n'a Ã©tÃ© conservÃ©e.",
+            "n'a été conservée.",
         )
 
     except PersonnelExecutionProjet.DoesNotExist:
         messages.error(
             request,
-            "Ce minier n'existe plus ou a dÃ©jÃ  Ã©tÃ© supprimÃ©.",
+            "Ce minier n'existe plus ou a déjà été supprimé.",
         )
 
     return redirect(
@@ -5163,14 +5145,14 @@ def rapport_vehicule_create(
 
                 form.add_error(
                     "vehicule",
-                    "Veuillez sÃ©lectionner un vÃ©hicule.",
+                    "Veuillez sélectionner un véhicule.",
                 )
 
             if chauffeur is None:
 
                 form.add_error(
                     "chauffeur",
-                    "Veuillez sÃ©lectionner un chauffeur.",
+                    "Veuillez sélectionner un chauffeur.",
                 )
 
             if not form.errors:
@@ -5185,7 +5167,7 @@ def rapport_vehicule_create(
 
                 messages.success(
                     request,
-                    "Rapport vÃ©hicule enregistrÃ© avec succÃ¨s.",
+                    "Rapport véhicule enregistré avec succés.",
                 )
 
                 return redirect(
@@ -5227,7 +5209,7 @@ def equipe_projet_selection(request):
 
         messages.error(
             request,
-            "Vous n'avez pas l'autorisation de gÃ©rer les Ã©quipes.",
+            "Vous n'avez pas l'autorisation de gérer les équipes.",
         )
 
         return redirect("projet:projet_list")
@@ -5331,7 +5313,7 @@ def activite_transport_projet_create(
 
             messages.success(
                 request,
-                ("L'activitÃ© de transport " "a Ã©tÃ© enregistrÃ©e avec succÃ¨s."),
+                ("L'activité de transport " "a été enregistrée avec succés."),
             )
 
             return redirect(
@@ -5351,7 +5333,7 @@ def activite_transport_projet_create(
         {
             "form": form,
             "projet": projet,
-            "titre_page": "Nouvelle activitÃ© de transport",
+            "titre_page": "Nouvelle activité de transport",
             "mode": "create",
             "user": request.current_user,
         },
@@ -5391,7 +5373,7 @@ def activite_transport_projet_update(
 
         messages.error(
             request,
-            ("Vous n'Ãªtes pas autorisÃ© Ã  modifier " "cette activitÃ©."),
+            ("Vous n'étes pas autorisé à modifier " "cette activitÃ©."),
         )
 
         return redirect(
@@ -5418,7 +5400,7 @@ def activite_transport_projet_update(
 
             messages.success(
                 request,
-                ("L'activitÃ© de transport " "a Ã©tÃ© modifiÃ©e avec succÃ¨s."),
+                ("L'activité de transport " "a été modifiée avec succés."),
             )
 
             return redirect(
@@ -5476,7 +5458,7 @@ def activite_transport_projet_delete(
 
         messages.error(
             request,
-            ("Vous n'Ãªtes pas autorisÃ© Ã  supprimer " "cette activitÃ©."),
+            ("Vous n'êtes pas autorisé à supprimer " "cette activité."),
         )
 
         return redirect(
@@ -5492,7 +5474,7 @@ def activite_transport_projet_delete(
 
             messages.success(
                 request,
-                ("L'activitÃ© de transport " "a Ã©tÃ© supprimÃ©e avec succÃ¨s."),
+                ("L'activité de transport " "a été supprimée avec succés."),
             )
 
         except ProtectedError:
@@ -5500,8 +5482,7 @@ def activite_transport_projet_delete(
             messages.error(
                 request,
                 (
-                    "Impossible de supprimer cette activitÃ© "
-                    "car elle est utilisÃ©e par d'autres donnÃ©es."
+                    "Impossible de supprimer cette activité car elle est utilisée par d'autres données."
                 ),
             )
 
@@ -5527,7 +5508,7 @@ def activite_transport_projet_delete(
 
 
 def _mouvement_est_createur(mouvement, user):
-    """VÃ©rifie si l'utilisateur connectÃ© est le crÃ©ateur."""
+    """VÃ©rifie si l'utilisateur connecté est le créateur."""
     return user is not None and mouvement.enregistre_par_id == getattr(user, "pk", None)
 
 
@@ -5719,7 +5700,7 @@ def mouvement_vehicule_projet_detail(
     )
 
     if not appartient_au_projet:
-        raise PermissionDenied("Ce mouvement n'appartient pas Ã  ce projet.")
+        raise PermissionDenied("Ce mouvement n'appartient pas à ce projet.")
 
     return render(
         request,
@@ -5763,19 +5744,19 @@ def mouvement_vehicule_projet_create(request, projet_id):
             if bool(vehicule) == bool(engin):
                 form.add_error(
                     None,
-                    "SÃ©lectionnez un seul vÃ©hicule ou un seul engin.",
+                    "Sélectionnez un seul véhicule ou un seul engin.",
                 )
             elif vehicule and vehicule.projet_id != projet.pk:
-                raise PermissionDenied("Ce vÃ©hicule n'appartient pas Ã  ce projet.")
+                raise PermissionDenied("Ce véhicule n'appartient pas à ce projet.")
             elif engin and engin.projet_id != projet.pk:
-                raise PermissionDenied("Cet engin n'appartient pas Ã  ce projet.")
+                raise PermissionDenied("Cet engin n'appartient pas à ce projet.")
             else:
                 mouvement.enregistre_par = user
                 mouvement.save()
 
                 messages.success(
                     request,
-                    "Le rapport d'activitÃ© a Ã©tÃ© enregistrÃ© avec succÃ¨s.",
+                    "Le rapport d'activitÃ© a été enregistrÃ© avec succés.",
                 )
 
                 return redirect(
@@ -5829,7 +5810,7 @@ def mouvement_vehicule_projet_update(
     )
 
     if not appartient_au_projet:
-        raise PermissionDenied("Ce mouvement n'appartient pas Ã  ce projet.")
+        raise PermissionDenied("Ce mouvement n'appartient pas à ce projet.")
 
     if not _mouvement_peut_gerer(mouvement, user):
         messages.error(
@@ -5857,12 +5838,12 @@ def mouvement_vehicule_projet_update(
             if bool(vehicule) == bool(engin):
                 form.add_error(
                     None,
-                    "SÃ©lectionnez un seul vÃ©hicule ou un seul engin.",
+                    "Sélectionnez un seul véhicule ou un seul engin.",
                 )
             elif vehicule and vehicule.projet_id != projet.pk:
-                raise PermissionDenied("Ce vÃ©hicule n'appartient pas Ã  ce projet.")
+                raise PermissionDenied("Ce véhicule n'appartient pas à ce projet.")
             elif engin and engin.projet_id != projet.pk:
-                raise PermissionDenied("Cet engin n'appartient pas Ã  ce projet.")
+                raise PermissionDenied("Cet engin n'appartient pas à ce projet.")
             else:
                 # Conserver le crÃ©ateur initial.
                 mouvement_modifie.enregistre_par = mouvement.enregistre_par
@@ -5870,7 +5851,7 @@ def mouvement_vehicule_projet_update(
 
                 messages.success(
                     request,
-                    "Le rapport d'activitÃ© a Ã©tÃ© modifiÃ© avec succÃ¨s.",
+                    "Le rapport d'activité a été modifié avec succés.",
                 )
 
                 return redirect(
@@ -5927,7 +5908,7 @@ def mouvement_vehicule_projet_delete(
     )
 
     if not appartient_au_projet:
-        raise PermissionDenied("Ce mouvement n'appartient pas Ã  ce projet.")
+        raise PermissionDenied("Ce mouvement n'appartient pas à ce projet.")
 
     if not _mouvement_peut_gerer(mouvement, user):
         messages.error(
@@ -5943,13 +5924,12 @@ def mouvement_vehicule_projet_delete(
         mouvement.delete()
         messages.success(
             request,
-            "Le rapport d'activitÃ© a Ã©tÃ© supprimÃ© avec succÃ¨s.",
+            "Le rapport d'activité a été supprimé avec succés.",
         )
     except Exception:
         messages.error(
             request,
-            "Impossible de supprimer ce mouvement. "
-            "VÃ©rifiez s'il est utilisÃ© par d'autres donnÃ©es.",
+            "Impossible de supprimer ce mouvement. Vérifiez s'il est utilisÃ© par d'autres données.",
         )
 
     return redirect(
@@ -5963,8 +5943,8 @@ def mouvement_vehicule_projet_delete(
 # ================================================
 def _avances_du_projet(projet):
     """
-    Retourne uniquement les avances rattachÃ©es Ã  ce projet
-    via leur Ã©quipe d'exÃ©cution ou leur Ã©quipe de miniers.
+    Retourne uniquement les avances rattachées à ce projet
+    via leur équipe d'exécution ou leur équipe de miniers.
     """
     return (
         AvanceEquipeProjet.objects.filter(
@@ -5982,7 +5962,7 @@ def _avances_du_projet(projet):
 def _peut_gerer_avance(request, avance):
     """
     L'auteur peut modifier ou supprimer son avance.
-    Admin et Superviseur disposent Ã©galement de ce droit.
+    Admin et Superviseur disposent également de ce droit.
     """
     role = request.session.get("role")
     user_id = request.session.get("user_id")
@@ -7073,8 +7053,7 @@ def _materiaux_projet_create(request, projet, type_objet):
 
                     messages.error(
                         request,
-                        "Le retour n'a pas pu Ãªtre enregistrÃ©. "
-                        "VÃ©rifiez les informations saisies.",
+                        "Le retour n'a pas pu être enregistré. Vérifiez les informations saisies.",
                     )
 
                     contexte["form"] = form
@@ -7086,7 +7065,7 @@ def _materiaux_projet_create(request, projet, type_objet):
                     )
 
                 messages.success(
-                    request, f"{config['titre']} : enregistrement rÃ©ussi."
+                    request, f"{config['titre']} : enregistrement réussi."
                 )
 
                 return redirect(
@@ -7129,7 +7108,7 @@ def _materiaux_projet_create(request, projet, type_objet):
             objet.save()
             form.save_m2m()
 
-            messages.success(request, f"{config['titre']} : enregistrement rÃ©ussi.")
+            messages.success(request, f"{config['titre']} : enregistrement réussi.")
 
             return redirect(
                 config["list_url"],

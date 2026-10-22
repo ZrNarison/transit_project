@@ -4,370 +4,215 @@
 <html lang="fr">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <title>
-        Impression des dépôts
-    </title>
-
+    <title>E-LOONG SARLU</title>
 
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
 
-
     <style>
-
         body {
-
             background: white;
-
+            color: black;
             font-size: 13px;
-
         }
-
 
         .print-area {
-
             width: 95%;
-
             margin: auto;
-
         }
 
-
-        h2 {
-
-            margin-bottom: 30px;
-
+        /* En-tête E-LOONG */
+        .company-header {
+            text-align: left;
+            line-height: 1.5;
+            margin-bottom: 25px;
         }
 
+        .company-header .company-name {
+            font-size: 19px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .company-header p {
+            margin: 0;
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .report-header h2 {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .period {
+            text-align: left;
+            margin-bottom: 20px;
+        }
 
         table {
-
             width: 100%;
-
             border-collapse: collapse;
-
             margin-top: 20px;
-
         }
-
 
         th, td {
-
             border: 1px solid black !important;
-
             padding: 10px !important;
-
             vertical-align: middle;
-
         }
 
+        th {
+            text-align: center;
+        }
 
         .signature {
-
-            margin-top: 80px;
-
+            margin-top: 70px;
             text-align: right;
-
         }
-
 
         .date-impression {
-
             margin-bottom: 40px;
-
         }
-
-
 
         @media print {
-
-
-            .no-print {
-
+            .no-print,
+            footer,
+            .footer,
+            .main-footer,
+            .site-footer {
                 display: none !important;
-
             }
-
 
             body {
-
                 font-size: 12px;
-
             }
-
 
             .print-area {
-
                 width: 100%;
-
             }
-
 
             @page {
-
                 size: A4 landscape;
-
-                margin: 15mm;
-
+                margin: 12mm;
             }
-
-
         }
-
-
     </style>
-
-
 </head>
-
 
 <body>
 
-
 <div class="print-area">
-
 
     <div class="no-print text-end mt-3 mb-3">
         <a href="{% url 'depot:depot_list' %}"
-       class="btn btn-secondary">
+           class="btn btn-secondary">
+            ↩ Retour
+        </a>
 
-        ↩ Retour
-
-    </a>
-        <button onclick="window.print()"
-                class="btn btn-success">
-
+        <button onclick="window.print()" class="btn btn-success">
             🖨 Imprimer
-
         </button>
-
     </div>
 
+    <!-- EN-TÊTE DE L'ENTREPRISE -->
+    <div class="company-header">
+        <div class="company-name">E LOONG SARLU</div>
+        <p><strong>NIF :</strong> 2018530507</p>
+        <p><strong>STAT :</strong> 46309312024000629</p>
+        <p><strong>Adresse :</strong> Angle Rue Flacourt PLLE 32/43-44 Ampasimazava - Toamasina</p>
+    </div>
 
-
-    <h2 class="text-center">
-
-        LISTE DES DÉPÔTS
-
-    </h2>
-
-
-
+    <!-- TITRE DU RAPPORT -->
+    <div class="report-header">
+        <h2>LISTE DES DÉPÔTS</h2>
+    </div>
+    <!-- ========== VÉRIFICATION DE LA PÉRIODE ========== -->
     {% if date_debut or date_fin %}
-
-    <div class="mb-4">
-
-        <strong>
-            Période :
-        </strong>
-
-        {{ date_debut|default:"-" }}
-
+    <div class="period">
+        <strong>Période :</strong>
+        {{ date_debut|date:"d-m-Y"|default:"-" }}
         au
-
-        {{ date_fin|default:"-" }}
-
+        {{ date_fin|date:"d-m-Y"|default:"-" }}
     </div>
-
     {% endif %}
-
-
-
+    <!-- ================================================ -->
 
     <table>
-
-
         <thead>
-
             <tr>
-
-                <th>
-                    Déposant
-                </th>
-
-
-                <th>
-                    Montant global
-                </th>
-
-
-                <th>
-                    Distributions
-                </th>
-
-
-                <th>
-                    Reste
-                </th>
-
-
-                <th>
-                    Date
-                </th>
-
+                <th>Déposant</th>
+                <th>Montant global</th>
+                <th>Distributions</th>
+                <th>Reste</th>
+                <th>Date</th>
             </tr>
-
         </thead>
 
-
-
         <tbody>
+            {% for depot in depots %}
+            <tr>
+                <td>
+                    <strong>{{ depot.deposant }}</strong>
+                </td>
 
+                <td>
+                    {{ depot.montantG|floatformat:0 }} Ar
+                </td>
 
-        {% for depot in depots %}
+                <td>
+                    {% for d in depot.distributions.all %}
+                        {{ d.distributeur }} :
+                        {{ d.montant|floatformat:0 }} Ar
+                        <br>
+                    {% empty %}
+                        Aucune distribution
+                    {% endfor %}
+                </td>
 
+                <td>
+                    <strong>{{ depot.reste|floatformat:0 }} Ar</strong>
+                </td>
 
-        <tr>
+                <td>
+                    {{ depot.date|date:"d/m/Y" }}
+                </td>
+            </tr>
 
-
-            <td>
-                <strong>
-                    {{ depot.deposant }}
-                </strong>
-            </td>
-
-
-
-            <td>
-
-                {{ depot.montantG|floatformat:0 }} Ar
-
-            </td>
-
-
-
-
-            <td>
-
-
-                {% for d in depot.distributions.all %}
-
-                    {{ d.distributeur }} :
-                    {{ d.montant|floatformat:0 }} Ar
-
-                    <br>
-
-
-                {% empty %}
-
-                    Aucune distribution
-
-
-                {% endfor %}
-
-
-            </td>
-
-
-
-
-            <td>
-
-                <strong>
-                    {{ depot.reste|floatformat:0 }} Ar
-                </strong>
-
-            </td>
-
-
-
-
-            <td>
-
-                {{ depot.date|date:"d/m/Y" }}
-
-            </td>
-
-
-        </tr>
-
-
-
-        {% empty %}
-
-
-        <tr>
-
-            <td colspan="5" class="text-center">
-
-                Aucun dépôt trouvé.
-
-            </td>
-
-        </tr>
-
-
-        {% endfor %}
-
-
-
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">
+                    Aucun dépôt trouvé.
+                </td>
+            </tr>
+            {% endfor %}
         </tbody>
-
-
     </table>
 
-
-
-
-
     <div class="mt-4 text-end">
-
-
-        <strong>
-            Total dépôt :
-        </strong>
-
+        <strong>Total dépôt :</strong>
         {{ total_montant|floatformat:0 }} Ar
-
-
         <br>
 
-
-        <strong>
-            Total distribué :
-        </strong>
-
+        <strong>Total distribué :</strong>
         {{ total_distribution|floatformat:0 }} Ar
-
-
     </div>
-
-
-
-
 
     <div class="signature">
-
-
         <div class="date-impression">
-
-            Fait le :
-            {% now "d/m/Y à H:i" %}
-
-
+            Fait le : {% now "d/m/Y à H:i" %}
         </div>
 
-
-
         Signature :
-
-
         <br><br><br>
-
-
         ______________________
-
-
-
     </div>
-
-
 
 </div>
 
-
 </body>
-
 </html>

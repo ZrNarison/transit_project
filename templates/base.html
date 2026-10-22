@@ -17,10 +17,6 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
     <style>
-        /* ==========================================
-           BASE GÉNÉRALE
-           ========================================== */
-
         *,
         *::before,
         *::after {
@@ -108,15 +104,6 @@
             margin-left: auto;
         }
 
-        /* ==========================================
-           MENUS DÉROULANTS
-           ========================================== */
-
-        /*
-         * Ne pas appliquer min-width: 0 aux dropdown-menu.
-         * Cela peut rendre les menus beaucoup trop étroits.
-         */
-
         .navbar .dropdown {
             position: relative;
         }
@@ -154,10 +141,6 @@
             overflow-wrap: anywhere;
         }
 
-        /* ==========================================
-           CONTENU PRINCIPAL
-           ========================================== */
-
         .main-content {
             flex: 1 0 auto;
             width: 100%;
@@ -182,11 +165,6 @@
         label {
             overflow-wrap: anywhere;
         }
-
-        /* ==========================================
-           TABLEAUX
-           ========================================== */
-
         .table-responsive {
             width: 100%;
             max-width: 100%;
@@ -197,11 +175,6 @@
         .table-responsive table {
             margin-bottom: 0;
         }
-
-        /* ==========================================
-           FORMULAIRES
-           ========================================== */
-
         input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
         select,
         textarea {
@@ -217,11 +190,6 @@
             width: 100%;
             min-width: 0;
         }
-
-        /* ==========================================
-           BOUTONS
-           ========================================== */
-
         .btn {
             white-space: normal;
             overflow-wrap: anywhere;
@@ -231,11 +199,6 @@
             max-width: 100%;
             flex-wrap: wrap;
         }
-
-        /* ==========================================
-           CARTES ET MODALES
-           Ne pas contraindre les menus déroulants ici
-           ========================================== */
 
         .card,
         .modal-content {
@@ -262,10 +225,6 @@
             overflow-wrap: anywhere;
         }
 
-        /* ==========================================
-           PIED DE PAGE
-           ========================================== */
-
         .site-footer {
             flex-shrink: 0;
             width: 100%;
@@ -273,9 +232,6 @@
             text-align: center;
         }
 
-        /* ==========================================
-           TABLETTES ET ÉCRANS INTERMÉDIAIRES
-           ========================================== */
 
         @media (max-width: 991.98px) {
             .main-content {
@@ -324,9 +280,6 @@
             }
         }
 
-        /* ==========================================
-           SMARTPHONES
-           ========================================== */
 
         @media (max-width: 575.98px) {
             body {

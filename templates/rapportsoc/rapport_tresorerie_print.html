@@ -1,12 +1,106 @@
 <!DOCTYPE html>
 <html lang="fr">
 
-<head>
+{% load static %}
+{% load humanize %}
 
+<head>
     <meta charset="UTF-8">
     {% load humanize %}
 
     <style>
+    .company-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        width: 100%;
+        margin: 0 auto 15px;
+        padding: 8px 0 12px;
+        border-bottom: 2px solid #222;
+        box-sizing: border-box;
+    }
+
+    .company-logo {
+        flex: 0 0 85px;
+        width: 85px;
+        height: 85px;
+        object-fit: contain;
+        display: block;
+    }
+
+    .company-info {
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+    }
+
+    .company-info h1 {
+        margin: 0 0 4px;
+        font-size: 22px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .company-info h4 {
+        margin: 3px 0 6px;
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .company-info h6 {
+        margin: 0;
+        font-size: 10px;
+        font-weight: normal;
+        line-height: 1.5;
+    }
+
+    .print-header {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .print-header h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .print-header p {
+        margin: 3px 0;
+        font-size: 11px;
+    }
+
+
+
+    @media print {
+        .company-header {
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 4px 0 8px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .company-logo {
+            flex-basis: 75px;
+            width: 75px;
+            height: 75px;
+        }
+
+        .company-info h1 {
+            font-size: 20px;
+        }
+
+        .company-info h4 {
+            font-size: 12px;
+        }
+
+        .company-info h6 {
+            font-size: 9px;
+        }
+    }
+
 
         /* =====================================================
            PAGE
@@ -234,10 +328,30 @@
 
 <div class="print-container">
 
+    <div class="company-header">
 
-    <!-- =====================================================
-         EN-TÊTE
-         ===================================================== -->
+        <img
+            src="{% static 'images/Ga.png' %}"
+            class="company-logo"
+            alt="Logo Entreprise GALAXIE"
+        >
+
+        <div class="company-info">
+
+            <h1>ENTREPRISE GALAXIE</h1>
+
+            <h4>LOT IN 3BIS TANAMBAO - IHOSY</h4>
+
+            <h6>
+                Entreprise générale de construction<br>
+                Fourniture de bureau, mobilier, consommables informatiques,
+                divers produits et services traiteurs
+            </h6>
+
+        </div>
+
+    </div>
+
 
     <div class="print-header">
 
