@@ -1,338 +1,329 @@
 {% extends "base.html" %}
+
 {% block content %}
 
-<div class="container mt-4">
+<div class="container-fluid mt-4">
 
     <!-- =====================================================
          EN-TÊTE
     ====================================================== -->
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
-
             <h2 class="mb-1">
-                Liste de tous les dépôts société
+                <i class="fas fa-file-invoice-dollar me-2"></i>
+                Liste des dépenses société
             </h2>
-
             <p class="text-muted mb-0">
-                Gestion des dépôts enregistrés.
+                Gestion et consultation des dépenses enregistrées.
             </p>
-
         </div>
 
-        <a
-            href="{% url 'depotSoc:depot_soc_add' %}"
-            class="btn btn-primary"
-        >
-            + Nouveau dépôt
+        <a href="{% url 'depensesoc:soc_depense_add' %}"
+           class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            Nouvelle dépense
         </a>
-
     </div>
-
 
     <!-- =====================================================
          MESSAGES
     ====================================================== -->
 
     {% if messages %}
-
         {% for message in messages %}
-
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
                 {{ message }}
-
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert"
-                ></button>
-
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
             </div>
-
         {% endfor %}
-
     {% endif %}
 
-
     <!-- =====================================================
-         FILTRE
+         FILTRES
     ====================================================== -->
 
-    <form
-        method="get"
-        class="row g-2 align-items-end mb-4"
-    >
-
-        <div class="col-md-4">
-
-            <label class="form-label small">
-                Montant
-            </label>
-
-            <input
-                type="text"
-                name="montant"
-                value="{{ montant }}"
-                class="form-control"
-                placeholder="Montant"
-            >
-
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <strong>
+                <i class="fas fa-filter me-2"></i>
+                Rechercher une dépense
+            </strong>
         </div>
 
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
 
-        <div class="col-md-4">
+                <div class="col-md-4">
+                    <label for="titre" class="form-label">
+                        Titre de la dépense
+                    </label>
+                    <input type="text"
+                           id="titre"
+                           name="titre"
+                           value="{{ titre }}"
+                           class="form-control"
+                           placeholder="Saisir le titre">
+                </div>
 
-            <label class="form-label small">
-                Date
-            </label>
+                <div class="col-md-3">
+                    <label for="date_debut" class="form-label">
+                        Date de début
+                    </label>
+                    <input type="date"
+                           id="date_debut"
+                           name="date_debut"
+                           value="{{ date_debut }}"
+                           class="form-control">
+                </div>
 
-            <input
-                type="date"
-                name="date"
-                value="{{ date }}"
-                class="form-control"
-            >
+                <div class="col-md-3">
+                    <label for="date_fin" class="form-label">
+                        Date de fin
+                    </label>
+                    <input type="date"
+                           id="date_fin"
+                           name="date_fin"
+                           value="{{ date_fin }}"
+                           class="form-control">
+                </div>
 
+                <div class="col-md-2 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        Filtrer
+                    </button>
+
+                    <a href="{{ request.path }}"
+                       class="btn btn-outline-secondary">
+                        Réinitialiser
+                    </a>
+                </div>
+
+            </form>
         </div>
-
-
-        <div class="col-md-4 d-flex gap-2">
-
-            <button
-                type="submit"
-                class="btn btn-primary"
-            >
-                🔎 Rechercher
-            </button>
-
-            <a
-                href="{% url 'depotSoc:depot_soc_list' %}"
-                class="btn btn-secondary"
-            >
-                Réinitialiser
-            </a>
-
-        </div>
-
-    </form>
-
-
-    <!-- =====================================================
-         TOTAL
-    ====================================================== -->
-
-    <div class="alert alert-info">
-
-        <strong>
-            Total des dépôts :
-        </strong>
-
-        {{ total_depots|floatformat:2 }} Ar
-
     </div>
 
+    <!-- =====================================================
+         RÉSULTATS
+    ====================================================== -->
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div class="text-muted">
+            <i class="fas fa-list me-1"></i>
+            {{ page_obj.paginator.count }} dépense(s) trouvée(s)
+        </div>
+
+        {% if page_obj.paginator.count > 0 %}
+            <div class="small text-muted">
+                Affichage de {{ page_obj.start_index }}
+                à {{ page_obj.end_index }}
+                sur {{ page_obj.paginator.count }}
+            </div>
+        {% endif %}
+    </div>
 
     <!-- =====================================================
          TABLEAU
     ====================================================== -->
 
-    <div class="table-responsive">
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
 
-        <table class="table table-bordered table-hover align-middle">
+                <table class="table table-bordered table-hover align-middle mb-0">
 
-            <thead class="table-dark">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th>Titre</th>
+                            <th class="text-end">Montant</th>
+                            <th>Date</th>
+                            <th>Enregistreur</th>
+                            <th>Enregistré le</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
 
-                <tr>
+                    <tbody>
+                        {% for depense in depenses %}
+                            <tr>
+                                <td class="text-center">
+                                    {{ page_obj.start_index|add:forloop.counter0 }}
+                                </td>
 
-                    <th>
-                        #
-                    </th>
+                                <td class="fw-semibold">
+                                    {{ depense.titre|default:"—" }}
+                                </td>
 
-                    <th>
-                        Montant
-                    </th>
+                                <td class="text-end fw-bold text-danger">
+                                    {% if depense.montant != None %}
+                                        {{ depense.montant|floatformat:2 }} Ar
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                    <th>
-                        Date
-                    </th>
+                                <td>
+                                    {% if depense.date %}
+                                        {{ depense.date|date:"d/m/Y" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                    <th>
-                        Enregistreur
-                    </th>
+                                <td>
+                                    {% if depense.enregistre_par %}
+                                        {{ depense.enregistre_par.username|default:depense.enregistre_par }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
 
-                    <th>
-                        Enregistré le
-                    </th>
+                                <td>
+                                    {% if depense.date_enregistrement %}
+                                        {{ depense.date_enregistrement|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
 
-                    <th class="text-center">
-                        Actions
-                    </th>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center flex-wrap gap-1">
 
-                </tr>
+                                        <a href="{% url 'depensesoc:soc_depense_detail' depense.id %}"
+                                           class="btn btn-info btn-sm"
+                                           title="Voir les détails"
+                                           aria-label="Voir les détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
 
-            </thead>
+                                        <a href="{% url 'depensesoc:soc_depense_edit' depense.id %}"
+                                           class="btn btn-warning btn-sm"
+                                           title="Modifier"
+                                           aria-label="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
 
+                                        <a href="{% url 'depensesoc:soc_depense_delete' depense.id %}"
+                                           class="btn btn-danger btn-sm"
+                                           title="Supprimer"
+                                           aria-label="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
 
-            <tbody>
+                                    </div>
+                                </td>
+                            </tr>
 
-                {% for depot in depots %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="7"
+                                    class="text-center text-muted py-5">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                    Aucune dépense société trouvée.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
 
-                <tr>
+                </table>
 
-                    <td>
-                        {{ forloop.counter }}
-                    </td>
-
-                    <td class="fw-bold">
-                        {{ depot.montant|floatformat:2 }} Ar
-                    </td>
-
-                    <td>
-                        {{ depot.date|date:"d/m/Y" }}
-                    </td>
-
-                    <td>
-
-                        {% if depot.enregistreur %}
-
-                            {{ depot.enregistreur.username }}
-
-                        {% else %}
-
-                            <span class="text-muted">
-                                —
-                            </span>
-
-                        {% endif %}
-
-                    </td>
-
-                    <td>
-                        {{ depot.date_enregistrement|date:"d/m/Y H:i" }}
-                    </td>
-
-
-                    <!-- ACTIONS -->
-
-                    <td class="text-center">
-
-                        <a
-                            href="{% url 'depotSoc:depot_soc_detail' depot.id %}"
-                            class="btn btn-info btn-sm"
-                            title="Voir"
-                        >
-                            👁
-                        </a>
-
-
-                        <a
-                            href="{% url 'depotSoc:depot_soc_edit' depot.id %}"
-                            class="btn btn-warning btn-sm"
-                            title="Modifier"
-                        >
-                            ✏
-                        </a>
-
-
-                        <a
-                            href="{% url 'depotSoc:depot_soc_delete' depot.id %}"
-                            class="btn btn-danger btn-sm"
-                            title="Supprimer"
-                        >
-                            🗑
-                        </a>
-
-                    </td>
-
-                </tr>
-
-                {% empty %}
-
-                <tr>
-
-                    <td
-                        colspan="6"
-                        class="text-center text-muted py-4"
-                    >
-                        Aucun dépôt société trouvé.
-                    </td>
-
-                </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
+            </div>
+        </div>
     </div>
-
 
     <!-- =====================================================
          PAGINATION
+         Toujours visible, même avec une seule page
     ====================================================== -->
 
-    {% if page_obj.has_other_pages %}
+    {% if page_obj %}
+        <nav aria-label="Pagination des dépenses" class="mt-4">
+            <ul class="pagination justify-content-center flex-wrap">
 
-    <nav
-        aria-label="Pagination"
-        class="mt-4"
-    >
+                <!-- Première page -->
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page=1&amp;titre={{ titre|urlencode }}&amp;date_debut={{ date_debut|urlencode }}&amp;date_fin={{ date_fin|urlencode }}">
+                            « Première
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">« Première</span>
+                    </li>
+                {% endif %}
 
-        <ul class="pagination justify-content-center">
+                <!-- Page précédente -->
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ page_obj.previous_page_number }}&amp;titre={{ titre|urlencode }}&amp;date_debut={{ date_debut|urlencode }}&amp;date_fin={{ date_fin|urlencode }}">
+                            ← Précédente
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">← Précédente</span>
+                    </li>
+                {% endif %}
 
+                <!-- Numéros de page -->
+                {% for numero in page_obj.paginator.page_range %}
+                    {% if numero == page_obj.number %}
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">{{ numero }}</span>
+                        </li>
+                    {% elif numero >= page_obj.number|add:"-2" and numero <= page_obj.number|add:"2" %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?page={{ numero }}&amp;titre={{ titre|urlencode }}&amp;date_debut={{ date_debut|urlencode }}&amp;date_fin={{ date_fin|urlencode }}">
+                                {{ numero }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
 
-            {% if page_obj.has_previous %}
+                <!-- Page suivante -->
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ page_obj.next_page_number }}&amp;titre={{ titre|urlencode }}&amp;date_debut={{ date_debut|urlencode }}&amp;date_fin={{ date_fin|urlencode }}">
+                            Suivante →
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Suivante →</span>
+                    </li>
+                {% endif %}
 
-            <li class="page-item">
+                <!-- Dernière page -->
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ page_obj.paginator.num_pages }}&amp;titre={{ titre|urlencode }}&amp;date_debut={{ date_debut|urlencode }}&amp;date_fin={{ date_fin|urlencode }}">
+                            Dernière »
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Dernière »</span>
+                    </li>
+                {% endif %}
 
-                <a
-                    class="page-link"
-                    href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}"
-                >
-                    ← Précédent
-                </a>
+            </ul>
+        </nav>
 
-            </li>
-
-            {% endif %}
-
-
-            <li class="page-item active">
-
-                <span class="page-link">
-
-                    Page
-                    {{ page_obj.number }}
-                    /
-                    {{ page_obj.paginator.num_pages }}
-
-                </span>
-
-            </li>
-
-
-            {% if page_obj.has_next %}
-
-            <li class="page-item">
-
-                <a
-                    class="page-link"
-                    href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}"
-                >
-                    Suivant →
-                </a>
-
-            </li>
-
-            {% endif %}
-
-        </ul>
-
-    </nav>
-
+        <p class="text-center text-muted small mb-4">
+            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}
+        </p>
     {% endif %}
 
 </div>

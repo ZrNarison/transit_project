@@ -5,20 +5,19 @@ from users.models import AppUser
 
 from .forms import DepenseSocForm
 from .models import DepenseSoc
+from django.core.paginator import Paginator
+from django.shortcuts import render
 
 # ============================================================
 # LISTE DES DÉPENSES SOC
 # ============================================================
 
 
-def soc_depense_list(request):
 
+def soc_depense_list(request):
     depenses = DepenseSoc.objects.select_related("enregistre_par").all()
 
-    # -------------------------
-    # FILTRES
-    # -------------------------
-
+    # Filtres
     titre = request.GET.get("titre", "").strip()
     date_debut = request.GET.get("date_debut", "").strip()
     date_fin = request.GET.get("date_fin", "").strip()
@@ -32,8 +31,13 @@ def soc_depense_list(request):
     if date_fin:
         depenses = depenses.filter(date__lte=date_fin)
 
+    # Pagination : 10 dépenses par page
+    paginator = Paginator(depenses.order_by("-date", "-id"), 8)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
     context = {
-        "depenses": depenses,
+        "depenses": page_obj,
+        "page_obj": page_obj,
         "titre": titre,
         "date_debut": date_debut,
         "date_fin": date_fin,

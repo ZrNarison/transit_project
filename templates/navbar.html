@@ -197,11 +197,7 @@
                     <!-- ================================================= ACTIVITE================================================= -->
                     {% if request.session.role == "Admin" or request.session.role == "SuperviseurMica" or request.session.role == "UserMica" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHAUFFEUR" or request.session.role == "UserEntreprise" or request.session.role == "Magasin" %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle"
-                               href="#"
-                               role="button"
-                               data-bs-toggle="dropdown"
-                               aria-expanded="false">ðŸ“‹ ActivitÃ©</a>
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Activité</a>
                             <ul class="dropdown-menu shadow">
                                 <!-- PROJET -->
                                 {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" or fonction_projet == "INGENIEUR" or fonction_projet == "CHAUFFEUR" or fonction_projet == "CHEF_CHANTIER" %}
@@ -258,7 +254,7 @@
                                    href="#"
                                    role="button"
                                    data-bs-toggle="dropdown"
-                                   aria-expanded="false">ðŸ’° Finance</a>
+                                   aria-expanded="false">Finance</a>
                                 <ul class="dropdown-menu shadow">
                                     <!-- AVANCES ENTREPRISE -->
                                     {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
@@ -389,7 +385,7 @@
                             <!-- MICA -->
                             {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                                 <li>
-                                    <a class="dropdown-item"   href="{% url 'rapports:rapport_list' %}">ðŸ“Š Rapport Mica</a>
+                                    <a class="dropdown-item"   href="{% url 'rapports:rapport_list' %}">Rapport Mica</a>
                                 </li>
                                 <!-- ENTREPRISE -->
                             {% endif %}
