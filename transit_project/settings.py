@@ -41,9 +41,9 @@ DEBUG = True  # Ã€ dÃ©sactiver avant l'ouverture publique
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
-    "10.32.135.12"
+    #"10.32.135.12"
     #"192.168.159.12",
-    #"192.168.43.12",
+    "192.168.43.12",
 ]
 
 

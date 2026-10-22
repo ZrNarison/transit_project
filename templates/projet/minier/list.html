@@ -189,12 +189,11 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-striped table-hover align-middle mb-0">
-                    <thead class="table-dark">
+                    <thead class="table-dark text-white">
                         <tr>
                             <th class="text-center">N°</th>
                             <th>Minier</th>
                             <th>Matériau</th>
-                            <th>Point</th>
                             <th class="text-end">Quantité</th>
                             <th class="text-end">Prix unitaire</th>
                             <th class="text-end">Montant total</th>
@@ -215,7 +214,7 @@
                                 </td>
 
                                 <td>
-                                    <strong>{{ minier.nom|default:"—" }}</strong>
+                                    <strong>{{ minier.nom|default:"—"| upper }}</strong>
                                 </td>
 
                                 <td>
@@ -225,15 +224,6 @@
                                         —
                                     {% endif %}
                                 </td>
-
-                                <td>
-                                    {% if minier.point_projet %}
-                                        {{ minier.point_projet }}
-                                    {% else %}
-                                        —
-                                    {% endif %}
-                                </td>
-
                                 <td class="text-end text-nowrap">
                                     {{ minier.quantite|default:0|floatformat:2 }}
                                 </td>
