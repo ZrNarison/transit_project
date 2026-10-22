@@ -1,6 +1,5 @@
 from datetime import timedelta
 from decimal import Decimal
-
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
@@ -396,21 +395,13 @@ class PersonnelExecutionProjet(models.Model):
     # ============================================================
     # MONTANT TOTAL DE PRODUCTION
     # ============================================================
-
     @property
     def montant_total_production(self):
-
-        if self.type_class != "MINIER":
-            return Decimal("0.00")
-
-        quantite = self.quantite if self.quantite is not None else Decimal("0.00")
-
-        prix_unitaire = (
-            self.prix_unitaire if self.prix_unitaire is not None else Decimal("0.00")
-        )
+        quantite = self.quantite or Decimal("0.00")
+        prix_unitaire = self.prix_unitaire or Decimal("0.00")
 
         return (quantite * prix_unitaire).quantize(Decimal("0.01"))
-
+    
     # ============================================================
     # MONTANT TOTAL DU PAIEMENT
     # ============================================================
