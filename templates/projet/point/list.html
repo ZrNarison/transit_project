@@ -16,25 +16,19 @@
                 Points de chantier
             </h2>
             <p class="text-muted mb-0">
-                Projet : <strong>{{ projet }}</strong>
+                Projet : <strong>{{ projet| title }}</strong>
             </p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
             <!-- RETOUR AU PROJET -->
-            <a
-                href="{% url 'projet:projet_detail' projet.id %}"
-                class="btn btn-outline-secondary"
-            >
+            <a href="{% url 'projet:projet_detail' projet.id %}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
                 Retour au projet
             </a>
 
             <!-- NOUVEAU POINT -->
-            <a
-                href="{% url 'projet:point_create' projet.id %}"
-                class="btn btn-primary"
-            >
+            <a href="{% url 'projet:point_create' projet.id %}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 Ajouter un point
             </a>
@@ -46,18 +40,10 @@
     <!-- ================================================== -->
     {% if messages %}
         {% for message in messages %}
-            <div
-                class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
-                role="alert"
-            >
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
                 {{ message }}
 
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert"
-                    aria-label="Fermer"
-                ></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
             </div>
         {% endfor %}
     {% endif %}
@@ -75,63 +61,40 @@
         </div>
 
         <div class="card-body">
-            <form
-                method="get"
-                action="{% url 'projet:point_list' projet.id %}"
-            >
+            <form method="get" action="{% url 'projet:point_list' projet.id %}">
                 <div class="row g-3 align-items-end">
 
-                    <!-- FILTRE PAR NOM -->
-                    <div class="col-12 col-md-4">
-                        <label for="filtreNom" class="form-label fw-semibold">
-                            Nom du point
-                        </label>
-
-                        <input
-                            type="text"
-                            id="filtreNom"
-                            name="nom"
-                            class="form-control"
-                            placeholder="Rechercher un nom..."
-                            value="{{ nom_filtre }}"
-                        >
+                    
+                    <!-- FILTRE PAR LOCALISATION -->
+                    <div class="col-12 col-md-2">
+                        <label for="filtreLocalisation" class="form-label fw-semibold">Localisation</label>
+                        <input type="text" id="filtreLocalisation" name="localisation" class="form-control" placeholder="Rechercher une localisation..." value="{{ localisation_filtre }}">
                     </div>
 
                     <!-- DISTANCE MINIMALE -->
-                    <div class="col-12 col-md-3">
-                        <label for="distanceMin" class="form-label fw-semibold">
-                            Distance minimale (km)
-                        </label>
-
-                        <input
-                            type="number"
-                            id="distanceMin"
-                            name="distance_min"
-                            class="form-control"
-                            min="0"
-                            step="0.01"
-                            placeholder="Ex. : 5"
-                            value="{{ distance_min }}"
-                        >
-                    </div>
+                    <div class="col-12 col-md-2">
+                        <label for="distanceMin" class="form-label fw-semibold">Min (km)</label>
+                        <input type="number" id="distanceMin" name="distance_min" class="form-control" min="0" step="0.01" placeholder="Ex. : 5" value="{{ distance_min }}"></div>
 
                     <!-- DISTANCE MAXIMALE -->
-                    <div class="col-12 col-md-3">
-                        <label for="distanceMax" class="form-label fw-semibold">
-                            Distance maximale (km)
-                        </label>
+                    <div class="col-12 col-md-2">
+                        <label for="distanceMax" class="form-label fw-semibold">Max (km)</label>
+                        <input type="number" id="distanceMax" name="distance_max" class="form-control" min="0" step="0.01" placeholder="Ex. : 50" value="{{ distance_max }}"></div>
+                    
+                    <!-- FILTRE PAR OBSERVATION -->
+                    <div class="col-12 col-md-4">
+                        <label for="filtreObservation" class="form-label fw-semibold">Observation</label>
 
                         <input
-                            type="number"
-                            id="distanceMax"
-                            name="distance_max"
+                            type="text"
+                            id="filtreObservation"
+                            name="observation"
                             class="form-control"
-                            min="0"
-                            step="0.01"
-                            placeholder="Ex. : 50"
-                            value="{{ distance_max }}"
+                            placeholder="Rechercher dans les observations..."
+                            value="{{ observation_filtre }}"
                         >
                     </div>
+
 
                     <!-- BOUTONS DE FILTRAGE -->
                     <div class="col-12 col-md-2">

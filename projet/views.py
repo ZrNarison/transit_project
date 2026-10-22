@@ -1,6 +1,6 @@
 ﻿from decimal import Decimal, InvalidOperation
 from functools import wraps
-
+from django.db.models import Max
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -561,7 +561,7 @@ def chef_equipe_delete(request, projet_id, pk):
 
         messages.success(
             request,
-            f"Le chef d'équipe Â« {nom} Â» et ses affectations inutilisés ont étés supprimés.",
+            f"Le chef d'équipe {nom} et ses affectations inutilisés ont étés supprimés.",
         )
 
     except ProtectedError:
@@ -609,7 +609,7 @@ def utilisateur_projet_create(
 
         messages.error(
             request,
-            "Cette affectation ne possÃ¨de pas de personnel interne.",
+            "Cette affectation ne posséde pas de personnel interne.",
         )
 
         return redirect(
@@ -624,8 +624,7 @@ def utilisateur_projet_create(
         messages.warning(
             request,
             (
-                f"{personnel} poste de déjà un compte "
-                f"utilisateur Â« {compte_existant.username} Â»."
+                f"{personnel} poste de déjà un compte utilisateur {compte_existant.username}."
             ),
         )
 
@@ -676,7 +675,7 @@ def utilisateur_projet_create(
 
             messages.error(
                 request,
-                (f"Le nom d'utilisateur " f"Â« {username} Â» existe déjà."),
+                (f"Le nom d'utilisateur {username} existe déjà."),
             )
 
         else:
@@ -691,7 +690,7 @@ def utilisateur_projet_create(
             messages.success(
                 request,
                 (
-                    f"Le compte Â« {utilisateur.username} Â» a été crée pour {personnel}."
+                    f"Le compte {utilisateur.username} a été crée pour {personnel}."
                 ),
             )
 
@@ -1522,7 +1521,7 @@ def equipe_create(request, projet_id):
             messages.success(
                 request,
                 (
-                    f"{affectation.personnel} a été affecté au projet Â« {projet.titre} Â» comme "
+                    f"{affectation.personnel} a été affecté au projet {projet.titre} comme "
                     f"{affectation.get_fonction_display()}."
                 ),
             )
@@ -1675,7 +1674,6 @@ def equipe_delete(
 # POINTS - LISTE
 # ============================================================
 
-
 @login_required_projet
 def point_list(request, projet_id):
     current_user = request.current_user
@@ -1688,14 +1686,15 @@ def point_list(request, projet_id):
     if not user_has_project_access(current_user, projet):
         messages.error(
             request,
-            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+            "Votre accès à ce projet n'est pas actif.",
         )
         return redirect("projet:projet_list")
 
     # --------------------------------------------------------
     # FILTRES
     # --------------------------------------------------------
-    nom = request.GET.get("nom", "").strip()
+    localisation = request.GET.get("localisation", "").strip()
+    observation = request.GET.get("observation", "").strip()
     distance_min = request.GET.get("distance_min", "").strip()
     distance_max = request.GET.get("distance_max", "").strip()
 
@@ -1703,9 +1702,19 @@ def point_list(request, projet_id):
         projet=projet,
     ).select_related("enregistre_par")
 
-    if nom:
-        queryset = queryset.filter(nom__icontains=nom)
+    # Filtre par localisation
+    if localisation:
+        queryset = queryset.filter(
+            localisation__icontains=localisation,
+        )
 
+    # Filtre par observation
+    if observation:
+        queryset = queryset.filter(
+            observation__icontains=observation,
+        )
+
+    # Filtre par distance minimale
     if distance_min:
         try:
             valeur_min = Decimal(distance_min)
@@ -1724,6 +1733,7 @@ def point_list(request, projet_id):
             )
             distance_min = ""
 
+    # Filtre par distance maximale
     if distance_max:
         try:
             valeur_max = Decimal(distance_max)
@@ -1743,19 +1753,16 @@ def point_list(request, projet_id):
             distance_max = ""
 
     # --------------------------------------------------------
-    # TOTALS SUR TOUS LES RÃ‰SULTATS FILTRÃ‰S
+    # STATISTIQUES SUR TOUS LES RÉSULTATS FILTRÉS
     # --------------------------------------------------------
     total_points = queryset.count()
 
-    total_distance = sum(
-        (
-            distance or Decimal("0.00")
-            for distance in queryset.values_list(
-                "distance_km",
-                flat=True,
-            )
-        ),
-        Decimal("0.00"),
+    # Distance maximale, et non somme des distances
+    total_distance = (
+        queryset.aggregate(
+            distance_max=Max("distance_km"),
+        )["distance_max"]
+        or Decimal("0.00")
     )
 
     # --------------------------------------------------------
@@ -1766,7 +1773,9 @@ def point_list(request, projet_id):
         10,
     )
 
-    page_obj = paginator.get_page(request.GET.get("page"))
+    page_obj = paginator.get_page(
+        request.GET.get("page"),
+    )
 
     points = list(page_obj.object_list)
 
@@ -1782,24 +1791,32 @@ def point_list(request, projet_id):
             and point.enregistre_par_id == current_user.pk
         )
 
-        point.peut_gerer = peut_gerer_projet or est_enregistreur
+        point.peut_gerer = (
+            peut_gerer_projet or est_enregistreur
+        )
+
+    # --------------------------------------------------------
+    # CONTEXTE
+    # --------------------------------------------------------
+    context = {
+        "projet": projet,
+        "points": points,
+        "page_obj": page_obj,
+        "paginator": paginator,
+        "total_points": total_points,
+        "total_distance": total_distance,
+        "localisation_filtre": localisation,
+        "observation_filtre": observation,
+        "distance_min": distance_min,
+        "distance_max": distance_max,
+        "user": current_user,
+        "current_user": current_user,
+    }
 
     return render(
         request,
         "projet/point/list.html",
-        {
-            "projet": projet,
-            "points": points,
-            "page_obj": page_obj,
-            "paginator": paginator,
-            "total_points": total_points,
-            "total_distance": total_distance,
-            "nom_filtre": nom,
-            "distance_min": distance_min,
-            "distance_max": distance_max,
-            "user": current_user,
-            "current_user": current_user,
-        },
+        context,
     )
 
 
@@ -1817,7 +1834,7 @@ def point_create(request, projet_id):
     if not current_user:
         messages.error(
             request,
-            "Utilisateur connectÃ© introuvable.",
+            "Utilisateur connecté introuvable.",
         )
         return redirect("users:login")
 
@@ -1835,7 +1852,7 @@ def point_create(request, projet_id):
     if not user_has_project_access(current_user, projet):
         messages.error(
             request,
-            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+            "Votre accés à ce projet n'est pas actif.",
         )
         return redirect("projet:projet_list")
 
@@ -1851,24 +1868,20 @@ def point_create(request, projet_id):
 
         if form.is_valid():
 
-            # PrÃ©parer l'objet sans l'enregistrer immÃ©diatement.
             point = form.save(commit=False)
 
             # Associer le projet courant.
             point.projet = projet
 
-            # Enregistrer le crÃ©ateur du point.
             point.enregistre_par = current_user
 
-            # Enregistrer le point en base de donnÃ©es.
             point.save()
 
-            # Enregistrer les relations Ã©ventuelles du formulaire.
             form.save_m2m()
 
             messages.success(
                 request,
-                f"Le point Â« {point.nom} Â» a été créer avec succées.",
+                f"Le point {point.nom} a été créer avec succées.",
             )
 
             return redirect(
@@ -1988,7 +2001,7 @@ def point_update(request, projet_id, point_id):
 
             messages.success(
                 request,
-                f"Le point Â« {point.nom} Â» a été modifié avec succés.",
+                f"Le point {point.nom} a été modifié avec succés.",
             )
 
             return redirect(
@@ -2078,7 +2091,7 @@ def point_delete(request, projet_id, point_id):
     if request.method != "POST":
         messages.warning(
             request,
-            "La suppression doit Ãªtre confirmÃ©e depuis le formulaire.",
+            "La suppression doit être confirmée depuis le formulaire.",
         )
         return redirect(
             "projet:point_list",
@@ -2092,7 +2105,7 @@ def point_delete(request, projet_id, point_id):
 
         messages.success(
             request,
-            f"Le point Â« {nom_point} Â» a été supprimé avec succés.",
+            f"Le point {nom_point} a été supprimé avec succés.",
         )
 
     except ProtectedError:
@@ -2635,7 +2648,7 @@ def rapport_projet_create(
 
         messages.error(
             request,
-            ("Seul l'IngÃ©nieur Responsable du Chantier " "peut crÃ©er ce rapport."),
+            ("Seul l'Ingénieur Responsable du Chantier " "peut créer ce rapport."),
         )
 
         return redirect(
@@ -2658,7 +2671,7 @@ def rapport_projet_create(
 
             messages.success(
                 request,
-                "Le rapport de projet a Ã©tÃ© enregistrÃ©.",
+                "Le rapport de projet a été enregistré.",
             )
 
             return redirect(
@@ -3076,8 +3089,8 @@ def vehicule_projet_create(
             messages.success(
                 request,
                 (
-                    f"Le véhicule / engin  Â« {affectation.vehicule} Â» a été affecté au projet "
-                    f"Â« {projet.titre} Â»."
+                    f"Le véhicule / engin  {affectation.vehicule} a été affecté au projet "
+                    f"{projet.titre}."
                 ),
             )
 
@@ -3180,7 +3193,7 @@ def vehicule_projet_update(
             messages.success(
                 request,
                 (
-                    f"L'affectation du véhicule Â« {affectation_modifiee.vehicule} Â» a été modifiée avec succés."
+                    f"L'affectation du véhicule {affectation_modifiee.vehicule} a été modifiée avec succés."
                 ),
             )
 
@@ -3259,9 +3272,7 @@ def vehicule_projet_delete(
             messages.success(
                 request,
                 (
-                    f"L'affectation du véhicule / engin "
-                    f"Â« {vehicule} Â» "
-                    f"a été supprimée avec succés."
+                    f"L'affectation du véhicule / engin  {vehicule} a été supprimée avec succés."
                 ),
             )
 
@@ -3556,7 +3567,7 @@ def engin_create(
 
             messages.success(
                 request,
-                (f"L'engin Â« {engin.engin} Â» " "a été ajouté au projet."),
+                (f"L'engin {engin.engin} a été ajouté au projet."),
             )
 
             return redirect(
@@ -3669,7 +3680,7 @@ def engin_update(
 
             messages.success(
                 request,
-                (f"L'engin Â« {engin.engin} Â» " "a été modifié."),
+                (f"L'engin {engin.engin} a été modifié."),
             )
 
             return redirect(
@@ -3774,7 +3785,7 @@ def engin_delete(
 
         messages.success(
             request,
-            (f"L'engin Â« {nom_engin} Â» " "a été supprimé."),
+            (f"L'engin {nom_engin} a été supprimé."),
         )
 
         return redirect(
@@ -3879,9 +3890,6 @@ def materiau_list(request, projet_id):
         )
         return redirect("projet:projet_list")
 
-    # ========================================================
-    # MATÃ‰RIAUX DU PROJET â€” DÃ‰PÃ”T 2
-    # ========================================================
     materiaux = list(
         MateriauProjet.objects.filter(projet=projet).order_by("materiau", "id")
     )
@@ -3940,10 +3948,7 @@ def materiau_list(request, projet_id):
             or ZERO
         )
 
-        # ----------------------------------------------------
-        # 5. STOCK ACTUEL DU MAGASIN â€” DÃ‰PÃ”T 2
-        # Stock = reÃ§u - distribuÃ© + retournÃ©
-        # ----------------------------------------------------
+        
         stock_magasin = (
             quantite_recue_magasin - quantite_distribuee + quantite_retournee_magasin
         )
@@ -4101,9 +4106,7 @@ def materiau_create(request, projet_id):
             if not isinstance(current_user, AppUser):
                 messages.error(
                     request,
-                    "L'utilisateur connectÃ© n'est pas "
-                    "un compte AppUser valide. "
-                    "Le matÃ©riau n'a pas Ã©tÃ© enregistrÃ©.",
+                    "L'utilisateur connecté n'est pas un compte AppUser valide. Le matériau n'a pas été enregistré.",
                 )
             else:
                 materiau_projet.enregistre_par = current_user
@@ -4113,7 +4116,7 @@ def materiau_create(request, projet_id):
 
                 messages.success(
                     request,
-                    f"Le matériau Â« {materiau_projet.materiau} Â» a été ajouté au projet.",
+                    f"Le matériau {materiau_projet.materiau} a été ajouté au projet.",
                 )
 
                 return redirect(
@@ -4352,7 +4355,7 @@ def materiau_delete(request, projet_id, pk):
     if not peut_gerer:
         messages.error(
             request,
-            "Vous n'avez pas l'autorisation de supprimer " "ce matÃ©riau de ce projet.",
+            "Vous n'avez pas l'autorisation de supprimer " "ce matériau de ce projet.",
         )
         return redirect(
             "projet:materiau_list",
@@ -4370,7 +4373,7 @@ def materiau_delete(request, projet_id, pk):
 
         messages.success(
             request,
-            f"Le matériau Â« {nom_materiau} Â» " "a été supprimé du projet.",
+            f"Le matériau {nom_materiau} a été supprimé du projet.",
         )
 
         return redirect(
@@ -4642,7 +4645,7 @@ def minier_create(request, projet_id):
 
             messages.success(
                 request,
-                f"Le minier Â« {minier.nom} Â» a été ajouté " f"avec succés.",
+                f"Le minier {minier.nom} a été ajouté avec succés.",
             )
 
             # ----------------------------------------------------
@@ -4855,7 +4858,7 @@ def minier_update(
 
             messages.success(
                 request,
-                (f"Le minier Â« {minier.nom} Â» " "a été modifié avec succés."),
+                (f"Le minier {minier.nom} a été modifié avec succés."),
             )
 
             return redirect(
@@ -5063,16 +5066,14 @@ def minier_delete(request, projet_id, pk):
 
         messages.success(
             request,
-            f"Le minier Â« {nom_minier} Â» et ses affectations inutilisées ont été supprimés.",
+            f"Le minier {nom_minier} et ses affectations inutilisées ont été supprimés.",
         )
 
     except ProtectedError:
         messages.error(
             request,
             "Impossible de supprimer ce minier : "
-            "d'autres données du projet utilisent encore "
-            "ce minier. Aucune suppression partielle "
-            "n'a été conservée.",
+            "d'autres données du projet utilisent encore ce minier. Aucune suppression partielle n'a été conservée.",
         )
 
     except PersonnelExecutionProjet.DoesNotExist:
@@ -5524,8 +5525,6 @@ def _mouvement_peut_gerer(mouvement, user):
 # ============================================================
 # MOUVEMENTS - LISTE ET BILAN DU PROJET
 # ============================================================
-
-
 @project_access_required
 def mouvement_vehicule_projet_list(request, projet_id):
     projet = request.projet
@@ -5555,6 +5554,7 @@ def mouvement_vehicule_projet_list(request, projet_id):
         .order_by("-date_mouvement", "-id")
     )
 
+    
     # --------------------------------------------------------
     # FILTRES
     # --------------------------------------------------------
@@ -5576,25 +5576,39 @@ def mouvement_vehicule_projet_list(request, projet_id):
             vehicule_projet__isnull=True,
         )
 
-    if materiel_filtre.isdigit():
-        materiel_id = int(materiel_filtre)
+    # Le format du filtre est : vehicule-12 ou engin-3.
+    if materiel_filtre:
+        try:
+            categorie_materiel, identifiant = materiel_filtre.split("-", 1)
+        except ValueError:
+            categorie_materiel, identifiant = "", ""
 
-        if type_filtre == "ENGIN":
-            mouvements_qs = mouvements_qs.filter(
-                engin_projet_id=materiel_id,
-            )
-        elif type_filtre == "ROUTIER":
-            mouvements_qs = mouvements_qs.filter(
-                vehicule_projet_id=materiel_id,
-            )
+        if (
+            categorie_materiel not in ("vehicule", "engin")
+            or not identifiant.isdigit()
+        ):
+            materiel_filtre = ""
         else:
-            mouvements_qs = mouvements_qs.filter(
-                Q(vehicule_projet_id=materiel_id) | Q(engin_projet_id=materiel_id)
-            )
-    else:
-        materiel_filtre = ""
+            materiel_id = int(identifiant)
+
+            if categorie_materiel == "vehicule":
+                mouvements_qs = mouvements_qs.filter(
+                    vehicule_projet_id=materiel_id,
+                    engin_projet__isnull=True,
+                )
+                if type_filtre == "ENGIN":
+                    mouvements_qs = mouvements_qs.none()
+
+            elif categorie_materiel == "engin":
+                mouvements_qs = mouvements_qs.filter(
+                    engin_projet_id=materiel_id,
+                    vehicule_projet__isnull=True,
+                )
+                if type_filtre == "ROUTIER":
+                    mouvements_qs = mouvements_qs.none()
 
     mouvements = list(mouvements_qs)
+
 
     # --------------------------------------------------------
     # STATISTIQUES DES MOUVEMENTS AFFICHÃ‰S
@@ -5668,8 +5682,6 @@ def mouvement_vehicule_projet_list(request, projet_id):
 # ============================================================
 # MOUVEMENTS - DÃ‰TAIL
 # ============================================================
-
-
 @project_access_required
 def mouvement_vehicule_projet_detail(
     request,
@@ -6313,9 +6325,7 @@ def avance_equipe_projet_delete(request, projet_id, avance_id):
     )
 
 
-# ======================================================
-# MATÃ‰RIAUX â€” TABLEAU DE BORD DU PROJET
-# ======================================================
+
 @project_access_required
 def dashboard_materiaux(request, projet_id):
     from decimal import Decimal
@@ -6327,7 +6337,7 @@ def dashboard_materiaux(request, projet_id):
     ZERO = Decimal("0.00")
 
     # ==========================================================
-    # 1. MATÃ‰RIAUX ET MOUVEMENTS DU PROJET
+    # 1. MATERIAUX ET MOUVEMENTS DU PROJET
     # ==========================================================
 
     materiaux = list(
@@ -6356,7 +6366,7 @@ def dashboard_materiaux(request, projet_id):
     stocks_par_point_dict = {}
 
     # ==========================================================
-    # 2. TOTAUX GÃ‰NÃ‰RAUX
+    # 2. TOTAUX GENERAUX
     # ==========================================================
 
     total_prevu = ZERO
@@ -6374,7 +6384,7 @@ def dashboard_materiaux(request, projet_id):
     total_valeur_stock = ZERO
 
     # ==========================================================
-    # 3. CALCUL PAR MATÃ‰RIAU
+    # 3. CALCUL PAR MATÃEIAU
     # ==========================================================
 
     for materiau in materiaux:
@@ -6695,7 +6705,7 @@ def dashboard_materiaux(request, projet_id):
 
 
 # ============================================================
-# CRUD MATÃ‰RIAUX DU PROJET â€” DÃ‰PÃ”T 2
+# CRUD MATERIAUX DU PROJET 
 # ============================================================
 
 MATERIAUX_PROJET_CRUD = {
@@ -6703,8 +6713,8 @@ MATERIAUX_PROJET_CRUD = {
         "model": AchatMateriauProjet,
         "form": AchatMateriauProjetForm,
         "titre": "Achats de matÃ©riaux",
-        "titre_create": "Nouvel achat de matÃ©riaux",
-        "titre_update": "Modifier un achat de matÃ©riaux",
+        "titre_create": "Nouvel achat de matériaux",
+        "titre_update": "Modifier un achat de matériaux",
         "list_url": "projet:achat_materiau_projet_list",
         "create_url": "projet:achat_materiau_projet_create",
         "update_url": "projet:achat_materiau_projet_update",
@@ -6715,8 +6725,8 @@ MATERIAUX_PROJET_CRUD = {
     "reception": {
         "model": ReceptionMateriauProjet,
         "form": ReceptionMateriauProjetForm,
-        "titre": "RÃ©ceptions de matÃ©riaux",
-        "titre_create": "Nouvelle rÃ©ception de matÃ©riaux",
+        "titre": "Réceptions de matériaux",
+        "titre_create": "Nouvelle réception de matériaux",
         "titre_update": "Modifier une rÃ©ception",
         "list_url": "projet:reception_materiau_projet_list",
         "create_url": "projet:reception_materiau_projet_create",
@@ -6728,8 +6738,8 @@ MATERIAUX_PROJET_CRUD = {
     "distribution": {
         "model": DistributionMateriauProjet,
         "form": DistributionMateriauProjetForm,
-        "titre": "Distributions de matÃ©riaux",
-        "titre_create": "Nouvelle distribution de matÃ©riaux",
+        "titre": "Distributions de matériaux",
+        "titre_create": "Nouvelle distribution de matériaux",
         "titre_update": "Modifier une distribution",
         "list_url": "projet:distribution_materiau_projet_list",
         "create_url": "projet:distribution_materiau_projet_create",
@@ -6741,8 +6751,8 @@ MATERIAUX_PROJET_CRUD = {
     "consommation": {
         "model": ConsommationMateriauProjet,
         "form": ConsommationMateriauProjetForm,
-        "titre": "Consommations de matÃ©riaux",
-        "titre_create": "Nouvelle consommation de matÃ©riaux",
+        "titre": "Consommations de matériaux",
+        "titre_create": "Nouvelle consommation de matériaux",
         "titre_update": "Modifier une consommation",
         "list_url": "projet:consommation_materiau_projet_list",
         "create_url": "projet:consommation_materiau_projet_create",
@@ -6753,8 +6763,8 @@ MATERIAUX_PROJET_CRUD = {
     "retour": {
         "model": RetourMateriauProjet,
         "form": RetourMateriauProjetForm,
-        "titre": "Retours de matÃ©riaux",
-        "titre_create": "Nouveau retour de matÃ©riaux",
+        "titre": "Retours de matériaux",
+        "titre_create": "Nouveau retour de matériaux",
         "titre_update": "Modifier un retour",
         "list_url": "projet:retour_materiau_projet_list",
         "create_url": "projet:retour_materiau_projet_create",
@@ -6773,8 +6783,8 @@ MATERIAUX_PROJET_CRUD = {
 def _materiaux_projet_queryset(config, projet):
     """
     Retourne uniquement les enregistrements appartenant au projet.
-    Les consommations et retours peuvent Ãªtre rattachÃ©s Ã  une
-    distribution ou Ã  une rÃ©ception directe.
+    Les consommations et retours peuvent être rattachés à une
+    distribution ou à une réception directe.
     """
     model = config["model"]
 
@@ -6797,7 +6807,7 @@ def _materiaux_projet_queryset(config, projet):
 
 
 # ============================================================
-# LISTE GÃ‰NÃ‰RIQUE
+# LISTE 
 # ============================================================
 def _materiaux_projet_list(request, projet, type_objet):
     config = MATERIAUX_PROJET_CRUD[type_objet]
@@ -7263,7 +7273,7 @@ def _materiaux_projet_delete(request, projet, type_objet, pk):
 
 
 # ============================================================
-# VUES PUBLIQUES â€” ACHATS
+# VUES PUBLIQUES ACHATS
 # ============================================================
 
 
@@ -7292,7 +7302,7 @@ def achat_materiau_projet_delete(request, projet_id, pk):
 
 
 # ============================================================
-# VUES PUBLIQUES â€” RÃ‰CEPTIONS
+# VUES PUBLIQUES RÃ‰CEPTIONS
 # ============================================================
 
 
@@ -7321,7 +7331,7 @@ def reception_materiau_projet_delete(request, projet_id, pk):
 
 
 # ============================================================
-# VUES PUBLIQUES â€” DISTRIBUTIONS
+# VUES PUBLIQUE DISTRIBUTIONS
 # ============================================================
 
 
@@ -7350,7 +7360,7 @@ def distribution_materiau_projet_delete(request, projet_id, pk):
 
 
 # ============================================================
-# VUES PUBLIQUES â€” CONSOMMATIONS
+# VUES PUBLIQUES  CONSOMMATIONS
 # ============================================================
 
 
@@ -7379,7 +7389,7 @@ def consommation_materiau_projet_delete(request, projet_id, pk):
 
 
 # ============================================================
-# VUES PUBLIQUES â€” RETOURS
+# VUES PUBLIQUES RETOURS
 # ============================================================
 
 

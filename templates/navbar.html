@@ -326,28 +326,27 @@
                                 </ul>
                             </li>
                         {% endif %}
-                        <!-- =================================================MATÃ‰RIELS================================================= -->
+                        <!-- =================================================MATERIELS================================================= -->
+                        {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                         <li class="nav-item dropdown">
-                            {% if request.session.role == "MAGASIN" or request.session.role == "CHEF_MAGASIN" or request.session.role == "Admin" or request.session.role == "Superviseur" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_MAGASIN" or fonction_projet == "MAGASINIER" %}
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Matériels</a>
-                                <ul class="dropdown-menu shadow">
-                                    <!-- MAGASIN -->
-                                    {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                                        <li>
-                                            <a class="dropdown-item"   href="{% url 'materiels:materiels_list' %}">Stock matériel</a>
-                                        </li>                                        
-                                        <li>
-                                            <a class="dropdown-item"   href="{% url 'materielEntre:materielEntre_list' %}">Entrée matériel</a>
-                                        </li>                                        
-                                        <li>
-                                            <a class="dropdown-item"   href="{% url 'materielsort:materielsort_list' %}">Sortie matériel</a>
-                                        </li>
-                                    {% endif %}
-                                </ul>
-                            {% endif %}
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Matériels</a>
+                            <ul class="dropdown-menu shadow">
+                                <!-- MAGASIN -->
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'materiels:materiels_list' %}">Stock matériel</a>
+                                </li>                                        
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'materielEntre:materielEntre_list' %}">Entrée matériel</a>
+                                </li>                                        
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'materielsort:materielsort_list' %}">Sortie matériel</a>
+                                </li>
+                            </ul>
                         </li>
+                        {% endif %}
                     {% endif %}
-                    <!-- =================================================VÃ‰HICULES=================================================-->
+                    <!-- =================================================VEHICULES=================================================-->
+                    {% if request.session.role == "UserEntreprise" or request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "SuperviseurMica" %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Véhicules</a>
                         <ul class="dropdown-menu shadow">
@@ -369,11 +368,13 @@
                                     <a class="dropdown-item"   href="{% url 'materiaux:reparations_list' %}">Entretien / Réparation</a>
                                 </li>
                             {% elif fonction_projet == "CHAUFFEUR" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHEF_MAGASIN" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
-                                <li><a class="dropdown-item" href="{% url 'projet:projet_list' %}">ðŸš› Transport</a></li>
+                                <li><a class="dropdown-item" href="{% url 'projet:projet_list' %}">Transport</a></li>
                             {% endif %}
                         </ul>
                     </li>
+                    {% endif %}
                     <!-- =================================================RAPPORTS================================================= -->
+                    {% if request.session.role == "UserEntreprise" or request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Rapports</a>
                         <ul class="dropdown-menu shadow">
@@ -382,9 +383,6 @@
                                 <li>
                                     <a class="dropdown-item"   href="{% url 'rapports:rapport_list' %}">Rapport Mica</a>
                                 </li>
-                                <!-- ENTREPRISE -->
-                            {% endif %}
-                            {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "SuperviseurMica" %}
                                 <li>
                                     <a class="dropdown-item"   href="{% url 'produit:historique_produits' %}">Historique</a>
                                 </li>
@@ -408,6 +406,7 @@
                             {% endif %}
                         </ul>
                     </li>
+                    {% endif %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="bddDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-database me-1"></i> BDD
