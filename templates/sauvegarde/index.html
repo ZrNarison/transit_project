@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% load static %}
 
 {% block content %}
 <div class="container-fluid py-3">
 
-    {# En-tête #}
+    {# En-tÃªte #}
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div>
             <h3 class="mb-1">
@@ -32,7 +32,7 @@
         {% endfor %}
     {% endif %}
 
-    {# Informations de sécurité #}
+    {# Informations de sécurisé #}
     <div class="alert alert-info">
         <div class="d-flex align-items-start gap-2">
             <i class="fas fa-info-circle mt-1"></i>
@@ -52,7 +52,7 @@
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
                 <i class="fas fa-file-export me-2"></i>
-                Exporter la base sécurisée
+                Exporter la base sécurisé
             </h5>
         </div>
 
@@ -118,7 +118,7 @@
                     >
 
                     <div class="form-text">
-                        Sélectionnez une archive précédemment exportée depuis l'application.
+                        SÃ©lectionnez une archive précédemment exportée depuis l'application.
                     </div>
                 </div>
 
@@ -142,27 +142,20 @@
 
             <div class="card-body">
                 <p>
-                    Une sauvegarde a été préparée pour l'importation.
-                    Assurez-vous d'avoir sélectionné le bon fichier.
+                    Une sauvegarde a été préparé pour l'importation.
+                    Assurez-vous d'avoir séléctionner le bon fichier.
                 </p>
 
                 <div class="alert alert-danger">
                     <strong>Cette opération peut modifier les données existantes.</strong>
-                    Vérifiez que vous disposez d'une sauvegarde récente avant de confirmer.
+                    VÃ©rifiez que vous disposez d'une sauvegarde récente avant de confirmer.
                 </div>
 
                 <form method="post" action="{% url importer_url_name %}">
                     {% csrf_token %}
 
                     <div class="form-check mb-3">
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            id="confirmation_import"
-                            name="confirmation_import"
-                            value="oui"
-                            required
-                        >
+                        <input class="form-check-input" type="checkbox" id="confirmation_import" name="confirmation_import" value="oui" required>
                         <label class="form-check-label" for="confirmation_import">
                             Je confirme vouloir importer cette sauvegarde.
                         </label>
@@ -196,14 +189,7 @@
             <form method="get" action="{% url index_url_name %}" class="row g-2 mb-3">
                 <div class="col-12 col-md-4">
                     <label for="q" class="form-label">Recherche</label>
-                    <input
-                        type="text"
-                        name="q"
-                        id="q"
-                        class="form-control"
-                        value="{{ request.GET.q|default:'' }}"
-                        placeholder="Utilisateur, opération..."
-                    >
+                    <input type="text" name="q" id="q" class="form-control" value="{{ request.GET.q|default:'' }}" placeholder="Utilisateur, opération...">
                 </div>
 
                 <div class="col-12 col-md-3">
@@ -259,41 +245,41 @@
                         {% for journal in journal_sauvegardes %}
                             <tr>
                                 <td>
-                                    {% if journal.date_creation %}
-                                        {{ journal.date_creation|date:"d/m/Y H:i" }}
-                                    {% elif journal.created_at %}
-                                        {{ journal.created_at|date:"d/m/Y H:i" }}
-                                    {% elif journal.date %}
-                                        {{ journal.date|date:"d/m/Y H:i" }}
+                                    {% if journal.date_operation %}
+                                        {{ journal.date_operation|date:"d/m/Y H:i" }}
+                                    {% elif False %}
+                                        
+                                    {% elif False %}
+                                        
                                     {% else %}
-                                        —
+                                        â€”
                                     {% endif %}
                                 </td>
 
                                 <td>
                                     {% if journal.utilisateur %}
                                         {{ journal.utilisateur }}
-                                    {% elif journal.username %}
-                                        {{ journal.username }}
-                                    {% elif journal.user %}
-                                        {{ journal.user }}
+                                    {% elif False %}
+                                        
+                                    {% elif False %}
+                                        
                                     {% else %}
-                                        —
+                                        â€”
                                     {% endif %}
                                 </td>
 
                                 <td>
                                     {% if journal.action %}
                                         {{ journal.action }}
-                                    {% elif journal.operation %}
-                                        {{ journal.operation }}
+                                    {% elif False %}
+                                        
                                     {% else %}
-                                        —
+                                        â€”
                                     {% endif %}
                                 </td>
 
                                 <td>
-                                    {% with statut_journal=journal.statut|default:journal.status|default:"—" %}
+                                    {% with statut_journal=journal.statut|default:"-" %}
                                         {% if statut_journal == "SUCCES" or statut_journal == "SUCCESS" or statut_journal == "success" or statut_journal == "OK" %}
                                             <span class="badge bg-success">{{ statut_journal }}</span>
                                         {% elif statut_journal == "ECHEC" or statut_journal == "ERROR" or statut_journal == "error" or statut_journal == "FAILED" %}
@@ -307,12 +293,12 @@
                                 </td>
 
                                 <td>
-                                    {% if journal.description %}
-                                        {{ journal.description|truncatechars:150 }}
-                                    {% elif journal.message %}
-                                        {{ journal.message|truncatechars:150 }}
+                                    {% if journal.details %}
+                                        {{ journal.details|truncatechars:150 }}
+                                    {% elif False %}
+                                        
                                     {% else %}
-                                        —
+                                        â€”
                                     {% endif %}
                                 </td>
                             </tr>
@@ -320,7 +306,7 @@
                             <tr>
                                 <td colspan="5" class="text-center text-muted py-4">
                                     <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                    Aucune opération enregistrée.
+                                    Aucune opÃ©ration enregistrée.
                                 </td>
                             </tr>
                         {% endfor %}
@@ -337,21 +323,21 @@
                             <li class="page-item">
                                 <a class="page-link"
                                    href="?page=1{% if query_string %}&{{ query_string }}{% endif %}">
-                                    Première
+                                    PremiÃ¨re
                                 </a>
                             </li>
                             <li class="page-item">
                                 <a class="page-link"
                                    href="?page={{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">
-                                    Précédente
+                                    PrÃ©cÃ©dente
                                 </a>
                             </li>
                         {% else %}
                             <li class="page-item disabled">
-                                <span class="page-link">Première</span>
+                                <span class="page-link">PremiÃ¨re</span>
                             </li>
                             <li class="page-item disabled">
-                                <span class="page-link">Précédente</span>
+                                <span class="page-link">Précedente</span>
                             </li>
                         {% endif %}
 
@@ -363,15 +349,12 @@
 
                         {% if page_obj.has_next %}
                             <li class="page-item">
-                                <a class="page-link"
-                                   href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">
-                                    Suivante
-                                </a>
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">Suivante</a>
                             </li>
                             <li class="page-item">
                                 <a class="page-link"
                                    href="?page={{ page_obj.paginator.num_pages }}{% if query_string %}&{{ query_string }}{% endif %}">
-                                    Dernière
+                                    Derniére
                                 </a>
                             </li>
                         {% else %}
@@ -379,7 +362,7 @@
                                 <span class="page-link">Suivante</span>
                             </li>
                             <li class="page-item disabled">
-                                <span class="page-link">Dernière</span>
+                                <span class="page-link">Derniére</span>
                             </li>
                         {% endif %}
 
@@ -391,3 +374,5 @@
 
 </div>
 {% endblock %}
+
+

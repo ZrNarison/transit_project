@@ -558,6 +558,26 @@ def index(request):
     if actor is None:
         return redirect("users:login")
 
+    # Déterminer les routes correspondant à l'entreprise connectée.
+    index_url_name = _index_url_name(request)
+    is_mccr = index_url_name == "sauvegarde:h_index"
+
+    exporter_url_name = (
+        "sauvegarde:h_exporter"
+        if is_mccr
+        else "sauvegarde:exporter"
+    )
+    valider_import_url_name = (
+        "sauvegarde:h_valider_import"
+        if is_mccr
+        else "sauvegarde:valider_import"
+    )
+    importer_url_name = (
+        "sauvegarde:h_importer"
+        if is_mccr
+        else "sauvegarde:importer"
+    )
+
     # Historique complet : les filtres sont appliqués avant la pagination.
     journal = JournalSauvegarde.objects.all()
 
@@ -569,8 +589,6 @@ def index(request):
     date_fin = request.GET.get("date_fin", "").strip()
 
     if recherche:
-        from django.db.models import Q
-
         journal = journal.filter(
             Q(fichier__icontains=recherche)
             | Q(details__icontains=recherche)
@@ -588,12 +606,13 @@ def index(request):
         journal = journal.filter(action=action)
 
     statuts_valides = set(
-        JournalSauvegarde.objects.values_list("statut", flat=True).distinct()
+        JournalSauvegarde.objects.values_list(
+            "statut", flat=True
+        ).distinct()
     )
     if statut in statuts_valides:
         journal = journal.filter(statut=statut)
 
-    # Les dates attendues par les champs HTML sont au format AAAA-MM-JJ.
     from datetime import date
 
     try:
@@ -620,11 +639,10 @@ def index(request):
 
     journal = journal.order_by("-date_operation")
 
-    # Vingt opérations par page. get_page() gère les numéros invalides.
+    # Pagination : 20 opérations par page.
     paginator = Paginator(journal, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    # Liste des utilisateurs et statuts existants dans le journal complet.
     utilisateurs = (
         JournalSauvegarde.objects.exclude(utilisateur="")
         .values_list("utilisateur", flat=True)
@@ -638,11 +656,12 @@ def index(request):
         .order_by("statut")
     )
 
-    # Conserve les filtres dans les liens de pagination.
+    # Conserver les filtres dans les liens de pagination.
     query_params = request.GET.copy()
     query_params.pop("page", None)
     query_string = query_params.urlencode()
 
+    # Vérifier si une archive validée attend une confirmation.
     pending_token = request.session.get(SESSION_TOKEN_KEY)
     pending_exists = False
 
@@ -655,25 +674,35 @@ def index(request):
         except ValueError:
             request.session.pop(SESSION_TOKEN_KEY, None)
 
+    context = {
+        "journal_sauvegardes": page_obj,
+        "page_obj": page_obj,
+        "pending_import": pending_exists,
+        "recherche": recherche,
+        "filtre_utilisateur": utilisateur,
+        "filtre_action": action,
+        "filtre_statut": statut,
+        "date_debut": date_debut,
+        "date_fin": date_fin,
+        "utilisateurs": utilisateurs,
+        "actions_sauvegarde": JournalSauvegarde.ACTION_CHOICES,
+        "statuts": statuts,
+        "query_string": query_string,
+
+        # Routes indispensables au template.
+        "is_mccr": is_mccr,
+        "index_url_name": index_url_name,
+        "exporter_url_name": exporter_url_name,
+        "valider_import_url_name": valider_import_url_name,
+        "importer_url_name": importer_url_name,
+    }
+
     return render(
         request,
         "sauvegarde/index.html",
-        {
-            "journal_sauvegardes": page_obj,
-            "page_obj": page_obj,
-            "pending_import": pending_exists,
-            "recherche": recherche,
-            "filtre_utilisateur": utilisateur,
-            "filtre_action": action,
-            "filtre_statut": statut,
-            "date_debut": date_debut,
-            "date_fin": date_fin,
-            "utilisateurs": utilisateurs,
-            "actions_sauvegarde": JournalSauvegarde.ACTION_CHOICES,
-            "statuts": statuts,
-            "query_string": query_string,
-        },
+        context,
     )
+
 
 @never_cache
 @require_POST
@@ -945,5 +974,6 @@ def importer(request):
 
     finally:
         _clear_staged_import(request)
+        
 
     return redirect(_index_url_name(request))

@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    {# En-tête #}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h3 class="mb-1">
+                <i class="fas fa-shield-alt me-2"></i>
+                Sauvegarde sécurisée
+            </h3>
+            <p class="text-muted mb-0">
+                Exportation, importation et suivi des sauvegardes de la base de données.
+            </p>
+        </div>
+
+        <a href="{% url index_url_name %}" class="btn btn-outline-secondary">
+            <i class="fas fa-sync-alt me-1"></i>
+            Actualiser
+        </a>
+    </div>
+
+    {# Messages Django #}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if 'error' in message.tags %}danger{% elif 'success' in message.tags %}success{% elif 'warning' in message.tags %}warning{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {# Informations de sécurité #}
+    <div class="alert alert-info">
+        <div class="d-flex align-items-start gap-2">
+            <i class="fas fa-info-circle mt-1"></i>
+            <div>
+                <strong>Protection des sauvegardes</strong>
+                <p class="mb-0">
+                    Les archives sont protégées par chiffrement. Conservez la clé de sauvegarde
+                    et les fichiers exportés dans un emplacement sécurisé.
+                    Une importation peut modifier les données existantes.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {# Exportation #}
+    <div class="card shadow-sm mb-4" id="exporter">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-file-export me-2"></i>
+                Exporter la base sécurisée
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <p>
+                Générer une archive de sauvegarde chiffrée de la base de données.
+            </p>
+
+            <form method="post" action="{% url exporter_url_name %}">
+                {% csrf_token %}
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-download me-1"></i>
+                    Exporter la base sécurisée
+                </button>
+            </form>
+
+            <small class="text-muted d-block mt-2">
+                Attendez la fin du téléchargement avant de fermer la page.
+            </small>
+        </div>
+    </div>
+
+    {# Importation : validation du fichier #}
+    <div class="card shadow-sm mb-4" id="importer">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0">
+                <i class="fas fa-file-import me-2"></i>
+                Importer une sauvegarde
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Attention
+                </strong>
+                <p class="mb-0">
+                    Vérifiez le fichier avant de poursuivre. L'importation peut remplacer
+                    ou modifier des données de l'application. Faites une sauvegarde actuelle
+                    avant de continuer.
+                </p>
+            </div>
+
+            <form method="post"
+                  action="{% url valider_import_url_name %}"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="fichier_sauvegarde" class="form-label">
+                        Fichier de sauvegarde chiffré
+                    </label>
+
+                    <input
+                        type="file"
+                        name="fichier_sauvegarde"
+                        id="fichier_sauvegarde"
+                        class="form-control"
+                        accept=".transitbak,.bak,.backup"
+                        required
+                    >
+
+                    <div class="form-text">
+                        Sélectionnez une archive précédemment exportée depuis l'application.
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Vérifier la sauvegarde
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {# Confirmation de l'importation #}
+    {% if pending_import %}
+        <div class="card border-danger shadow-sm mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Confirmer l'importation
+                </h5>
+            </div>
+
+            <div class="card-body">
+                <p>
+                    Une sauvegarde a été préparée pour l'importation.
+                    Assurez-vous d'avoir sélectionné le bon fichier.
+                </p>
+
+                <div class="alert alert-danger">
+                    <strong>Cette opération peut modifier les données existantes.</strong>
+                    Vérifiez que vous disposez d'une sauvegarde récente avant de confirmer.
+                </div>
+
+                <form method="post" action="{% url importer_url_name %}">
+                    {% csrf_token %}
+
+                    <div class="form-check mb-3">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="confirmation_import"
+                            name="confirmation_import"
+                            value="oui"
+                            required
+                        >
+                        <label class="form-check-label" for="confirmation_import">
+                            Je confirme vouloir importer cette sauvegarde.
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-database me-1"></i>
+                        Confirmer l'importation
+                    </button>
+
+                    <a href="{% url index_url_name %}" class="btn btn-outline-secondary ms-1">
+                        Annuler
+                    </a>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+    {# Historique des sauvegardes #}
+    <div class="card shadow-sm mb-4" id="historique">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-history me-2"></i>
+                Historique des opérations
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            {# Filtres #}
+            <form method="get" action="{% url index_url_name %}" class="row g-2 mb-3">
+                <div class="col-12 col-md-4">
+                    <label for="q" class="form-label">Recherche</label>
+                    <input
+                        type="text"
+                        name="q"
+                        id="q"
+                        class="form-control"
+                        value="{{ request.GET.q|default:'' }}"
+                        placeholder="Utilisateur, opération..."
+                    >
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="action" class="form-label">Opération</label>
+                    <select name="action" id="action" class="form-select">
+                        <option value="">Toutes les opérations</option>
+                        {% for action_item in actions_sauvegarde %}
+                            <option value="{{ action_item }}" {% if request.GET.action == action_item %}selected{% endif %}>
+                                {{ action_item }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <label for="statut" class="form-label">Statut</label>
+                    <select name="statut" id="statut" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        {% for statut_item in statuts %}
+                            <option value="{{ statut_item }}" {% if request.GET.statut == statut_item %}selected{% endif %}>
+                                {{ statut_item }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        Filtrer
+                    </button>
+
+                    <a href="{% url index_url_name %}" class="btn btn-outline-secondary" title="Réinitialiser les filtres">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </form>
+
+            {# Tableau #}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Utilisateur</th>
+                            <th>Opération</th>
+                            <th>Statut</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for journal in journal_sauvegardes %}
+                            <tr>
+                                <td>
+                                    {% if journal.date_creation %}
+                                        {{ journal.date_creation|date:"d/m/Y H:i" }}
+                                    {% elif journal.created_at %}
+                                        {{ journal.created_at|date:"d/m/Y H:i" }}
+                                    {% elif journal.date %}
+                                        {{ journal.date|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if journal.utilisateur %}
+                                        {{ journal.utilisateur }}
+                                    {% elif journal.username %}
+                                        {{ journal.username }}
+                                    {% elif journal.user %}
+                                        {{ journal.user }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if journal.action %}
+                                        {{ journal.action }}
+                                    {% elif journal.operation %}
+                                        {{ journal.operation }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% with statut_journal=journal.statut|default:journal.status|default:"—" %}
+                                        {% if statut_journal == "SUCCES" or statut_journal == "SUCCESS" or statut_journal == "success" or statut_journal == "OK" %}
+                                            <span class="badge bg-success">{{ statut_journal }}</span>
+                                        {% elif statut_journal == "ECHEC" or statut_journal == "ERROR" or statut_journal == "error" or statut_journal == "FAILED" %}
+                                            <span class="badge bg-danger">{{ statut_journal }}</span>
+                                        {% elif statut_journal == "EN_ATTENTE" or statut_journal == "PENDING" %}
+                                            <span class="badge bg-warning text-dark">{{ statut_journal }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ statut_journal }}</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+
+                                <td>
+                                    {% if journal.description %}
+                                        {{ journal.description|truncatechars:150 }}
+                                    {% elif journal.message %}
+                                        {{ journal.message|truncatechars:150 }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                    Aucune opération enregistrée.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {# Pagination #}
+            {% if page_obj and page_obj.paginator.num_pages > 1 %}
+                <nav aria-label="Pagination de l'historique">
+                    <ul class="pagination justify-content-center flex-wrap mb-0">
+
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?page=1{% if query_string %}&{{ query_string }}{% endif %}">
+                                    Première
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?page={{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">
+                                    Précédente
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Première</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">Précédente</span>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">
+                                    Suivante
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?page={{ page_obj.paginator.num_pages }}{% if query_string %}&{{ query_string }}{% endif %}">
+                                    Dernière
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Suivante</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">Dernière</span>
+                            </li>
+                        {% endif %}
+
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
