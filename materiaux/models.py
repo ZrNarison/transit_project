@@ -1351,9 +1351,9 @@ class H_Vehicule(models.Model):
 
     @property
     def total_reparations(self):
-        return self.reparations.aggregate(total=Sum("montant_total_calcule"))[
-            "total"
-        ] or Decimal("0")
+        return self.reparations.aggregate(
+            total=Sum("total")
+        )["total"] or Decimal("0")
 
     @property
     def total_depenses(self):
@@ -1402,24 +1402,6 @@ class ReparationVehicule(models.Model):
         related_name="reparations",
         verbose_name="Véhicule",
     )
-
-    # Ancien champ conserv├®.
-    chauffeur = models.CharField(
-        max_length=150,
-        blank=True,
-        verbose_name="Chauffeur",
-    )
-
-    # Nouveau lien vers Personnel.
-    chauffeur_personnel = models.ForeignKey(
-        "personnel.H_Personnel",
-        on_delete=models.PROTECT,
-        related_name="reparations_vehicules",
-        null=True,
-        blank=True,
-        verbose_name="Chauffeur",
-    )
-
 
     designation = models.CharField(
         max_length=255,
@@ -1533,18 +1515,18 @@ class ReparationVehicule(models.Model):
         errors = {}
 
         if self.quantite is None or self.quantite <= 0:
-            errors["quantite"] = "La quantit├® doit ├¬tre sup├®rieure ├á z├®ro."
+            errors["quantite"] = "La quantité doit être supérieure à 0."
 
         if self.prix_unitaire is None or self.prix_unitaire < 0:
-            errors["prix_unitaire"] = "Le prix unitaire ne peut pas ├¬tre n├®gatif."
+            errors["prix_unitaire"] = "Le prix unitaire ne peut pas être négatif."
 
         if self.montant_main_oeuvre is None or self.montant_main_oeuvre < 0:
             errors["montant_main_oeuvre"] = (
-                "La main d'┼ôuvre ne peut pas ├¬tre n├®gative."
+                "La main d'oeuuvre ne peut pas être négative."
             )
 
         if self.Cout is not None and self.Cout < 0:
-            errors["Cout"] = "Le co├╗t ne peut pas ├¬tre n├®gatif."
+            errors["Cout"] = "Le coût ne peut pas être négatif."
 
         if errors:
             raise ValidationError(errors)

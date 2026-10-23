@@ -451,21 +451,21 @@ reparations_list = _make_list(
     ReparationVehicule,
     "materiaux/reparations_list.html",
     "reparations",
-    "RÃ©parations vÃ©hicules MCCR",
+    "Réparations véhicules MCCR",
 )
 reparation_add = _make_add(
     ReparationVehicule,
     ReparationVehiculeForm,
     "materiaux/reparation_form.html",
     "reparations_list",
-    "Ajouter une rÃ©paration",
+    "Ajouter une réparation",
 )
 reparation_edit = _make_edit(
     ReparationVehicule,
     ReparationVehiculeForm,
     "materiaux/reparation_form.html",
     "reparations_list",
-    "Modifier une rÃ©paration",
+    "Modifier une réparation",
 )
 reparation_delete = _make_delete(ReparationVehicule, "reparations_list", "rÃ©paration")
 
@@ -473,14 +473,14 @@ receptions_materiaux_list = _make_list(
     ReceptionMateriau,
     "materiaux/receptions_materiaux_list.html",
     "receptions",
-    "RÃ©ceptions matÃ©riaux MCCR",
+    "Réceptions matériaux MCCR",
 )
 reception_materiau_add = _make_add(
     ReceptionMateriau,
     ReceptionMateriauForm,
     "materiaux/suivi_materiau_form.html",
     "receptions_materiaux_list",
-    "Ajouter une rÃ©ception",
+    "Ajouter une réception",
 )
 reception_materiau_edit = _make_edit(
     ReceptionMateriau,

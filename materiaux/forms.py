@@ -248,7 +248,6 @@ class DepenseGasoilForm(BootstrapModelForm):
 # ============================================================
 # FORMULAIRE VÉHICULE MCCR
 # ============================================================
-
 class VehiculeForm(forms.ModelForm):
     class Meta:
         model = H_Vehicule
@@ -296,7 +295,6 @@ class VehiculeForm(forms.ModelForm):
 # ============================================================
 # FORMULAIRE RÉPARATION VÉHICULE MCCR
 # ============================================================
-
 class ReparationVehiculeForm(forms.ModelForm):
     class Meta:
         model = ReparationVehicule
@@ -304,8 +302,6 @@ class ReparationVehiculeForm(forms.ModelForm):
         fields = [
             "date_reparation",
             "vehicule",
-            "chauffeur",
-            "chauffeur_personnel",
             "designation",
             "type_reparation",
             "garage",
@@ -324,13 +320,6 @@ class ReparationVehiculeForm(forms.ModelForm):
                 "type": "date",
             }),
             "vehicule": forms.Select(attrs={
-                "class": "form-select",
-            }),
-            "chauffeur": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Nom du chauffeur (historique)",
-            }),
-            "chauffeur_personnel": forms.Select(attrs={
                 "class": "form-select",
             }),
             "designation": forms.TextInput(attrs={
@@ -379,8 +368,6 @@ class ReparationVehiculeForm(forms.ModelForm):
         labels = {
             "date_reparation": "Date de réparation",
             "vehicule": "Véhicule MCCR",
-            "chauffeur": "Chauffeur historique",
-            "chauffeur_personnel": "Chauffeur du personnel MCCR",
             "designation": "Désignation",
             "type_reparation": "Type d'intervention",
             "garage": "Garage",
@@ -400,8 +387,3 @@ class ReparationVehiculeForm(forms.ModelForm):
             H_Vehicule.objects.all().order_by("immatriculation")
         )
 
-        self.fields["chauffeur_personnel"].queryset = (
-            H_Personnel.objects.all().order_by("nom", "prenom")
-        )
-
-        self.fields["chauffeur_personnel"].required = False
