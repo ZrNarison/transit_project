@@ -11,7 +11,14 @@ from depotEntreprise.models import DepotSoc, H_DepotSoc
 from users.models import H_AppUser, AppUser
 from recette.models import H_Recette, Recette
 from salaire.models import H_Salaire, Salaire
-
+from materiels.models import ReparationVehicule
+from materiaux.models import (
+    Depense,
+    DepenseGasoil,
+    ReparationVehicule,
+    PaiementDocker,
+    MouvementMateriauMCCR,
+)
 # ============================================================
 # CONSTRUCTION DU RAPPORT DE TRÉSORERIE SOCIÉTÉ
 # ============================================================
@@ -201,6 +208,32 @@ def construire_rapport_tresorerie(request):
                 "depense": avance.montantAv or ZERO,
                 "source": "Avance",
                 "objet": avance,
+            }
+        )
+        # ========================================================
+    # 6. RÉPARATIONS VÉHICULES ET ENGINS — GALAXY
+    # ========================================================
+
+    reparations = ReparationVehicule.objects.all()
+
+    for reparation in reparations:
+        if not reparation.date_reparation:
+            continue
+
+        operations.append(
+            {
+                "date": reparation.date_reparation,
+                "piece": f"MAT-{reparation.id}",
+                "description": "Matériel - Réparation",
+                "titre": (
+                    f"{reparation.vehicule} - "
+                    f"{reparation.designation}"
+                ),
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": reparation.total or ZERO,
+                "source": "ReparationVehicule",
+                "objet": reparation,
             }
         )
 
@@ -629,6 +662,163 @@ def h_construire_rapport_tresorerie(request):
                 "depense": avance.montantAv or ZERO,
                 "source": "H_Avance",
                 "objet": avance,
+            }
+        )
+
+        # ========================================================
+    # 2.6. DÉPENSES GÉNÉRALES MCCR
+    # ========================================================
+
+    for depense in Depense.objects.all():
+        if not depense.date_depense:
+            continue
+
+        operations.append(
+            {
+                "date": depense.date_depense,
+                "piece": f"MCCR-DEP-{depense.id}",
+                "description": "Dépense matériel",
+                "titre": depense.designation or "Dépense MCCR",
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": depense.montant or ZERO,
+                "source": "Depense",
+                "objet": depense,
+            }
+        )
+
+    # ========================================================
+    # 2.7. DÉPENSES DE GASOIL MCCR
+    # ========================================================
+
+    for gasoil in DepenseGasoil.objects.select_related("vehicule").all():
+        if not gasoil.date_gasoil:
+            continue
+
+        operations.append(
+            {
+                "date": gasoil.date_gasoil,
+                "piece": f"MCCR-GAS-{gasoil.id}",
+                "description": "Achat gasoil",
+                "titre": (
+                    f"{gasoil.vehicule.immatriculation} "
+                    f"- {gasoil.quantite_litre} L"
+                ),
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": gasoil.total or ZERO,
+                "source": "DepenseGasoil",
+                "objet": gasoil,
+            }
+        )
+
+    # ========================================================
+    # 2.8. RÉPARATIONS VÉHICULES MCCR
+    # ========================================================
+
+    for reparation in ReparationVehicule.objects.select_related(
+        "vehicule"
+    ).all():
+        if not reparation.date_reparation:
+            continue
+
+        operations.append(
+            {
+                "date": reparation.date_reparation,
+                "piece": f"MCCR-REP-{reparation.id}",
+                "description": "Réparation véhicule",
+                "titre": (
+                    f"{reparation.vehicule.immatriculation} "
+                    f"- {reparation.designation}"
+                ),
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": reparation.montant_total_calcule or ZERO,
+                "source": "ReparationVehicule",
+                "objet": reparation,
+            }
+        )
+
+    # ========================================================
+    # 2.9. PAIEMENTS DOCKERS MCCR
+    # ========================================================
+
+    for paiement in PaiementDocker.objects.select_related(
+        "activite",
+        "activite__vehicule",
+    ).all():
+        if not paiement.date_activite:
+            continue
+
+        operations.append(
+            {
+                "date": paiement.date_activite,
+                "piece": f"MCCR-DOC-{paiement.id}",
+                "description": "Paiement docker",
+                "titre": (
+                    f"{paiement.activite.vehicule.immatriculation}"
+                ),
+                "depot": ZERO,
+                "recette": ZERO,
+                "depense": paiement.montant or ZERO,
+                "source": "PaiementDocker",
+                "objet": paiement,
+            }
+        )
+
+    # ========================================================
+    # 2.10. MOUVEMENTS DE MATÉRIAUX MCCR
+    # ========================================================
+
+    mouvements = MouvementMateriauMCCR.objects.select_related(
+        "materiau"
+    ).all()
+
+    for mouvement in mouvements:
+        if not mouvement.date_mouvement:
+            continue
+
+        montant = mouvement.montant or ZERO
+
+        if mouvement.type_mouvement == (
+            MouvementMateriauMCCR.TypeMouvement.ENTREE
+        ):
+            # Entrée de stock : achat, donc dépense.
+            depot_materiau = ZERO
+            recette_materiau = ZERO
+            depense_materiau = montant
+            description = "Achat matériau"
+
+        elif mouvement.type_mouvement == (
+            MouvementMateriauMCCR.TypeMouvement.SORTIE
+        ):
+            # Sortie de stock : vente, donc recette.
+            depot_materiau = ZERO
+            recette_materiau = montant
+            depense_materiau = ZERO
+            description = "Vente matériau"
+
+        elif mouvement.type_mouvement == (
+            MouvementMateriauMCCR.TypeMouvement.RETOUR
+        ):
+            # Le sens financier du retour dépend de la transaction.
+            # Ne pas le comptabiliser automatiquement sans règle définie.
+            continue
+
+        else:
+            continue
+
+        operations.append(
+            {
+                "date": mouvement.date_mouvement,
+                "piece": f"MCCR-MAT-{mouvement.id}",
+                "description": description,
+                "titre": mouvement.materiau.nom,
+                "depot": depot_materiau,
+                "recette": recette_materiau,
+                "depense": depense_materiau,
+                "source": "MouvementMateriauMCCR",
+                "objet": mouvement,
             }
         )
 
