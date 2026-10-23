@@ -1,16 +1,13 @@
-﻿from decimal import Decimal
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
-
 from users.models import AppUser, H_AppUser
-
-
 # ============================================================
-# MAT├ëRIAUX
+# MATERIAUX
 # ============================================================
 class Materiaux(models.Model):
     libelle = models.CharField(
@@ -25,8 +22,8 @@ class Materiaux(models.Model):
 
     class Meta:
         ordering = ["libelle"]
-        verbose_name = "Mat├®riau"
-        verbose_name_plural = "Mat├®riaux"
+        verbose_name = "Matériau"
+        verbose_name_plural = "Matériaux"
 
     def __str__(self):
         return f"{self.libelle} ({self.unite})"
@@ -56,7 +53,7 @@ class Materiaux(models.Model):
     @property
     def stock_entrepot(self):
         """
-        Stock encore disponible dans l'entrep├┤t,
+        Stock encore disponible dans l'entreprise,
         avant division vers le magasin.
         """
         return self.total_entrees - self.total_divisions
@@ -87,13 +84,13 @@ class MateriauxEntree(models.Model):
         Materiaux,
         on_delete=models.PROTECT,
         related_name="entrees",
-        verbose_name="Mat├®riau",
+        verbose_name="Matériau",
     )
 
     entree = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantit├® entr├®e",
+        verbose_name="Quantit├® entrée",
     )
 
     date_entree = models.DateField(
@@ -109,14 +106,14 @@ class MateriauxEntree(models.Model):
     vehicule = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name="V├®hicule",
+        verbose_name="Véhicule",
     )
 
     enregistreur = models.ForeignKey(
         H_AppUser,
         on_delete=models.PROTECT,
         related_name="materiaux_entrees",
-        verbose_name="Enregistr├® par",
+        verbose_name="Enregistrée par",
     )
 
     date_creation = models.DateTimeField(
@@ -125,13 +122,13 @@ class MateriauxEntree(models.Model):
 
     class Meta:
         ordering = ["-date_entree", "-id"]
-        verbose_name = "Entr├®e mat├®riau"
-        verbose_name_plural = "Entr├®es mat├®riaux"
+        verbose_name = "Entrée matériau"
+        verbose_name_plural = "Entrées matériaux"
 
     def clean(self):
         if self.entree is None or self.entree <= 0:
             raise ValidationError(
-                {"entree": ("La quantit├® entr├®e doit ├¬tre sup├®rieure ├á z├®ro.")}
+                {"entree": ("La quantité entrée doit être supérieure á 0.")}
             )
 
         if self.pk:
@@ -143,8 +140,7 @@ class MateriauxEntree(models.Model):
                 raise ValidationError(
                     {
                         "entree": (
-                            "Impossible de diminuer cette entr├®e ├á cette "
-                            "quantit├® car une partie a d├®j├á ├®t├® divis├®e."
+                            "Impossible de diminuer cette entrée á cette quantité car une partie a déjá été divisée."
                         )
                     }
                 )
@@ -172,7 +168,7 @@ class MateriauxEntree(models.Model):
 
 
 # ============================================================
-# DIVISION ENTREP├öT ÔåÆ MAGASIN
+# DIVISION ENTREPOT DU MAGASIN
 # ============================================================
 
 
@@ -181,7 +177,7 @@ class MateriauxDivision(models.Model):
         MateriauxEntree,
         on_delete=models.PROTECT,
         related_name="divisions",
-        verbose_name="Entr├®e entrep├┤t",
+        verbose_name="Entrée entrepôt",
     )
 
     destination = models.CharField(
@@ -192,7 +188,7 @@ class MateriauxDivision(models.Model):
     quantite = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantit├® divis├®e",
+        verbose_name="Quantité divisée",
     )
 
     date_division = models.DateField(
@@ -212,8 +208,8 @@ class MateriauxDivision(models.Model):
 
     class Meta:
         ordering = ["-date_division", "-id"]
-        verbose_name = "Division mat├®riau"
-        verbose_name_plural = "Divisions mat├®riaux"
+        verbose_name = "Division matériau"
+        verbose_name_plural = "Divisions matériaux"
 
     def clean(self):
         if not self.entree_id:
@@ -221,7 +217,7 @@ class MateriauxDivision(models.Model):
 
         if self.quantite is None or self.quantite <= 0:
             raise ValidationError(
-                {"quantite": ("La quantit├® doit ├¬tre sup├®rieure ├á z├®ro.")}
+                {"quantite": ("La quantité doit être supérieure à 0.")}
             )
 
         divisions_existantes = self.entree.divisions.exclude(pk=self.pk).aggregate(
@@ -250,8 +246,7 @@ class MateriauxDivision(models.Model):
                 raise ValidationError(
                     {
                         "quantite": (
-                            "Impossible de r├®duire cette division en dessous "
-                            "des quantit├®s d├®j├á sorties."
+                            "Impossible de réduire cette division en dessous des quantités déjá sorties."
                         )
                     }
                 )
@@ -284,10 +279,8 @@ class MateriauxDivision(models.Model):
 
 
 # ============================================================
-# SORTIE MAGASIN ÔåÆ PROJET
+# SORTIE MAGASIN 
 # ============================================================
-
-
 class MateriauxOut(models.Model):
     division = models.ForeignKey(
         MateriauxDivision,
@@ -299,7 +292,7 @@ class MateriauxOut(models.Model):
     quantite = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantit├® sortie",
+        verbose_name="Quantité sortie",
     )
 
     date_sortie = models.DateField(
@@ -315,7 +308,7 @@ class MateriauxOut(models.Model):
     vehicule = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name="V├®hicule",
+        verbose_name="Véhicule",
     )
 
     # --------------------------------------------------------
@@ -344,7 +337,7 @@ class MateriauxOut(models.Model):
         H_AppUser,
         on_delete=models.PROTECT,
         related_name="materiaux_sorties",
-        verbose_name="Enregistr├® par",
+        verbose_name="Enregistré par",
     )
 
     date_creation = models.DateTimeField(
@@ -353,8 +346,8 @@ class MateriauxOut(models.Model):
 
     class Meta:
         ordering = ["-date_sortie", "-id"]
-        verbose_name = "Sortie mat├®riau"
-        verbose_name_plural = "Sorties mat├®riaux"
+        verbose_name = "Sortie matériau"
+        verbose_name_plural = "Sorties matériaux"
 
     def clean(self):
         if not self.division_id:
@@ -392,8 +385,7 @@ class MateriauxOut(models.Model):
                 raise ValidationError(
                     {
                         "point_projet": (
-                            "Le point de chantier doit appartenir "
-                            "au projet s├®lectionn├®."
+                            "Le point de chantier doit appartenir au projet sélectionné."
                         )
                     }
                 )
@@ -428,106 +420,8 @@ class MateriauxOut(models.Model):
 
 
 # ============================================================
-# V├ëHICULE
+# CATEGORIE DE DEPENSE
 # ============================================================
-
-
-class Vehicule(models.Model):
-    immatriculation = models.CharField(
-        max_length=50,
-        unique=True,
-        verbose_name="Immatriculation",
-    )
-
-    marque = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name="Marque",
-    )
-
-    modele = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name="Mod├¿le",
-    )
-
-    kilometrage = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        default=Decimal("0"),
-        verbose_name="Kilom├®trage",
-    )
-
-    actif = models.BooleanField(
-        default=True,
-        verbose_name="Actif",
-    )
-
-    date_creation = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    class Meta:
-        ordering = ["immatriculation"]
-        verbose_name = "V├®hicule"
-        verbose_name_plural = "V├®hicules"
-
-    def clean(self):
-        if self.kilometrage is not None and self.kilometrage < 0:
-            raise ValidationError(
-                {"kilometrage": ("Le kilom├®trage ne peut pas ├¬tre n├®gatif.")}
-            )
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
-
-    @property
-    def total_gasoil(self):
-        return self.depenses_gasoil.aggregate(total=Sum("total"))["total"] or Decimal(
-            "0"
-        )
-
-    @property
-    def total_litres_gasoil(self):
-        return self.depenses_gasoil.aggregate(total=Sum("quantite_litre"))[
-            "total"
-        ] or Decimal("0")
-
-    @property
-    def total_reparations(self):
-        return self.reparations.aggregate(total=Sum("montant_total_calcule"))[
-            "total"
-        ] or Decimal("0")
-
-    @property
-    def total_depenses(self):
-        return self.depenses.aggregate(total=Sum("montant"))["total"] or Decimal("0")
-
-    @property
-    def total_dockers(self):
-        return PaiementDocker.objects.filter(activite__vehicule=self).aggregate(
-            total=Sum("montant")
-        )["total"] or Decimal("0")
-
-    @property
-    def cout_total(self):
-        return (
-            self.total_gasoil
-            + self.total_reparations
-            + self.total_depenses
-            + self.total_dockers
-        )
-
-    def __str__(self):
-        return self.immatriculation
-
-
-# ============================================================
-# CAT├ëGORIE DE D├ëPENSE
-# ============================================================
-
-
 class CategorieDepense(models.Model):
     nom = models.CharField(
         max_length=100,
@@ -547,8 +441,8 @@ class CategorieDepense(models.Model):
 
     class Meta:
         ordering = ["nom"]
-        verbose_name = "Cat├®gorie de d├®pense"
-        verbose_name_plural = "Cat├®gories de d├®penses"
+        verbose_name = "Catégorie de dépense"
+        verbose_name_plural = "Catégories de dépenses"
 
     def __str__(self):
         return self.nom
@@ -567,8 +461,8 @@ class ActiviteTransport(models.Model):
 
     TYPE_TRANSPORT_CHOICES = [
         (PERSONNEL, "Personnel"),
-        (MATERIELS, "Mat├®riels"),
-        (MATERIAUX, "Mat├®riaux"),
+        (MATERIELS, "Matériels"),
+        (MATERIAUX, "Matériaux"),
     ]
 
     date_activite = models.DateField(
@@ -576,10 +470,10 @@ class ActiviteTransport(models.Model):
     )
 
     vehicule = models.ForeignKey(
-        Vehicule,
+        "materiaux.H_Vehicule",
         on_delete=models.PROTECT,
         related_name="activites_transport",
-        verbose_name="V├®hicule",
+        verbose_name="Véhicule",
     )
 
     # Ancien champ conserv├® pour compatibilit├®
@@ -666,7 +560,7 @@ class ActiviteTransport(models.Model):
     )
 
     # --------------------------------------------------------
-    # KILOM├ëTRAGE
+    # KILOMETRAGE
     # --------------------------------------------------------
 
     kilometrage_depart = models.DecimalField(
@@ -696,23 +590,23 @@ class ActiviteTransport(models.Model):
 
     class Meta:
         ordering = ["-date_activite", "-id"]
-        verbose_name = "Activit├® de transport"
-        verbose_name_plural = "Activit├®s de transport"
+        verbose_name = "Activité de transport"
+        verbose_name_plural = "Activités de transport"
 
     def clean(self):
         errors = {}
 
         if self.quantite is not None and self.quantite < 0:
-            errors["quantite"] = "La quantit├® ne peut pas ├¬tre n├®gative."
+            errors["quantite"] = "La quantité ne peut pas être négative."
 
         if self.kilometrage_depart is not None and self.kilometrage_depart < 0:
             errors["kilometrage_depart"] = (
-                "Le kilom├®trage de d├®part ne peut pas ├¬tre n├®gatif."
+                "Le kilométrage de départ ne peut pas être négatif."
             )
 
         if self.kilometrage_arrivee is not None and self.kilometrage_arrivee < 0:
             errors["kilometrage_arrivee"] = (
-                "Le kilom├®trage d'arriv├®e ne peut pas ├¬tre n├®gatif."
+                "Le kilom├®trage d'arrivée ne peut pas être négatif."
             )
 
         if (
@@ -721,12 +615,11 @@ class ActiviteTransport(models.Model):
             and self.kilometrage_arrivee < self.kilometrage_depart
         ):
             errors["kilometrage_arrivee"] = (
-                "Le kilom├®trage d'arriv├®e doit ├¬tre sup├®rieur "
-                "ou ├®gal au kilom├®trage de d├®part."
+                "Le kilométrage d'arrivée doit être supérieur ou égal au kilométrage de départ."
             )
 
         # ----------------------------------------------------
-        # Un transport de mat├®riaux doit ├¬tre li├® ├á une sortie.
+        # Un transport de matériaux doit être lié à une sortie.
         # ----------------------------------------------------
 
         if self.type_transport == self.MATERIAUX and self.sortie_materiau_id:
@@ -740,7 +633,7 @@ class ActiviteTransport(models.Model):
 
             if self.quantite > disponible:
                 errors["quantite"] = (
-                    f"Quantit├® trop ├®lev├®e. "
+                    f"Quantité trop élévée. "
                     f"Disponible pour transport : "
                     f"{disponible} "
                     f"{sortie.division.entree.materiau.unite}."
@@ -753,12 +646,11 @@ class ActiviteTransport(models.Model):
         if self.point_projet_id and self.projet_id:
             if self.point_projet.projet_id != self.projet_id:
                 errors["point_projet"] = (
-                    "Le point s├®lectionn├® n'appartient pas "
-                    "au projet s├®lectionn├®."
+                    "Le point sélectionné n'appartient pas au projet sélectionné"
                 )
 
         # ----------------------------------------------------
-        # Coh├®rence Projet / Sortie mat├®riau
+        # Cohérence Projet / Sortie matériau
         # ----------------------------------------------------
 
         if self.sortie_materiau_id and self.projet_id:
@@ -1213,10 +1105,8 @@ class PaiementDocker(models.Model):
 
 
 # ============================================================
-# D├ëPENSE G├ëN├ëRALE
+# DEPENSE GENERALE
 # ============================================================
-
-
 class Depense(models.Model):
 
     date_depense = models.DateField(
@@ -1238,7 +1128,7 @@ class Depense(models.Model):
     )
 
     vehicule = models.ForeignKey(
-        Vehicule,
+        "materiaux.H_Vehicule",
         on_delete=models.PROTECT,
         related_name="depenses",
         blank=True,
@@ -1286,13 +1176,13 @@ class Depense(models.Model):
 
     class Meta:
         ordering = ["-date_depense", "-id"]
-        verbose_name = "D├®pense"
-        verbose_name_plural = "D├®penses"
+        verbose_name = "Dépense"
+        verbose_name_plural = "Dépenses"
 
     def clean(self):
         if self.montant is None or self.montant <= 0:
             raise ValidationError(
-                {"montant": ("Le montant doit ├¬tre sup├®rieur ├á z├®ro.")}
+                {"montant": ("Le montant doit être supérieur à 0.")}
             )
 
     def save(self, *args, **kwargs):
@@ -1315,7 +1205,7 @@ class DepenseGasoil(models.Model):
     )
 
     vehicule = models.ForeignKey(
-        Vehicule,
+        "materiaux.H_Vehicule",
         on_delete=models.PROTECT,
         related_name="depenses_gasoil",
         verbose_name="V├®hicule",
@@ -1394,19 +1284,111 @@ class DepenseGasoil(models.Model):
             f"{self.total}"
         )
 
+# ============================================================
+# VEHICULE
+# ============================================================
+class H_Vehicule(models.Model):
+    immatriculation = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name="Immatriculation",
+    )
+
+    marque = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Marque",
+    )
+
+    modele = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Modéle",
+    )
+
+    kilometrage = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0"),
+        verbose_name="Kilométrage",
+    )
+
+    actif = models.BooleanField(
+        default=True,
+        verbose_name="Actif",
+    )
+
+    date_creation = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["immatriculation"]
+        verbose_name = "Véhicule"
+        verbose_name_plural = "Véhicules"
+
+    def clean(self):
+        if self.kilometrage is not None and self.kilometrage < 0:
+            raise ValidationError(
+                {"kilometrage": ("Le kilométrage ne peut pas êttre négatif.")}
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    @property
+    def total_gasoil(self):
+        return self.depenses_gasoil.aggregate(total=Sum("total"))["total"] or Decimal(
+            "0"
+        )
+
+    @property
+    def total_litres_gasoil(self):
+        return self.depenses_gasoil.aggregate(total=Sum("quantite_litre"))[
+            "total"
+        ] or Decimal("0")
+
+    @property
+    def total_reparations(self):
+        return self.reparations.aggregate(total=Sum("montant_total_calcule"))[
+            "total"
+        ] or Decimal("0")
+
+    @property
+    def total_depenses(self):
+        return self.depenses.aggregate(total=Sum("montant"))["total"] or Decimal("0")
+
+    @property
+    def total_dockers(self):
+        return PaiementDocker.objects.filter(activite__vehicule=self).aggregate(
+            total=Sum("montant")
+        )["total"] or Decimal("0")
+
+    @property
+    def cout_total(self):
+        return (
+            self.total_gasoil
+            + self.total_reparations
+            + self.total_depenses
+            + self.total_dockers
+        )
+
+    def __str__(self):
+        return self.immatriculation
+
+
 
 # ============================================================
-# R├ëPARATION V├ëHICULE
+# REPARATION VEHICULE
 # ============================================================
-
-
 class ReparationVehicule(models.Model):
 
     REPARATION = "REPARATION"
     CHANGEMENT = "CHANGEMENT"
 
     TYPE_REPARATION_CHOICES = [
-        (REPARATION, "R├®paration"),
+        (REPARATION, "Réparation"),
         (CHANGEMENT, "Changement"),
     ]
 
@@ -1415,10 +1397,10 @@ class ReparationVehicule(models.Model):
     )
 
     vehicule = models.ForeignKey(
-        Vehicule,
+        H_Vehicule,
         on_delete=models.PROTECT,
         related_name="reparations",
-        verbose_name="V├®hicule",
+        verbose_name="Véhicule",
     )
 
     # Ancien champ conserv├®.
@@ -1430,7 +1412,7 @@ class ReparationVehicule(models.Model):
 
     # Nouveau lien vers Personnel.
     chauffeur_personnel = models.ForeignKey(
-        "personnel.Personnel",
+        "personnel.H_Personnel",
         on_delete=models.PROTECT,
         related_name="reparations_vehicules",
         null=True,
@@ -1438,18 +1420,10 @@ class ReparationVehicule(models.Model):
         verbose_name="Chauffeur",
     )
 
-    projet = models.ForeignKey(
-        "projet.Projet",
-        on_delete=models.PROTECT,
-        related_name="reparations_vehicules",
-        null=True,
-        blank=True,
-        verbose_name="Projet",
-    )
 
     designation = models.CharField(
         max_length=255,
-        verbose_name="D├®signation",
+        verbose_name="Désignation",
     )
 
     type_reparation = models.CharField(
@@ -1469,13 +1443,13 @@ class ReparationVehicule(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal("1"),
-        verbose_name="Quantit├®",
+        verbose_name="Quantité",
     )
 
     unite = models.CharField(
         max_length=50,
         blank=True,
-        verbose_name="Unit├®",
+        verbose_name="Unité",
     )
 
     prix_unitaire = models.DecimalField(
@@ -1489,7 +1463,7 @@ class ReparationVehicule(models.Model):
         max_digits=14,
         decimal_places=2,
         default=Decimal("0"),
-        verbose_name="Main d'┼ôuvre",
+        verbose_name="Main d'oeuvre",
     )
 
     # Ancien champ conserv├® pour compatibilit├®.
@@ -1497,7 +1471,7 @@ class ReparationVehicule(models.Model):
         max_digits=14,
         decimal_places=2,
         default=Decimal("0"),
-        verbose_name="Co├╗t historique",
+        verbose_name="Coût historique",
     )
 
     # Ancien champ conserv├® pour compatibilit├®.
@@ -1506,14 +1480,14 @@ class ReparationVehicule(models.Model):
         decimal_places=2,
         default=Decimal("0"),
         editable=False,
-        verbose_name="Total pi├¿ce historique",
+        verbose_name="Total piéce historique",
     )
 
     enregistreur = models.ForeignKey(
         H_AppUser,
         on_delete=models.PROTECT,
         related_name="reparations_vehicules",
-        verbose_name="Enregistr├® par",
+        verbose_name="Enregistré par",
     )
 
     date_creation = models.DateTimeField(
@@ -1528,20 +1502,20 @@ class ReparationVehicule(models.Model):
         upload_to="reparations/pieces_remplacees/",
         blank=True,
         null=True,
-        verbose_name="Photo pi├¿ce remplac├®e",
+        verbose_name="Photo piéce remplacée",
     )
 
     photo_piece_remplacante = models.ImageField(
         upload_to="reparations/pieces_remplacantes/",
         blank=True,
         null=True,
-        verbose_name="Photo pi├¿ce remplac├®e par",
+        verbose_name="Photo piéce remplaante ",
     )
 
     class Meta:
         ordering = ["-date_reparation", "-id"]
-        verbose_name = "R├®paration v├®hicule"
-        verbose_name_plural = "R├®parations v├®hicules"
+        verbose_name = "Réparation véhicule"
+        verbose_name_plural = "Réparations véhicules"
 
     @property
     def montant_piece(self):
@@ -1593,8 +1567,6 @@ class ReparationVehicule(models.Model):
 # MODÈLES INDÉPENDANTS POUR LE STOCK MCCR
 # Les modèles historiques GALAXY restent inchangés.
 # ============================================================
-
-
 class MateriauMCCR(models.Model):
     nom = models.CharField(
         max_length=100,

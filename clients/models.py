@@ -6,13 +6,13 @@ from users.models import AppUser
 class Client(models.Model):
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100, blank=True)
-    date_naissance = models.DateField(null=True, blank=True)
+    date_naissance = models.DateField(null=False, blank=False)
     lieu_naissance = models.CharField(max_length=150)
     cin = models.CharField(max_length=12)
     nom_pere = models.CharField(max_length=150, blank=True)
-    nom_mere = models.CharField(max_length=150, blank=True)
+    nom_mere = models.CharField(max_length=150, blank=False)
     contact = models.CharField(max_length=10, blank=True)
-    adresse = models.TextField(blank=True)
+    adresse = models.TextField(blank=False)
     photo = models.ImageField(upload_to="images/Clients/")
 
     enregistre_par = models.ForeignKey(

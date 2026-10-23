@@ -29,14 +29,43 @@
                         <a class="nav-link" href="{% url 'mccr_materiaux:dashboard_mccr' %}">Matériaux</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle"
-                           href="#"
-                           role="button"
-                           data-bs-toggle="dropdown"
-                           aria-expanded="false">Finance</a>
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Finance</a>
                         <ul class="dropdown-menu shadow">
                             <li>
                                 <a class="dropdown-item" href="{% url 'avances:h_avance_list' %}">Avances</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'depensesoc:h_soc_depense_list' %}">Dépenses</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'materiaux:activites_transport_list' %}">Transport</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'materiaux:depenses_gasoil_list' %}">Carburant</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'materiaux:ReparationVehicule_list' %}">Entretien / Réparation</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'depotSoc:h_depot_soc_list' %}">Banque Construction</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'salaire:h_salaire_list' %}">Salaire</a>
+                            </li>
+                            <!-- RECETTE ENTREPRISE -->
+                            <li>
+                                <a class="dropdown-item" href="{% url 'recette:h_recette_list' %}"> Recette</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Materiels</a>
+                        <ul class="dropdown-menu shadow">
+                            {% comment %} <li>
+                                <a class="dropdown-item" href="{% url 'avances:h_avance_list' %}"></a>
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'depensesoc:h_soc_depense_list' %}">Dépenses</a>
@@ -58,10 +87,9 @@
                             </li>
                             <li>
                                 <a class="dropdown-item" href="{% url 'salaire:h_salaire_list' %}">Salaire</a>
-                            </li>
-                            <!-- RECETTE ENTREPRISE -->
+                            </li> {% endcomment %}
                             <li>
-                                <a class="dropdown-item" href="{% url 'recette:h_recette_list' %}"> Recette</a>
+                                <a class="dropdown-item" href="{% url 'materiaux:vehicules_list' %}"> Véhicules</a>
                             </li>
                         </ul>
                     </li>
@@ -127,7 +155,7 @@
                         <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <!-- PHOTO -->
                             {% if request.session.h_photo %}
-                                <img src="{{ request.session.h_photo }}" width="35" height="35" class="rounded-circle border border-light" style="object-fit: cover" alt="Photo utilisateur"> 
+                                <img src="{{ request.session.h_photo }}" width="28" height="28" class="rounded-circle border border-light" style="object-fit: cover" alt="Photo utilisateur"> 
                             {% else %}
                                 <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center" style="width:35px; height:35px"></span>                            {% endif %}
                             <span>{{ request.session.username|title }}</span>
@@ -341,6 +369,9 @@
                                 <li>
                                     <a class="dropdown-item"   href="{% url 'materielsort:materielsort_list' %}">Sortie matériel</a>
                                 </li>
+                                <li>
+                                    <a class="dropdown-item"   href="{% url 'materiels:Vehicule_list' %}">Véhicules</a>
+                                </li>
                             </ul>
                         </li>
                         {% endif %}
@@ -365,7 +396,7 @@
                             <!-- ENTREPRISE -->
                             {% if request.session.role == "UserEntreprise" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHAUFFEUR" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                                 <li>
-                                    <a class="dropdown-item"   href="{% url 'materiaux:reparations_list' %}">Entretien / Réparation</a>
+                                    <a class="dropdown-item"   href="{% url 'materiels:ReparationVehicule_list' %}">Entretien / Réparation</a>
                                 </li>
                             {% elif fonction_projet == "CHAUFFEUR" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" or fonction_projet == "CHEF_MAGASIN" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                                 <li><a class="dropdown-item" href="{% url 'projet:projet_list' %}">Transport</a></li>
@@ -458,7 +489,7 @@
                            aria-expanded="false">
                             <!-- PHOTO -->
                             {% if request.session.photo %}
-                                <img src="{{ request.session.photo }}" width="35" height="35" class="rounded-circle border border-light" style="object-fit: cover" alt="Photo utilisateur">
+                                <img src="{{ request.session.photo }}" width="28" height="28" class="rounded-circle border border-light" style="object-fit: cover" alt="Photo utilisateur">
                             {% else %}
                                 <span class="rounded-circle bg-light text-primary d-inline-flex align-items-center justify-content-center" style="width:35px; height:35px"></span>
                             {% endif %}

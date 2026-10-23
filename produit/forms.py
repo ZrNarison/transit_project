@@ -31,17 +31,20 @@ class ProduitForm(forms.ModelForm):
             "montant": forms.NumberInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "En nombre",
+                    "placeholder": "En nombre (ex : 250)",
                     "maxlength": "4",
                 }
             ),
             "quantite": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "En nombre"}
+                attrs={
+                    "class": "form-control", 
+                    "placeholder": "En nombre (ex : 1 000)"
+                }
             ),
             "pourcentage": forms.NumberInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "En nombre",
+                    "placeholder": "En nombre (ex : 5 )",
                     "maxlength": "1",
                 }
             ),

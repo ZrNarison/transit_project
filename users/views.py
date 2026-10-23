@@ -382,7 +382,7 @@ def users_login(request):
             request=request,
         )
 
-        return redirect("materiaux:dashboard")
+        return redirect("mccr_materiaux:dashboard_mccr")
 
     # --------------------------------------------------------
     # GALAXY

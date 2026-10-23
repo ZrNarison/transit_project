@@ -1,0 +1,193 @@
+from django.urls import path
+
+from . import views
+
+app_name = "materiels"
+
+urlpatterns = [
+    # =========================================================
+    # GALAXY — LISTE
+    # =========================================================
+    path(
+        "",
+        views.materiels_list,
+        name="materiels_list",
+    ),
+    # =========================================================
+    # GALAXY — DÉTAIL D'UN GROUPE
+    # =========================================================
+    path(
+        "mdetail/<str:nom>/<str:typeMat>/<str:catMat>/",
+        views.materiels_mdetail,
+        name="materiels_mdetail",
+    ),
+    # =========================================================
+    # GALAXY — DÉTAIL CLASSIQUE
+    # =========================================================
+    path(
+        "detail/<str:nom>/<str:typeMat>/<str:catMat>/",
+        views.materiels_detail,
+        name="materiels_detail",
+    ),
+    # =========================================================
+    # GALAXY — AJOUTER
+    # =========================================================
+    path(
+        "add/",
+        views.materiels_add,
+        name="materiels_add",
+    ),
+    # =========================================================
+    # GALAXY — MODIFIER
+    # =========================================================
+    path(
+        "edit/<int:id>/",
+        views.materiels_edit,
+        name="materiels_edit",
+    ),
+    # =========================================================
+    # GALAXY — SUPPRIMER
+    # =========================================================
+    path(
+        "delete/<int:id>/",
+        views.materiels_delete,
+        name="materiels_delete",
+    ),
+    # =========================================================
+    # GALAXY — SUPPRIMER LE STOCK INITIAL
+    # =========================================================
+    path(
+        "supprimer-stock-initial/<str:nom>/<str:typeMat>/<str:catMat>/",
+        views.supprimer_stock_initial,
+        name="supprimer_stock_initial",
+    ),
+    # =========================================================
+    # ENTREPRISE H — LISTE
+    # =========================================================
+    path(
+        "entreprise-h/",
+        views.h_materiels_list,
+        name="h_materiels_list",
+    ),
+    # =========================================================
+    # ENTREPRISE H — DÉTAIL D'UN GROUPE
+    # =========================================================
+    path(
+        "entreprise-h/mdetail/<str:nom>/<str:typeMat>/<str:catMat>/",
+        views.h_materiels_mdetail,
+        name="h_materiels_mdetail",
+    ),
+    # =========================================================
+    # ENTREPRISE H — DÉTAIL CLASSIQUE
+    # =========================================================
+    path(
+        "entreprise-h/detail/<str:nom>/<str:typeMat>/<str:catMat>/",
+        views.h_materiels_detail,
+        name="h_materiels_detail",
+    ),
+    # =========================================================
+    # ENTREPRISE H — AJOUTER
+    # =========================================================
+    path(
+        "entreprise-h/add/",
+        views.h_materiels_add,
+        name="h_materiels_add",
+    ),
+    # =========================================================
+    # ENTREPRISE H — MODIFIER
+    # =========================================================
+    path(
+        "entreprise-h/edit/<int:id>/",
+        views.h_materiels_edit,
+        name="h_materiels_edit",
+    ),
+    # =========================================================
+    # ENTREPRISE H — SUPPRIMER
+    # =========================================================
+    path(
+        "entreprise-h/delete/<int:id>/",
+        views.h_materiels_delete,
+        name="h_materiels_delete",
+    ),
+    # =========================================================
+    # ENTREPRISE H — SUPPRIMER LE STOCK INITIAL
+    # =========================================================
+    path(
+        "entreprise-h/supprimer-stock-initial/<str:nom>/<str:typeMat>/<str:catMat>/",
+        views.h_supprimer_stock_initial,
+        name="h_supprimer_stock_initial",
+    ),
+
+        # =========================================================
+    # GALAXY — CRUD VÉHICULES
+    # =========================================================
+    path(
+        "vehicules/",
+        views.Vehicule_list,
+        name="Vehicule_list",
+    ),
+    path(
+        "vehicules/ajouter/",
+        views.Vehicule_create,
+        name="Vehicule_create",
+    ),
+    path(
+        "vehicules/<int:id>/modifier/",
+        views.Vehicule_update,
+        name="Vehicule_update",
+    ),
+    path(
+        "vehicules/<int:id>/supprimer/",
+        views.Vehicule_delete,
+        name="Vehicule_delete",
+    ),
+
+    # =========================================================
+    # GALAXY — CRUD RÉPARATIONS
+    # =========================================================
+    path(
+        "reparations-vehicules/",
+        views.ReparationVehicule_list,
+        name="ReparationVehicule_list",
+    ),
+    path(
+        "reparations-vehicules/ajouter/",
+        views.ReparationVehicule_create,
+        name="ReparationVehicule_create",
+    ),
+    path(
+        "reparations-vehicules/<int:id>/modifier/",
+        views.ReparationVehicule_update,
+        name="ReparationVehicule_update",
+    ),
+    path(
+        "reparations-vehicules/<int:id>/supprimer/",
+        views.ReparationVehicule_delete,
+        name="ReparationVehicule_delete",
+    ),
+
+    # =========================================================
+    # MCCR — CRUD VÉHICULES
+    # =========================================================
+    path(
+        "entreprise-h/vehicules/",
+        views.H_Vehicule_list,
+        name="H_Vehicule_list",
+    ),
+    path(
+        "entreprise-h/vehicules/ajouter/",
+        views.H_Vehicule_create,
+        name="H_Vehicule_create",
+    ),
+    path(
+        "entreprise-h/vehicules/<int:id>/modifier/",
+        views.H_Vehicule_update,
+        name="H_Vehicule_update",
+    ),
+    path(
+        "entreprise-h/vehicules/<int:id>/supprimer/",
+        views.H_Vehicule_delete,
+        name="H_Vehicule_delete",
+    ),
+
+]

@@ -38,7 +38,6 @@ from .models import (
 # ============================================================
 # WIDGETS BOOTSTRAP
 # ============================================================
-
 DATE_WIDGET = forms.DateInput(
     format="%Y-%m-%d",
     attrs={

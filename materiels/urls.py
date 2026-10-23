@@ -1,4 +1,4 @@
-from django.urls import path
+﻿from django.urls import path
 
 from . import views
 
@@ -117,4 +117,53 @@ urlpatterns = [
         views.h_supprimer_stock_initial,
         name="h_supprimer_stock_initial",
     ),
+
+        # =========================================================
+    # GALAXY — CRUD VÉHICULES
+    # =========================================================
+    path(
+        "reparations-vehicules/",
+        views.ReparationVehicule_list,
+        name="ReparationVehicule_list",
+    ),
+    path(
+        "reparations-vehicules/ajouter/",
+        views.ReparationVehicule_create,
+        name="ReparationVehicule_create",
+    ),
+    path(
+        "reparations-vehicules/<int:id>/modifier/",
+        views.ReparationVehicule_update,
+        name="ReparationVehicule_update",
+    ),
+    path(
+        "reparations-vehicules/<int:id>/supprimer/",
+        views.ReparationVehicule_delete,
+        name="ReparationVehicule_delete",
+    ),
+
+
+    path(
+            "vehicules/",
+            views.Vehicule_list,
+            name="Vehicule_list",
+        ),
+        path(
+            "vehicules/ajouter/",
+            views.Vehicule_create,
+            name="Vehicule_create",
+        ),
+        path(
+            "vehicules/<int:id>/modifier/",
+            views.Vehicule_update,
+            name="Vehicule_update",
+        ),
+        path(
+            "vehicules/<int:id>/supprimer/",
+            views.Vehicule_delete,
+            name="Vehicule_delete",
+        ),
+
+    
 ]
+

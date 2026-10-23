@@ -1,0 +1,371 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-truck me-2"></i>
+                {{ titre|default:"Gestion du véhicule" }}
+            </h2>
+            <p class="text-muted mb-0">
+                Gestion des véhicules routiers et des engins de chantier GALAXY.
+            </p>
+        </div>
+
+        <a href="{% url 'materiels:Vehicule_list' %}"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la liste
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-id-card me-2"></i>
+                Informations du véhicule
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-3">
+
+                    {# N° Immatriculation #}
+                    <div class="col-12 col-md-6"
+                         data-vehicle-field="vehicule">
+                        <label for="{{ form.vehicule.id_for_label }}"
+                               class="form-label fw-semibold">
+                            N° Immatriculation
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.vehicule }}
+
+                        {% if form.vehicule.help_text %}
+                            <div class="form-text">
+                                {{ form.vehicule.help_text }}
+                            </div>
+                        {% endif %}
+
+                        {% for error in form.vehicule.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {# Type #}
+                    <div class="col-12 col-md-6"
+                         data-vehicle-field="type_vehicule">
+                        <label for="{{ form.type_vehicule.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Type de véhicule
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.type_vehicule }}
+
+                        {% for error in form.type_vehicule.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {# Date début #}
+                    <div class="col-12 col-md-6"
+                         data-vehicle-field="date_debut">
+                        <label for="{{ form.date_debut.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Date de début
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        {{ form.date_debut }}
+
+                        {% for error in form.date_debut.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {# Date fin facultative #}
+                    <div class="col-12 col-md-6"
+                         data-vehicle-field="date_fin">
+                        <label for="{{ form.date_fin.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Date de fin
+                        </label>
+
+                        {{ form.date_fin }}
+
+                        <div class="form-text">
+                            Facultatif si aucune date de fin n'est connue.
+                        </div>
+
+                        {% for error in form.date_fin.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {# Mesures véhicule routier #}
+                    <div class="col-12" data-vehicle-section="routier">
+                        <hr class="my-2">
+                        <h5 class="text-primary mb-3">
+                            <i class="fas fa-road me-2"></i>
+                            Suivi kilométrique
+                        </h5>
+                    </div>
+
+                    <div class="col-12 col-md-4"
+                         data-vehicle-field="kilometrage_initial">
+                        <label for="{{ form.kilometrage_initial.id_for_label }}"
+                               class="form-label">
+                            Kilométrage initial
+                        </label>
+
+                        {{ form.kilometrage_initial }}
+
+                        {% for error in form.kilometrage_initial.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-12 col-md-4"
+                         data-vehicle-field="kilometrage_final">
+                        <label for="{{ form.kilometrage_final.id_for_label }}"
+                               class="form-label">
+                            Kilométrage final
+                        </label>
+
+                        {{ form.kilometrage_final }}
+
+                        {% for error in form.kilometrage_final.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-12 col-md-4"
+                         data-vehicle-field="consommation_km_litre">
+                        <label for="{{ form.consommation_km_litre.id_for_label }}"
+                               class="form-label">
+                            Consommation (km/L)
+                        </label>
+
+                        {{ form.consommation_km_litre }}
+
+                        {% for error in form.consommation_km_litre.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {# Mesures engin #}
+                    <div class="col-12" data-vehicle-section="engin">
+                        <hr class="my-2">
+                        <h5 class="text-warning mb-3">
+                            <i class="fas fa-hard-hat me-2"></i>
+                            Suivi des heures de travail
+                        </h5>
+                    </div>
+
+                    <div class="col-12 col-md-4"
+                         data-vehicle-field="heures_initiales">
+                        <label for="{{ form.heures_initiales.id_for_label }}"
+                               class="form-label">
+                            Heures initiales
+                        </label>
+
+                        {{ form.heures_initiales }}
+
+                        {% for error in form.heures_initiales.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-12 col-md-4"
+                         data-vehicle-field="heures_finales">
+                        <label for="{{ form.heures_finales.id_for_label }}"
+                               class="form-label">
+                            Heures finales
+                        </label>
+
+                        {{ form.heures_finales }}
+
+                        {% for error in form.heures_finales.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-12 col-md-4"
+                         data-vehicle-field="consommation_heure_litre">
+                        <label for="{{ form.consommation_heure_litre.id_for_label }}"
+                               class="form-label">
+                            Consommation (L/h)
+                        </label>
+
+                        {{ form.consommation_heure_litre }}
+
+                        {% for error in form.consommation_heure_litre.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {# Statut actif #}
+                    <div class="col-12"
+                         data-vehicle-field="actif">
+                        <div class="form-check form-switch mt-2">
+                            {{ form.actif }}
+                            <label class="form-check-label fw-semibold"
+                                   for="{{ form.actif.id_for_label }}">
+                                Affectation active
+                            </label>
+                        </div>
+
+                        {% for error in form.actif.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {# Observation #}
+                    <div class="col-12"
+                         data-vehicle-field="observation">
+                        <label for="{{ form.observation.id_for_label }}"
+                               class="form-label fw-semibold">
+                            Observation
+                        </label>
+
+                        {{ form.observation }}
+
+                        {% for error in form.observation.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+                <div class="alert alert-info mt-4 mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Le numéro d'immatriculation doit être unique.
+                    Les champs kilométriques concernent les véhicules routiers ;
+                    les champs horaires concernent les engins de chantier.
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+                    <a href="{% url 'materiels:Vehicule_list' %}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        Annuler
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        {{ action|default:"Enregistrer" }}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const typeSelect = document.getElementById("id_type_vehicule");
+
+    const champsRoutier = [
+        "kilometrage_initial",
+        "kilometrage_final",
+        "consommation_km_litre"
+    ];
+
+    const champsEngin = [
+        "heures_initiales",
+        "heures_finales",
+        "consommation_heure_litre"
+    ];
+
+    function afficherChamps() {
+        if (!typeSelect) return;
+
+        const estEngin = typeSelect.value === "ENGIN";
+
+        document.querySelectorAll('[data-vehicle-section="routier"]')
+            .forEach(el => el.classList.toggle("d-none", estEngin));
+
+        document.querySelectorAll('[data-vehicle-section="engin"]')
+            .forEach(el => el.classList.toggle("d-none", !estEngin));
+
+        champsRoutier.forEach(function (nom) {
+            const bloc = document.querySelector(
+                '[data-vehicle-field="' + nom + '"]'
+            );
+            const champ = document.getElementById("id_" + nom);
+
+            if (bloc) bloc.classList.toggle("d-none", estEngin);
+            if (champ) champ.disabled = estEngin;
+        });
+
+        champsEngin.forEach(function (nom) {
+            const bloc = document.querySelector(
+                '[data-vehicle-field="' + nom + '"]'
+            );
+            const champ = document.getElementById("id_" + nom);
+
+            if (bloc) bloc.classList.toggle("d-none", !estEngin);
+            if (champ) champ.disabled = !estEngin;
+        });
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener("change", afficherChamps);
+        afficherChamps();
+    }
+});
+</script>
+{% endblock %}

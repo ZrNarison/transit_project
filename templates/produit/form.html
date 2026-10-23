@@ -14,7 +14,10 @@
         {% endif %}
     </h3>
 
-    <form method="post" enctype="multipart/form-data">
+    <form method="post"
+          enctype="multipart/form-data"
+          id="produitForm">
+
         {% csrf_token %}
 
         {% if form.errors %}
@@ -25,57 +28,146 @@
 
         <div class="row">
 
+            <!-- INFORMATIONS DU PRODUIT -->
             <div class="col-md-6">
 
-                <div class="mb-2">
-                    <label>Client</label>
+                <div class="mb-3">
+                    <label for="{{ form.client.id_for_label }}"
+                           class="form-label">
+                        Client
+                    </label>
                     {{ form.client }}
                 </div>
 
-                <div class="mb-2">
-                    <label>Véhicule / Chauffeur</label>
+                <div class="mb-3">
+                    <label for="{{ form.vehicule.id_for_label }}"
+                           class="form-label">
+                        Véhicule / Chauffeur
+                    </label>
                     {{ form.vehicule }}
                 </div>
 
-                <div class="mb-2">
-                    <label>Source</label>
+                <div class="mb-3">
+                    <label for="{{ form.source.id_for_label }}"
+                           class="form-label">
+                        Source
+                    </label>
                     {{ form.source }}
                 </div>
 
-                <div class="mb-2">
-                    <label>Type de paiement</label>
+                <div class="mb-3">
+                    <label for="{{ form.type_produit.id_for_label }}"
+                           class="form-label">
+                        Type de paiement
+                    </label>
                     {{ form.type_produit }}
                 </div>
 
-                <div class="mb-2">
-                    <label>Montant/Kg</label>
+                <div class="mb-3">
+                    <label for="{{ form.montant.id_for_label }}"
+                           class="form-label">
+                        Montant/Kg
+                    </label>
                     {{ form.montant }}
                 </div>
 
-                <div class="mb-2">
-                    <label>Quantité(Kg)</label>
+                <div class="mb-3">
+                    <label for="{{ form.quantite.id_for_label }}"
+                           class="form-label">
+                        Quantité (Kg)
+                    </label>
                     {{ form.quantite }}
                 </div>
 
-                <div class="mb-2">
-                    <label>Pourcentage</label>
+                <div class="mb-3">
+                    <label for="{{ form.pourcentage.id_for_label }}"
+                           class="form-label">
+                        Pourcentage
+                    </label>
                     {{ form.pourcentage }}
                 </div>
 
             </div>
 
-            <div class="col-md-4 text-center">
+            <!-- PHOTO PRISE AVEC LE SMARTPHONE -->
+            <div class="col-md-5 text-center">
 
-                <div class="mb-3">
-                    <label>Photo</label><br>
-                    {{ form.photo }}
+                <label for="photoCapture"
+                       class="form-label fw-bold">
+                    <i class="fas fa-camera me-1"></i>
+                    Photo du produit
+                </label>
+
+                <div class="border rounded p-3">
+
+                    <div class="mb-3">
+
+                        <input
+                            type="file"
+                            name="{{ form.photo.html_name }}"
+                            id="photoCapture"
+                            class="form-control"
+                            accept="image/*"
+                            capture="environment"
+                            {% if not form.instance.photo %}required{% endif %}
+                        >
+
+                    </div>
+
+                    <!-- APERÇU DE LA PHOTO CAPTURÉE -->
+                    <div id="nouvellePhotoContainer"
+                         style="display:none;">
+
+                        <p class="text-success fw-bold mb-2">
+                            <i class="fas fa-check-circle me-1"></i>
+                            Photo capturée
+                        </p>
+
+                        <img
+                            id="photoPreview"
+                            src=""
+                            alt="Aperçu de la nouvelle photo"
+                            class="img-thumbnail"
+                            style="width:100%;max-width:320px;height:240px;object-fit:contain;"
+                        >
+
+                        <button
+                            type="button"
+                            id="supprimerNouvellePhoto"
+                            class="btn btn-outline-danger btn-sm mt-2">
+
+                            <i class="fas fa-redo me-1"></i>
+                            Reprendre la photo
+
+                        </button>
+
+                    </div>
+
+                    <!-- PHOTO EXISTANTE EN MODE MODIFICATION -->
+                    {% if form.instance.photo %}
+
+                        <div id="anciennePhotoContainer"
+                             class="mt-3">
+
+                            <p class="text-muted small mb-2">
+                                Photo actuellement enregistrée
+                            </p>
+
+                            <img src="{{ form.instance.photo.url }}" alt="Photo actuelle du produit" class="img-thumbnail" style="width:100%;max-width:320px;height:240px;object-fit:contain;">
+
+                        </div>
+
+                    {% endif %}
+
+                    <div id="photoMessage" class="small text-muted mt-2" aria-live="polite">
+                        {% if form.instance.photo %}
+                            La photo actuelle sera conservée si vous n'en prenez pas une nouvelle.
+                        {% else %}
+                            Une photo est obligatoire pour enregistrer un nouveau produit.
+                        {% endif %}
+                    </div>
+
                 </div>
-
-                {% if form.instance.photo %}
-                    <img src="{{ form.instance.photo.url }}"
-                         class="img-thumbnail mt-2"
-                         style="width:200px;height:200px;object-fit:cover;">
-                {% endif %}
 
             </div>
 
@@ -83,11 +175,153 @@
 
         <hr>
 
-        <button class="btn btn-success">Enregistrer</button>
-        <a href="{% url 'produit:p_produit_liste' %}" class="btn btn-secondary">Retour</a>
+        <!-- BOUTONS -->
+        <div class="d-flex flex-wrap gap-2">
+
+            <button type="submit" class="btn btn-success" id="enregistrerProduit">
+                <i class="fas fa-save me-1"></i>
+                Enregistrer
+            </button>
+
+            <a href="{% url 'produit:p_produit_liste' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Retour
+            </a>
+
+        </div>
 
     </form>
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    "use strict";
+
+    const formulaire = document.getElementById("produitForm");
+    const inputPhoto = document.getElementById("photoCapture");
+    const apercu = document.getElementById("photoPreview");
+    const conteneurNouvellePhoto =
+        document.getElementById("nouvellePhotoContainer");
+    const conteneurAnciennePhoto =
+        document.getElementById("anciennePhotoContainer");
+    const message = document.getElementById("photoMessage");
+    const boutonReprendre =
+        document.getElementById("supprimerNouvellePhoto");
+
+    let urlApercu = null;
+
+    function afficherMessage(texte, erreur = false) {
+        message.textContent = texte;
+        message.className = erreur
+            ? "small text-danger mt-2"
+            : "small text-muted mt-2";
+    }
+
+    function libererApercu() {
+        if (urlApercu) {
+            URL.revokeObjectURL(urlApercu);
+            urlApercu = null;
+        }
+    }
+
+    inputPhoto.addEventListener("change", function () {
+
+        const fichier = inputPhoto.files && inputPhoto.files[0];
+
+        libererApercu();
+
+        if (!fichier) {
+            conteneurNouvellePhoto.style.display = "none";
+
+            {% if form.instance.photo %}
+                if (conteneurAnciennePhoto) {
+                    conteneurAnciennePhoto.style.display = "block";
+                }
+            {% endif %}
+
+            return;
+        }
+
+        if (!fichier.type.startsWith("image/")) {
+            inputPhoto.value = "";
+
+            conteneurNouvellePhoto.style.display = "none";
+
+            afficherMessage(
+                "Le fichier choisi n'est pas une image valide.",
+                true
+            );
+
+            return;
+        }
+
+        urlApercu = URL.createObjectURL(fichier);
+        apercu.src = urlApercu;
+
+        conteneurNouvellePhoto.style.display = "block";
+
+        if (conteneurAnciennePhoto) {
+            conteneurAnciennePhoto.style.display = "none";
+        }
+
+        afficherMessage(
+            "Photo prête. Vous pouvez enregistrer le produit."
+        );
+    });
+
+    if (boutonReprendre) {
+        boutonReprendre.addEventListener("click", function () {
+
+            inputPhoto.value = "";
+            libererApercu();
+
+            apercu.removeAttribute("src");
+            conteneurNouvellePhoto.style.display = "none";
+
+            {% if form.instance.photo %}
+                if (conteneurAnciennePhoto) {
+                    conteneurAnciennePhoto.style.display = "block";
+                }
+
+                afficherMessage(
+                    "La photo actuelle sera conservée. Vous pouvez en prendre une nouvelle."
+                );
+            {% else %}
+                afficherMessage(
+                    "Prenez une photo avant d'enregistrer le produit."
+                );
+            {% endif %}
+
+            // Relance le sélecteur de capture du smartphone.
+            inputPhoto.click();
+        });
+    }
+
+    formulaire.addEventListener("submit", function (event) {
+
+        const nouvellePhoto =
+            inputPhoto.files && inputPhoto.files.length > 0;
+
+        const photoExistante =
+            {% if form.instance.photo %}true{% else %}false{% endif %};
+
+        if (!nouvellePhoto && !photoExistante) {
+            event.preventDefault();
+
+            afficherMessage(
+                "Veuillez prendre une photo avant d'enregistrer le produit.",
+                true
+            );
+
+            inputPhoto.focus();
+        }
+    });
+
+    window.addEventListener("pagehide", libererApercu);
+
+});
+</script>
 
 {% endblock %}

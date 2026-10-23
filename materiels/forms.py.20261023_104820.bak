@@ -1,0 +1,892 @@
+﻿
+from django import forms
+from .models import H_Materiels, Materiels, Vehicule, ReparationVehicule
+from personnel.models import Personnel, H_Personnel
+from materiaux.models import H_Vehicule, ReparationVehicule as H_ReparationVehicule
+
+
+# ============================================================
+# MATERIELS GALAXY
+# ============================================================
+class MaterielsForm(forms.ModelForm):
+    class Meta:
+        model = Materiels
+        fields = [
+            "photo",
+            "nom",
+            "typeMat",
+            "catMat",
+            "stock_initial",
+        ]
+
+        widgets = {
+            "photo": forms.ClearableFileInput(
+                attrs={"class": "form-control"}
+            ),
+            "nom": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom du matÃ©riel",
+                }
+            ),
+            "typeMat": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Type matÃ©riel",
+                }
+            ),
+            "catMat": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "CatÃ©gorie",
+                }
+            ),
+            "stock_initial": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Stock initial",
+                    "min": "0",
+                    "step": "1",
+                }
+            ),
+        }
+
+        labels = {
+            "photo": "Photo",
+            "nom": "Nom du matÃ©riel",
+            "typeMat": "Type",
+            "catMat": "CatÃ©gorie",
+            "stock_initial": "Stock initial",
+        }
+
+    def __init__(self, *args, role=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.role = role
+
+        if role == "UserEntreprise":
+            self.fields["catMat"].initial = "Chantier"
+            self.fields["catMat"].disabled = True
+
+        elif role == "UserMica":
+            self.fields["catMat"].initial = "Mica"
+            self.fields["catMat"].disabled = True
+
+        else:
+            self.fields["catMat"].disabled = False
+
+    def clean_catMat(self):
+        categorie = self.cleaned_data.get("catMat", "")
+
+        if self.role == "UserEntreprise":
+            return "Chantier"
+
+        if self.role == "UserMica":
+            return "Mica"
+
+        return categorie.strip()
+
+
+# ============================================================
+# VÃ‰HICULES / ENGINS GALAXY
+# ============================================================
+
+class VehiculeForm(forms.ModelForm):
+    class Meta:
+        model = Vehicule
+
+        fields = [
+            "vehicule",
+            "type_vehicule",
+            "chauffeur",
+            "date_debut",
+            "date_fin",
+            "kilometrage_initial",
+            "kilometrage_final",
+            "consommation_km_litre",
+            "heures_initiales",
+            "heures_finales",
+            "consommation_heure_litre",
+            "actif",
+            "observation",
+        ]
+
+        widgets = {
+            "vehicule": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Exemple : Camion 01",
+                }
+            ),
+            "type_vehicule": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "chauffeur": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "date_debut": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "date_fin": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "kilometrage_initial": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "kilometrage_final": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "consommation_km_litre": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Exemple : 3.50",
+                }
+            ),
+            "heures_initiales": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "heures_finales": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "consommation_heure_litre": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "actif": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+            "observation": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                }
+            ),
+        }
+
+        labels = {
+            "vehicule": "VÃ©hicule / Engin",
+            "type_vehicule": "Type de vÃ©hicule",
+            "chauffeur": "Conducteur / Chauffeur",
+            "date_debut": "DÃ©but de l'affectation",
+            "date_fin": "Fin de l'affectation",
+            "kilometrage_initial": "KilomÃ©trage initial",
+            "kilometrage_final": "KilomÃ©trage final",
+            "consommation_km_litre": "Consommation (km/L)",
+            "heures_initiales": "Heures initiales",
+            "heures_finales": "Heures finales",
+            "consommation_heure_litre": "Consommation (L/h)",
+            "actif": "Affectation active",
+            "observation": "Observation",
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # ConservÃ© pour compatibilitÃ© avec les vues existantes.
+        # Le modÃ¨le materiels.Vehicule ne possÃ¨de pas de FK projet.
+        self.projet = projet
+
+        self.fields["chauffeur"].queryset = (
+            Personnel.objects.filter(
+                typeTravail="Construction"
+            ).order_by("nom", "prenom")
+        )
+        self.fields["chauffeur"].required = False
+
+        # Les dates du projet ne sont appliquÃ©es que si la vue
+        # fournit un projet, sans supposer que le modÃ¨le y est liÃ©.
+        if projet:
+            if getattr(projet, "date_debut", None):
+                self.fields["date_debut"].widget.attrs["min"] = (
+                    projet.date_debut.isoformat()
+                )
+                self.fields["date_fin"].widget.attrs["min"] = (
+                    projet.date_debut.isoformat()
+                )
+
+            if getattr(projet, "date_fin", None):
+                self.fields["date_debut"].widget.attrs["max"] = (
+                    projet.date_fin.isoformat()
+                )
+                self.fields["date_fin"].widget.attrs["max"] = (
+                    projet.date_fin.isoformat()
+                )
+
+        if not self.instance.pk:
+            if projet:
+                if getattr(projet, "date_debut", None):
+                    self.fields["date_debut"].initial = projet.date_debut
+
+                if getattr(projet, "date_fin", None):
+                    self.fields["date_fin"].initial = projet.date_fin
+
+            self.fields["actif"].initial = True
+
+    def clean_vehicule(self):
+        vehicule = self.cleaned_data.get("vehicule", "")
+        vehicule = vehicule.strip() if vehicule else ""
+
+        if not vehicule:
+            raise forms.ValidationError(
+                "Veuillez saisir le vÃ©hicule."
+            )
+
+        return vehicule
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        date_debut = cleaned_data.get("date_debut")
+        date_fin = cleaned_data.get("date_fin")
+        kilometrage_initial = cleaned_data.get("kilometrage_initial")
+        kilometrage_final = cleaned_data.get("kilometrage_final")
+        heures_initiales = cleaned_data.get("heures_initiales")
+        heures_finales = cleaned_data.get("heures_finales")
+        consommation_km = cleaned_data.get("consommation_km_litre")
+        consommation_heure = cleaned_data.get("consommation_heure_litre")
+
+        if date_debut and date_fin and date_fin < date_debut:
+            self.add_error(
+                "date_fin",
+                "La fin de l'affectation doit Ãªtre postÃ©rieure "
+                "ou Ã©gale au dÃ©but.",
+            )
+
+        if self.projet:
+            projet_debut = getattr(self.projet, "date_debut", None)
+            projet_fin = getattr(self.projet, "date_fin", None)
+
+            if date_debut and projet_debut and date_debut < projet_debut:
+                self.add_error(
+                    "date_debut",
+                    "L'affectation ne peut pas commencer avant "
+                    "le dÃ©but du projet.",
+                )
+
+            if date_fin and projet_fin and date_fin > projet_fin:
+                self.add_error(
+                    "date_fin",
+                    "L'affectation ne peut pas dÃ©passer "
+                    "la date de fin du projet.",
+                )
+
+        if (
+            kilometrage_initial is not None
+            and kilometrage_initial < 0
+        ):
+            self.add_error(
+                "kilometrage_initial",
+                "Le kilomÃ©trage initial ne peut pas Ãªtre nÃ©gatif.",
+            )
+
+        if (
+            kilometrage_final is not None
+            and kilometrage_final < 0
+        ):
+            self.add_error(
+                "kilometrage_final",
+                "Le kilomÃ©trage final ne peut pas Ãªtre nÃ©gatif.",
+            )
+
+        if (
+            kilometrage_initial is not None
+            and kilometrage_final is not None
+            and kilometrage_final < kilometrage_initial
+        ):
+            self.add_error(
+                "kilometrage_final",
+                "Le kilomÃ©trage final doit Ãªtre supÃ©rieur "
+                "ou Ã©gal au kilomÃ©trage initial.",
+            )
+
+        if heures_initiales is not None and heures_initiales < 0:
+            self.add_error(
+                "heures_initiales",
+                "Les heures initiales ne peuvent pas Ãªtre nÃ©gatives.",
+            )
+
+        if heures_finales is not None and heures_finales < 0:
+            self.add_error(
+                "heures_finales",
+                "Les heures finales ne peuvent pas Ãªtre nÃ©gatives.",
+            )
+
+        if (
+            heures_initiales is not None
+            and heures_finales is not None
+            and heures_finales < heures_initiales
+        ):
+            self.add_error(
+                "heures_finales",
+                "Les heures finales doivent Ãªtre supÃ©rieures "
+                "ou Ã©gales aux heures initiales.",
+            )
+
+        if consommation_km is not None and consommation_km < 0:
+            self.add_error(
+                "consommation_km_litre",
+                "La consommation (km/L) ne peut pas Ãªtre nÃ©gative.",
+            )
+
+        if consommation_heure is not None and consommation_heure < 0:
+            self.add_error(
+                "consommation_heure_litre",
+                "La consommation (L/h) ne peut pas Ãªtre nÃ©gative.",
+            )
+
+        return cleaned_data
+
+
+# ============================================================
+# RÃ‰PARATIONS VÃ‰HICULES GALAXY
+# ============================================================
+class ReparationVehiculeForm(forms.ModelForm):
+    class Meta:
+        model = ReparationVehicule
+
+        fields = [
+            "date_reparation",
+            "vehicule",
+            "chauffeur",
+            "chauffeur_personnel",
+            "designation",
+            "type_reparation",
+            "garage",
+            "quantite",
+            "unite",
+            "prix_unitaire",
+            "montant_main_oeuvre",
+            "photo_piece_remplacee",
+            "photo_piece_remplacante",
+        ]
+
+        widgets = {
+            "date_reparation": forms.DateInput(
+                attrs={"class": "form-control", "type": "date"}
+            ),
+            "vehicule": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "chauffeur": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom du chauffeur",
+                }
+            ),
+            "chauffeur_personnel": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "designation": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "DÃ©signation de la rÃ©paration",
+                }
+            ),
+            "type_reparation": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "garage": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom du garage",
+                }
+            ),
+            "quantite": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                }
+            ),
+            "unite": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "UnitÃ©"}
+            ),
+            "prix_unitaire": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0",
+                    "step": "0.01",
+                }
+            ),
+            "montant_main_oeuvre": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0",
+                    "step": "0.01",
+                }
+            ),
+            "photo_piece_remplacee": forms.ClearableFileInput(
+                attrs={"class": "form-control"}
+            ),
+            "photo_piece_remplacante": forms.ClearableFileInput(
+                attrs={"class": "form-control"}
+            ),
+        }
+
+        labels = {
+            "date_reparation": "Date de rÃ©paration",
+            "vehicule": "MatÃ©riel / vÃ©hicule GALAXY",
+            "chauffeur": "Chauffeur (texte historique)",
+            "chauffeur_personnel": "Chauffeur GALAXY",
+            "designation": "DÃ©signation",
+            "type_reparation": "Type de rÃ©paration",
+            "garage": "Garage",
+            "quantite": "QuantitÃ©",
+            "unite": "UnitÃ©",
+            "prix_unitaire": "Prix unitaire",
+            "montant_main_oeuvre": "Main-d'Å“uvre",
+            "photo_piece_remplacee": "Photo de la piÃ¨ce remplacÃ©e",
+            "photo_piece_remplacante": "Photo de la piÃ¨ce de remplacement",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["chauffeur_personnel"].queryset = (
+            Personnel.objects.filter(
+                typeTravail="Construction"
+            ).order_by("nom", "prenom")
+        )
+        self.fields["chauffeur_personnel"].required = False
+
+        self.fields["vehicule"].queryset = (
+            Materiels.objects.all().order_by("nom")
+        )
+# ============================================================
+# MATÃ‰RIELS H / MCCR
+# ============================================================
+class H_MaterielsForm(forms.ModelForm):
+    class Meta:
+        model = H_Materiels
+
+        fields = [
+            "photo",
+            "nom",
+            "typeMat",
+            "catMat",
+            "stock_initial",
+        ]
+
+        widgets = {
+            "photo": forms.ClearableFileInput(
+                attrs={"class": "form-control"}
+            ),
+            "nom": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom du matÃ©riel",
+                }
+            ),
+            "typeMat": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Type matÃ©riel",
+                }
+            ),
+            "catMat": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "CatÃ©gorie",
+                }
+            ),
+            "stock_initial": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Stock initial",
+                    "min": "0",
+                    "step": "1",
+                }
+            ),
+        }
+
+        labels = {
+            "photo": "Photo",
+            "nom": "Nom du matÃ©riel",
+            "typeMat": "Type",
+            "catMat": "CatÃ©gorie",
+            "stock_initial": "Stock initial",
+        }
+
+    def __init__(self, *args, role=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.role = role
+
+        if role == "UserEntreprise":
+            self.fields["catMat"].initial = "Chantier"
+            self.fields["catMat"].disabled = True
+
+        elif role == "UserMica":
+            self.fields["catMat"].initial = "Mica"
+            self.fields["catMat"].disabled = True
+
+        else:
+            self.fields["catMat"].disabled = False
+
+    def clean_catMat(self):
+        categorie = self.cleaned_data.get("catMat", "")
+
+        if self.role == "UserEntreprise":
+            return "Chantier"
+
+        if self.role == "UserMica":
+            return "Mica"
+
+        return categorie.strip()
+
+
+# ============================================================
+# VÃ‰HICULES / ENGINS H / MCCR
+# ============================================================
+class H_VehiculeForm(forms.ModelForm):
+    class Meta:
+        model = H_Vehicule
+
+        fields = [
+            "vehicule",
+            "chauffeur",
+            "date_debut",
+            "date_fin",
+            "kilometrage_initial",
+            "kilometrage_final",
+            "consommation_km_litre",
+            "actif",
+        ]
+
+        widgets = {
+            "vehicule": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Exemple : Camion 01",
+                }
+            ),
+            "chauffeur": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+            "date_debut": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "date_fin": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+            "kilometrage_initial": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "kilometrage_final": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "consommation_km_litre": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "step": "0.01",
+                    "min": "0",
+                    "placeholder": "Exemple : 3.50",
+                }
+            ),
+            "actif": forms.CheckboxInput(
+                attrs={"class": "form-check-input"}
+            ),
+        }
+
+        labels = {
+            "vehicule": "VÃ©hicule",
+            "chauffeur": "Conducteur / Chauffeur",
+            "date_debut": "DÃ©but de l'affectation",
+            "date_fin": "Fin de l'affectation",
+            "kilometrage_initial": "KilomÃ©trage initial",
+            "kilometrage_final": "KilomÃ©trage final",
+            "consommation_km_litre": "Consommation (km/L)",
+            "actif": "Affectation active",
+        }
+
+    def __init__(self, *args, projet=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.projet = projet
+
+        self.fields["chauffeur"].queryset = (
+            H_Personnel.objects.all().order_by("nom", "prenom")
+        )
+        self.fields["chauffeur"].required = False
+
+        if projet:
+            if getattr(projet, "date_debut", None):
+                self.fields["date_debut"].widget.attrs["min"] = (
+                    projet.date_debut.isoformat()
+                )
+                self.fields["date_fin"].widget.attrs["min"] = (
+                    projet.date_debut.isoformat()
+                )
+
+            if getattr(projet, "date_fin", None):
+                self.fields["date_debut"].widget.attrs["max"] = (
+                    projet.date_fin.isoformat()
+                )
+                self.fields["date_fin"].widget.attrs["max"] = (
+                    projet.date_fin.isoformat()
+                )
+
+        if not self.instance.pk:
+            if projet:
+                if getattr(projet, "date_debut", None):
+                    self.fields["date_debut"].initial = projet.date_debut
+
+                if getattr(projet, "date_fin", None):
+                    self.fields["date_fin"].initial = projet.date_fin
+
+            self.fields["actif"].initial = True
+
+    def clean_vehicule(self):
+        vehicule = self.cleaned_data.get("vehicule", "")
+        vehicule = vehicule.strip() if vehicule else ""
+
+        if not vehicule:
+            raise forms.ValidationError(
+                "Veuillez saisir le vÃ©hicule."
+            )
+
+        return vehicule
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        date_debut = cleaned_data.get("date_debut")
+        date_fin = cleaned_data.get("date_fin")
+        kilometrage_initial = cleaned_data.get("kilometrage_initial")
+        kilometrage_final = cleaned_data.get("kilometrage_final")
+        consommation = cleaned_data.get("consommation_km_litre")
+
+        if date_debut and date_fin and date_fin < date_debut:
+            self.add_error(
+                "date_fin",
+                "La fin de l'affectation doit Ãªtre postÃ©rieure "
+                "ou Ã©gale au dÃ©but.",
+            )
+
+        if self.projet:
+            projet_debut = getattr(self.projet, "date_debut", None)
+            projet_fin = getattr(self.projet, "date_fin", None)
+
+            if date_debut and projet_debut and date_debut < projet_debut:
+                self.add_error(
+                    "date_debut",
+                    "L'affectation ne peut pas commencer avant "
+                    "le dÃ©but du projet.",
+                )
+
+            if date_fin and projet_fin and date_fin > projet_fin:
+                self.add_error(
+                    "date_fin",
+                    "L'affectation ne peut pas dÃ©passer "
+                    "la date de fin du projet.",
+                )
+
+        if (
+            kilometrage_initial is not None
+            and kilometrage_initial < 0
+        ):
+            self.add_error(
+                "kilometrage_initial",
+                "Le kilomÃ©trage initial ne peut pas Ãªtre nÃ©gatif.",
+            )
+
+        if (
+            kilometrage_final is not None
+            and kilometrage_final < 0
+        ):
+            self.add_error(
+                "kilometrage_final",
+                "Le kilomÃ©trage final ne peut pas Ãªtre nÃ©gatif.",
+            )
+
+        if (
+            kilometrage_initial is not None
+            and kilometrage_final is not None
+            and kilometrage_final < kilometrage_initial
+        ):
+            self.add_error(
+                "kilometrage_final",
+                "Le kilomÃ©trage final doit Ãªtre supÃ©rieur "
+                "ou Ã©gal au kilomÃ©trage initial.",
+            )
+
+        if consommation is not None and consommation < 0:
+            self.add_error(
+                "consommation_km_litre",
+                "La consommation ne peut pas Ãªtre nÃ©gative.",
+            )
+
+        return cleaned_data
+
+
+# ============================================================
+# REPARATIONS VEHICULES H / MCCR
+# ============================================================
+class H_ReparationVehiculeForm(forms.ModelForm):
+
+    class Meta:
+        model = H_ReparationVehicule
+
+        fields = [
+            "date_reparation",
+            "vehicule",
+            "chauffeur",
+            "chauffeur_personnel",
+            "designation",
+            "type_reparation",
+            "garage",
+            "quantite",
+            "unite",
+            "prix_unitaire",
+            "montant_main_oeuvre",
+            "photo_piece_remplacee",
+            "photo_piece_remplacante",
+        ]
+
+        widgets = {
+            "date_reparation": forms.DateInput(
+                attrs={
+                    "class": "form-control",
+                    "type": "date",
+                }
+            ),
+
+            "vehicule": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+
+            "chauffeur": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom du chauffeur",
+                }
+            ),
+
+            "chauffeur_personnel": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+
+            "designation": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "DÃ©signation de la rÃ©paration",
+                }
+            ),
+
+            "type_reparation": forms.Select(
+                attrs={"class": "form-select"}
+            ),
+
+            "garage": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Nom du garage",
+                }
+            ),
+
+            "quantite": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0.01",
+                    "step": "0.01",
+                }
+            ),
+
+            "unite": forms.TextInput(
+                attrs={"class": "form-control"}
+            ),
+
+            "prix_unitaire": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0",
+                    "step": "0.01",
+                }
+            ),
+
+            "montant_main_oeuvre": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": "0",
+                    "step": "0.01",
+                }
+            ),
+
+            "photo_piece_remplacee": forms.ClearableFileInput(
+                attrs={"class": "form-control"}
+            ),
+
+            "photo_piece_remplacante": forms.ClearableFileInput(
+                attrs={"class": "form-control"}
+            ),
+        }
+
+        labels = {
+            "date_reparation": "Date de rÃ©paration",
+            "vehicule": "MatÃ©riel / vÃ©hicule MCCR",
+            "chauffeur": "Chauffeur (texte historique)",
+            "chauffeur_personnel": "Chauffeur MCCR",
+            "designation": "DÃ©signation de la rÃ©paration",
+            "type_reparation": "Type de rÃ©paration",
+            "garage": "Garage",
+            "quantite": "QuantitÃ©",
+            "unite": "UnitÃ©",
+            "prix_unitaire": "Prix unitaire",
+            "montant_main_oeuvre": "Montant de la main-d'Å“uvre",
+            "photo_piece_remplacee": "Photo de la piÃ¨ce remplacÃ©e",
+            "photo_piece_remplacante": "Photo de la piÃ¨ce de remplacement",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # MatÃ©riels appartenant Ã  MCCR uniquement.
+        self.fields["vehicule"].queryset = (
+            H_Materiels.objects.all().order_by("nom")
+        )
+
+        # Personnel appartenant Ã  MCCR uniquement.
+        self.fields["chauffeur_personnel"].queryset = (
+            H_Personnel.objects.all().order_by("nom", "prenom")
+        )
+
+        # Le chauffeur liÃ© au personnel reste facultatif.
+        self.fields["chauffeur_personnel"].required = False

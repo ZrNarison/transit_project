@@ -9,7 +9,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from users.models import H_AppUser
+from django.contrib import messages
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
 
+from users.models import H_AppUser
+from .models import H_Vehicule, ReparationVehicule
+from .forms import VehiculeForm, ReparationVehiculeForm
 from .forms_mccr import MateriauxMCCRForm, MouvementMateriauMCCRForm
 from .models import MateriauMCCR, MouvementMateriauMCCR
 
@@ -608,4 +615,275 @@ def mouvement_mccr_delete(request, pk):
         request,
         "materiaux/mccr/mouvement_confirm_delete.html",
         {"mouvement": mouvement},
+    )
+
+
+
+# ============================================================
+# OUTIL DE SESSION MCCR
+# ============================================================
+
+def _h_current_user(request):
+    """Retourner le compte MCCR associé à la session."""
+    user_id = request.session.get("h_user_id")
+
+    if not user_id:
+        return None
+
+    return H_AppUser.objects.filter(pk=user_id).first()
+
+
+# ============================================================
+# LISTE VÉHICULES MCCR
+# ============================================================
+
+@require_http_methods(["GET"])
+def Vehicule_list(request):
+    user = _h_current_user(request)
+
+    if not user:
+        return redirect("users:login")
+
+    vehicules = H_Vehicule.objects.all().order_by("immatriculation")
+    recherche = request.GET.get("q", "").strip()
+
+    if recherche:
+        vehicules = vehicules.filter(
+            Q(immatriculation__icontains=recherche)
+            | Q(marque__icontains=recherche)
+            | Q(modele__icontains=recherche)
+        )
+
+    return render(request, "materiels/vehicule_list.html", {
+        "vehicules": vehicules,
+        "recherche": recherche,
+        "titre": "Véhicules MCCR",
+    })
+
+
+# ============================================================
+# AJOUTER VÉHICULE MCCR
+# ============================================================
+
+@require_http_methods(["GET", "POST"])
+def Vehicule_create(request):
+    if not _h_current_user(request):
+        return redirect("users:login")
+
+    if request.method == "POST":
+        form = VehiculeForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Véhicule enregistré avec succès.")
+            return redirect("materiels:Vehicule_list")
+    else:
+        form = VehiculeForm()
+
+    return render(request, "materiels/vehicule_form.html", {
+        "form": form,
+        "titre": "Ajouter un véhicule MCCR",
+        "action": "Créer",
+    })
+
+
+# ============================================================
+# MODIFIER VÉHICULE MCCR
+# ============================================================
+
+@require_http_methods(["GET", "POST"])
+def Vehicule_update(request, id):
+    if not _h_current_user(request):
+        return redirect("users:login")
+
+    vehicule = get_object_or_404(Vehicule, pk=id)
+
+    if request.method == "POST":
+        form = VehiculeForm(request.POST, instance=vehicule)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Véhicule modifié avec succès.")
+            return redirect("materiels:Vehicule_list")
+    else:
+        form = VehiculeForm(instance=vehicule)
+
+    return render(request, "materiels/vehicule_form.html", {
+        "form": form,
+        "vehicule": vehicule,
+        "titre": "Modifier un véhicule MCCR",
+        "action": "Modifier",
+    })
+
+
+# ============================================================
+# SUPPRIMER VÉHICULE MCCR
+# ============================================================
+
+@require_http_methods(["GET", "POST"])
+def Vehicule_delete(request, id):
+    if not _h_current_user(request):
+        return redirect("users:login")
+
+    vehicule = get_object_or_404(H_Vehicule, pk=id)
+
+    if request.method == "POST":
+        try:
+            vehicule.delete()
+        except Exception:
+            messages.error(
+                request,
+                "Suppression impossible : ce véhicule est peut-être "
+                "utilisé par des réparations ou d'autres opérations.",
+            )
+        else:
+            messages.success(request, "Véhicule supprimé avec succès.")
+
+        return redirect("materiels:Vehicule_list")
+
+    return render(request, "materiels/vehicule_confirm_delete.html", {
+        "vehicule": vehicule,
+        "titre": "Supprimer un véhicule MCCR",
+    })
+
+
+# ============================================================
+# LISTE RÉPARATIONS MCCR
+# ============================================================
+
+@require_http_methods(["GET"])
+def ReparationVehicule_list(request):
+    if not _h_current_user(request):
+        return redirect("users:login")
+
+    reparations = (
+        ReparationVehicule.objects
+        .select_related("vehicule", "chauffeur_personnel", "enregistreur")
+        .order_by("-date_reparation", "-id")
+    )
+
+    recherche = request.GET.get("q", "").strip()
+
+    if recherche:
+        reparations = reparations.filter(
+            Q(vehicule__immatriculation__icontains=recherche)
+            | Q(vehicule__marque__icontains=recherche)
+            | Q(designation__icontains=recherche)
+            | Q(garage__icontains=recherche)
+            | Q(chauffeur__icontains=recherche)
+            | Q(chauffeur_personnel__nom__icontains=recherche)
+            | Q(chauffeur_personnel__prenom__icontains=recherche)
+        )
+
+    return render(request, "materiels/reparation_vehicule_list.html", {
+        "reparations": reparations,
+        "recherche": recherche,
+        "titre": "Réparations des véhicules MCCR",
+    })
+
+
+# ============================================================
+# AJOUTER RÉPARATION MCCR
+# ============================================================
+
+@require_http_methods(["GET", "POST"])
+def ReparationVehicule_create(request):
+    user = _h_current_user(request)
+
+    if not user:
+        return redirect("users:login")
+
+    if request.method == "POST":
+        form = ReparationVehiculeForm(
+            request.POST,
+            request.FILES,
+        )
+
+        if form.is_valid():
+            reparation = form.save(commit=False)
+            reparation.enregistreur = user
+            reparation.save()
+            form.save_m2m()
+
+            messages.success(request, "Réparation enregistrée avec succès.")
+            return redirect("materiels:ReparationVehicule_list")
+    else:
+        form = ReparationVehiculeForm()
+
+    return render(request, "materiels/reparation_vehicule_form.html", {
+        "form": form,
+        "titre": "Ajouter une réparation MCCR",
+        "action": "Créer",
+    })
+
+
+# ============================================================
+# MODIFIER RÉPARATION MCCR
+# ============================================================
+
+@require_http_methods(["GET", "POST"])
+def ReparationVehicule_update(request, id):
+    if not _h_current_user(request):
+        return redirect("users:login")
+
+    reparation = get_object_or_404(ReparationVehicule, pk=id)
+
+    if request.method == "POST":
+        form = ReparationVehiculeForm(
+            request.POST,
+            request.FILES,
+            instance=reparation,
+        )
+
+        if form.is_valid():
+            objet = form.save(commit=False)
+            # Ne pas remplacer l'enregistreur d'origine.
+            objet.save()
+            form.save_m2m()
+
+            messages.success(request, "Réparation modifiée avec succès.")
+            return redirect("materiels:ReparationVehicule_list")
+    else:
+        form = ReparationVehiculeForm(instance=reparation)
+
+    return render(request, "materiels/reparation_vehicule_form.html", {
+        "form": form,
+        "reparation": reparation,
+        "titre": "Modifier une réparation MCCR",
+        "action": "Modifier",
+    })
+
+
+# ============================================================
+# SUPPRIMER RÉPARATION MCCR
+# ============================================================
+
+@require_http_methods(["GET", "POST"])
+def ReparationVehicule_delete(request, id):
+    if not _h_current_user(request):
+        return redirect("users:login")
+
+    reparation = get_object_or_404(ReparationVehicule, pk=id)
+
+    if request.method == "POST":
+        try:
+            reparation.delete()
+        except Exception:
+            messages.error(
+                request,
+                "Suppression impossible : cette réparation est utilisée "
+                "par une autre opération.",
+            )
+        else:
+            messages.success(request, "Réparation supprimée avec succès.")
+
+        return redirect("materiels:ReparationVehicule_list")
+
+    return render(
+        request,
+        "materiels/reparation_vehicule_confirm_delete.html",
+        {
+            "reparation": reparation,
+            "titre": "Supprimer une réparation MCCR",
+        },
     )

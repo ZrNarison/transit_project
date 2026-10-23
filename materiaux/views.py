@@ -1,4 +1,4 @@
-from decimal import Decimal
+﻿from decimal import Decimal
 from functools import wraps
 
 from django.contrib import messages
@@ -42,20 +42,20 @@ from .models import (
     ReceptionMateriau,
     ReparationVehicule,
     UtilisationMateriau,
-    Vehicule,
+    H_Vehicule,
 )
 
 ENTREPRISE = "MCCR"
 
 
 def mccr_required(view_func):
-    """Authentification propre à l'espace MCCR (session h_user_id)."""
+    """Authentification propre Ã  l'espace MCCR (session h_user_id)."""
 
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         user_id = request.session.get("h_user_id")
         if not user_id:
-            messages.warning(request, "Veuillez vous connecter à votre espace MCCR.")
+            messages.warning(request, "Veuillez vous connecter Ã  votre espace MCCR.")
             return redirect("users:login")
         try:
             request.h_current_user = H_AppUser.objects.get(pk=user_id)
@@ -77,22 +77,22 @@ def _qs(model):
 
 def _form_save(request, form):
     """
-    Enregistre les données dans l'espace MCCR.
-    Associe l'utilisateur H_AppUser si le modèle possède
+    Enregistre les donnÃ©es dans l'espace MCCR.
+    Associe l'utilisateur H_AppUser si le modÃ¨le possÃ¨de
     un champ enregistreur compatible.
     """
     obj = form.save(commit=False)
 
-    # À utiliser uniquement si le modèle possède ce champ.
+    # Ã€ utiliser uniquement si le modÃ¨le possÃ¨de ce champ.
     if hasattr(obj, "entreprise"):
         obj.entreprise = ENTREPRISE
 
-    # Les anciens modèles utilisent le champ « enregistreur ».
+    # Les anciens modÃ¨les utilisent le champ Â« enregistreur Â».
     if hasattr(obj, "enregistreur_id"):
         if not obj.enregistreur_id:
             obj.enregistreur = request.h_current_user
 
-    # Compatibilité si certains modèles utilisent ce nom.
+    # CompatibilitÃ© si certains modÃ¨les utilisent ce nom.
     elif hasattr(obj, "enregistreur_mccr_id"):
         if not obj.enregistreur_mccr_id:
             obj.enregistreur_mccr = request.h_current_user
@@ -132,7 +132,7 @@ def _crud_form(request, model, form_class, template, list_url_name, pk=None, tit
             try:
                 _form_save(request, form)
             except Exception as exc:
-                # Les ValidationError du modèle sont présentées comme erreur de formulaire.
+                # Les ValidationError du modÃ¨le sont prÃ©sentÃ©es comme erreur de formulaire.
                 from django.core.exceptions import ValidationError
 
                 if isinstance(exc, ValidationError):
@@ -140,7 +140,7 @@ def _crud_form(request, model, form_class, template, list_url_name, pk=None, tit
                 else:
                     raise
             else:
-                messages.success(request, "Enregistrement MCCR effectué avec succès.")
+                messages.success(request, "Enregistrement MCCR effectuÃ© avec succÃ¨s.")
                 return redirect(f"materiaux:{list_url_name}")
     else:
         form = form_class(instance=instance)
@@ -161,7 +161,7 @@ def _crud_delete(request, model, pk, list_url_name, label):
     if request.method == "POST":
         try:
             obj.delete()
-            messages.success(request, f"{label} supprimé avec succès.")
+            messages.success(request, f"{label} supprimÃ© avec succÃ¨s.")
         except Exception as exc:
             messages.error(request, f"Suppression impossible : {exc}")
         return redirect(f"materiaux:{list_url_name}")
@@ -179,7 +179,7 @@ def dashboard(request):
         "total_entrees": _qs(MateriauxEntree).count(),
         "total_divisions": _qs(MateriauxDivision).count(),
         "total_sorties": _qs(MateriauxOut).count(),
-        "total_vehicules": _qs(Vehicule).count(),
+        "total_vehicules": _qs(H_Vehicule).count(),
         "total_depenses": _qs(Depense).aggregate(total=Sum("montant"))["total"]
         or Decimal("0"),
         "total_gasoil": _qs(DepenseGasoil).aggregate(total=Sum("total"))["total"]
@@ -201,7 +201,7 @@ def dashboard_alt(request):
     return dashboard(request)
 
 
-# CRUD déclarés explicitement pour préserver les noms d'URL déjà utilisés par les templates.
+# CRUD dÃ©clarÃ©s explicitement pour prÃ©server les noms d'URL dÃ©jÃ  utilisÃ©s par les templates.
 def _make_list(model, template, context, title):
     @mccr_required
     def view(request):
@@ -235,48 +235,48 @@ def _make_delete(model, list_name, label):
 
 
 materiaux_list = _make_list(
-    Materiaux, "materiaux/materiaux_list.html", "materiaux", "Matériaux MCCR"
+    Materiaux, "materiaux/materiaux_list.html", "materiaux", "MatÃ©riaux MCCR"
 )
 materiau_add = _make_add(
     Materiaux,
     MateriauxForm,
     "materiaux/materiaux_form.html",
     "materiaux_list",
-    "Ajouter un matériau",
+    "Ajouter un matÃ©riau",
 )
 materiau_edit = _make_edit(
     Materiaux,
     MateriauxForm,
     "materiaux/materiaux_form.html",
     "materiaux_list",
-    "Modifier le matériau",
+    "Modifier le matÃ©riau",
 )
-materiau_delete = _make_delete(Materiaux, "materiaux_list", "matériau")
+materiau_delete = _make_delete(Materiaux, "materiaux_list", "matÃ©riau")
 
 entrees_list = _make_list(
-    MateriauxEntree, "materiaux/entrees_list.html", "entrees", "Entrées entrepôt MCCR"
+    MateriauxEntree, "materiaux/entrees_list.html", "entrees", "EntrÃ©es entrepÃ´t MCCR"
 )
 entree_add = _make_add(
     MateriauxEntree,
     MateriauxEntreeForm,
     "materiaux/entree_form.html",
     "entrees_list",
-    "Ajouter une entrée",
+    "Ajouter une entrÃ©e",
 )
 entree_edit = _make_edit(
     MateriauxEntree,
     MateriauxEntreeForm,
     "materiaux/entree_form.html",
     "entrees_list",
-    "Modifier une entrée",
+    "Modifier une entrÃ©e",
 )
-entree_delete = _make_delete(MateriauxEntree, "entrees_list", "entrée")
+entree_delete = _make_delete(MateriauxEntree, "entrees_list", "entrÃ©e")
 
 divisions_list = _make_list(
     MateriauxDivision,
     "materiaux/divisions_list.html",
     "divisions",
-    "Divisions entrepôt-magasin MCCR",
+    "Divisions entrepÃ´t-magasin MCCR",
 )
 division_add = _make_add(
     MateriauxDivision,
@@ -314,70 +314,70 @@ sortie_edit = _make_edit(
 sortie_delete = _make_delete(MateriauxOut, "sorties_list", "sortie")
 
 vehicules_list = _make_list(
-    Vehicule, "materiaux/vehicules_list.html", "vehicules", "Véhicules MCCR"
+    H_Vehicule, "materiaux/vehicules_list.html", "vehicules", "VÃ©hicules MCCR"
 )
 vehicule_add = _make_add(
-    Vehicule,
+    H_Vehicule,
     VehiculeForm,
     "materiaux/vehicule_form.html",
     "vehicules_list",
-    "Ajouter un véhicule",
+    "Ajouter un vÃ©hicule",
 )
 vehicule_edit = _make_edit(
-    Vehicule,
+    H_Vehicule,
     VehiculeForm,
     "materiaux/vehicule_form.html",
     "vehicules_list",
-    "Modifier un véhicule",
+    "Modifier un vÃ©hicule",
 )
-vehicule_delete = _make_delete(Vehicule, "vehicules_list", "véhicule")
+vehicule_delete = _make_delete(H_Vehicule, "vehicules_list", "vÃ©hicule")
 
 categories_depenses_list = _make_list(
     CategorieDepense,
     "materiaux/categories_depenses_list.html",
     "categories",
-    "Catégories de dépenses MCCR",
+    "CatÃ©gories de dÃ©penses MCCR",
 )
 categorie_depense_add = _make_add(
     CategorieDepense,
     CategorieDepenseForm,
     "materiaux/categorie_depense_form.html",
     "categories_depenses_list",
-    "Ajouter une catégorie",
+    "Ajouter une catÃ©gorie",
 )
 categorie_depense_edit = _make_edit(
     CategorieDepense,
     CategorieDepenseForm,
     "materiaux/categorie_depense_form.html",
     "categories_depenses_list",
-    "Modifier une catégorie",
+    "Modifier une catÃ©gorie",
 )
 categorie_depense_delete = _make_delete(
-    CategorieDepense, "categories_depenses_list", "catégorie"
+    CategorieDepense, "categories_depenses_list", "catÃ©gorie"
 )
 
 activites_transport_list = _make_list(
     ActiviteTransport,
     "materiaux/activites_transport_list.html",
     "activites",
-    "Activités de transport MCCR",
+    "ActivitÃ©s de transport MCCR",
 )
 activite_transport_add = _make_add(
     ActiviteTransport,
     ActiviteTransportForm,
     "materiaux/activite_transport_form.html",
     "activites_transport_list",
-    "Ajouter une activité de transport",
+    "Ajouter une activitÃ© de transport",
 )
 activite_transport_edit = _make_edit(
     ActiviteTransport,
     ActiviteTransportForm,
     "materiaux/activite_transport_form.html",
     "activites_transport_list",
-    "Modifier une activité de transport",
+    "Modifier une activitÃ© de transport",
 )
 activite_transport_delete = _make_delete(
-    ActiviteTransport, "activites_transport_list", "activité de transport"
+    ActiviteTransport, "activites_transport_list", "activitÃ© de transport"
 )
 
 paiements_dockers_list = _make_list(
@@ -405,96 +405,96 @@ paiement_docker_delete = _make_delete(
 )
 
 depenses_list = _make_list(
-    Depense, "materiaux/depenses_list.html", "depenses", "Dépenses MCCR"
+    Depense, "materiaux/depenses_list.html", "depenses", "DÃ©penses MCCR"
 )
 depense_add = _make_add(
     Depense,
     DepenseForm,
     "materiaux/depense_form.html",
     "depenses_list",
-    "Ajouter une dépense",
+    "Ajouter une dÃ©pense",
 )
 depense_edit = _make_edit(
     Depense,
     DepenseForm,
     "materiaux/depense_form.html",
     "depenses_list",
-    "Modifier une dépense",
+    "Modifier une dÃ©pense",
 )
-depense_delete = _make_delete(Depense, "depenses_list", "dépense")
+depense_delete = _make_delete(Depense, "depenses_list", "dÃ©pense")
 
 depenses_gasoil_list = _make_list(
     DepenseGasoil,
     "materiaux/gasoil_list.html",
     "depenses_gasoil",
-    "Dépenses gasoil MCCR",
+    "DÃ©penses gasoil MCCR",
 )
 depense_gasoil_add = _make_add(
     DepenseGasoil,
     DepenseGasoilForm,
     "materiaux/gasoil_form.html",
     "depenses_gasoil_list",
-    "Ajouter une dépense gasoil",
+    "Ajouter une dÃ©pense gasoil",
 )
 depense_gasoil_edit = _make_edit(
     DepenseGasoil,
     DepenseGasoilForm,
     "materiaux/gasoil_form.html",
     "depenses_gasoil_list",
-    "Modifier une dépense gasoil",
+    "Modifier une dÃ©pense gasoil",
 )
 depense_gasoil_delete = _make_delete(
-    DepenseGasoil, "depenses_gasoil_list", "dépense gasoil"
+    DepenseGasoil, "depenses_gasoil_list", "dÃ©pense gasoil"
 )
 
 reparations_list = _make_list(
     ReparationVehicule,
     "materiaux/reparations_list.html",
     "reparations",
-    "Réparations véhicules MCCR",
+    "RÃ©parations vÃ©hicules MCCR",
 )
 reparation_add = _make_add(
     ReparationVehicule,
     ReparationVehiculeForm,
     "materiaux/reparation_form.html",
     "reparations_list",
-    "Ajouter une réparation",
+    "Ajouter une rÃ©paration",
 )
 reparation_edit = _make_edit(
     ReparationVehicule,
     ReparationVehiculeForm,
     "materiaux/reparation_form.html",
     "reparations_list",
-    "Modifier une réparation",
+    "Modifier une rÃ©paration",
 )
-reparation_delete = _make_delete(ReparationVehicule, "reparations_list", "réparation")
+reparation_delete = _make_delete(ReparationVehicule, "reparations_list", "rÃ©paration")
 
 receptions_materiaux_list = _make_list(
     ReceptionMateriau,
     "materiaux/receptions_materiaux_list.html",
     "receptions",
-    "Réceptions matériaux MCCR",
+    "RÃ©ceptions matÃ©riaux MCCR",
 )
 reception_materiau_add = _make_add(
     ReceptionMateriau,
     ReceptionMateriauForm,
     "materiaux/suivi_materiau_form.html",
     "receptions_materiaux_list",
-    "Ajouter une réception",
+    "Ajouter une rÃ©ception",
 )
 reception_materiau_edit = _make_edit(
     ReceptionMateriau,
     ReceptionMateriauForm,
     "materiaux/suivi_materiau_form.html",
     "receptions_materiaux_list",
-    "Modifier une réception",
+    "Modifier une rÃ©ception",
 )
 
 utilisations_materiaux_list = _make_list(
     UtilisationMateriau,
     "materiaux/utilisations_materiaux_list.html",
     "utilisations",
-    "Utilisations matériaux MCCR",
+    "Utilisations matÃ©riaux MCCR",
 )
 utilisation_materiau_add = _make_add(
     UtilisationMateriau,
@@ -518,7 +518,7 @@ retours_materiaux_list = _make_list(
     MateriauxRetour,
     "materiaux/retours_materiaux_list.html",
     "retours",
-    "Retours matériaux MCCR",
+    "Retours matÃ©riaux MCCR",
 )
 retour_materiau_add = _make_add(
     MateriauxRetour,
@@ -547,7 +547,7 @@ def stock_entrepot(request):
         {
             "materiaux": _qs(Materiaux),
             "entrees": _qs(MateriauxEntree),
-            "titre": "Stock entrepôt MCCR",
+            "titre": "Stock entrepÃ´t MCCR",
         },
     )
 
@@ -564,3 +564,4 @@ def stock_magasin(request):
             "titre": "Stock magasin MCCR",
         },
     )
+

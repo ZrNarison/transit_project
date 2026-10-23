@@ -14,8 +14,10 @@ from .models import (
     ReceptionMateriau,
     ReparationVehicule,
     UtilisationMateriau,
-    Vehicule,
+    H_Vehicule,
 )
+from .models import H_Vehicule, ReparationVehicule
+from personnel.models import H_Personnel
 
 
 class BootstrapModelForm(forms.ModelForm):
@@ -114,7 +116,7 @@ class MateriauxOutForm(BootstrapModelForm):
 
 class VehiculeForm(BootstrapModelForm):
     class Meta:
-        model = Vehicule
+        model = H_Vehicule
         fields = ["immatriculation", "marque", "modele", "kilometrage", "actif"]
         widgets = {"kilometrage": forms.NumberInput(attrs={"min": "0", "step": "0.01"})}
 
@@ -242,15 +244,68 @@ class DepenseGasoilForm(BootstrapModelForm):
         }
 
 
-class ReparationVehiculeForm(BootstrapModelForm):
+
+# ============================================================
+# FORMULAIRE VÉHICULE MCCR
+# ============================================================
+
+class VehiculeForm(forms.ModelForm):
+    class Meta:
+        model = H_Vehicule
+
+        fields = [
+            "immatriculation",
+            "marque",
+            "modele",
+            "kilometrage",
+            "actif",
+        ]
+
+        widgets = {
+            "immatriculation": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ex. 1234 TBA",
+            }),
+            "marque": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Marque du véhicule",
+            }),
+            "modele": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Modèle du véhicule",
+            }),
+            "kilometrage": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "step": "0.01",
+            }),
+            "actif": forms.CheckboxInput(attrs={
+                "class": "form-check-input",
+            }),
+        }
+
+        labels = {
+            "immatriculation": "Immatriculation",
+            "marque": "Marque",
+            "modele": "Modèle",
+            "kilometrage": "Kilométrage",
+            "actif": "Véhicule actif",
+        }
+
+
+# ============================================================
+# FORMULAIRE RÉPARATION VÉHICULE MCCR
+# ============================================================
+
+class ReparationVehiculeForm(forms.ModelForm):
     class Meta:
         model = ReparationVehicule
+
         fields = [
             "date_reparation",
             "vehicule",
             "chauffeur",
             "chauffeur_personnel",
-            "projet",
             "designation",
             "type_reparation",
             "garage",
@@ -262,12 +317,91 @@ class ReparationVehiculeForm(BootstrapModelForm):
             "photo_piece_remplacee",
             "photo_piece_remplacante",
         ]
+
         widgets = {
-            "date_reparation": forms.DateInput(attrs={"type": "date"}),
-            "quantite": forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
-            "prix_unitaire": forms.NumberInput(attrs={"min": "0", "step": "0.01"}),
-            "montant_main_oeuvre": forms.NumberInput(
-                attrs={"min": "0", "step": "0.01"}
-            ),
-            "Cout": forms.NumberInput(attrs={"min": "0", "step": "0.01"}),
+            "date_reparation": forms.DateInput(attrs={
+                "class": "form-control",
+                "type": "date",
+            }),
+            "vehicule": forms.Select(attrs={
+                "class": "form-select",
+            }),
+            "chauffeur": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nom du chauffeur (historique)",
+            }),
+            "chauffeur_personnel": forms.Select(attrs={
+                "class": "form-select",
+            }),
+            "designation": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Désignation de la réparation",
+            }),
+            "type_reparation": forms.Select(attrs={
+                "class": "form-select",
+            }),
+            "garage": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Nom du garage",
+            }),
+            "quantite": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0.01",
+                "step": "0.01",
+            }),
+            "unite": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Pièce, litre, unité...",
+            }),
+            "prix_unitaire": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "step": "0.01",
+            }),
+            "montant_main_oeuvre": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "step": "0.01",
+            }),
+            "Cout": forms.NumberInput(attrs={
+                "class": "form-control",
+                "min": "0",
+                "step": "0.01",
+            }),
+            "photo_piece_remplacee": forms.ClearableFileInput(attrs={
+                "class": "form-control",
+            }),
+            "photo_piece_remplacante": forms.ClearableFileInput(attrs={
+                "class": "form-control",
+            }),
         }
+
+        labels = {
+            "date_reparation": "Date de réparation",
+            "vehicule": "Véhicule MCCR",
+            "chauffeur": "Chauffeur historique",
+            "chauffeur_personnel": "Chauffeur du personnel MCCR",
+            "designation": "Désignation",
+            "type_reparation": "Type d'intervention",
+            "garage": "Garage",
+            "quantite": "Quantité",
+            "unite": "Unité",
+            "prix_unitaire": "Prix unitaire",
+            "montant_main_oeuvre": "Main-d'œuvre",
+            "Cout": "Coût historique",
+            "photo_piece_remplacee": "Photo de la pièce remplacée",
+            "photo_piece_remplacante": "Photo de la pièce de remplacement",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["vehicule"].queryset = (
+            H_Vehicule.objects.all().order_by("immatriculation")
+        )
+
+        self.fields["chauffeur_personnel"].queryset = (
+            H_Personnel.objects.all().order_by("nom", "prenom")
+        )
+
+        self.fields["chauffeur_personnel"].required = False

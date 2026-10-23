@@ -180,12 +180,11 @@
                             </th>
 
                             <th>Client</th>
-                            <th>Véhicule</th>
-                            <th>Chauffeur</th>
+                            <th>Transport</th>
                             <th>Source</th>
-                            <th>Montant unitaire</th>
+                            <th>P.U</th>
                             <th>Quantité</th>
-                            <th>Pourcentage</th>
+                            <th>%</th>
                             <th>Montant net</th>
                             <th>Photo</th>
                             <th>État</th>
@@ -224,16 +223,14 @@
                             <!-- CLIENT -->
                             <td>
                                 {{ produit.client.nom|upper }}
+                                <small> {{ produit.client.prenom|title }}</small>
                             </td>
 
                             <!-- VÉHICULE -->
                             <td>
-                                {{ produit.vehicule.num_vehicule|upper }}
-                            </td>
-
-                            <!-- CHAUFFEUR -->
-                            <td>
                                 {{ produit.vehicule.chauffeur|upper }}
+                                <br>
+                                <small class="text-success mt-0">{{ produit.vehicule.num_vehicule|upper }}</small>
                             </td>
 
                             <!-- SOURCE -->

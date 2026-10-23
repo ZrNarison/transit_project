@@ -14,9 +14,9 @@
         <h2 class="mb-1">🔧 Réparations / Entretien véhicules</h2>
         <small class="text-muted">Suivi des réparations, pièces et main d'œuvre</small>
     </div>
-    {% if fonction_projet == "CHAUFFEUR" %}
+    {% comment %} {% if fonction_projet == "CHAUFFEUR" %} {% endcomment %}
     <a href="{% url 'materiaux:reparation_add' %}" class="btn btn-primary">Nouvelle réparation</a>
-    {% endif %}
+    {% comment %} {% endif %} {% endcomment %}
 </div>
 
 
@@ -330,7 +330,7 @@
 
                     <td class="text-nowrap text-center">
 
-                        {% if reparation.enregistreur_id == user.id %}
+                        {% comment %} {% if reparation.enregistreur_id == user.id %} {% endcomment %}
 
                             <a
                                 href="{% url 'materiaux:reparation_edit' reparation.pk %}"
@@ -361,7 +361,7 @@
 
                             </form>
 
-                        {% else %}
+                        {% comment %} {% else %}
 
                             <span
                                 class="badge bg-secondary"
@@ -371,7 +371,7 @@
 
                             </span>
 
-                        {% endif %}
+                        {% endif %} {% endcomment %}
 
                     </td>
 

@@ -28,7 +28,11 @@ class ClientForm(forms.ModelForm):
             "cin": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Numéro de la carte d'identité",
+                    "maxlength": "12",
+                    "placeholder": "Numéro Carte d'identité National",
+                    "pattern": "[0-9]{12}",
+                    # et que la 6e soit 1 soit 2 , unique pour clé
+                    "inputmode": "numeric",
                 }
             ),
             "nom_pere": forms.TextInput(
@@ -40,8 +44,10 @@ class ClientForm(forms.ModelForm):
             "contact": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Numéro téléphone",
                     "maxlength": "10",
+                    "placeholder": "034 01 000 01",
+                    "pattern": "[0-9]{10}",
+                    "inputmode": "numeric",
                 }
             ),
             "adresse": forms.Textarea(
@@ -52,3 +58,11 @@ class ClientForm(forms.ModelForm):
                 }
             ),
         }
+
+        def clean_cin(self):
+                cin = self.cleaned_data.get("cin", "").strip()
+        
+                if len(cin) < 6 or cin[5] not in ("1", "2"):
+                    raise forms.ValidationError("Le 6e chiffre du CIN doit être 1 ou 2.")
+        
+                return cin

@@ -1,0 +1,234 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h3>Réparations des véhicules GALAXY</h3>
+            <p class="text-muted mb-0">
+                Suivi des réparations et changements de pièces
+            </p>
+        </div>
+
+        <a href="{% url 'materiels:ReparationVehicule_create' %}"
+           class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Ajouter
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="get" class="card card-body mb-3">
+        <div class="row g-2">
+            <div class="col-md-6">
+                <input type="text"
+                       name="q"
+                       value="{{ q }}"
+                       class="form-control"
+                       placeholder="Désignation, garage ou immatriculation du matériel">
+            </div>
+
+            <div class="col-md-4">
+                <select name="type_reparation" class="form-select">
+                    <option value="">Tous les types</option>
+                    <option value="REPARATION"
+                        {% if type_reparation == "REPARATION" %}selected{% endif %}>
+                        Réparation
+                    </option>
+                    <option value="CHANGEMENT"
+                        {% if type_reparation == "CHANGEMENT" %}selected{% endif %}>
+                        Changement
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-success" type="submit">
+                    <i class="fas fa-filter me-1"></i> Filtrer
+                </button>
+
+                <a href="{% url 'materiels:ReparationVehicule_list' %}"
+                   class="btn btn-outline-secondary">
+                    Effacer
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Matériel / Engin</th>
+                    <th>Type</th>
+                    <th>Désignation</th>
+                    <th>Garage</th>
+                    <th>Quantité</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for r in reparations %}
+                    <tr>
+                        <td>{{ r.date_reparation|date:"d/m/Y" }}</td>
+                        <td>{{ r.vehicule }}</td>
+                        <td>{{ r.get_type_reparation_display }}</td>
+                        <td>{{ r.designation }}</td>
+                        <td>{{ r.garage|default:"—" }}</td>
+                        <td>{{ r.quantite }} {{ r.unite }}</td>
+                        <td>{{ r.total|floatformat:2 }}</td>
+
+                        <td class="text-nowrap">
+                            <a class="btn btn-sm btn-warning"
+                               href="{% url 'materiels:ReparationVehicule_update' r.pk %}">
+                                <i class="fas fa-edit"></i> Modifier
+                            </a>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#confirmationSuppression"
+                                    data-url="{% url 'materiels:ReparationVehicule_delete' r.pk %}"
+                                    data-designation="{{ r.designation|escape }}"
+                                    data-vehicule="{{ r.vehicule|escape }}"
+                                    data-date="{{ r.date_reparation|date:'d/m/Y' }}">
+                                <i class="fas fa-trash-alt"></i> Supprimer
+                            </button>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Aucune réparation trouvée.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Fenêtre de confirmation centrée -->
+<div class="modal fade"
+     id="confirmationSuppression"
+     tabindex="-1"
+     aria-labelledby="titreConfirmationSuppression"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="titreConfirmationSuppression">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirmer la suppression
+                </h5>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Fermer"></button>
+            </div>
+
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-trash-alt text-danger"
+                       style="font-size: 3rem;"></i>
+                </div>
+
+                <h5>Voulez-vous vraiment supprimer cette réparation ?</h5>
+
+                <div class="text-start bg-light rounded p-3 mt-3">
+                    <p class="mb-2">
+                        <strong>Matériel :</strong>
+                        <span id="suppressionVehicule">—</span>
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Désignation :</strong>
+                        <span id="suppressionDesignation">—</span>
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Date :</strong>
+                        <span id="suppressionDate">—</span>
+                    </p>
+                </div>
+
+                <p class="text-danger small mt-3 mb-0">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    Cette action peut être irréversible.
+                </p>
+            </div>
+
+            <div class="modal-footer justify-content-center gap-2">
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Annuler
+                </button>
+
+                <form id="formSuppression"
+                      method="post"
+                      action="">
+                    {% csrf_token %}
+
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i>
+                        Oui, supprimer
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("confirmationSuppression");
+
+    if (!modal) {
+        return;
+    }
+
+    modal.addEventListener("show.bs.modal", function (event) {
+        const bouton = event.relatedTarget;
+
+        if (!bouton) {
+            return;
+        }
+
+        const url = bouton.getAttribute("data-url");
+        const designation = bouton.getAttribute("data-designation");
+        const vehicule = bouton.getAttribute("data-vehicule");
+        const date = bouton.getAttribute("data-date");
+
+        document.getElementById("formSuppression").action = url || "";
+        document.getElementById("suppressionDesignation").textContent =
+            designation || "—";
+        document.getElementById("suppressionVehicule").textContent =
+            vehicule || "—";
+        document.getElementById("suppressionDate").textContent =
+            date || "—";
+    });
+});
+</script>
+{% endblock %}

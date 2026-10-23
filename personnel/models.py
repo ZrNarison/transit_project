@@ -70,8 +70,12 @@ class H_Personnel(models.Model):
         ("Stage", "Stage"),
     ]
     CATEGORIES_CHOICES = [
-        ("DIRECTEUR", "Administration"),
-        ("COMPTABLE", "Comptabilité"),
+        ("DIRECTEUR", "Directeur"),
+        ("COMPTABLE", "Comptable"),
+        ("CHAFFEUR", "Chauffeur"),
+        ("MANOEUVRE", "Manoeuvre"),
+        ("MACON", "Maçon"),
+        ("ELECTRICIEN", "Eléctricien"),
         ("MPIASA", "Employé"),
     ]
 

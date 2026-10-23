@@ -44,7 +44,7 @@ from users.decorators import (
     user_has_project_function,
 )
 from users.models import AppUser
-from .models import MateriauProjet
+from .models import MateriauProjet, ReparationVehicule
 from .forms import (
     AchatMateriauProjetForm,
     ActiviteTransportProjetForm,
@@ -1102,9 +1102,14 @@ def projet_detail(
     depenses_gasoil = DepenseGasoil.objects.filter(
         projet=projet,
     )
-    reparations = ReparationVehicule.objects.filter(
-        projet=projet,
+    reparations = (ReparationVehicule.objects
+    .filter(projet=projet)
+    .select_related(
+        "vehicule",
+        "chauffeur_personnel",
+        "enregistre_par",
     )
+)
     paiements_dockers = PaiementDocker.objects.filter(
         projet=projet,
     )

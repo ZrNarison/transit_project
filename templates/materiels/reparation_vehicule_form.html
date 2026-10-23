@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-tools me-2"></i>
+                {% if form.instance.pk %}
+                    Modifier une réparation
+                {% else %}
+                    Enregistrer une réparation
+                {% endif %}
+            </h2>
+            <p class="text-muted mb-0">
+                Gestion des réparations et changements de pièces des véhicules et engins GALAXY.
+            </p>
+        </div>
+
+        <a href="{% url 'materiels:ReparationVehicule_list' %}"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour à la liste
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post"
+          enctype="multipart/form-data"
+          novalidate>
+        {% csrf_token %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-truck me-2"></i>
+                    Informations générales
+                </h5>
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <label for="{{ form.date_reparation.id_for_label }}"
+                               class="form-label">
+                            {{ form.date_reparation.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.date_reparation }}
+                        {% for error in form.date_reparation.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="{{ form.vehicule.id_for_label }}"
+                               class="form-label">
+                            {{ form.vehicule.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.vehicule }}
+                        {% for error in form.vehicule.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="{{ form.type_reparation.id_for_label }}"
+                               class="form-label">
+                            {{ form.type_reparation.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.type_reparation }}
+                        {% for error in form.type_reparation.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.designation.id_for_label }}"
+                               class="form-label">
+                            {{ form.designation.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.designation }}
+                        {% for error in form.designation.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.garage.id_for_label }}"
+                               class="form-label">
+                            {{ form.garage.label }}
+                        </label>
+                        {{ form.garage }}
+                        {% for error in form.garage.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.chauffeur_personnel.id_for_label }}"
+                               class="form-label">
+                            {{ form.chauffeur_personnel.label }}
+                        </label>
+                        {{ form.chauffeur_personnel }}
+                        <div class="form-text">
+                            Facultatif : sélectionner un chauffeur GALAXY si nécessaire.
+                        </div>
+                        {% for error in form.chauffeur_personnel.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.chauffeur.id_for_label }}"
+                               class="form-label">
+                            {{ form.chauffeur.label }}
+                        </label>
+                        {{ form.chauffeur }}
+                        <div class="form-text">
+                            Champ historique facultatif. Il n'est pas nécessaire de renseigner un chauffeur.
+                        </div>
+                        {% for error in form.chauffeur.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-calculator me-2"></i>
+                    Quantité et coûts
+                </h5>
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <label for="{{ form.quantite.id_for_label }}"
+                               class="form-label">
+                            {{ form.quantite.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.quantite }}
+                        {% for error in form.quantite.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="{{ form.unite.id_for_label }}"
+                               class="form-label">
+                            {{ form.unite.label }}
+                        </label>
+                        {{ form.unite }}
+                        {% for error in form.unite.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="{{ form.prix_unitaire.id_for_label }}"
+                               class="form-label">
+                            {{ form.prix_unitaire.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.prix_unitaire }}
+                        {% for error in form.prix_unitaire.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.montant_main_oeuvre.id_for_label }}"
+                               class="form-label">
+                            {{ form.montant_main_oeuvre.label }}
+                        </label>
+                        {{ form.montant_main_oeuvre }}
+                        {% for error in form.montant_main_oeuvre.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Montant estimé</label>
+                        <input type="text"
+                               id="montant_total_estime"
+                               class="form-control bg-light"
+                               value="0,00 Ar"
+                               readonly>
+                        <div class="form-text">
+                            Calcul indicatif : quantité × prix unitaire + main-d'œuvre.
+                            Le total enregistré est calculé côté serveur.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-camera me-2"></i>
+                    Photos des pièces
+                </h5>
+            </div>
+
+            <div class="card-body">
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label for="{{ form.photo_piece_remplacee.id_for_label }}"
+                               class="form-label">
+                            {{ form.photo_piece_remplacee.label }}
+                        </label>
+
+                        {% if form.instance.photo_piece_remplacee %}
+                            <div class="mb-2">
+                                <a href="{{ form.instance.photo_piece_remplacee.url }}"
+                                   target="_blank"
+                                   rel="noopener">
+                                    Voir la photo actuelle
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        {{ form.photo_piece_remplacee }}
+
+                        {% for error in form.photo_piece_remplacee.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+
+                        <img id="preview_piece_remplacee"
+                             class="img-thumbnail mt-2 d-none"
+                             alt="Aperçu de la pièce remplacée"
+                             style="max-height: 220px;">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="{{ form.photo_piece_remplacante.id_for_label }}"
+                               class="form-label">
+                            {{ form.photo_piece_remplacante.label }}
+                        </label>
+
+                        {% if form.instance.photo_piece_remplacante %}
+                            <div class="mb-2">
+                                <a href="{{ form.instance.photo_piece_remplacante.url }}"
+                                   target="_blank"
+                                   rel="noopener">
+                                    Voir la photo actuelle
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        {{ form.photo_piece_remplacante }}
+
+                        {% for error in form.photo_piece_remplacante.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+
+                        <img id="preview_piece_remplacante"
+                             class="img-thumbnail mt-2 d-none"
+                             alt="Aperçu de la pièce de remplacement"
+                             style="max-height: 220px;">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-end gap-2 mb-4">
+            <a href="{% url 'materiels:ReparationVehicule_list' %}"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-times me-1"></i>
+                Annuler
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i>
+                {% if form.instance.pk %}
+                    Enregistrer les modifications
+                {% else %}
+                    Enregistrer la réparation
+                {% endif %}
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const quantite = document.getElementById("id_quantite");
+    const prixUnitaire = document.getElementById("id_prix_unitaire");
+    const mainOeuvre = document.getElementById("id_montant_main_oeuvre");
+    const montantTotal = document.getElementById("montant_total_estime");
+
+    function calculerTotal() {
+        const q = Number.parseFloat(quantite?.value) || 0;
+        const p = Number.parseFloat(prixUnitaire?.value) || 0;
+        const m = Number.parseFloat(mainOeuvre?.value) || 0;
+        const total = (q * p) + m;
+
+        montantTotal.value = total.toLocaleString("fr-FR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }) + " Ar";
+    }
+
+    [quantite, prixUnitaire, mainOeuvre].forEach(function (champ) {
+        if (champ) {
+            champ.addEventListener("input", calculerTotal);
+        }
+    });
+
+    calculerTotal();
+
+    function afficherApercu(inputId, imageId) {
+        const input = document.getElementById(inputId);
+        const image = document.getElementById(imageId);
+
+        if (!input || !image) {
+            return;
+        }
+
+        input.addEventListener("change", function () {
+            const fichier = input.files && input.files[0];
+
+            if (!fichier) {
+                image.src = "";
+                image.classList.add("d-none");
+                return;
+            }
+
+            if (!fichier.type.startsWith("image/")) {
+                input.value = "";
+                image.src = "";
+                image.classList.add("d-none");
+                alert("Veuillez sélectionner un fichier image.");
+                return;
+            }
+
+            image.src = URL.createObjectURL(fichier);
+            image.classList.remove("d-none");
+        });
+    }
+
+    afficherApercu(
+        "id_photo_piece_remplacee",
+        "preview_piece_remplacee"
+    );
+
+    afficherApercu(
+        "id_photo_piece_remplacante",
+        "preview_piece_remplacante"
+    );
+});
+</script>
+{% endblock %}

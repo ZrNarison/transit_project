@@ -5,25 +5,23 @@ from django.core.validators import FileExtensionValidator, MinValueValidator
 from django.db import models
 from django.urls import path, reverse, reverse_lazy
 from django.utils import timezone
-from materiaux.models import Materiaux, Vehicule
-from .models import Materiaux, Vehicule
-from personnel.models import Personnel
+from materiels.models import Materiels, Vehicule
+# from .models import Materiaux, Vehicule
 from users.models import AppUser
+from personnel.models import Personnel
 
 # ============================================================
 # PROJET
 # ============================================================
-
-
 class Projet(models.Model):
     """
     Projet / chantier de l'entreprise.
     """
 
     STATUT_CHOICES = [
-        ("PLANIFIE", "Planifié"),
+        ("PLANIFIE", "PlanifiÃ©"),
         ("EN_COURS", "En cours"),
-        ("TERMINE", "Terminé"),
+        ("TERMINE", "TerminÃ©"),
         ("SUSPENDU", "Suspendu"),
     ]
 
@@ -38,7 +36,7 @@ class Projet(models.Model):
     )
 
     date_debut = models.DateField(
-        verbose_name="Date de début",
+        verbose_name="Date de dÃ©but",
     )
 
     date_fin = models.DateField(
@@ -56,7 +54,7 @@ class Projet(models.Model):
         max_digits=15,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Budget prévisionnel",
+        verbose_name="Budget prÃ©visionnel",
     )
 
     observation = models.TextField(
@@ -68,7 +66,7 @@ class Projet(models.Model):
         AppUser,
         on_delete=models.PROTECT,
         related_name="projets_enregistres",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     created_at = models.DateTimeField(
@@ -101,8 +99,8 @@ class Projet(models.Model):
 
             if self.date_fin < self.date_debut:
                 errors["date_fin"] = (
-                    "La date de fin doit être "
-                    "postérieure ou égale à la date de début."
+                    "La date de fin doit Ãªtre "
+                    "postÃ©rieure ou Ã©gale Ã  la date de dÃ©but."
                 )
 
         # ----------------------------------------------------
@@ -113,7 +111,7 @@ class Projet(models.Model):
             "0.00"
         ):
             errors["budget_previsionnel"] = (
-                "Le budget prévisionnel ne peut pas être négatif."
+                "Le budget prÃ©visionnel ne peut pas Ãªtre nÃ©gatif."
             )
 
         if errors:
@@ -123,7 +121,7 @@ class Projet(models.Model):
     def est_actif(self):
         """
         Projet actif uniquement lorsque :
-        - la date actuelle est comprise dans la période ;
+        - la date actuelle est comprise dans la pÃ©riode ;
         - le statut est EN_COURS.
         """
 
@@ -140,7 +138,7 @@ class Projet(models.Model):
     @property
     def periode_terminee(self):
         """
-        True lorsque la date de fin du projet est dépassée.
+        True lorsque la date de fin du projet est dÃ©passÃ©e.
         """
 
         if not self.date_fin:
@@ -167,7 +165,7 @@ class Projet(models.Model):
 
 class PersonnelExecutionProjet(models.Model):
     """
-    Personnel ou personne externe intervenant dans l'exécution
+    Personnel ou personne externe intervenant dans l'exÃ©cution
     d'un projet.
     """
 
@@ -176,7 +174,7 @@ class PersonnelExecutionProjet(models.Model):
     # ============================================================
 
     TYPE_CLASS_CHOICES = [
-        ("CHEF_EQUIPE", "Chef d'équipe"),
+        ("CHEF_EQUIPE", "Chef d'Ã©quipe"),
         ("CHAUFFEUR_ENGIN", "Chauffeur d'engin"),
         ("MINIER", "Minier"),
         ("AUTRE", "Autre"),
@@ -237,13 +235,13 @@ class PersonnelExecutionProjet(models.Model):
     )
 
     # ============================================================
-    # PÉRIODE
+    # PÃ‰RIODE
     # ============================================================
 
     date_debut = models.DateField(
         null=True,
         blank=True,
-        verbose_name="Date de début",
+        verbose_name="Date de dÃ©but",
     )
 
     date_fin = models.DateField(
@@ -277,7 +275,7 @@ class PersonnelExecutionProjet(models.Model):
     )
 
     # ============================================================
-    # MATÉRIAU DU PROJET
+    # MATÃ‰RIAU DU PROJET
     # ============================================================
 
     materiau_projet = models.ForeignKey(
@@ -286,7 +284,7 @@ class PersonnelExecutionProjet(models.Model):
         null=True,
         blank=True,
         related_name="miniers",
-        verbose_name="Matériau du projet",
+        verbose_name="MatÃ©riau du projet",
     )
 
     # ============================================================
@@ -297,7 +295,7 @@ class PersonnelExecutionProjet(models.Model):
         max_digits=14,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Quantité",
+        verbose_name="QuantitÃ©",
     )
 
     prix_unitaire = models.DecimalField(
@@ -332,7 +330,7 @@ class PersonnelExecutionProjet(models.Model):
         null=True,
         blank=True,
         related_name="personnels_execution_enregistres",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     # ============================================================
@@ -358,9 +356,9 @@ class PersonnelExecutionProjet(models.Model):
             "nom",
         ]
 
-        verbose_name = "Personnel d'exécution du projet"
+        verbose_name = "Personnel d'exÃ©cution du projet"
 
-        verbose_name_plural = "Personnels d'exécution des projets"
+        verbose_name_plural = "Personnels d'exÃ©cution des projets"
 
     # ============================================================
     # AFFICHAGE
@@ -373,7 +371,7 @@ class PersonnelExecutionProjet(models.Model):
             if self.materiau_projet_id:
                 materiau = str(self.materiau_projet)
             else:
-                materiau = "Sans matériau"
+                materiau = "Sans matÃ©riau"
 
             return f"{self.nom} - " f"Minier - " f"{materiau}"
 
@@ -384,7 +382,7 @@ class PersonnelExecutionProjet(models.Model):
             else:
                 point = "Sans point"
 
-            return f"{self.nom} - " f"Chef d'équipe - " f"{point}"
+            return f"{self.nom} - " f"Chef d'Ã©quipe - " f"{point}"
 
         return (
             f"{self.nom} - "
@@ -415,7 +413,7 @@ class PersonnelExecutionProjet(models.Model):
         return self.montant if self.montant is not None else Decimal("0.00")
 
     # ============================================================
-    # ACCÈS ACTIF
+    # ACCÃˆS ACTIF
     # ============================================================
 
     @property
@@ -447,7 +445,7 @@ class PersonnelExecutionProjet(models.Model):
         return self.date_debut <= aujourd_hui <= self.date_fin
 
     # ============================================================
-    # PÉRIODE TERMINÉE
+    # PÃ‰RIODE TERMINÃ‰E
     # ============================================================
 
     @property
@@ -495,9 +493,9 @@ class PersonnelExecutionProjet(models.Model):
 
         if self.date_debut and self.date_fin and self.date_fin < self.date_debut:
             errors["date_fin"] = (
-                "La date de fin doit être "
-                "postérieure ou égale à la "
-                "date de début."
+                "La date de fin doit Ãªtre "
+                "postÃ©rieure ou Ã©gale Ã  la "
+                "date de dÃ©but."
             )
 
         # ========================================================
@@ -512,15 +510,15 @@ class PersonnelExecutionProjet(models.Model):
                 and self.date_debut < projet.date_debut
             ):
                 errors["date_debut"] = (
-                    "La date de début du personnel "
-                    "ne peut pas être antérieure "
-                    "au début du projet."
+                    "La date de dÃ©but du personnel "
+                    "ne peut pas Ãªtre antÃ©rieure "
+                    "au dÃ©but du projet."
                 )
 
             if self.date_fin and projet.date_fin and self.date_fin > projet.date_fin:
                 errors["date_fin"] = (
                     "La date de fin du personnel "
-                    "ne peut pas dépasser la "
+                    "ne peut pas dÃ©passer la "
                     "date de fin du projet."
                 )
 
@@ -529,7 +527,7 @@ class PersonnelExecutionProjet(models.Model):
         # ========================================================
 
         if self.montant is not None and self.montant < Decimal("0.00"):
-            errors["montant"] = "Le montant ne peut pas être négatif."
+            errors["montant"] = "Le montant ne peut pas Ãªtre nÃ©gatif."
 
         # ========================================================
         # TYPES EXTERNES
@@ -553,7 +551,7 @@ class PersonnelExecutionProjet(models.Model):
 
                 errors["personnel"] = (
                     "Ce type de personnel est externe "
-                    "et ne doit pas être lié à un "
+                    "et ne doit pas Ãªtre liÃ© Ã  un "
                     "personnel interne."
                 )
 
@@ -562,13 +560,13 @@ class PersonnelExecutionProjet(models.Model):
 
         else:
 
-            # Pour un éventuel type interne.
+            # Pour un Ã©ventuel type interne.
             if not self.personnel_id:
 
-                errors["personnel"] = "Un personnel interne doit " "être sélectionné."
+                errors["personnel"] = "Un personnel interne doit " "Ãªtre sÃ©lectionnÃ©."
 
         # ========================================================
-        # CHEF D'ÉQUIPE
+        # CHEF D'Ã‰QUIPE
         # ========================================================
 
         if self.type_class == "CHEF_EQUIPE":
@@ -576,35 +574,35 @@ class PersonnelExecutionProjet(models.Model):
             if not self.point_projet_id:
 
                 errors["point_projet"] = (
-                    "Le point du projet est obligatoire " "pour un chef d'équipe."
+                    "Le point du projet est obligatoire " "pour un chef d'Ã©quipe."
                 )
 
             if self.materiau_projet_id:
 
                 errors["materiau_projet"] = (
-                    "Un chef d'équipe ne peut pas " "être associé à un matériau."
+                    "Un chef d'Ã©quipe ne peut pas " "Ãªtre associÃ© Ã  un matÃ©riau."
                 )
 
             if self.montant is None or self.montant <= Decimal("0.00"):
 
                 errors["montant"] = (
                     "Le montant est obligatoire et "
-                    "doit être supérieur à zéro "
-                    "pour un chef d'équipe."
+                    "doit Ãªtre supÃ©rieur Ã  zÃ©ro "
+                    "pour un chef d'Ã©quipe."
                 )
 
             if self.quantite and self.quantite > Decimal("0.00"):
 
-                errors["quantite"] = "La quantité est réservée " "aux miniers."
+                errors["quantite"] = "La quantitÃ© est rÃ©servÃ©e " "aux miniers."
 
             if self.prix_unitaire and self.prix_unitaire > Decimal("0.00"):
 
-                errors["prix_unitaire"] = "Le prix unitaire est réservé " "aux miniers."
+                errors["prix_unitaire"] = "Le prix unitaire est rÃ©servÃ© " "aux miniers."
 
             if self.date_production:
 
                 errors["date_production"] = (
-                    "La date de production est " "réservée aux miniers."
+                    "La date de production est " "rÃ©servÃ©e aux miniers."
                 )
 
         # ========================================================
@@ -614,13 +612,13 @@ class PersonnelExecutionProjet(models.Model):
         elif self.type_class == "MINIER":
 
             # ----------------------------------------------------
-            # MATÉRIAU OBLIGATOIRE
+            # MATÃ‰RIAU OBLIGATOIRE
             # ----------------------------------------------------
 
             if not self.materiau_projet_id:
 
                 errors["materiau_projet"] = (
-                    "Le matériau est obligatoire " "pour un minier."
+                    "Le matÃ©riau est obligatoire " "pour un minier."
                 )
 
             # ----------------------------------------------------
@@ -630,20 +628,20 @@ class PersonnelExecutionProjet(models.Model):
             if self.point_projet_id:
 
                 errors["point_projet"] = (
-                    "Un minier ne peut pas être " "associé à un point du projet."
+                    "Un minier ne peut pas Ãªtre " "associÃ© Ã  un point du projet."
                 )
 
             # ----------------------------------------------------
-            # QUANTITÉ
+            # QUANTITÃ‰
             # ----------------------------------------------------
 
             if self.quantite is None:
 
-                errors["quantite"] = "La quantité est obligatoire " "pour un minier."
+                errors["quantite"] = "La quantitÃ© est obligatoire " "pour un minier."
 
             elif self.quantite <= Decimal("0.00"):
 
-                errors["quantite"] = "La quantité doit être " "supérieure à zéro."
+                errors["quantite"] = "La quantitÃ© doit Ãªtre " "supÃ©rieure Ã  zÃ©ro."
 
             # ----------------------------------------------------
             # PRIX UNITAIRE
@@ -658,7 +656,7 @@ class PersonnelExecutionProjet(models.Model):
             elif self.prix_unitaire <= Decimal("0.00"):
 
                 errors["prix_unitaire"] = (
-                    "Le prix unitaire doit être " "supérieur à zéro."
+                    "Le prix unitaire doit Ãªtre " "supÃ©rieur Ã  zÃ©ro."
                 )
 
             # ----------------------------------------------------
@@ -681,7 +679,7 @@ class PersonnelExecutionProjet(models.Model):
 
                     errors["date_production"] = (
                         "La date de production ne peut "
-                        "pas être antérieure au début "
+                        "pas Ãªtre antÃ©rieure au dÃ©but "
                         "du projet."
                     )
 
@@ -689,7 +687,7 @@ class PersonnelExecutionProjet(models.Model):
 
                     errors["date_production"] = (
                         "La date de production ne peut "
-                        "pas dépasser la fin du projet."
+                        "pas dÃ©passer la fin du projet."
                     )
 
             # ----------------------------------------------------
@@ -700,8 +698,8 @@ class PersonnelExecutionProjet(models.Model):
 
                 errors["montant"] = (
                     "Pour un minier, le montant est "
-                    "calculé automatiquement avec "
-                    "la quantité et le prix unitaire."
+                    "calculÃ© automatiquement avec "
+                    "la quantitÃ© et le prix unitaire."
                 )
 
         # ========================================================
@@ -717,41 +715,41 @@ class PersonnelExecutionProjet(models.Model):
 
                 errors["point_projet"] = (
                     "Ce type de personnel ne peut "
-                    "pas être associé à un point "
+                    "pas Ãªtre associÃ© Ã  un point "
                     "du projet."
                 )
 
             if self.materiau_projet_id:
 
                 errors["materiau_projet"] = (
-                    "Ce type de personnel ne peut " "pas être associé à un matériau."
+                    "Ce type de personnel ne peut " "pas Ãªtre associÃ© Ã  un matÃ©riau."
                 )
 
             if self.quantite and self.quantite > Decimal("0.00"):
 
                 errors["quantite"] = (
-                    "La quantité de production est " "réservée aux miniers."
+                    "La quantitÃ© de production est " "rÃ©servÃ©e aux miniers."
                 )
 
             if self.prix_unitaire and self.prix_unitaire > Decimal("0.00"):
 
-                errors["prix_unitaire"] = "Le prix unitaire est réservé " "aux miniers."
+                errors["prix_unitaire"] = "Le prix unitaire est rÃ©servÃ© " "aux miniers."
 
             if self.date_production:
 
                 errors["date_production"] = (
-                    "La date de production est " "réservée aux miniers."
+                    "La date de production est " "rÃ©servÃ©e aux miniers."
                 )
 
         # ========================================================
-        # VÉRIFICATION MATÉRIAU / PROJET
+        # VÃ‰RIFICATION MATÃ‰RIAU / PROJET
         # ========================================================
         #
         # IMPORTANT :
-        # MateriauProjet NE possède PAS de champ "actif".
+        # MateriauProjet NE possÃ¨de PAS de champ "actif".
         #
-        # On vérifie uniquement que le matériau appartient
-        # au même projet.
+        # On vÃ©rifie uniquement que le matÃ©riau appartient
+        # au mÃªme projet.
         #
 
         if self.materiau_projet_id and self.projet_id:
@@ -759,11 +757,11 @@ class PersonnelExecutionProjet(models.Model):
             if self.materiau_projet.projet_id != self.projet_id:
 
                 errors["materiau_projet"] = (
-                    "Le matériau sélectionné " "n'appartient pas à ce projet."
+                    "Le matÃ©riau sÃ©lectionnÃ© " "n'appartient pas Ã  ce projet."
                 )
 
         # ========================================================
-        # VÉRIFICATION POINT / PROJET
+        # VÃ‰RIFICATION POINT / PROJET
         # ========================================================
 
         if self.point_projet_id and self.projet_id:
@@ -771,13 +769,13 @@ class PersonnelExecutionProjet(models.Model):
             if self.point_projet.projet_id != self.projet_id:
 
                 errors["point_projet"] = (
-                    "Le point sélectionné " "n'appartient pas à ce projet."
+                    "Le point sÃ©lectionnÃ© " "n'appartient pas Ã  ce projet."
                 )
 
             elif not self.point_projet.actif:
 
                 errors["point_projet"] = (
-                    "Le point sélectionné " "n'est plus actif pour ce projet."
+                    "Le point sÃ©lectionnÃ© " "n'est plus actif pour ce projet."
                 )
 
         # ========================================================
@@ -793,13 +791,13 @@ class PersonnelExecutionProjet(models.Model):
 # ============================================================
 class EquipeProjet(models.Model):
     """
-    Affectation d'une personne à l'équipe du projet.
+    Affectation d'une personne Ã  l'Ã©quipe du projet.
     """
 
     FONCTION_CHOICES = [
         (
             "INGENIEUR",
-            "Ingénieur Responsable du Chantier",
+            "IngÃ©nieur Responsable du Chantier",
         ),
         (
             "CHEF_CHANTIER",
@@ -823,7 +821,7 @@ class EquipeProjet(models.Model):
         ),
         (
             "CHEF_EQUIPE",
-            "Chef d'équipe",
+            "Chef d'Ã©quipe",
         ),
         (
             "MINIER",
@@ -865,7 +863,7 @@ class EquipeProjet(models.Model):
         null=True,
         blank=True,
         related_name="affectations_equipe",
-        verbose_name="Personnel d'exécution du projet",
+        verbose_name="Personnel d'exÃ©cution du projet",
     )
 
     fonction = models.CharField(
@@ -875,7 +873,7 @@ class EquipeProjet(models.Model):
     )
 
     date_debut = models.DateField(
-        verbose_name="Début de l'affectation",
+        verbose_name="DÃ©but de l'affectation",
     )
 
     date_fin = models.DateField(
@@ -905,8 +903,8 @@ class EquipeProjet(models.Model):
             "projet",
             "fonction",
         ]
-        verbose_name = "Équipe de projet"
-        verbose_name_plural = "Équipe des projets"
+        verbose_name = "Ã‰quipe de projet"
+        verbose_name_plural = "Ã‰quipe des projets"
 
     def __str__(self):
 
@@ -917,7 +915,7 @@ class EquipeProjet(models.Model):
             personne = str(self.personnel)
 
         else:
-            personne = "Personne non définie"
+            personne = "Personne non dÃ©finie"
 
         return (
             f"{personne} - " f"{self.get_fonction_display()} - " f"{self.projet.titre}"
@@ -933,15 +931,15 @@ class EquipeProjet(models.Model):
         if not self.personnel_id and not self.personnel_execution_id:
 
             errors["personnel"] = (
-                "Sélectionnez soit un personnel de l'entreprise, "
-                "soit une personne inscrite pour l'exécution du projet."
+                "SÃ©lectionnez soit un personnel de l'entreprise, "
+                "soit une personne inscrite pour l'exÃ©cution du projet."
             )
 
         if self.personnel_id and self.personnel_execution_id:
 
             errors["personnel"] = (
-                "Une affectation ne peut pas avoir simultanément "
-                "un personnel entreprise et un personnel d'exécution."
+                "Une affectation ne peut pas avoir simultanÃ©ment "
+                "un personnel entreprise et un personnel d'exÃ©cution."
             )
 
         # ----------------------------------------------------
@@ -955,7 +953,7 @@ class EquipeProjet(models.Model):
             if personnel.typeTravail != "Construction":
 
                 errors["personnel"] = (
-                    "Le personnel affecté à un projet doit "
+                    "Le personnel affectÃ© Ã  un projet doit "
                     "appartenir au personnel Construction."
                 )
 
@@ -967,11 +965,11 @@ class EquipeProjet(models.Model):
             }:
                 errors["personnel"] = (
                     "Pour cette fonction, utilisez "
-                    "l'inscription du Personnel d'exécution du projet."
+                    "l'inscription du Personnel d'exÃ©cution du projet."
                 )
 
         # ----------------------------------------------------
-        # PERSONNEL D'EXÉCUTION
+        # PERSONNEL D'EXÃ‰CUTION
         # ----------------------------------------------------
 
         if self.personnel_execution_id:
@@ -981,7 +979,7 @@ class EquipeProjet(models.Model):
             if execution.projet_id != self.projet_id:
 
                 errors["personnel_execution"] = (
-                    "La personne inscrite doit appartenir " "au même projet."
+                    "La personne inscrite doit appartenir " "au mÃªme projet."
                 )
 
             # ------------------------------------------------
@@ -1015,8 +1013,8 @@ class EquipeProjet(models.Model):
             if self.date_fin < self.date_debut:
 
                 errors["date_fin"] = (
-                    "La fin de l'affectation doit être "
-                    "postérieure ou égale au début."
+                    "La fin de l'affectation doit Ãªtre "
+                    "postÃ©rieure ou Ã©gale au dÃ©but."
                 )
 
         # ----------------------------------------------------
@@ -1033,12 +1031,12 @@ class EquipeProjet(models.Model):
                 and self.date_debut < projet.date_debut
             ):
                 errors["date_debut"] = (
-                    "L'affectation ne peut pas commencer " "avant le début du projet."
+                    "L'affectation ne peut pas commencer " "avant le dÃ©but du projet."
                 )
 
             if self.date_fin and projet.date_fin and self.date_fin > projet.date_fin:
                 errors["date_fin"] = (
-                    "L'affectation ne peut pas dépasser " "la date de fin du projet."
+                    "L'affectation ne peut pas dÃ©passer " "la date de fin du projet."
                 )
 
         if errors:
@@ -1113,7 +1111,7 @@ class PointProjet(models.Model):
 
     travail_prevu = models.CharField(
         max_length=255,
-        verbose_name="Travail prévu",
+        verbose_name="Travail prÃ©vu",
     )
 
     observation = models.TextField(
@@ -1133,8 +1131,8 @@ class PointProjet(models.Model):
     enregistre_par = models.ForeignKey(
         AppUser,
         on_delete=models.PROTECT,
-        related_name="point_enregistré",
-        verbose_name="Enregistré par",
+        related_name="points_enregistres",
+        verbose_name="EnregistrÃ© par",
         null=True,
         blank=True,
     )
@@ -1167,7 +1165,7 @@ class PointProjet(models.Model):
         errors = {}
 
         if self.distance_km is not None and self.distance_km < Decimal("0.00"):
-            errors["distance_km"] = "La distance ne peut pas être négative."
+            errors["distance_km"] = "La distance ne peut pas Ãªtre nÃ©gative."
 
         if errors:
             raise ValidationError(errors)
@@ -1187,19 +1185,19 @@ class MateriauProjet(models.Model):
 
     materiau = models.CharField(
         max_length=150,
-        verbose_name="Matériau",
+        verbose_name="MatÃ©riau",
     )
 
     unite = models.CharField(
         max_length=50,
-        verbose_name="Unité",
+        verbose_name="UnitÃ©",
     )
 
     quantite_prevue = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Quantité prévue",
+        verbose_name="QuantitÃ© prÃ©vue",
     )
 
     created_at = models.DateTimeField(
@@ -1210,7 +1208,7 @@ class MateriauProjet(models.Model):
         AppUser,
         on_delete=models.PROTECT,
         related_name="materiaux_projet_enregistres",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
         null=True,
         blank=True,
     )
@@ -1235,8 +1233,8 @@ class MateriauProjet(models.Model):
             ),
         ]
 
-        verbose_name = "Matériau du projet"
-        verbose_name_plural = "Matériaux du projet"
+        verbose_name = "MatÃ©riau du projet"
+        verbose_name_plural = "MatÃ©riaux du projet"
 
     def __str__(self):
         return f"{self.materiau} - " f"{self.projet.titre}"
@@ -1245,21 +1243,21 @@ class MateriauProjet(models.Model):
         errors = {}
 
         if self.quantite_prevue is not None and self.quantite_prevue < Decimal("0.00"):
-            errors["quantite_prevue"] = "La quantité prévue ne peut pas être négative."
+            errors["quantite_prevue"] = "La quantitÃ© prÃ©vue ne peut pas Ãªtre nÃ©gative."
 
         if errors:
             raise ValidationError(errors)
 
 
 # ============================================================
-# ACHATS DE MATÉRIAUX DU PROJET
+# ACHATS DE MATÃ‰RIAUX DU PROJET
 # ============================================================
 class AchatMateriauProjet(models.Model):
     materiau_projet = models.ForeignKey(
         "MateriauProjet",
         on_delete=models.PROTECT,
         related_name="achats",
-        verbose_name="Matériau prévu",
+        verbose_name="MatÃ©riau prÃ©vu",
     )
     fournisseur = models.CharField(max_length=200, verbose_name="Fournisseur")
 
@@ -1270,7 +1268,7 @@ class AchatMateriauProjet(models.Model):
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
-        verbose_name="Quantité achetée",
+        verbose_name="QuantitÃ© achetÃ©e",
     )
     prix_unitaire = models.DecimalField(
         max_digits=14,
@@ -1290,11 +1288,11 @@ class AchatMateriauProjet(models.Model):
 
     class Meta:
         ordering = ["-date_achat", "-id"]
-        verbose_name = "Achat de matériau"
-        verbose_name_plural = "Achats de matériaux"
+        verbose_name = "Achat de matÃ©riau"
+        verbose_name_plural = "Achats de matÃ©riaux"
 
     def __str__(self):
-        return f"{self.materiau_projet.materiau} — {self.fournisseur}"
+        return f"{self.materiau_projet.materiau} â€” {self.fournisseur}"
 
     @property
     def montant_total(self):
@@ -1306,13 +1304,13 @@ class AchatMateriauProjet(models.Model):
             if not (projet.date_debut <= self.date_achat <= projet.date_fin):
                 raise ValidationError(
                     {
-                        "date_achat": "La date d'achat doit être comprise dans la période du projet."
+                        "date_achat": "La date d'achat doit Ãªtre comprise dans la pÃ©riode du projet."
                     }
                 )
 
 
 # ============================================================
-# RÉCEPTION DE MATÉRIAUX AU DÉPÔT OU SUR UN POINT DU CHANTIER
+# RÃ‰CEPTION DE MATÃ‰RIAUX AU DÃ‰PÃ”T OU SUR UN POINT DU CHANTIER
 # Le point indique le lieu. Aucun achat ni destination distincte.
 # ============================================================
 
@@ -1322,19 +1320,19 @@ class ReceptionMateriauProjet(models.Model):
         "MateriauProjet",
         on_delete=models.PROTECT,
         related_name="receptions",
-        verbose_name="Matériau",
+        verbose_name="MatÃ©riau",
     )
 
     date_reception = models.DateField(
         default=timezone.localdate,
-        verbose_name="Date de réception",
+        verbose_name="Date de rÃ©ception",
     )
 
     quantite_recue = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
-        verbose_name="Quantité reçue",
+        verbose_name="QuantitÃ© reÃ§ue",
     )
 
     point = models.ForeignKey(
@@ -1343,7 +1341,7 @@ class ReceptionMateriauProjet(models.Model):
         related_name="receptions_materiaux_projet",
         null=True,
         blank=True,
-        verbose_name="Point de réception / livraison",
+        verbose_name="Point de rÃ©ception / livraison",
     )
 
     piece_justificative = models.FileField(
@@ -1355,7 +1353,7 @@ class ReceptionMateriauProjet(models.Model):
         ],
         blank=True,
         null=True,
-        verbose_name="Pièce justificative",
+        verbose_name="PiÃ¨ce justificative",
     )
 
     observation = models.TextField(
@@ -1369,18 +1367,18 @@ class ReceptionMateriauProjet(models.Model):
         null=True,
         blank=True,
         related_name="receptions_materiaux_enregistrees",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-date_reception", "-id"]
-        verbose_name = "Réception de matériau"
-        verbose_name_plural = "Réceptions de matériaux"
+        verbose_name = "RÃ©ception de matÃ©riau"
+        verbose_name_plural = "RÃ©ceptions de matÃ©riaux"
 
     def __str__(self):
-        return f"{self.materiau_projet.materiau} — " f"{self.quantite_recue}"
+        return f"{self.materiau_projet.materiau} â€” " f"{self.quantite_recue}"
 
     def clean(self):
         errors = {}
@@ -1393,18 +1391,18 @@ class ReceptionMateriauProjet(models.Model):
 
             if date_debut and self.date_reception < date_debut:
                 errors["date_reception"] = (
-                    "La date ne peut pas précéder le début du projet."
+                    "La date ne peut pas prÃ©cÃ©der le dÃ©but du projet."
                 )
 
             if date_fin and self.date_reception > date_fin:
                 errors["date_reception"] = (
-                    "La date ne peut pas dépasser la fin du projet."
+                    "La date ne peut pas dÃ©passer la fin du projet."
                 )
 
         if self.point_id and self.materiau_projet_id:
             if self.point.projet_id != self.materiau_projet.projet_id:
                 errors["point"] = (
-                    "Le point doit appartenir au même projet que le matériau."
+                    "Le point doit appartenir au mÃªme projet que le matÃ©riau."
                 )
 
         if errors:
@@ -1412,14 +1410,14 @@ class ReceptionMateriauProjet(models.Model):
 
 
 # ============================================================
-# DISTRIBUTION DU DÉPÔT VERS UNE ÉQUIPE
+# DISTRIBUTION DU DÃ‰PÃ”T VERS UNE Ã‰QUIPE
 # ============================================================
 class DistributionMateriauProjet(models.Model):
     materiau_projet = models.ForeignKey(
         "MateriauProjet",
         on_delete=models.PROTECT,
         related_name="distributions",
-        verbose_name="Matériau",
+        verbose_name="MatÃ©riau",
     )
 
     vehicule = models.ForeignKey(
@@ -1428,8 +1426,8 @@ class DistributionMateriauProjet(models.Model):
         related_name="distributions_materiaux",
         null=True,
         blank=True,
-        verbose_name="Véhicule / Engin",
-        help_text="Facultatif : laisser vide si aucun véhicule n'est utilisé.",
+        verbose_name="VÃ©hicule / Engin",
+        help_text="Facultatif : laisser vide si aucun vÃ©hicule n'est utilisÃ©.",
     )
 
     point = models.ForeignKey(
@@ -1450,7 +1448,7 @@ class DistributionMateriauProjet(models.Model):
         validators=[
             MinValueValidator(Decimal("0.01")),
         ],
-        verbose_name="Quantité distribuée",
+        verbose_name="QuantitÃ© distribuÃ©e",
     )
 
     observation = models.TextField(
@@ -1470,13 +1468,13 @@ class DistributionMateriauProjet(models.Model):
 
     class Meta:
         ordering = ["-date_distribution", "-id"]
-        verbose_name = "Distribution de matériau"
-        verbose_name_plural = "Distributions de matériaux"
+        verbose_name = "Distribution de matÃ©riau"
+        verbose_name_plural = "Distributions de matÃ©riaux"
 
     def __str__(self):
         return (
-            f"{self.materiau_projet.materiau} — "
-            f"{self.quantite} {self.materiau_projet.unite} — "
+            f"{self.materiau_projet.materiau} â€” "
+            f"{self.quantite} {self.materiau_projet.unite} â€” "
             f"{self.point}"
         )
 
@@ -1486,14 +1484,14 @@ class DistributionMateriauProjet(models.Model):
         if self.materiau_projet_id and self.point_id:
             if self.materiau_projet.projet_id != self.point.projet_id:
                 errors["point"] = (
-                    "Le point doit appartenir au même projet " "que le matériau."
+                    "Le point doit appartenir au mÃªme projet " "que le matÃ©riau."
                 )
 
         if self.vehicule_id and self.materiau_projet_id:
             if self.vehicule.projet_id != self.materiau_projet.projet_id:
                 errors["vehicule"] = (
-                    "Le véhicule ou l'engin doit être affecté "
-                    "au même projet que le matériau."
+                    "Le vÃ©hicule ou l'engin doit Ãªtre affectÃ© "
+                    "au mÃªme projet que le matÃ©riau."
                 )
 
         if errors:
@@ -1501,10 +1499,8 @@ class DistributionMateriauProjet(models.Model):
 
 
 # ============================================================
-# CONSOMMATION DE MATÉRIAUX
+# CONSOMMATION DE MATÃ‰RIAUX
 # ============================================================
-
-
 class ConsommationMateriauProjet(models.Model):
     distribution = models.ForeignKey(
         "DistributionMateriauProjet",
@@ -1512,7 +1508,7 @@ class ConsommationMateriauProjet(models.Model):
         related_name="consommations",
         null=True,
         blank=True,
-        verbose_name="Distribution du dépôt",
+        verbose_name="Distribution du dÃ©pÃ´t",
     )
 
     reception_directe = models.ForeignKey(
@@ -1521,7 +1517,7 @@ class ConsommationMateriauProjet(models.Model):
         related_name="consommations_directes",
         null=True,
         blank=True,
-        verbose_name="Réception directe",
+        verbose_name="RÃ©ception directe",
     )
 
     date_consommation = models.DateField(
@@ -1533,7 +1529,7 @@ class ConsommationMateriauProjet(models.Model):
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
-        verbose_name="Quantité utilisée",
+        verbose_name="QuantitÃ© utilisÃ©e",
     )
 
     observation = models.TextField(
@@ -1551,8 +1547,8 @@ class ConsommationMateriauProjet(models.Model):
 
     class Meta:
         ordering = ["-date_consommation", "-id"]
-        verbose_name = "Consommation de matériau"
-        verbose_name_plural = "Consommations de matériaux"
+        verbose_name = "Consommation de matÃ©riau"
+        verbose_name_plural = "Consommations de matÃ©riaux"
 
     def clean(self):
         super().clean()
@@ -1562,38 +1558,38 @@ class ConsommationMateriauProjet(models.Model):
         # Une consommation ne peut pas provenir des deux sources.
         if self.distribution_id and self.reception_directe_id:
             errors["__all__"] = (
-                "Choisissez une seule source : distribution " "ou réception directe."
+                "Choisissez une seule source : distribution " "ou rÃ©ception directe."
             )
 
-        # Vérification de la distribution.
+        # VÃ©rification de la distribution.
         if self.distribution_id:
             distribution = self.distribution
 
             if not distribution.materiau_projet_id:
                 errors["__all__"] = (
-                    "La distribution ne possède pas de matériau associé."
+                    "La distribution ne possÃ¨de pas de matÃ©riau associÃ©."
                 )
 
             if not distribution.point_id:
                 errors["__all__"] = (
-                    "La distribution ne possède pas de point de stockage."
+                    "La distribution ne possÃ¨de pas de point de stockage."
                 )
 
-        # Vérification de la réception directe.
+        # VÃ©rification de la rÃ©ception directe.
         if self.reception_directe_id:
             reception = self.reception_directe
 
             if not reception.point_id:
                 errors["__all__"] = (
-                    "La réception directe ne possède pas de point de stockage."
+                    "La rÃ©ception directe ne possÃ¨de pas de point de stockage."
                 )
 
-        # Vérification de la quantité.
+        # VÃ©rification de la quantitÃ©.
         if self.quantite_utilisee is not None and self.quantite_utilisee <= Decimal(
             "0"
         ):
             errors["quantite_utilisee"] = (
-                "La quantité utilisée doit être supérieure à zéro."
+                "La quantitÃ© utilisÃ©e doit Ãªtre supÃ©rieure Ã  zÃ©ro."
             )
 
         if errors:
@@ -1603,18 +1599,18 @@ class ConsommationMateriauProjet(models.Model):
         if self.distribution_id:
             source = f"Distribution : {self.distribution}"
         elif self.reception_directe_id:
-            source = f"Réception directe : {self.reception_directe}"
+            source = f"RÃ©ception directe : {self.reception_directe}"
         else:
-            source = "Source non définie"
+            source = "Source non dÃ©finie"
 
         return (
-            f"Consommation du {self.date_consommation} — "
-            f"{self.quantite_utilisee} — {source}"
+            f"Consommation du {self.date_consommation} â€” "
+            f"{self.quantite_utilisee} â€” {source}"
         )
 
 
 # ============================================================
-# RETOUR DE MATÉRIAUX NON UTILISÉS
+# RETOUR DE MATÃ‰RIAUX NON UTILISÃ‰S
 # ============================================================
 
 
@@ -1625,7 +1621,7 @@ class RetourMateriauProjet(models.Model):
         related_name="retours",
         null=True,
         blank=True,
-        verbose_name="Distribution du dépôt",
+        verbose_name="Distribution du dÃ©pÃ´t",
     )
 
     reception_directe = models.ForeignKey(
@@ -1634,7 +1630,7 @@ class RetourMateriauProjet(models.Model):
         related_name="retours_directs",
         null=True,
         blank=True,
-        verbose_name="Réception directe",
+        verbose_name="RÃ©ception directe",
     )
 
     date_retour = models.DateField(
@@ -1646,7 +1642,7 @@ class RetourMateriauProjet(models.Model):
         max_digits=12,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
-        verbose_name="Quantité retournée",
+        verbose_name="QuantitÃ© retournÃ©e",
     )
 
     observation = models.TextField(
@@ -1666,24 +1662,24 @@ class RetourMateriauProjet(models.Model):
 
     class Meta:
         ordering = ["-date_retour", "-id"]
-        verbose_name = "Retour de matériau"
-        verbose_name_plural = "Retours de matériaux"
+        verbose_name = "Retour de matÃ©riau"
+        verbose_name_plural = "Retours de matÃ©riaux"
 
     def clean(self):
         errors = {}
 
-        # Une distribution et une réception directe ne peuvent
-        # pas être renseignées simultanément.
+        # Une distribution et une rÃ©ception directe ne peuvent
+        # pas Ãªtre renseignÃ©es simultanÃ©ment.
         if self.distribution_id and self.reception_directe_id:
             errors["__all__"] = (
-                "Sélectionnez une distribution ou une réception directe, "
+                "SÃ©lectionnez une distribution ou une rÃ©ception directe, "
                 "mais pas les deux."
             )
 
-        # Une réception directe doit obligatoirement être associée
-        # à un point du projet.
+        # Une rÃ©ception directe doit obligatoirement Ãªtre associÃ©e
+        # Ã  un point du projet.
         if self.reception_directe_id and self.reception_directe.point_id is None:
-            errors["__all__"] = "La réception sélectionnée n'a pas de point associé."
+            errors["__all__"] = "La rÃ©ception sÃ©lectionnÃ©e n'a pas de point associÃ©."
 
         if errors:
             raise ValidationError(errors)
@@ -1694,13 +1690,13 @@ class RetourMateriauProjet(models.Model):
         elif self.reception_directe_id:
             source = str(self.reception_directe)
         else:
-            source = "Source non définie"
+            source = "Source non dÃ©finie"
 
-        return f"Retour du {self.date_retour} — " f"{self.quantite} — {source}"
+        return f"Retour du {self.date_retour} â€” " f"{self.quantite} â€” {source}"
 
 
 # ============================================================
-# RAPPORT DE L'INGÉNIEUR
+# RAPPORT DE L'INGÃ‰NIEUR
 # ============================================================
 
 
@@ -1739,12 +1735,12 @@ class RapportProjet(models.Model):
 
     travaux_realises = models.TextField(
         blank=True,
-        verbose_name="Travaux réalisés",
+        verbose_name="Travaux rÃ©alisÃ©s",
     )
 
     difficultes = models.TextField(
         blank=True,
-        verbose_name="Difficultés rencontrées",
+        verbose_name="DifficultÃ©s rencontrÃ©es",
     )
 
     actions_planifiees = models.TextField(
@@ -1783,7 +1779,7 @@ class RapportProjet(models.Model):
 
             if self.avancement < Decimal("0.00") or self.avancement > Decimal("100.00"):
                 errors["avancement"] = (
-                    "L'avancement doit être compris " "entre 0 et 100 %."
+                    "L'avancement doit Ãªtre compris " "entre 0 et 100 %."
                 )
 
         if self.projet_id and self.date_rapport:
@@ -1793,13 +1789,13 @@ class RapportProjet(models.Model):
             if self.date_rapport < projet.date_debut:
 
                 errors["date_rapport"] = (
-                    "La date du rapport ne peut pas " "être avant le début du projet."
+                    "La date du rapport ne peut pas " "Ãªtre avant le dÃ©but du projet."
                 )
 
             elif self.date_rapport > projet.date_fin:
 
                 errors["date_rapport"] = (
-                    "La date du rapport ne peut pas " "dépasser la fin du projet."
+                    "La date du rapport ne peut pas " "dÃ©passer la fin du projet."
                 )
 
         if self.auteur_id:
@@ -1856,7 +1852,7 @@ class RapportTravail(models.Model):
     )
 
     date_debut = models.DateField(
-        verbose_name="Date de début",
+        verbose_name="Date de dÃ©but",
     )
 
     date_fin = models.DateField(
@@ -1906,7 +1902,7 @@ class RapportTravail(models.Model):
 
         if self.date_debut and self.date_fin and self.date_fin < self.date_debut:
             errors["date_fin"] = (
-                "La date de fin doit être " "postérieure ou égale à la date de début."
+                "La date de fin doit Ãªtre " "postÃ©rieure ou Ã©gale Ã  la date de dÃ©but."
             )
 
         if self.projet_id:
@@ -1915,19 +1911,19 @@ class RapportTravail(models.Model):
 
             if self.date_debut and self.date_debut < projet.date_debut:
                 errors["date_debut"] = (
-                    "La date de début du travail " "ne peut pas être avant le projet."
+                    "La date de dÃ©but du travail " "ne peut pas Ãªtre avant le projet."
                 )
 
             if self.date_fin and self.date_fin > projet.date_fin:
                 errors["date_fin"] = (
-                    "La date de fin du travail " "ne peut pas dépasser le projet."
+                    "La date de fin du travail " "ne peut pas dÃ©passer le projet."
                 )
 
         if self.point_id and self.projet_id:
 
             if self.point.projet_id != self.projet_id:
                 errors["point"] = (
-                    "Le point sélectionné " "n'appartient pas à ce projet."
+                    "Le point sÃ©lectionnÃ© " "n'appartient pas Ã  ce projet."
                 )
 
         if self.auteur_id:
@@ -1942,7 +1938,7 @@ class RapportTravail(models.Model):
 
 
 # ============================================================
-# RAPPORT MATÉRIAUX
+# RAPPORT MATÃ‰RIAUX
 # ============================================================
 
 
@@ -1968,7 +1964,7 @@ class RapportMateriau(models.Model):
         "materiaux.Materiaux",
         on_delete=models.PROTECT,
         related_name="rapports_projets",
-        verbose_name="Matériau",
+        verbose_name="MatÃ©riau",
     )
 
     auteur = models.ForeignKey(
@@ -1981,7 +1977,7 @@ class RapportMateriau(models.Model):
     quantite = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        verbose_name="Quantité",
+        verbose_name="QuantitÃ©",
     )
 
     point_ravitaillement = models.CharField(
@@ -2011,8 +2007,8 @@ class RapportMateriau(models.Model):
             "-date_ravitaillement",
             "-id",
         ]
-        verbose_name = "Rapport matériau"
-        verbose_name_plural = "Rapports matériaux"
+        verbose_name = "Rapport matÃ©riau"
+        verbose_name_plural = "Rapports matÃ©riaux"
 
     def __str__(self):
         return f"{self.materiau} - " f"{self.quantite} - " f"{self.projet.titre}"
@@ -2021,13 +2017,13 @@ class RapportMateriau(models.Model):
         errors = {}
 
         if self.quantite is not None and self.quantite <= Decimal("0.00"):
-            errors["quantite"] = "La quantité doit être supérieure à zéro."
+            errors["quantite"] = "La quantitÃ© doit Ãªtre supÃ©rieure Ã  zÃ©ro."
 
         if self.projet_id and self.point_id:
 
             if self.point.projet_id != self.projet_id:
                 errors["point"] = (
-                    "Le point sélectionné " "n'appartient pas à ce projet."
+                    "Le point sÃ©lectionnÃ© " "n'appartient pas Ã  ce projet."
                 )
 
         if self.projet_id and self.date_ravitaillement:
@@ -2037,13 +2033,13 @@ class RapportMateriau(models.Model):
             if self.date_ravitaillement < projet.date_debut:
                 errors["date_ravitaillement"] = (
                     "La date de ravitaillement "
-                    "ne peut pas être avant le début du projet."
+                    "ne peut pas Ãªtre avant le dÃ©but du projet."
                 )
 
             elif self.date_ravitaillement > projet.date_fin:
                 errors["date_ravitaillement"] = (
                     "La date de ravitaillement "
-                    "ne peut pas dépasser la fin du projet."
+                    "ne peut pas dÃ©passer la fin du projet."
                 )
 
         if self.auteur_id:
@@ -2058,7 +2054,7 @@ class RapportMateriau(models.Model):
 
 
 # ============================================================
-# ENGIN AFFECTÉ AU PROJET
+# ENGIN AFFECTÃ‰ AU PROJET
 # ============================================================
 class EnginProjet(models.Model):
 
@@ -2084,7 +2080,7 @@ class EnginProjet(models.Model):
     )
 
     date_debut = models.DateField(
-        verbose_name="Début de l'affectation",
+        verbose_name="DÃ©but de l'affectation",
     )
 
     date_fin = models.DateField(
@@ -2135,8 +2131,8 @@ class EnginProjet(models.Model):
             ),
         ]
 
-        verbose_name = "Engin affecté au projet"
-        verbose_name_plural = "Engins affectés aux projets"
+        verbose_name = "Engin affectÃ© au projet"
+        verbose_name_plural = "Engins affectÃ©s aux projets"
 
     def __str__(self):
         conducteur = str(self.conducteur) if self.conducteur_id else "Sans conducteur"
@@ -2152,12 +2148,12 @@ class EnginProjet(models.Model):
         if self.date_debut and self.date_fin:
             if self.date_fin < self.date_debut:
                 errors["date_fin"] = (
-                    "La date de fin doit être postérieure "
-                    "ou égale à la date de début."
+                    "La date de fin doit Ãªtre postÃ©rieure "
+                    "ou Ã©gale Ã  la date de dÃ©but."
                 )
 
         # ----------------------------------------------------
-        # PÉRIODE DU PROJET
+        # PÃ‰RIODE DU PROJET
         # ----------------------------------------------------
         if self.projet_id:
             projet = self.projet
@@ -2168,17 +2164,17 @@ class EnginProjet(models.Model):
                 and self.date_debut < projet.date_debut
             ):
                 errors["date_debut"] = (
-                    "L'affectation ne peut pas commencer " "avant le début du projet."
+                    "L'affectation ne peut pas commencer " "avant le dÃ©but du projet."
                 )
 
             if self.date_fin and projet.date_fin and self.date_fin > projet.date_fin:
                 errors["date_fin"] = (
-                    "L'affectation ne peut pas dépasser " "la date de fin du projet."
+                    "L'affectation ne peut pas dÃ©passer " "la date de fin du projet."
                 )
 
                 # ----------------------------------------------------
         # COMPTEUR D'HEURES
-        # Le compteur initial doit être supérieur ou égal
+        # Le compteur initial doit Ãªtre supÃ©rieur ou Ã©gal
         # au compteur final.
         # ----------------------------------------------------
 
@@ -2186,12 +2182,12 @@ class EnginProjet(models.Model):
             "0.00"
         ):
             errors["heures_initiales"] = (
-                "Les heures initiales ne peuvent pas être négatives."
+                "Les heures initiales ne peuvent pas Ãªtre nÃ©gatives."
             )
 
         if self.heures_finales is not None and self.heures_finales < Decimal("0.00"):
             errors["heures_finales"] = (
-                "Les heures finales ne peuvent pas être négatives."
+                "Les heures finales ne peuvent pas Ãªtre nÃ©gatives."
             )
 
         if (
@@ -2200,7 +2196,7 @@ class EnginProjet(models.Model):
             and self.heures_initiales < self.heures_finales
         ):
             errors["heures_finales"] = (
-                "Le compteur initial doit être supérieur " "ou égal au compteur final."
+                "Le compteur initial doit Ãªtre supÃ©rieur " "ou Ã©gal au compteur final."
             )
 
         # ----------------------------------------------------
@@ -2211,7 +2207,7 @@ class EnginProjet(models.Model):
             and self.consommation_heure_litre < Decimal("0.00")
         ):
             errors["consommation_heure_litre"] = (
-                "La consommation ne peut pas être négative."
+                "La consommation ne peut pas Ãªtre nÃ©gative."
             )
 
         if errors:
@@ -2264,21 +2260,13 @@ class EnginProjet(models.Model):
 
 
 # ============================================================
-# VÉHICULE / ENGIN AFFECTÉ AU PROJET
+# VÃ‰HICULE / ENGIN AFFECTÃ‰ AU PROJET
 # ============================================================
 
-
 class VehiculeProjet(models.Model):
-
     TYPE_VEHICULE_CHOICES = [
-        (
-            "ROUTIER",
-            "Véhicule routier",
-        ),
-        (
-            "ENGIN",
-            "Engin de chantier",
-        ),
+        ("ROUTIER", "VÃ©hicule routier"),
+        ("ENGIN", "Engin de chantier"),
     ]
 
     projet = models.ForeignKey(
@@ -2290,7 +2278,7 @@ class VehiculeProjet(models.Model):
 
     vehicule = models.CharField(
         max_length=30,
-        verbose_name="Véhicule / Engin",
+        verbose_name="VÃ©hicule / Engin",
     )
 
     type_vehicule = models.CharField(
@@ -2303,14 +2291,14 @@ class VehiculeProjet(models.Model):
     chauffeur = models.ForeignKey(
         Personnel,
         on_delete=models.PROTECT,
-        related_name="affectations_vehicules_projets",
+        related_name="affectations_vehicules_galaxy",
         verbose_name="Conducteur / Chauffeur",
         null=True,
         blank=True,
     )
 
     date_debut = models.DateField(
-        verbose_name="Début de l'affectation",
+        verbose_name="DÃ©but de l'affectation",
     )
 
     date_fin = models.DateField(
@@ -2321,14 +2309,14 @@ class VehiculeProjet(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Kilométrage initial",
+        verbose_name="KilomÃ©trage initial",
     )
 
     kilometrage_final = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Kilométrage final",
+        verbose_name="KilomÃ©trage final",
     )
 
     consommation_km_litre = models.DecimalField(
@@ -2369,102 +2357,99 @@ class VehiculeProjet(models.Model):
         verbose_name="Observation",
     )
 
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    updated_at = models.DateTimeField(
-        auto_now=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = [
-            "-date_debut",
-            "-id",
-        ]
-
+        ordering = ["-date_debut", "-id"]
         constraints = [
             models.UniqueConstraint(
-                fields=[
-                    "projet",
-                    "vehicule",
-                ],
-                name="unique_vehicule_projet",
+                fields=["projet", "vehicule"],
+                name="unique_vehicule_projet_galaxy",
             ),
         ]
-
-        verbose_name = "Véhicule / Engin affecté au projet"
-        verbose_name_plural = "Véhicules / Engins affectés aux projets"
+        verbose_name = "VÃ©hicule / Engin affectÃ© au projet"
+        verbose_name_plural = "VÃ©hicules / Engins affectÃ©s aux projets"
 
     def __str__(self):
-
-        chauffeur = str(self.chauffeur) if self.chauffeur_id else "Sans chauffeur"
-
-        return f"{self.vehicule} - " f"{self.projet.titre} - " f"{chauffeur}"
+        chauffeur = (
+            str(self.chauffeur)
+            if self.chauffeur_id
+            else "Sans chauffeur"
+        )
+        return f"{self.vehicule} - {self.projet.titre} - {chauffeur}"
 
     def clean(self):
-
+        super().clean()
         errors = {}
 
-        if self.date_debut and self.date_fin and self.date_fin < self.date_debut:
+        if (
+            self.date_debut
+            and self.date_fin
+            and self.date_fin < self.date_debut
+        ):
             errors["date_fin"] = (
-                "La fin de l'affectation doit être " "postérieure ou égale au début."
+                "La fin de l'affectation doit Ãªtre postÃ©rieure "
+                "ou Ã©gale au dÃ©but."
             )
 
         if self.projet_id:
-
             projet = self.projet
 
             if self.date_debut and self.date_debut < projet.date_debut:
                 errors["date_debut"] = (
-                    "L'affectation du véhicule ne peut pas "
-                    "commencer avant le début du projet."
+                    "L'affectation du vÃ©hicule ne peut pas "
+                    "commencer avant le dÃ©but du projet."
                 )
 
             if self.date_fin and self.date_fin > projet.date_fin:
                 errors["date_fin"] = (
-                    "L'affectation du véhicule ne peut pas "
-                    "dépasser la date de fin du projet."
+                    "L'affectation du vÃ©hicule ne peut pas dÃ©passer "
+                    "la date de fin du projet."
                 )
 
-        # ----------------------------------------------------
-        # KILOMÉTRAGE
-        # ----------------------------------------------------
+        if self.kilometrage_initial is not None:
+            if self.kilometrage_initial < Decimal("0.00"):
+                errors["kilometrage_initial"] = (
+                    "Le kilomÃ©trage initial ne peut pas Ãªtre nÃ©gatif."
+                )
 
-        if self.kilometrage_initial < Decimal("0.00"):
-            errors["kilometrage_initial"] = (
-                "Le kilométrage initial ne peut pas être négatif."
-            )
+        if self.kilometrage_final is not None:
+            if self.kilometrage_final < Decimal("0.00"):
+                errors["kilometrage_final"] = (
+                    "Le kilomÃ©trage final ne peut pas Ãªtre nÃ©gatif."
+                )
 
-        if self.kilometrage_final < Decimal("0.00"):
+        if (
+            self.kilometrage_initial is not None
+            and self.kilometrage_final is not None
+            and self.kilometrage_final < self.kilometrage_initial
+        ):
             errors["kilometrage_final"] = (
-                "Le kilométrage final ne peut pas être négatif."
+                "Le kilomÃ©trage final doit Ãªtre supÃ©rieur "
+                "ou Ã©gal au kilomÃ©trage initial."
             )
 
-        if self.kilometrage_final < self.kilometrage_initial:
-            errors["kilometrage_final"] = (
-                "Le kilométrage final doit être supérieur "
-                "ou égal au kilométrage initial."
-            )
+        if self.heures_initiales is not None:
+            if self.heures_initiales < Decimal("0.00"):
+                errors["heures_initiales"] = (
+                    "Les heures initiales ne peuvent pas Ãªtre nÃ©gatives."
+                )
 
-        # ----------------------------------------------------
-        # HEURES
-        # ----------------------------------------------------
+        if self.heures_finales is not None:
+            if self.heures_finales < Decimal("0.00"):
+                errors["heures_finales"] = (
+                    "Les heures finales ne peuvent pas Ãªtre nÃ©gatives."
+                )
 
-        if self.heures_initiales < Decimal("0.00"):
-            errors["heures_initiales"] = (
-                "Les heures initiales ne peuvent pas être négatives."
-            )
-
-        if self.heures_finales < Decimal("0.00"):
+        if (
+            self.heures_initiales is not None
+            and self.heures_finales is not None
+            and self.heures_finales < self.heures_initiales
+        ):
             errors["heures_finales"] = (
-                "Les heures finales ne peuvent pas être négatives."
-            )
-
-        if self.heures_finales < self.heures_initiales:
-            errors["heures_finales"] = (
-                "Les heures finales doivent être supérieures "
-                "ou égales aux heures initiales."
+                "Les heures finales doivent Ãªtre supÃ©rieures "
+                "ou Ã©gales aux heures initiales."
             )
 
         if errors:
@@ -2472,28 +2457,20 @@ class VehiculeProjet(models.Model):
 
     @property
     def acces_actif(self):
-
-        if not self.actif:
-            return False
-
-        if not self.date_debut or not self.date_fin:
+        if not self.actif or not self.date_debut or not self.date_fin:
             return False
 
         aujourd_hui = timezone.localdate()
-
         return self.date_debut <= aujourd_hui <= self.date_fin
 
     @property
     def periode_terminee(self):
-
         if not self.date_fin:
             return False
-
         return timezone.localdate() > self.date_fin
 
     @property
     def kilometres_parcourus(self):
-
         if self.type_vehicule == "ENGIN":
             return Decimal("0.00")
 
@@ -2504,7 +2481,6 @@ class VehiculeProjet(models.Model):
 
     @property
     def heures_travail(self):
-
         if self.type_vehicule != "ENGIN":
             return Decimal("0.00")
 
@@ -2515,47 +2491,35 @@ class VehiculeProjet(models.Model):
 
     @property
     def carburant_estime(self):
-
         if self.type_vehicule == "ENGIN":
-
-            if (
-                not self.consommation_heure_litre
-                or self.consommation_heure_litre <= Decimal("0.00")
-            ):
+            consommation = self.consommation_heure_litre
+            if not consommation or consommation <= Decimal("0.00"):
                 return Decimal("0.00")
 
-            return (self.heures_travail * self.consommation_heure_litre).quantize(
-                Decimal("0.01")
-            )
+            return (
+                self.heures_travail * consommation
+            ).quantize(Decimal("0.01"))
 
-        if not self.consommation_km_litre or self.consommation_km_litre <= Decimal(
-            "0.00"
-        ):
+        consommation = self.consommation_km_litre
+        if not consommation or consommation <= Decimal("0.00"):
             return Decimal("0.00")
 
-        return (self.kilometres_parcourus / self.consommation_km_litre).quantize(
-            Decimal("0.01")
-        )
+        return (
+            self.kilometres_parcourus / consommation
+        ).quantize(Decimal("0.01"))
 
     @property
     def unite_travail(self):
-
-        if self.type_vehicule == "ENGIN":
-            return "heures"
-
-        return "km"
+        return "heures" if self.type_vehicule == "ENGIN" else "km"
 
     @property
     def travail_total(self):
-
         if self.type_vehicule == "ENGIN":
             return self.heures_travail
-
         return self.kilometres_parcourus
 
-
 class MouvementVehiculeProjet(models.Model):
-    """Rapport de déplacement d'un véhicule ou d'un engin de chantier."""
+    """Rapport de dÃ©placement d'un vÃ©hicule ou d'un engin de chantier."""
 
     vehicule_projet = models.ForeignKey(
         "projet.VehiculeProjet",
@@ -2563,7 +2527,7 @@ class MouvementVehiculeProjet(models.Model):
         related_name="mouvements",
         null=True,
         blank=True,
-        verbose_name="Véhicule routier",
+        verbose_name="VÃ©hicule routier",
     )
 
     engin_projet = models.ForeignKey(
@@ -2583,13 +2547,13 @@ class MouvementVehiculeProjet(models.Model):
     heure_depart = models.TimeField(
         null=True,
         blank=True,
-        verbose_name="Heure de départ",
+        verbose_name="Heure de dÃ©part",
     )
 
     heure_arrivee = models.TimeField(
         null=True,
         blank=True,
-        verbose_name="Heure d'arrivée",
+        verbose_name="Heure d'arrivÃ©e",
     )
 
     point_depart = models.ForeignKey(
@@ -2598,7 +2562,7 @@ class MouvementVehiculeProjet(models.Model):
         related_name="mouvements_vehicules_depart",
         null=True,
         blank=True,
-        verbose_name="Lieu de départ",
+        verbose_name="Lieu de dÃ©part",
     )
 
     point_arrivee = models.ForeignKey(
@@ -2611,26 +2575,26 @@ class MouvementVehiculeProjet(models.Model):
     )
 
     # --------------------------------------------------------
-    # COMPTEURS KILOMÉTRIQUES : VÉHICULE ROUTIER
+    # COMPTEURS KILOMÃ‰TRIQUES : VÃ‰HICULE ROUTIER
     # --------------------------------------------------------
 
     kilometrage_initial = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Kilométrage initial (km)",
+        verbose_name="KilomÃ©trage initial (km)",
     )
 
     kilometrage_final = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Kilométrage final (km)",
+        verbose_name="KilomÃ©trage final (km)",
     )
 
     # --------------------------------------------------------
     # COMPTEURS HORAIRES : ENGIN
-    # Le compteur final doit être inférieur ou égal à l'initial.
+    # Le compteur final doit Ãªtre infÃ©rieur ou Ã©gal Ã  l'initial.
     # --------------------------------------------------------
 
     heures_initiales = models.DecimalField(
@@ -2655,7 +2619,7 @@ class MouvementVehiculeProjet(models.Model):
         max_digits=10,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Carburant consommé (litres)",
+        verbose_name="Carburant consommÃ© (litres)",
     )
 
     observation = models.TextField(
@@ -2672,13 +2636,13 @@ class MouvementVehiculeProjet(models.Model):
         null=True,
         blank=True,
         related_name="mouvements_vehicules_enregistres",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     class Meta:
         ordering = ["-date_mouvement", "-id"]
-        verbose_name = "Mouvement véhicule / engin"
-        verbose_name_plural = "Mouvements véhicules / engins"
+        verbose_name = "Mouvement vÃ©hicule / engin"
+        verbose_name_plural = "Mouvements vÃ©hicules / engins"
 
     def __str__(self):
         if self.engin_projet_id:
@@ -2686,12 +2650,12 @@ class MouvementVehiculeProjet(models.Model):
         elif self.vehicule_projet_id:
             materiel = str(self.vehicule_projet)
         else:
-            materiel = "Matériel non défini"
+            materiel = "MatÃ©riel non dÃ©fini"
 
         return f"{materiel} - {self.date_mouvement:%d/%m/%Y}"
 
     # --------------------------------------------------------
-    # TYPE DE MATÉRIEL
+    # TYPE DE MATÃ‰RIEL
     # --------------------------------------------------------
 
     @property
@@ -2706,7 +2670,7 @@ class MouvementVehiculeProjet(models.Model):
 
     @property
     def materiel(self):
-        """Retourne le véhicule ou l'engin concerné."""
+        """Retourne le vÃ©hicule ou l'engin concernÃ©."""
         return self.engin_projet or self.vehicule_projet
 
     @property
@@ -2717,7 +2681,7 @@ class MouvementVehiculeProjet(models.Model):
         if self.vehicule_projet_id:
             return str(self.vehicule_projet)
 
-        return "Matériel non défini"
+        return "MatÃ©riel non dÃ©fini"
 
     # --------------------------------------------------------
     # DISTANCE PARCOURUE
@@ -2748,7 +2712,7 @@ class MouvementVehiculeProjet(models.Model):
         return max(Decimal("0.00"), initial - final)
 
     # --------------------------------------------------------
-    # DURÉE DU DÉPLACEMENT
+    # DURÃ‰E DU DÃ‰PLACEMENT
     # --------------------------------------------------------
 
     @property
@@ -2768,7 +2732,7 @@ class MouvementVehiculeProjet(models.Model):
             + self.heure_arrivee.second / 60
         )
 
-        # Arrivée le lendemain si elle est après minuit.
+        # ArrivÃ©e le lendemain si elle est aprÃ¨s minuit.
         if arrivee < depart:
             arrivee += 24 * 60
 
@@ -2806,23 +2770,23 @@ class MouvementVehiculeProjet(models.Model):
 
         erreurs = {}
 
-        # Un seul matériel doit être sélectionné.
+        # Un seul matÃ©riel doit Ãªtre sÃ©lectionnÃ©.
         if bool(self.vehicule_projet_id) == bool(self.engin_projet_id):
             erreurs["vehicule_projet"] = (
-                "Sélectionnez un véhicule routier ou un engin, " "mais pas les deux."
+                "SÃ©lectionnez un vÃ©hicule routier ou un engin, " "mais pas les deux."
             )
 
-        # Kilométrage.
+        # KilomÃ©trage.
         if self.kilometrage_initial is not None:
             if self.kilometrage_initial < 0:
                 erreurs["kilometrage_initial"] = (
-                    "Le kilométrage initial ne peut pas être négatif."
+                    "Le kilomÃ©trage initial ne peut pas Ãªtre nÃ©gatif."
                 )
 
         if self.kilometrage_final is not None:
             if self.kilometrage_final < 0:
                 erreurs["kilometrage_final"] = (
-                    "Le kilométrage final ne peut pas être négatif."
+                    "Le kilomÃ©trage final ne peut pas Ãªtre nÃ©gatif."
                 )
 
         if (
@@ -2831,21 +2795,21 @@ class MouvementVehiculeProjet(models.Model):
             and self.kilometrage_final < self.kilometrage_initial
         ):
             erreurs["kilometrage_final"] = (
-                "Le kilométrage final doit être supérieur ou égal "
-                "au kilométrage initial."
+                "Le kilomÃ©trage final doit Ãªtre supÃ©rieur ou Ã©gal "
+                "au kilomÃ©trage initial."
             )
 
         # Compteurs horaires.
         if self.heures_initiales is not None:
             if self.heures_initiales < 0:
                 erreurs["heures_initiales"] = (
-                    "Le compteur horaire initial ne peut pas être négatif."
+                    "Le compteur horaire initial ne peut pas Ãªtre nÃ©gatif."
                 )
 
         if self.heures_finales is not None:
             if self.heures_finales < 0:
                 erreurs["heures_finales"] = (
-                    "Le compteur horaire final ne peut pas être négatif."
+                    "Le compteur horaire final ne peut pas Ãªtre nÃ©gatif."
                 )
 
         if (
@@ -2854,21 +2818,212 @@ class MouvementVehiculeProjet(models.Model):
             and self.heures_finales > self.heures_initiales
         ):
             erreurs["heures_finales"] = (
-                "Le compteur final doit être inférieur ou égal " "au compteur initial."
+                "Le compteur final doit Ãªtre infÃ©rieur ou Ã©gal " "au compteur initial."
             )
 
         # Carburant.
         if self.carburant_litre is not None and self.carburant_litre < 0:
             erreurs["carburant_litre"] = (
-                "La quantité de carburant ne peut pas être négative."
+                "La quantitÃ© de carburant ne peut pas Ãªtre nÃ©gative."
             )
 
         if erreurs:
             raise ValidationError(erreurs)
 
 
+
+
+
+class ReparationVehicule(models.Model):
+    """RÃ©paration d'un vÃ©hicule ou engin affectÃ© Ã  un chantier GALAXY."""
+
+    REPARATION = "REPARATION"
+    CHANGEMENT = "CHANGEMENT"
+
+    TYPE_REPARATION_CHOICES = [
+        (REPARATION, "RÃ©paration"),
+        (CHANGEMENT, "Changement"),
+    ]
+
+    projet = models.ForeignKey(
+        "projet.Projet",
+        on_delete=models.PROTECT,
+        related_name="reparations_vehicules_galaxy",
+        verbose_name="Projet",
+    )
+
+    date_reparation = models.DateField(
+        verbose_name="Date de rÃ©paration",
+    )
+
+    vehicule = models.ForeignKey(
+        "projet.VehiculeProjet",
+        on_delete=models.PROTECT,
+        related_name="reparations",
+        verbose_name="VÃ©hicule / Engin du chantier",
+    )
+
+    chauffeur = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="Chauffeur (texte historique)",
+    )
+
+    chauffeur_personnel = models.ForeignKey(
+        "personnel.Personnel",
+        on_delete=models.PROTECT,
+        related_name="reparations_vehicules_galaxy",
+        null=True,
+        blank=True,
+        verbose_name="Chauffeur GALAXY",
+    )
+
+    designation = models.CharField(
+        max_length=255,
+        verbose_name="DÃ©signation",
+    )
+
+    type_reparation = models.CharField(
+        max_length=20,
+        choices=TYPE_REPARATION_CHOICES,
+        default=REPARATION,
+        verbose_name="Type",
+    )
+
+    garage = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Garage",
+    )
+
+    quantite = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("1.00"),
+        verbose_name="QuantitÃ©",
+    )
+
+    unite = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name="UnitÃ©",
+    )
+
+    prix_unitaire = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name="Prix unitaire",
+    )
+
+    montant_main_oeuvre = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name="Main-d'Å“uvre",
+    )
+
+    total = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        editable=False,
+        verbose_name="Total de la rÃ©paration",
+    )
+
+    enregistre_par = models.ForeignKey(
+        "users.AppUser",
+        on_delete=models.PROTECT,
+        related_name="reparations_vehicules_enregistrees_galaxy",
+        null=True,
+        blank=True,
+        verbose_name="EnregistrÃ© par",
+    )
+
+    photo_piece_remplacee = models.ImageField(
+        upload_to="projet/reparations/pieces_remplacees/",
+        blank=True,
+        null=True,
+        verbose_name="Photo de la piÃ¨ce remplacÃ©e",
+    )
+
+    photo_piece_remplacante = models.ImageField(
+        upload_to="projet/reparations/pieces_remplacantes/",
+        blank=True,
+        null=True,
+        verbose_name="Photo de la piÃ¨ce de remplacement",
+    )
+
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date_reparation", "-id"]
+        verbose_name = "RÃ©paration de vÃ©hicule de chantier"
+        verbose_name_plural = "RÃ©parations des vÃ©hicules de chantier"
+
+    @property
+    def montant_piece(self):
+        return (
+            (self.quantite or Decimal("0.00"))
+            * (self.prix_unitaire or Decimal("0.00"))
+        )
+
+    @property
+    def montant_total_calcule(self):
+        return self.montant_piece + (
+            self.montant_main_oeuvre or Decimal("0.00")
+        )
+
+    @property
+    def montant_total(self):
+        return self.montant_total_calcule
+
+    def clean(self):
+        super().clean()
+        errors = {}
+
+        if self.quantite is not None and self.quantite <= 0:
+            errors["quantite"] = (
+                "La quantitÃ© doit Ãªtre supÃ©rieure Ã  zÃ©ro."
+            )
+
+        if self.prix_unitaire is not None and self.prix_unitaire < 0:
+            errors["prix_unitaire"] = (
+                "Le prix unitaire ne peut pas Ãªtre nÃ©gatif."
+            )
+
+        if (
+            self.montant_main_oeuvre is not None
+            and self.montant_main_oeuvre < 0
+        ):
+            errors["montant_main_oeuvre"] = (
+                "La main-d'Å“uvre ne peut pas Ãªtre nÃ©gative."
+            )
+
+        if self.projet_id and self.vehicule_id:
+            if self.vehicule.projet_id != self.projet_id:
+                errors["vehicule"] = (
+                    "Le vÃ©hicule doit Ãªtre affectÃ© au projet sÃ©lectionnÃ©."
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        self.total = self.montant_total_calcule
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"{self.designation} - {self.projet} - "
+            f"{self.date_reparation}"
+        )
+
+
 # ============================================================
-# MOUVEMENT DU PERSONNEL D'EXÉCUTION
+# MOUVEMENT DU PERSONNEL D'EXÃ‰CUTION
 # ============================================================
 class MouvementPersonnelProjet(models.Model):
     personnel_execution = models.ForeignKey(
@@ -2894,13 +3049,13 @@ class MouvementPersonnelProjet(models.Model):
 
     activite = models.CharField(
         max_length=255,
-        verbose_name="Activité",
+        verbose_name="ActivitÃ©",
     )
 
     date_debut = models.DateTimeField(
         null=True,
         blank=True,
-        verbose_name="Début",
+        verbose_name="DÃ©but",
     )
 
     date_fin = models.DateTimeField(
@@ -2928,7 +3083,7 @@ class MouvementPersonnelProjet(models.Model):
         null=True,
         blank=True,
         related_name="mouvements_personnel_enregistres",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     class Meta:
@@ -2958,36 +3113,36 @@ class MouvementPersonnelProjet(models.Model):
 
             if self.point.projet_id != personnel.projet_id:
                 errors["point"] = (
-                    "Le point sélectionné n'appartient " "pas au projet du personnel."
+                    "Le point sÃ©lectionnÃ© n'appartient " "pas au projet du personnel."
                 )
 
         if self.date_mouvement:
 
             if self.date_mouvement.date() < personnel.projet.date_debut:
                 errors["date_mouvement"] = (
-                    "La date du mouvement est avant " "le début du projet."
+                    "La date du mouvement est avant " "le dÃ©but du projet."
                 )
 
             elif self.date_mouvement.date() > personnel.projet.date_fin:
                 errors["date_mouvement"] = (
-                    "La date du mouvement dépasse " "la fin du projet."
+                    "La date du mouvement dÃ©passe " "la fin du projet."
                 )
 
         if self.date_debut and self.date_fin and self.date_fin < self.date_debut:
-            errors["date_fin"] = "La fin doit être postérieure au début."
+            errors["date_fin"] = "La fin doit Ãªtre postÃ©rieure au dÃ©but."
 
         if errors:
             raise ValidationError(errors)
 
 
 # ============================================================
-# ÉQUIPAGE DU PROJET
+# Ã‰QUIPAGE DU PROJET
 # ============================================================
 class EquipageProjet(models.Model):
     """
-    Affectation d'un Chef d'équipe à un point de chantier.
+    Affectation d'un Chef d'Ã©quipe Ã  un point de chantier.
 
-    Le Chef d'équipe doit obligatoirement être une inscription
+    Le Chef d'Ã©quipe doit obligatoirement Ãªtre une inscription
     PersonnelExecutionProjet avec type_class = CHEF_EQUIPE.
     """
 
@@ -2995,7 +3150,7 @@ class EquipageProjet(models.Model):
         "PersonnelExecutionProjet",
         on_delete=models.PROTECT,
         related_name="equipages",
-        verbose_name="Chef d'équipe",
+        verbose_name="Chef d'Ã©quipe",
     )
 
     lieu = models.ForeignKey(
@@ -3013,7 +3168,7 @@ class EquipageProjet(models.Model):
     )
 
     date_debut = models.DateTimeField(
-        verbose_name="Date de début",
+        verbose_name="Date de dÃ©but",
     )
 
     date_fin = models.DateTimeField(
@@ -3036,7 +3191,7 @@ class EquipageProjet(models.Model):
         null=True,
         blank=True,
         related_name="equipages_projet_enregistres",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     class Meta:
@@ -3044,8 +3199,8 @@ class EquipageProjet(models.Model):
             "-date_debut",
             "-id",
         ]
-        verbose_name = "Équipage du projet"
-        verbose_name_plural = "Équipages du projet"
+        verbose_name = "Ã‰quipage du projet"
+        verbose_name_plural = "Ã‰quipages du projet"
 
     def __str__(self):
 
@@ -3056,7 +3211,7 @@ class EquipageProjet(models.Model):
         errors = {}
 
         # ----------------------------------------------------
-        # CHEF D'ÉQUIPE
+        # CHEF D'Ã‰QUIPE
         # ----------------------------------------------------
 
         if self.personnel_execution_id:
@@ -3066,7 +3221,7 @@ class EquipageProjet(models.Model):
             if chef.type_class != "CHEF_EQUIPE":
 
                 errors["personnel_execution"] = (
-                    "La personne sélectionnée doit être enregistrée comme Chef d'équipe."
+                    "La personne sÃ©lectionnÃ©e doit Ãªtre enregistrÃ©e comme Chef d'Ã©quipe."
                 )
 
             if self.lieu_id:
@@ -3074,7 +3229,7 @@ class EquipageProjet(models.Model):
                 if chef.projet_id != self.lieu.projet_id:
 
                     errors["personnel_execution"] = (
-                        "Le Chef d'équipe et le point doivent appartenir au même projet."
+                        "Le Chef d'Ã©quipe et le point doivent appartenir au mÃªme projet."
                     )
 
         # ----------------------------------------------------
@@ -3083,7 +3238,7 @@ class EquipageProjet(models.Model):
 
         if self.montant is not None and self.montant < Decimal("0.00"):
 
-            errors["montant"] = "Le montant ne peut pas être négatif."
+            errors["montant"] = "Le montant ne peut pas Ãªtre nÃ©gatif."
 
         # ----------------------------------------------------
         # DATES
@@ -3092,7 +3247,7 @@ class EquipageProjet(models.Model):
         if self.date_debut and self.date_fin and self.date_fin < self.date_debut:
 
             errors["date_fin"] = (
-                "La date de fin doit être " "postérieure ou égale au début."
+                "La date de fin doit Ãªtre " "postÃ©rieure ou Ã©gale au dÃ©but."
             )
 
         if errors:
@@ -3100,7 +3255,7 @@ class EquipageProjet(models.Model):
 
 
 # ============================================================
-# AVANCE ÉQUIPE PROJET
+# AVANCE Ã‰QUIPE PROJET
 # ============================================================
 class AvanceEquipeProjet(models.Model):
 
@@ -3110,7 +3265,7 @@ class AvanceEquipeProjet(models.Model):
         related_name="avances_equipe",
         null=True,
         blank=True,
-        verbose_name="Équipe d'exécution",
+        verbose_name="Ã‰quipe d'exÃ©cution",
     )
 
     miniers_execution = models.ForeignKey(
@@ -3119,7 +3274,7 @@ class AvanceEquipeProjet(models.Model):
         related_name="avances_miniers",
         null=True,
         blank=True,
-        verbose_name="Équipe de miniers",
+        verbose_name="Ã‰quipe de miniers",
     )
 
     montant = models.DecimalField(
@@ -3148,13 +3303,13 @@ class AvanceEquipeProjet(models.Model):
         null=True,
         blank=True,
         related_name="avances_equipe_enregistrees",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     class Meta:
         ordering = ["-date_avance", "-id"]
-        verbose_name = "Avance d'équipe"
-        verbose_name_plural = "Avances d'équipe"
+        verbose_name = "Avance d'Ã©quipe"
+        verbose_name_plural = "Avances d'Ã©quipe"
 
     def __str__(self):
         equipe = self.equipe_execution or self.miniers_execution
@@ -3162,19 +3317,19 @@ class AvanceEquipeProjet(models.Model):
         if equipe:
             return f"Avance - {equipe} - {self.montant}"
 
-        return f"Avance d'équipe - {self.montant}"
+        return f"Avance d'Ã©quipe - {self.montant}"
 
     def clean(self):
         super().clean()
         errors = {}
 
         if self.montant is not None and self.montant < Decimal("0.00"):
-            errors["montant"] = "Le montant de l'avance ne peut pas être négatif."
+            errors["montant"] = "Le montant de l'avance ne peut pas Ãªtre nÃ©gatif."
 
         if bool(self.equipe_execution_id) == bool(self.miniers_execution_id):
             message = (
-                "Sélectionnez une seule équipe : équipe d'exécution "
-                "ou équipe de miniers."
+                "SÃ©lectionnez une seule Ã©quipe : Ã©quipe d'exÃ©cution "
+                "ou Ã©quipe de miniers."
             )
             errors["equipe_execution"] = message
             errors["miniers_execution"] = message
@@ -3184,7 +3339,7 @@ class AvanceEquipeProjet(models.Model):
 
 
 # ============================================================
-# MATÉRIAUX UTILISÉS PAR L'ÉQUIPE
+# MATÃ‰RIAUX UTILISÃ‰S PAR L'Ã‰QUIPE
 # ============================================================
 class EquipeMateriauProjet(models.Model):
 
@@ -3206,20 +3361,20 @@ class EquipeMateriauProjet(models.Model):
         "materiaux.Materiaux",
         on_delete=models.PROTECT,
         related_name="equipes_projet",
-        verbose_name="Type de matériau",
+        verbose_name="Type de matÃ©riau",
     )
 
     quantite = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Quantité",
+        verbose_name="QuantitÃ©",
     )
 
     unite = models.CharField(
         max_length=50,
         blank=True,
-        verbose_name="Unité",
+        verbose_name="UnitÃ©",
     )
 
     prix_unitaire = models.DecimalField(
@@ -3247,7 +3402,7 @@ class EquipeMateriauProjet(models.Model):
         null=True,
         blank=True,
         related_name="materiaux_equipe_enregistres",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     class Meta:
@@ -3255,8 +3410,8 @@ class EquipeMateriauProjet(models.Model):
             "-date_debut",
             "-id",
         ]
-        verbose_name = "Matériau de l'équipe"
-        verbose_name_plural = "Matériaux des équipes"
+        verbose_name = "MatÃ©riau de l'Ã©quipe"
+        verbose_name_plural = "MatÃ©riaux des Ã©quipes"
 
     def __str__(self):
 
@@ -3268,11 +3423,11 @@ class EquipeMateriauProjet(models.Model):
 
         if self.quantite is not None and self.quantite < Decimal("0.00"):
 
-            errors["quantite"] = "La quantité ne peut pas être négative."
+            errors["quantite"] = "La quantitÃ© ne peut pas Ãªtre nÃ©gative."
 
         if self.prix_unitaire is not None and self.prix_unitaire < Decimal("0.00"):
 
-            errors["prix_unitaire"] = "Le prix unitaire ne peut pas être négatif."
+            errors["prix_unitaire"] = "Le prix unitaire ne peut pas Ãªtre nÃ©gatif."
 
         if (
             self.personnel_execution_id
@@ -3281,7 +3436,7 @@ class EquipeMateriauProjet(models.Model):
         ):
 
             errors["point"] = (
-                "Le point et le personnel doivent " "appartenir au même projet."
+                "Le point et le personnel doivent " "appartenir au mÃªme projet."
             )
 
         if errors:
@@ -3294,7 +3449,7 @@ class EquipeMateriauProjet(models.Model):
 
 
 # ============================================================
-# VÉHICULES LOURDS / ENGINS DU PROJET
+# VÃ‰HICULES LOURDS / ENGINS DU PROJET
 # ============================================================
 class VehiculeLourdsProjet(models.Model):
 
@@ -3326,7 +3481,7 @@ class VehiculeLourdsProjet(models.Model):
 
     matricule = models.CharField(
         max_length=30,
-        verbose_name="Numéro matricule",
+        verbose_name="NumÃ©ro matricule",
     )
 
     conducteur = models.ForeignKey(
@@ -3349,7 +3504,7 @@ class VehiculeLourdsProjet(models.Model):
                 raise ValidationError(
                     {
                         "conducteur": (
-                            "Le conducteur doit appartenir au même projet "
+                            "Le conducteur doit appartenir au mÃªme projet "
                             "que l'engin."
                         )
                     }
@@ -3359,7 +3514,7 @@ class VehiculeLourdsProjet(models.Model):
                 raise ValidationError(
                     {
                         "conducteur": (
-                            "Le conducteur doit être enregistré comme "
+                            "Le conducteur doit Ãªtre enregistrÃ© comme "
                             "CHAUFFEUR_ENGIN."
                         )
                     }
@@ -3371,7 +3526,7 @@ class VehiculeLourdsProjet(models.Model):
 
 
 # ============================================================
-# ACTIVITÉ TRANSPORT DU PROJET
+# ACTIVITÃ‰ TRANSPORT DU PROJET
 # ============================================================
 
 
@@ -3380,11 +3535,11 @@ class ActiviteTransportProjet(models.Model):
     TYPE_TRANSPORT_CHOICES = [
         (
             "MATERIAUX",
-            "Matériaux",
+            "MatÃ©riaux",
         ),
         (
             "MATERIEL",
-            "Matériel",
+            "MatÃ©riel",
         ),
         (
             "PERSONNEL",
@@ -3392,7 +3547,7 @@ class ActiviteTransportProjet(models.Model):
         ),
         (
             "MATERIAUX_MATERIEL",
-            "Matériaux + Matériel",
+            "MatÃ©riaux + MatÃ©riel",
         ),
         (
             "AUTRE",
@@ -3408,10 +3563,10 @@ class ActiviteTransportProjet(models.Model):
     )
 
     vehicule = models.ForeignKey(
-        "materiaux.Vehicule",
+        "materiels.Vehicule",
         on_delete=models.PROTECT,
         related_name="activites_transport_projet",
-        verbose_name="Véhicule",
+        verbose_name="VÃ©hicule",
     )
 
     chauffeur = models.ForeignKey(
@@ -3435,7 +3590,7 @@ class ActiviteTransportProjet(models.Model):
 
     lieu_depart = models.CharField(
         max_length=255,
-        verbose_name="Lieu de départ",
+        verbose_name="Lieu de dÃ©part",
     )
 
     destination = models.CharField(
@@ -3454,14 +3609,14 @@ class ActiviteTransportProjet(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Kilométrage initial",
+        verbose_name="KilomÃ©trage initial",
     )
 
     kilometrage_final = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Kilométrage final",
+        verbose_name="KilomÃ©trage final",
     )
 
     consommation_km_litre = models.DecimalField(
@@ -3475,13 +3630,13 @@ class ActiviteTransportProjet(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Quantité transportée",
+        verbose_name="QuantitÃ© transportÃ©e",
     )
 
     unite = models.CharField(
         max_length=50,
         blank=True,
-        verbose_name="Unité",
+        verbose_name="UnitÃ©",
     )
 
     date_transport = models.DateField(
@@ -3498,7 +3653,7 @@ class ActiviteTransportProjet(models.Model):
         AppUser,
         on_delete=models.PROTECT,
         related_name="activites_transport_projet_enregistrees",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     created_at = models.DateTimeField(
@@ -3514,8 +3669,8 @@ class ActiviteTransportProjet(models.Model):
             "-date_transport",
             "-id",
         ]
-        verbose_name = "Activité transport du projet"
-        verbose_name_plural = "Activités transport du projet"
+        verbose_name = "ActivitÃ© transport du projet"
+        verbose_name_plural = "ActivitÃ©s transport du projet"
 
     def __str__(self):
 
@@ -3527,25 +3682,25 @@ class ActiviteTransportProjet(models.Model):
 
         if self.distance_km is not None and self.distance_km < Decimal("0.00"):
 
-            errors["distance_km"] = "La distance ne peut pas être négative."
+            errors["distance_km"] = "La distance ne peut pas Ãªtre nÃ©gative."
 
         if self.kilometrage_initial < Decimal("0.00"):
 
             errors["kilometrage_initial"] = (
-                "Le kilométrage initial ne peut pas être négatif."
+                "Le kilomÃ©trage initial ne peut pas Ãªtre nÃ©gatif."
             )
 
         if self.kilometrage_final < Decimal("0.00"):
 
             errors["kilometrage_final"] = (
-                "Le kilométrage final ne peut pas être négatif."
+                "Le kilomÃ©trage final ne peut pas Ãªtre nÃ©gatif."
             )
 
         if self.kilometrage_final < self.kilometrage_initial:
 
             errors["kilometrage_final"] = (
-                "Le kilométrage final doit être supérieur "
-                "ou égal au kilométrage initial."
+                "Le kilomÃ©trage final doit Ãªtre supÃ©rieur "
+                "ou Ã©gal au kilomÃ©trage initial."
             )
 
         if (
@@ -3554,12 +3709,12 @@ class ActiviteTransportProjet(models.Model):
         ):
 
             errors["consommation_km_litre"] = (
-                "La consommation ne peut pas être négative."
+                "La consommation ne peut pas Ãªtre nÃ©gative."
             )
 
         if self.quantite is not None and self.quantite < Decimal("0.00"):
 
-            errors["quantite"] = "La quantité ne peut pas être négative."
+            errors["quantite"] = "La quantitÃ© ne peut pas Ãªtre nÃ©gative."
 
         if self.projet_id and self.date_transport:
 
@@ -3568,13 +3723,13 @@ class ActiviteTransportProjet(models.Model):
             if self.date_transport < projet.date_debut:
 
                 errors["date_transport"] = (
-                    "La date du transport ne peut pas " "être avant le début du projet."
+                    "La date du transport ne peut pas " "Ãªtre avant le dÃ©but du projet."
                 )
 
             elif self.date_transport > projet.date_fin:
 
                 errors["date_transport"] = (
-                    "La date du transport ne peut pas " "dépasser la fin du projet."
+                    "La date du transport ne peut pas " "dÃ©passer la fin du projet."
                 )
 
         # ----------------------------------------------------
@@ -3603,11 +3758,11 @@ class ActiviteTransportProjet(models.Model):
                 if not affectation:
 
                     errors["chauffeur"] = (
-                        "Ce personnel n'est pas affecté " "comme chauffeur à ce projet."
+                        "Ce personnel n'est pas affectÃ© " "comme chauffeur Ã  ce projet."
                     )
 
         # ----------------------------------------------------
-        # VÉHICULE
+        # VÃ‰HICULE
         # ----------------------------------------------------
 
         if self.projet_id and self.vehicule_id:
@@ -3623,7 +3778,7 @@ class ActiviteTransportProjet(models.Model):
             if not affectation:
 
                 errors["vehicule"] = (
-                    "Ce véhicule n'est pas actuellement " "affecté à ce projet."
+                    "Ce vÃ©hicule n'est pas actuellement " "affectÃ© Ã  ce projet."
                 )
 
         if errors:
@@ -3651,7 +3806,7 @@ class ActiviteTransportProjet(models.Model):
 
 
 # ============================================================
-# RAPPORT ÉTAT DU VÉHICULE
+# RAPPORT Ã‰TAT DU VÃ‰HICULE
 # ============================================================
 
 
@@ -3665,10 +3820,10 @@ class RapportVehicule(models.Model):
     )
 
     vehicule = models.ForeignKey(
-        "materiaux.Vehicule",
+        "materiels.Vehicule",
         on_delete=models.PROTECT,
         related_name="rapports_projets",
-        verbose_name="Véhicule",
+        verbose_name="VÃ©hicule",
     )
 
     chauffeur = models.ForeignKey(
@@ -3687,12 +3842,12 @@ class RapportVehicule(models.Model):
         max_digits=12,
         decimal_places=2,
         default=Decimal("0.00"),
-        verbose_name="Kilométrage",
+        verbose_name="KilomÃ©trage",
     )
 
     etat = models.CharField(
         max_length=100,
-        verbose_name="État",
+        verbose_name="Ã‰tat",
     )
 
     description = models.TextField(
@@ -3725,14 +3880,14 @@ class RapportVehicule(models.Model):
             "-date_rapport",
             "-id",
         ]
-        verbose_name = "Rapport véhicule"
-        verbose_name_plural = "Rapports véhicules"
+        verbose_name = "Rapport vÃ©hicule"
+        verbose_name_plural = "Rapports vÃ©hicules"
 
     def __str__(self):
 
-        vehicule = self.vehicule if self.vehicule_id else "Véhicule non défini"
+        vehicule = self.vehicule if self.vehicule_id else "VÃ©hicule non dÃ©fini"
 
-        projet = self.projet.titre if self.projet_id else "Projet non défini"
+        projet = self.projet.titre if self.projet_id else "Projet non dÃ©fini"
 
         return f"{vehicule} - " f"{self.date_rapport} - " f"{projet}"
 
@@ -3742,7 +3897,7 @@ class RapportVehicule(models.Model):
 
         if self.kilometrage is not None and self.kilometrage < Decimal("0.00"):
 
-            errors["kilometrage"] = "Le kilométrage ne peut pas être négatif."
+            errors["kilometrage"] = "Le kilomÃ©trage ne peut pas Ãªtre nÃ©gatif."
 
         if self.projet_id and self.date_rapport:
 
@@ -3751,13 +3906,13 @@ class RapportVehicule(models.Model):
             if projet.date_debut and self.date_rapport < projet.date_debut:
 
                 errors["date_rapport"] = (
-                    "La date du rapport ne peut pas " "être avant le début du projet."
+                    "La date du rapport ne peut pas " "Ãªtre avant le dÃ©but du projet."
                 )
 
             elif projet.date_fin and self.date_rapport > projet.date_fin:
 
                 errors["date_rapport"] = (
-                    "La date du rapport ne peut pas " "dépasser la fin du projet."
+                    "La date du rapport ne peut pas " "dÃ©passer la fin du projet."
                 )
 
         if self.chauffeur_id:
@@ -3782,7 +3937,7 @@ class RapportVehicule(models.Model):
                 if not affectation:
 
                     errors["chauffeur"] = (
-                        "Ce personnel n'est pas affecté " "comme chauffeur à ce projet."
+                        "Ce personnel n'est pas affectÃ© " "comme chauffeur Ã  ce projet."
                     )
 
         if self.projet_id and self.vehicule_id:
@@ -3798,7 +3953,7 @@ class RapportVehicule(models.Model):
             if not affectation:
 
                 errors["vehicule"] = (
-                    "Ce véhicule n'est pas actuellement " "affecté à ce projet."
+                    "Ce vÃ©hicule n'est pas actuellement " "affectÃ© Ã  ce projet."
                 )
 
         if errors:
@@ -3806,12 +3961,12 @@ class RapportVehicule(models.Model):
 
 
 # ============================================================
-# MOUVEMENTS UNIFIÉS DES MATÉRIAUX D'UN PROJET GALAXY
+# MOUVEMENTS UNIFIÃ‰S DES MATÃ‰RIAUX D'UN PROJET GALAXY
 # ============================================================
 class MouvementMateriauProjet(models.Model):
 
     class TypeMouvement(models.TextChoices):
-        ENTREE = "ENTREE", "Entrée"
+        ENTREE = "ENTREE", "EntrÃ©e"
         SORTIE = "SORTIE", "Sortie"
         RETOUR = "RETOUR", "Retour"
 
@@ -3819,7 +3974,7 @@ class MouvementMateriauProjet(models.Model):
         "MateriauProjet",
         on_delete=models.PROTECT,
         related_name="mouvements_unifies",
-        verbose_name="Matériau",
+        verbose_name="MatÃ©riau",
     )
 
     vehicule_transport = models.ForeignKey(
@@ -3828,7 +3983,7 @@ class MouvementMateriauProjet(models.Model):
         related_name="mouvements_materiaux",
         null=True,
         blank=True,
-        verbose_name="Véhicule / Engin de transport",
+        verbose_name="VÃ©hicule / Engin de transport",
     )
 
     type_mouvement = models.CharField(
@@ -3866,10 +4021,10 @@ class MouvementMateriauProjet(models.Model):
         validators=[
             MinValueValidator(Decimal("0.01")),
         ],
-        verbose_name="Quantité",
+        verbose_name="QuantitÃ©",
     )
 
-    # Prix obligatoire uniquement pour une entrée.
+    # Prix obligatoire uniquement pour une entrÃ©e.
     # Pour une sortie ou un retour, la valeur est NULL.
     prix_unitaire = models.DecimalField(
         max_digits=12,
@@ -3880,7 +4035,7 @@ class MouvementMateriauProjet(models.Model):
         null=True,
         blank=True,
         verbose_name="Prix unitaire",
-        help_text="À renseigner uniquement pour une entrée.",
+        help_text="Ã€ renseigner uniquement pour une entrÃ©e.",
     )
 
     observation = models.TextField(
@@ -3894,7 +4049,7 @@ class MouvementMateriauProjet(models.Model):
         null=True,
         blank=True,
         related_name="mouvements_materiaux_projet",
-        verbose_name="Enregistré par",
+        verbose_name="EnregistrÃ© par",
     )
 
     created_at = models.DateTimeField(
@@ -3903,13 +4058,13 @@ class MouvementMateriauProjet(models.Model):
 
     class Meta:
         ordering = ["-date_mouvement", "-id"]
-        verbose_name = "Mouvement de matériau"
-        verbose_name_plural = "Mouvements des matériaux"
+        verbose_name = "Mouvement de matÃ©riau"
+        verbose_name_plural = "Mouvements des matÃ©riaux"
 
     def __str__(self):
         return (
-            f"{self.get_type_mouvement_display()} — "
-            f"{self.materiau_projet.materiau} — "
+            f"{self.get_type_mouvement_display()} â€” "
+            f"{self.materiau_projet.materiau} â€” "
             f"{self.quantite} "
             f"{self.materiau_projet.unite}"
         )
@@ -3918,9 +4073,9 @@ class MouvementMateriauProjet(models.Model):
     def montant(self):
         """
         Montant direct du mouvement.
-        Seules les entrées possèdent un prix unitaire enregistré.
+        Seules les entrÃ©es possÃ¨dent un prix unitaire enregistrÃ©.
         La valorisation des sorties et retours utilise le prix
-        moyen calculé dans le tableau de bord.
+        moyen calculÃ© dans le tableau de bord.
         """
         quantite = self.quantite or Decimal("0.00")
         prix = self.prix_unitaire or Decimal("0.00")
@@ -3933,24 +4088,24 @@ class MouvementMateriauProjet(models.Model):
         errors = {}
 
         # --------------------------------------------------
-        # 1. VÉRIFICATION DU MATÉRIAU
+        # 1. VÃ‰RIFICATION DU MATÃ‰RIAU
         # --------------------------------------------------
         if not self.materiau_projet_id:
-            errors["materiau_projet"] = "Sélectionnez un matériau du projet."
+            errors["materiau_projet"] = "SÃ©lectionnez un matÃ©riau du projet."
 
         # --------------------------------------------------
-        # 2. VÉRIFICATION DE LA QUANTITÉ
+        # 2. VÃ‰RIFICATION DE LA QUANTITÃ‰
         # --------------------------------------------------
         if self.quantite is not None and self.quantite <= Decimal("0.00"):
-            errors["quantite"] = "La quantité doit être supérieure à zéro."
+            errors["quantite"] = "La quantitÃ© doit Ãªtre supÃ©rieure Ã  zÃ©ro."
 
         # --------------------------------------------------
-        # 3. PRIX UNITAIRE : ENTRÉE UNIQUEMENT
+        # 3. PRIX UNITAIRE : ENTRÃ‰E UNIQUEMENT
         # --------------------------------------------------
         if self.type_mouvement == self.TypeMouvement.ENTREE:
             if self.prix_unitaire is None or self.prix_unitaire <= Decimal("0.00"):
                 errors["prix_unitaire"] = (
-                    "Le prix unitaire est obligatoire pour une entrée."
+                    "Le prix unitaire est obligatoire pour une entrÃ©e."
                 )
         elif self.type_mouvement in (
             self.TypeMouvement.SORTIE,
@@ -3960,7 +4115,7 @@ class MouvementMateriauProjet(models.Model):
             self.prix_unitaire = None
 
         # --------------------------------------------------
-        # 4. VÉRIFICATION DU PROJET ET DES POINTS
+        # 4. VÃ‰RIFICATION DU PROJET ET DES POINTS
         # --------------------------------------------------
         projet_id = None
 
@@ -3971,47 +4126,47 @@ class MouvementMateriauProjet(models.Model):
                 if self.point_depart.projet_id != projet_id:
                     errors["point_depart"] = (
                         "Le point d'origine doit appartenir "
-                        "au même projet que le matériau."
+                        "au mÃªme projet que le matÃ©riau."
                     )
 
             if self.point_arrivee_id:
                 if self.point_arrivee.projet_id != projet_id:
                     errors["point_arrivee"] = (
                         "Le point de destination doit appartenir "
-                        "au même projet que le matériau."
+                        "au mÃªme projet que le matÃ©riau."
                     )
 
         # --------------------------------------------------
-        # 5. VÉRIFICATION DU VÉHICULE
+        # 5. VÃ‰RIFICATION DU VÃ‰HICULE
         # --------------------------------------------------
         if self.vehicule_transport_id and projet_id is not None:
             if self.vehicule_transport.projet_id != projet_id:
                 errors["vehicule_transport"] = (
-                    "Le véhicule ou l'engin doit être affecté "
-                    "au même projet que le matériau."
+                    "Le vÃ©hicule ou l'engin doit Ãªtre affectÃ© "
+                    "au mÃªme projet que le matÃ©riau."
                 )
 
         # --------------------------------------------------
-        # 6. RÈGLES PROPRES À CHAQUE MOUVEMENT
+        # 6. RÃˆGLES PROPRES Ã€ CHAQUE MOUVEMENT
         # --------------------------------------------------
         if self.type_mouvement == self.TypeMouvement.ENTREE:
 
             if self.point_depart_id:
                 errors["point_depart"] = (
-                    "Pour une entrée, laissez le point d'origine vide."
+                    "Pour une entrÃ©e, laissez le point d'origine vide."
                 )
 
             if not self.point_arrivee_id:
-                errors["point_arrivee"] = "Indiquez le point qui reçoit le matériau."
+                errors["point_arrivee"] = "Indiquez le point qui reÃ§oit le matÃ©riau."
 
         elif self.type_mouvement == self.TypeMouvement.SORTIE:
 
             if not self.point_depart_id:
-                errors["point_depart"] = "Indiquez le point d'où sort le matériau."
+                errors["point_depart"] = "Indiquez le point d'oÃ¹ sort le matÃ©riau."
 
             if not self.point_arrivee_id:
                 errors["point_arrivee"] = (
-                    "Indiquez le point de destination du matériau."
+                    "Indiquez le point de destination du matÃ©riau."
                 )
 
             if (
@@ -4020,16 +4175,16 @@ class MouvementMateriauProjet(models.Model):
                 and self.point_depart_id == self.point_arrivee_id
             ):
                 errors["point_arrivee"] = (
-                    "L'origine et la destination doivent être différentes."
+                    "L'origine et la destination doivent Ãªtre diffÃ©rentes."
                 )
 
         elif self.type_mouvement == self.TypeMouvement.RETOUR:
 
             if not self.point_depart_id:
-                errors["point_depart"] = "Indiquez le point d'où revient le matériau."
+                errors["point_depart"] = "Indiquez le point d'oÃ¹ revient le matÃ©riau."
 
             if not self.point_arrivee_id:
-                errors["point_arrivee"] = "Indiquez le point qui reçoit le retour."
+                errors["point_arrivee"] = "Indiquez le point qui reÃ§oit le retour."
 
             if (
                 self.point_depart_id
@@ -4037,11 +4192,11 @@ class MouvementMateriauProjet(models.Model):
                 and self.point_depart_id == self.point_arrivee_id
             ):
                 errors["point_arrivee"] = (
-                    "L'origine et la destination doivent être différentes."
+                    "L'origine et la destination doivent Ãªtre diffÃ©rentes."
                 )
 
         elif self.type_mouvement:
-            errors["type_mouvement"] = "Le type de mouvement sélectionné est invalide."
+            errors["type_mouvement"] = "Le type de mouvement sÃ©lectionnÃ© est invalide."
 
         if errors:
             raise ValidationError(errors)

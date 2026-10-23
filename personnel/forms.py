@@ -217,16 +217,18 @@ class H_PersonnelForm(forms.ModelForm):
             ),
             "telephone": forms.TextInput(
                 attrs={
-                    "class": "form-control",
-                    "placeholder": "Téléphone",
-                    "maxlength": "10",
-                }
+                        "class": "form-control",
+                        "maxlength": "10",
+                        "placeholder": "Numéro Carte d'identité National",
+                        "pattern": "[0-9]{10}",
+                        "inputmode": "numeric",
+                    }
             ),
             "cin": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Numéro CIN",
-                    "maxlength": "10",
+                    "placeholder": "000 000 000",
+                    "maxlength": "12",
                     "title": "Le numéro CIN doit contenir exactement 10 caractères.",
                 }
             ),

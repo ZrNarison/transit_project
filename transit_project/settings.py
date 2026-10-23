@@ -36,7 +36,7 @@ if not SECRET_KEY:
         "La variable d'environnement DJANGO_SECRET_KEY " "n'est pas dÃ©finie."
     )
 
-DEBUG = True  # Ã€ dÃ©sactiver avant l'ouverture publique
+DEBUG = True  # à désactiver avant l'ouverture publique
 
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -44,6 +44,14 @@ ALLOWED_HOSTS = [
     #"10.32.135.12"
     #"192.168.159.12",
     "192.168.43.12",
+]
+# HTTPS local : relais TLS vers Django
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://192.168.43.12:8443",
+    "https://localhost:8443",
+    "https://127.0.0.1:8443",
 ]
 
 

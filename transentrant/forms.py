@@ -42,3 +42,11 @@ class TransentrantForm(forms.ModelForm):
             ),
             "photo": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
+
+    def clean_cin(self):
+            cin = self.cleaned_data.get("cin", "").strip()
+    
+            if len(cin) < 6 or cin[5] not in ("1", "2"):
+                raise forms.ValidationError("Le 6e chiffre du CIN doit être 1 ou 2.")
+    
+            return cin

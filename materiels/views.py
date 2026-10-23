@@ -1,20 +1,23 @@
-from decimal import Decimal
-
+﻿from decimal import Decimal
 from django.contrib import messages
-from django.db.models import Sum
+from django.db.models import Sum,Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.utils import enregistrer_action
 from users.models import AppUser, H_AppUser
-
+from users.decorators import login_required_projet, h_role_required
 from .forms import H_MaterielsForm, MaterielsForm
 from .models import H_Materiels, Materiels
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
+from .models import Vehicule, ReparationVehicule
+from .forms import VehiculeForm, ReparationVehiculeForm
+
 
 # ================================================================
 # UTILITAIRES
 # ================================================================
-
-
 def valeur_audit(valeur):
     """
     Convertit les Decimal en chaînes pour éviter les problèmes
@@ -78,8 +81,6 @@ def groupe_materiel_queryset(nom, typeMat, catMat):
 # ================================================================
 # CALCUL STOCK D'UN MATERIEL
 # ================================================================
-
-
 def calcul_stock_materiel(materiel):
     """
     Calcule le stock d'un matériel individuel.
@@ -115,8 +116,6 @@ def calcul_stock_materiel(materiel):
 # ================================================================
 # CALCUL STOCK D'UN GROUPE
 # ================================================================
-
-
 def calcul_stock_groupe(materiels):
     """
     Calcule le stock total d'un groupe de matériels.
@@ -159,8 +158,6 @@ def calcul_stock_groupe(materiels):
 # ================================================================
 # VERIFICATION ROLE
 # ================================================================
-
-
 def role_autorise(request, roles):
     """
     Vérifie si l'utilisateur connecté possède
@@ -184,8 +181,6 @@ def role_autorise(request, roles):
 # ================================================================
 # VISIBILITE SELON LE ROLE
 # ================================================================
-
-
 def materiel_visible_pour_role(request, queryset):
     """
     Applique les restrictions de visibilité.
@@ -407,8 +402,6 @@ def materiels_list(request):
 # ================================================================
 # DETAIL D'UN GROUPE
 # ================================================================
-
-
 def materiels_mdetail(request, nom, typeMat, catMat):
     """
     Affiche le détail complet d'un groupe de matériels.
@@ -493,8 +486,6 @@ def materiels_mdetail(request, nom, typeMat, catMat):
 # ================================================================
 # DETAIL MATERIEL
 # ================================================================
-
-
 def materiels_detail(request, nom, typeMat, catMat):
     """
     Affiche le détail classique d'un groupe.
@@ -560,19 +551,6 @@ def materiels_detail(request, nom, typeMat, catMat):
 # ================================================================
 # AJOUT MATERIEL
 # ================================================================
-
-# ================================================================
-# AJOUT MATERIEL
-# ================================================================
-
-from django.contrib import messages
-from django.shortcuts import redirect, render
-
-from users.models import AppUser
-
-# autres imports déjà présents...
-
-
 def materiels_add(request):
     """
     Ajout d'un nouveau matériel.
@@ -736,8 +714,6 @@ def materiels_add(request):
 # ================================================================
 # MODIFICATION MATERIEL
 # ================================================================
-
-
 def materiels_edit(request, pk):
     """
     Modification d'un matériel.
@@ -894,8 +870,6 @@ def materiels_edit(request, pk):
 # ================================================================
 # SUPPRESSION MATERIEL
 # ================================================================
-
-
 def materiels_delete(request, id):
     """
     Suppression définitive d'un matériel.
@@ -985,8 +959,6 @@ def materiels_delete(request, id):
 # ================================================================
 # SUPPRIMER UNIQUEMENT LE STOCK INITIAL
 # ================================================================
-
-
 def supprimer_stock_initial(request, id):
     """
     Met uniquement le stock initial à zéro.
@@ -1089,8 +1061,6 @@ def supprimer_stock_initial(request, id):
 # ============================================================
 # AUTORISATION ENTREPRISE H
 # ============================================================
-
-
 def h_role_autorise(request, roles):
     """Vérifie le rôle de l'utilisateur connecté à Entreprise H."""
     return request.session.get("h_role") in roles
@@ -1110,8 +1080,6 @@ def h_materiel_audit_data(materiel):
 # ============================================================
 # LISTE DES MATÉRIELS H
 # ============================================================
-
-
 def h_materiels_list(request):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(
@@ -1135,8 +1103,6 @@ def h_materiels_list(request):
 # ============================================================
 # AJOUTER UN MATÉRIEL H
 # ============================================================
-
-
 def h_materiels_add(request):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Vous n'êtes pas autorisé à ajouter un matériel.")
@@ -1188,8 +1154,6 @@ def h_materiels_add(request):
 # MODIFIER UN MATÉRIEL H
 # Seul l'enregistreur peut modifier
 # ============================================================
-
-
 def h_materiels_edit(request, pk):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Vous n'êtes pas autorisé à modifier ce matériel.")
@@ -1254,8 +1218,6 @@ def h_materiels_edit(request, pk):
 # ============================================================
 # SUPPRIMER UN MATÉRIEL H
 # ============================================================
-
-
 def h_materiels_delete(request, pk):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Vous n'êtes pas autorisé à supprimer ce matériel.")
@@ -1304,8 +1266,6 @@ def h_materiels_delete(request, pk):
 # ================================================================
 # ENTREPRISE H — GROUPE DE MATÉRIELS
 # ================================================================
-
-
 def h_groupe_materiel_queryset(nom, typeMat, catMat):
     """Récupère les matériels H appartenant au même groupe."""
     return (
@@ -1362,8 +1322,6 @@ def h_calcul_stock_groupe(materiels):
 # ================================================================
 # ENTREPRISE H — DÉTAIL D'UN GROUPE
 # ================================================================
-
-
 def h_materiels_mdetail(request, nom, typeMat, catMat):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Accès refusé aux matériels de l'Entreprise H.")
@@ -1410,8 +1368,6 @@ def h_materiels_mdetail(request, nom, typeMat, catMat):
 # ================================================================
 # ENTREPRISE H — DÉTAIL CLASSIQUE
 # ================================================================
-
-
 def h_materiels_detail(request, nom, typeMat, catMat):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Accès refusé aux matériels de l'Entreprise H.")
@@ -1447,8 +1403,6 @@ def h_materiels_detail(request, nom, typeMat, catMat):
 # ================================================================
 # ENTREPRISE H — SUPPRIMER LE STOCK INITIAL D'UN GROUPE
 # ================================================================
-
-
 def h_supprimer_stock_initial(request, nom, typeMat, catMat):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Vous n'êtes pas autorisé à modifier le stock initial.")
@@ -1491,3 +1445,294 @@ def h_supprimer_stock_initial(request, nom, typeMat, catMat):
         typeMat=typeMat,
         catMat=catMat,
     )
+
+# ============================================================
+
+@login_required_projet
+@require_http_methods(["GET"])
+def Vehicule_list(request):
+    """Liste des véhicules et engins GALAXY avec filtres."""
+
+    vehicules = Vehicule.objects.all().order_by("vehicule")
+
+    # Recherche par immatriculation uniquement.
+    q = request.GET.get("q", "").strip()
+    if q:
+        vehicules = vehicules.filter(
+            Q(vehicule__icontains=q)
+        )
+
+    # Filtre par type.
+    type_vehicule = request.GET.get("type", "").strip()
+    if type_vehicule in ("ROUTIER", "ENGIN"):
+        vehicules = vehicules.filter(
+            type_vehicule=type_vehicule
+        )
+
+    # Filtre par statut.
+    statut = request.GET.get("statut", "").strip()
+    if statut == "actif":
+        vehicules = vehicules.filter(actif=True)
+    elif statut == "inactif":
+        vehicules = vehicules.filter(actif=False)
+
+    context = {
+        "vehicules": vehicules,
+    }
+
+    return render(
+        request,
+        "materiels/vehicule_list.html",
+        context,
+    )
+
+
+# CRUD VÉHICULES GALAXY
+# ============================================================
+@login_required_projet
+@require_http_methods(["GET", "POST"])
+def Vehicule_create(request):
+    """Créer un véhicule GALAXY."""
+
+    if request.method == "POST":
+        form = VehiculeForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Le véhicule a été ajouté avec succès.",
+            )
+            return redirect("materiels:Vehicule_list")
+
+    else:
+        form = VehiculeForm()
+
+    return render(
+        request,
+        "materiels/vehicule_form.html",
+        {
+            "form": form,
+            "titre": "Ajouter un véhicule GALAXY",
+            "action": "Créer",
+        },
+    )
+
+
+@login_required_projet
+@require_http_methods(["GET", "POST"])
+def Vehicule_update(request, id):
+    """Modifier un véhicule GALAXY."""
+    vehicule = get_object_or_404(Vehicule, pk=id)
+
+    if request.method == "POST":
+        form = VehiculeForm(
+            request.POST,
+            instance=vehicule,
+        )
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Le véhicule a été modifié avec succès.",
+            )
+            return redirect("materiels:Vehicule_list")
+
+    else:
+        form = VehiculeForm(instance=vehicule)
+
+    return render(
+        request,
+        "materiels/vehicule_form.html",
+        {
+            "form": form,
+            "vehicule": vehicule,
+            "titre": "Modifier un véhicule GALAXY",
+            "action": "Modifier",
+        },
+    )
+
+
+@login_required_projet
+@require_http_methods(["GET", "POST"])
+def Vehicule_delete(request, id):
+    """Supprimer un véhicule GALAXY après confirmation."""
+    vehicule = get_object_or_404(Vehicule, pk=id)
+
+    if request.method == "POST":
+        vehicule.delete()
+        messages.success(
+            request,
+            "Le véhicule a été supprimé avec succès.",
+        )
+        return redirect("materiels:Vehicule_list")
+
+    return render(
+        request,
+        "materiels/vehicule_confirm_delete.html",
+        {
+            "vehicule": vehicule,
+            "titre": "Supprimer un véhicule GALAXY",
+        },
+    )
+
+
+# ============================================================
+
+@login_required_projet
+@require_http_methods(["GET"])
+def ReparationVehicule_list(request):
+    """Liste des réparations de véhicules et engins GALAXY."""
+
+    reparations = (
+        ReparationVehicule.objects
+        .select_related("vehicule", "enregistre_par")
+        .order_by("-date_reparation", "-id")
+    )
+
+    q = request.GET.get("q", "").strip()
+    type_reparation = request.GET.get("type_reparation", "").strip()
+
+    if q:
+        reparations = reparations.filter(
+            Q(designation__icontains=q)
+            | Q(garage__icontains=q)
+            | Q(vehicule__vehicule__icontains=q)
+        )
+
+    if type_reparation in ("REPARATION", "CHANGEMENT"):
+        reparations = reparations.filter(
+            type_reparation=type_reparation
+        )
+    else:
+        type_reparation = ""
+
+    context = {
+        "reparations": reparations,
+        "q": q,
+        "type_reparation": type_reparation,
+    }
+
+    return render(
+        request,
+        "materiels/reparation_vehicule_list.html",
+        context,
+    )
+
+
+# CRUD RÉPARATIONS GALAXY
+# ============================================================
+@login_required_projet
+@require_http_methods(["GET", "POST"])
+def ReparationVehicule_create(request):
+    """Créer une réparation GALAXY."""
+
+    if request.method == "POST":
+        form = ReparationVehiculeForm(
+            request.POST,
+            request.FILES,
+        )
+
+        if form.is_valid():
+            reparation = form.save(commit=False)
+
+            # Enregistrer l'utilisateur connecté si disponible.
+            user_id = request.session.get("user_id")
+            if user_id:
+                reparation.enregistre_par_id = user_id
+
+            reparation.save()
+
+            messages.success(
+                request,
+                "La réparation a été enregistrée avec succès.",
+            )
+            return redirect("materiels:ReparationVehicule_list")
+
+    else:
+        form = ReparationVehiculeForm()
+
+    return render(
+        request,
+        "materiels/reparation_vehicule_form.html",
+        {
+            "form": form,
+            "titre": "Ajouter une réparation GALAXY",
+            "action": "Créer",
+        },
+    )
+
+
+@login_required_projet
+@require_http_methods(["GET", "POST"])
+def ReparationVehicule_update(request, id):
+    """Modifier une réparation GALAXY."""
+    reparation = get_object_or_404(
+        ReparationVehicule,
+        pk=id,
+    )
+
+    if request.method == "POST":
+        form = ReparationVehiculeForm(
+            request.POST,
+            request.FILES,
+            instance=reparation,
+        )
+
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "La réparation a été modifiée avec succès.",
+            )
+            return redirect("materiels:ReparationVehicule_list")
+
+    else:
+        form = ReparationVehiculeForm(
+            instance=reparation,
+        )
+
+    return render(
+        request,
+        "materiels/reparation_vehicule_form.html",
+        {
+            "form": form,
+            "reparation": reparation,
+            "titre": "Modifier une réparation GALAXY",
+            "action": "Modifier",
+        },
+    )
+
+
+@login_required_projet
+@require_http_methods(["GET", "POST"])
+def ReparationVehicule_delete(request, id):
+    """Supprimer une réparation GALAXY après confirmation."""
+    reparation = get_object_or_404(
+        ReparationVehicule,
+        pk=id,
+    )
+
+    if request.method == "POST":
+        reparation.delete()
+        messages.success(
+            request,
+            "La réparation a été supprimée avec succès.",
+        )
+        return redirect("materiels:ReparationVehicule_list")
+
+    return render(
+        request,
+        "materiels/reparation_vehicule_confirm_delete.html",
+        {
+            "reparation": reparation,
+            "titre": "Supprimer une réparation GALAXY",
+        },
+    )
+
+
+
+
+
+
