@@ -14,6 +14,11 @@
                 Projet : <strong>{{ projet }}</strong>
             </p>
         </div>
+        <a href="{% url 'projet:projet_detail' projet.id %}"
+               class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Retour au projet
+            </a>
 
         <a href="{% url 'projet:avance_equipe_projet_create' projet.id %}"
            class="btn btn-primary">

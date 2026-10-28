@@ -1,12 +1,12 @@
 {% extends "materiaux/base.html" %}
 
-{% block title %}
+{% comment %} {% block title %}
     {% if mode_modification %}
         Modifier un matériau
     {% else %}
         Ajouter un matériau
     {% endif %}
-{% endblock %}
+{% endblock %} {% endcomment %}
 
 {% block page_title %}
     {% if mode_modification %}

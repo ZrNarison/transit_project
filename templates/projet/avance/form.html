@@ -2,14 +2,14 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}
+{% comment %} {% block title %}
     {% if mode == "modification" %}
         Modifier une avance
     {% else %}
         Nouvelle avance
     {% endif %}
     - {{ projet.titre|title }}
-{% endblock %}
+{% endblock %} {% endcomment %}
 
 {% block content %}
 

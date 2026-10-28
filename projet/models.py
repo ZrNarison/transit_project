@@ -1200,7 +1200,8 @@ class MateriauProjet(models.Model):
         verbose_name_plural = "Matériaux du projet"
 
     def __str__(self):
-        return f"{self.materiau} - " f"{self.projet.titre}"
+        return f"{self.materiau}"
+        # return f"{self.materiau} - " f"{self.projet.titre}"
 
     def clean(self):
         errors = {}
@@ -2321,7 +2322,8 @@ class VehiculeProjet(models.Model):
             if self.chauffeur_id
             else "Sans chauffeur"
         )
-        return f"{self.vehicule} - {self.projet.titre} - {chauffeur}"
+        return f"{self.vehicule} ( {chauffeur} )"
+        # return f"{self.vehicule} - {self.projet.titre.title()} - {chauffeur}"
 
     def clean(self):
         super().clean()

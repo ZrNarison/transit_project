@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}
+{% comment %} {% block title %}
     {% if mode == "modification" %}
         Modifier le point
     {% else %}
         Nouveau point
     {% endif %}
-{% endblock %}
+{% endblock %} {% endcomment %}
 
 {% block content %}
 <div class="container py-4">

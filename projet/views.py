@@ -762,7 +762,7 @@ def projet_create(request):
             projet.save()
             messages.success(
                 request,
-                "Le projet a Ã©tÃ© crÃ©Ã© avec succÃ¨s.",
+                "Le projet a été crée avec succés.",
             )
 
             return redirect(
@@ -805,7 +805,7 @@ def projet_update(    request,    projet_id,):
             projet_modifie.save()
             messages.success(
                 request,
-                "Le projet a Ã©tÃ© modifiÃ© avec succÃ¨s.",
+                "Le projet a été modifié avec succés.",
             )
             return redirect(
                 "projet:projet_detail",
@@ -840,7 +840,7 @@ def projet_delete(    request,    projet_id,):
     if projet.enregistre_par_id != request.current_user.id:
         messages.error(
             request,
-            "Vous n'Ãªtes pas autorisÃ© Ã  supprimer ce projet.",
+            "Vous n'êtes pas autorisé à supprimer ce projet.",
         )
         return redirect(
             "projet:projet_detail",
@@ -858,7 +858,7 @@ def projet_delete(    request,    projet_id,):
 
         messages.success(
             request,
-            "Le projet a Ã©tÃ© supprimÃ©.",
+            "Le projet a éte supprimé.",
         )
 
     except ProtectedError:
@@ -867,7 +867,7 @@ def projet_delete(    request,    projet_id,):
             request,
             (
                 "Impossible de supprimer ce projet car "
-                "il possÃ¨de des donnÃ©es liÃ©es."
+                "il possÃ¨de des données liées."
             ),
         )
 
@@ -883,7 +883,7 @@ def projet_detail(    request,    projet_id,):
     if not current_user:
         messages.error(
             request,
-            "Utilisateur connectÃ© introuvable.",
+            "Utilisateur connecté introuvable.",
         )
 
         return redirect("users:login")
@@ -899,7 +899,7 @@ def projet_detail(    request,    projet_id,):
     ):
         messages.error(
             request,
-            "Votre accÃ¨s Ã  ce projet n'est pas actif.",
+            "Votre accés à ce projet n'est pas actif.",
         )
 
         return redirect("projet:projet_list")
@@ -1352,10 +1352,10 @@ def rapport_projet_global(request, projet_id):
     # --------------------------------------------------------
     avances_equipe = (
         AvanceEquipeProjet.objects.filter(
-            # Les avances sont rattachÃ©es Ã  EquipeProjet.
-            # On recherche les Ã©quipes du projet concernÃ©.
-            # Le filtre exact dÃ©pend de la relation utilisÃ©e.
-            # Voir la correction ci-dessous si nÃ©cessaire.
+            # Les avances sont rattachées Ã  EquipeProjet.
+            # On recherche les équipes du projet concerné.
+            # Le filtre exact dépend de la relation utilisée.
+            # Voir la correction ci-dessous si nécessaire.
             equipe_execution__projet=projet
         )
         .select_related(
@@ -1366,7 +1366,7 @@ def rapport_projet_global(request, projet_id):
         .order_by("-date_avance", "-id")
     )
 
-    # Inclure aussi les avances rattachÃ©es aux Ã©quipes de miniers.
+    # Inclure aussi les avances rattachées aux équipes de miniers.
     avances_miniers = (
         AvanceEquipeProjet.objects.filter(miniers_execution__projet=projet)
         .select_related(
@@ -1377,7 +1377,7 @@ def rapport_projet_global(request, projet_id):
         .order_by("-date_avance", "-id")
     )
 
-    # Ã‰viter les doublons si une avance correspond Ã  une seule Ã©quipe.
+    # Ã‰viter les doublons si une avance correspond Ã  une seule équipe.
     avances_equipe = (
         (avances_equipe | avances_miniers).distinct().order_by("-date_avance", "-id")
     )
@@ -1385,7 +1385,7 @@ def rapport_projet_global(request, projet_id):
     total_avances = avances_equipe.aggregate(total=Sum("montant"))["total"] or ZERO
 
     # --------------------------------------------------------
-    # 4. SYNTHÃˆSE FINANCIÃˆRE
+    # 4. SYNTHESE FINANCIERE
     # --------------------------------------------------------
     budget_previsionnel = projet.budget_previsionnel or ZERO
 
@@ -1413,7 +1413,7 @@ def rapport_projet_global(request, projet_id):
             # Budget
             "budget_previsionnel": budget_previsionnel,
             "total_achats": total_achats,
-            # RÃ©munÃ©rations
+            # Rémunérations
             "personnels_execution": personnels_execution,
             "total_chefs_equipe": total_chefs_equipe,
             "total_miniers": total_miniers,
@@ -1612,7 +1612,7 @@ def equipe_delete(    request,    projet_id,    equipe_id,):
 
         messages.error(
             request,
-            ("La suppression d'une affectation doit Ãªtre effectuÃ©e par POST."),
+            ("La suppression d'une affectation doit Ãªtre effectuée par POST."),
         )
 
         return redirect(
@@ -2021,7 +2021,7 @@ def point_update(request, projet_id, point_id):
 
             point_modifie = form.save(commit=False)
 
-            # Conserver le projet et le crÃ©ateur d'origine.
+            # Conserver le projet et le créateur d'origine.
             point_modifie.projet = projet
             point_modifie.enregistre_par = point.enregistre_par
 
@@ -2358,7 +2358,7 @@ def minier_projet_create(request, projet_id):
 
             minier.save()
 
-            messages.success(request, "Le Minier a Ã©tÃ© enregistrÃ© avec succÃ¨s.")
+            messages.success(request, "Le Minier a été enregistré avec succés.")
 
             return redirect(
                 "projet:minier_projet_list",
@@ -2403,7 +2403,7 @@ def minier_projet_update(request, projet_id, pk):
 
     if minier.enregistre_par_id and str(minier.enregistre_par_id) != str(user_id):
 
-        messages.error(request, "Vous n'Ãªtes pas autorisÃ© Ã  modifier ce Minier.")
+        messages.error(request, "Vous n'êtes pas autorisé à modifier ce Minier.")
 
         return redirect(
             "projet:minier_projet_list",
@@ -2429,7 +2429,7 @@ def minier_projet_update(request, projet_id, pk):
 
             minier.save()
 
-            messages.success(request, "Le Minier a Ã©tÃ© modifiÃ© avec succÃ¨s.")
+            messages.success(request, "Le Minier a été modifié avec succés.")
 
             return redirect(
                 "projet:minier_projet_list",
@@ -2623,7 +2623,7 @@ def rapport_projet_update(    request,    projet_id,    rapport_id,):
 
             messages.success(
                 request,
-                "Le rapport a Ã©tÃ© modifiÃ©.",
+                "Le rapport a été modifié.",
             )
 
             return redirect(
@@ -2716,7 +2716,7 @@ def rapport_travail_create(    request,    projet_id,):
 
             messages.success(
                 request,
-                "Le rapport de travail a Ã©tÃ© enregistrÃ©.",
+                "Le rapport de travail a été enregistré.",
             )
 
             return redirect(
@@ -2747,7 +2747,7 @@ def rapport_travail_create(    request,    projet_id,):
 # ============================================================
 def rapport_materiau_create(request, projet_id):
     """
-    Ajout d'un rapport matÃ©riau pour un projet.
+    Ajout d'un rapport matériau pour un projet.
     """
 
     # ============================================================
@@ -2758,7 +2758,7 @@ def rapport_materiau_create(request, projet_id):
     # CONTRÃ”LE D'ACCÃˆS AU PROJET
     # ============================================================
     if not user_has_project_access(request.current_user, projet):
-        messages.error(request, "Votre accÃ¨s Ã  ce projet n'est pas actif.")
+        messages.error(request, "Votre accés  à ce projet n'est pas actif.")
         return redirect("projet:projet_list")
 
     # ============================================================
@@ -2766,7 +2766,7 @@ def rapport_materiau_create(request, projet_id):
     # ============================================================
     if not user_can_manage_projects(request.current_user):
         messages.error(
-            request, "Vous n'avez pas l'autorisation d'ajouter " "un rapport matÃ©riau."
+            request, "Vous n'avez pas l'autorisation d'ajouter un rapport matériau."
         )
         return redirect("projet:rapport_materiau_list", projet_id=projet.id)
 
@@ -2805,7 +2805,7 @@ def rapport_materiau_create(request, projet_id):
             rapport.save()
 
             messages.success(
-                request, "Le rapport matÃ©riau a Ã©tÃ© ajoutÃ© avec succÃ¨s."
+                request, "Le rapport matériau a été ajouté avec succés."
             )
 
             return redirect("projet:rapport_materiau_list", projet_id=projet.id)
@@ -2820,7 +2820,7 @@ def rapport_materiau_create(request, projet_id):
     context = {
         "projet": projet,
         "form": form,
-        "titre": "Ajouter un rapport matÃ©riau",
+        "titre": "Ajouter un rapport matériau",
         "mode": "create",
         "user": request.current_user,
     }
@@ -2992,7 +2992,7 @@ def vehicule_projet_create(
             "form": form,
             "projet": projet,
             "affectation": None,
-            "titre_page": ("Affecter un vÃ©hicule / engin au projet"),
+            "titre_page": ("Affecter un véhicule / engin au projet"),
             "user": request.current_user,
         },
     )
@@ -3094,7 +3094,7 @@ def vehicule_projet_update(
             "form": form,
             "projet": projet,
             "affectation": affectation,
-            "titre_page": ("Modifier l'affectation du vÃ©hicule / engin"),
+            "titre_page": ("Modifier l'affectation du véhicule / engin"),
             "user": request.current_user,
         },
     )
@@ -3164,7 +3164,7 @@ def vehicule_projet_delete(
 
     messages.warning(
         request,
-        "La suppression doit Ãªtre confirmÃ©e par une requÃªte POST.",
+        "La suppression doit étre confirmée par une requête POST.",
     )
 
     return redirect(
@@ -3179,7 +3179,7 @@ def vehicule_projet_delete(
 @login_required_projet
 def engin_list(request, projet_id):
     """
-    Affiche la liste des engins affectÃ©s Ã  un projet.
+    Affiche la liste des engins affectés à un projet.
     """
 
     # ============================================================
@@ -3191,7 +3191,7 @@ def engin_list(request, projet_id):
     if not current_user:
         messages.error(
             request,
-            "Utilisateur connectÃ© introuvable.",
+            "Utilisateur connecté introuvable.",
         )
 
         return redirect("users:login")
@@ -3705,7 +3705,6 @@ def _peut_modifier_mouvement_materiau(
 # ============================================================
 # LISTE DES MATÃ‰RIAUX DU PROJET
 # ============================================================
-
 @login_required_projet
 def materiau_list(request, projet_id):
     from decimal import Decimal
@@ -3969,7 +3968,7 @@ def materiau_create(request, projet_id):
     # ========================================================
     if not current_user:
         messages.error(
-            request, "Utilisateur connectÃ© introuvable. " "Veuillez vous reconnecter."
+            request, "Utilisateur connecté introuvable. Veuillez vous reconnecter."
         )
         return redirect("users:login")
 
@@ -3985,7 +3984,7 @@ def materiau_create(request, projet_id):
     # 3. VERIFICATION DE L'ACCÃˆS AU PROJET
     # ========================================================
     if not user_has_project_access(current_user, projet):
-        messages.error(request, "Votre accÃ¨s Ã  ce projet n'est pas actif.")
+        messages.error(request, "Votre accés à ce projet n'est pas actif.")
         return redirect("projet:projet_list")
 
     # ========================================================
@@ -4012,7 +4011,7 @@ def materiau_create(request, projet_id):
     if not peut_ajouter:
         messages.error(
             request,
-            "Vous n'avez pas l'autorisation d'ajouter " "un matÃ©riau Ã  ce projet.",
+            "Vous n'avez pas l'autorisation d'ajouter un matériau à ce projet.",
         )
         return redirect(
             "projet:materiau_list",
@@ -4031,7 +4030,7 @@ def materiau_create(request, projet_id):
         if form.is_valid():
             materiau_projet = form.save(commit=False)
 
-            # Le projet est imposÃ© cÃ´tÃ© serveur.
+            # Le projet est imposé à cette serveur.
             materiau_projet.projet = projet
 
             # ================================================
@@ -4074,7 +4073,7 @@ def materiau_create(request, projet_id):
     context = {
         "projet": projet,
         "form": form,
-        "titre": "Ajouter un matÃ©riau au projet",
+        "titre": "Ajouter un matériau au projet",
         "mode": "creation",
         "user": current_user,
         "current_user": current_user,
@@ -4129,7 +4128,7 @@ def materiau_update(request, projet_id, pk):
     ):
         messages.error(
             request,
-            "Modification refusÃ©e : seul l'enregistreur initial peut modifier ce matÃ©riau.",
+            "Modification refusée : seul l'enregistreur initial peut modifier ce matériau.",
         )
         return redirect(
             "projet:materiau_list",
@@ -4155,7 +4154,7 @@ def materiau_update(request, projet_id, pk):
 
             messages.success(
                 request,
-                "MatÃ©riau modifiÃ© avec succÃ¨s.",
+                "Matériau modifié avec succés.",
             )
 
             return redirect(
@@ -4178,7 +4177,7 @@ def materiau_update(request, projet_id, pk):
             "objet": materiau,
             "mode_modification": True,
             "mode": "update",
-            "titre_page": "Modifier un matÃ©riau",
+            "titre_page": "Modifier un matériau",
             "url_retour": redirect(
                 "projet:materiau_list",
                 projet_id=projet.pk,
@@ -4204,7 +4203,7 @@ def materiau_delete(request, projet_id, pk):
     if not current_user:
         messages.error(
             request,
-            "Utilisateur connectÃ© introuvable.",
+            "Utilisateur connecté introuvable.",
         )
         return redirect("users:login")
 
@@ -4467,7 +4466,7 @@ def minier_create(request, projet_id):
         - Chef de chantier du projet
         - Chef d'équipe du projet
 
-    L'utilisateur connectÃ© devient automatiquement
+    L'utilisateur connecté devient automatiquement
     l'enregistreur du minier.
     """
 
@@ -4844,7 +4843,7 @@ def minier_delete(request, projet_id, pk):
     if not personnel_connecte:
         messages.error(
             request,
-            "Aucun personnel n'est associÃ© Ã  votre compte.",
+            "Aucun personnel n'est associé à votre compte.",
         )
         return redirect(
             "projet:minier_list",
