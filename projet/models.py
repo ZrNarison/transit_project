@@ -1122,7 +1122,7 @@ class PointProjet(models.Model):
         verbose_name_plural = "Points de chantier"
 
     def __str__(self):
-        return f"{self.nom} - ({self.distance_km} km)"
+        return f"{self.nom.upper()} - ({self.distance_km} km) : {self.localisation.upper()}"
 
     def clean(self):
         errors = {}
@@ -1572,8 +1572,6 @@ class ConsommationMateriauProjet(models.Model):
 # ============================================================
 # RETOUR DE MATÃ‰RIAUX NON UTILISÃ‰S
 # ============================================================
-
-
 class RetourMateriauProjet(models.Model):
     distribution = models.ForeignKey(
         "DistributionMateriauProjet",
