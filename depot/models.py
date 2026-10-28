@@ -127,15 +127,16 @@ class Distribution(models.Model):
 
         return self.avances.aggregate(total=Sum("montantAv"))["total"] or Decimal("0")
 
+   
     @property
     def solde(self):
-
         return (
             self.montant
             - self.montant_depenses
             - self.montant_avances
             - self.montant_produits
         )
+
 
     def __str__(self):
 

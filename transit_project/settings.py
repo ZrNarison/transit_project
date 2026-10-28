@@ -44,6 +44,7 @@ ALLOWED_HOSTS = [
     #"10.32.135.12"
     #"192.168.159.12",
     "192.168.43.12",
+    
 ]
 # HTTPS local : relais TLS vers Django
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

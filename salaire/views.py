@@ -9,7 +9,7 @@ from personnel.models import Personnel, H_Personnel
 from .forms import SalaireForm, H_SalaireForm
 from .models import Salaire, H_Salaire, recalculer_situation_personnel,h_recalculer_situation_personnel
 from django.views.decorators.http import require_http_methods
-
+from users.decorators import session_login_required
 # =============================================================
 # UTILISATEUR CONNECTÉ
 # =============================================================
@@ -39,6 +39,7 @@ def check_session(request):
 # =============================================================
 # LISTE DES SALAIRES
 # =============================================================
+@session_login_required
 def salaire_list(request):
 
     utilisateur = check_session(request)
@@ -194,6 +195,7 @@ def salaire_list(request):
 # =============================================================
 # AJOUT SALAIRE
 # =============================================================
+@session_login_required
 def salaire_add(request):
 
     utilisateur = check_session(request)
@@ -268,6 +270,7 @@ def salaire_add(request):
 # MODIFICATION SALAIRE
 # Compatible avec :
 # =============================================================
+@session_login_required
 def salaire_edit(request,id=None,pk=None,):
 
     utilisateur = check_session(request)
@@ -413,6 +416,7 @@ def salaire_edit(request,id=None,pk=None,):
 # SUPPRESSION SALAIRE
 # Compatible avec id ET pk.
 # =============================================================
+@session_login_required
 def salaire_delete(request,id=None,pk=None,):
     utilisateur = check_session(request)
 
@@ -498,7 +502,7 @@ def salaire_delete(request,id=None,pk=None,):
 # ===========================================================
 #  SALAIRE ENTREPRISE H
 # ===========================================================
-
+@session_login_required
 def _get_h_salaire_user(request):
     """Récupère exclusivement l'utilisateur MCCR connecté."""
     h_user_id = request.session.get("h_user_id")
@@ -512,6 +516,7 @@ def _get_h_salaire_user(request):
 # ===========================================================
 # LISTE DES SALAIRES MCCR
 # ===========================================================
+@session_login_required
 def h_salaire_list(request):
     utilisateur = _get_h_salaire_user(request)
 
@@ -628,6 +633,7 @@ def h_salaire_list(request):
 # ===========================================================
 # AJOUT SALAIRE MCCR
 # ===========================================================
+@session_login_required
 def h_salaire_add(request):
     utilisateur = _get_h_salaire_user(request)
 
@@ -677,6 +683,7 @@ def h_salaire_add(request):
 # ===========================================================
 # MODIFICATION SALAIRE MCCR
 # ===========================================================
+@session_login_required
 def h_salaire_edit(request, id=None, pk=None):
     utilisateur = _get_h_salaire_user(request)
 
@@ -766,6 +773,7 @@ def h_salaire_edit(request, id=None, pk=None):
 # SUPPRESSION SALAIRE MCCR
 # Compatible avec id et pk
 # ===========================================================
+@session_login_required
 @require_http_methods(["GET", "POST"])
 def h_salaire_delete(request, id=None, pk=None):
     # -------------------------------------------------------

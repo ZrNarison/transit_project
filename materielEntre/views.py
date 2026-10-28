@@ -6,12 +6,12 @@ from audit.utils import enregistrer_action
 
 from .forms import H_MaterielEntreForm, MaterielEntreForm
 from .models import H_MaterielEntre, MaterielEntre
+from users.decorators import session_login_required
+
 
 # ============================================================
 # LISTE
 # ============================================================
-
-
 def materielEntre_list(request):
 
     queryset = MaterielEntre.objects.select_related(
@@ -48,8 +48,7 @@ def materielEntre_list(request):
 # ============================================================
 # DETAIL
 # ============================================================
-
-
+@session_login_required
 def materielEntre_detail(request, id):
 
     entree = get_object_or_404(
@@ -65,8 +64,7 @@ def materielEntre_detail(request, id):
 # ============================================================
 # AJOUT
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def materielEntre_add(request):
 
@@ -112,8 +110,7 @@ def materielEntre_add(request):
 # ============================================================
 # MODIFICATION
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def materielEntre_edit(request, id):
 
@@ -177,8 +174,7 @@ def materielEntre_edit(request, id):
 # ============================================================
 # SUPPRESSION
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def materielEntre_delete(request, id):
 
@@ -220,8 +216,7 @@ def materielEntre_delete(request, id):
 # ===============================================================
 # ENTREPRISE H
 # ==============================================================
-
-
+@session_login_required
 def h_materielEntre_list(request):
 
     queryset = H_MaterielEntre.objects.select_related(
@@ -258,8 +253,7 @@ def h_materielEntre_list(request):
 # ============================================================
 # DETAIL
 # ============================================================
-
-
+@session_login_required
 def h_materielEntre_detail(request, id):
 
     entree = get_object_or_404(
@@ -275,8 +269,7 @@ def h_materielEntre_detail(request, id):
 # ============================================================
 # AJOUT
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def h_materielEntre_add(request):
 
@@ -322,8 +315,7 @@ def h_materielEntre_add(request):
 # ============================================================
 # MODIFICATION
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def h_materielEntre_edit(request, id):
 
@@ -387,8 +379,7 @@ def h_materielEntre_edit(request, id):
 # ============================================================
 # SUPPRESSION
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def h_materielEntre_delete(request, id):
 

@@ -1,0 +1,113 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Remboursement d'une avance client Mica</h2>
+        <a href="{% url 'produit:p_produit_liste' %}"
+           class="btn btn-outline-secondary">
+            Retour aux produits
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}"
+                 role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <p class="text-muted">
+                Cette opération rembourse une avance sans sélectionner
+                de produit et sans modifier le statut des produits.
+            </p>
+
+            <form method="post"
+                  action="{% url 'produit:rembourser_avance' %}">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="client_id" class="form-label">
+                        Client
+                    </label>
+                    <select name="client_id"
+                            id="client_id"
+                            class="form-select"
+                            required>
+                        <option value="">-- Sélectionner un client --</option>
+                        {% for client in clients %}
+                            <option value="{{ client.id }}">
+                                {{ client.nom }} {{ client.prenom }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="remboursement" class="form-label">
+                        Type de remboursement
+                    </label>
+                    <select name="remboursement"
+                            id="remboursement"
+                            class="form-select"
+                            required>
+                        <option value="PARTIEL">Partiel</option>
+                        <option value="TOTAL">Total du solde disponible</option>
+                    </select>
+                </div>
+
+                <div class="mb-3" id="bloc-montant">
+                    <label for="montant_retour" class="form-label">
+                        Montant à rembourser (Ar)
+                    </label>
+                    <input type="number"
+                           name="montant_retour"
+                           id="montant_retour"
+                           class="form-control"
+                           min="1"
+                           step="1"
+                           required>
+                </div>
+
+                <div class="alert alert-info">
+                    Le remboursement partiel ne supprime pas le reliquat :
+                    celui-ci reste disponible sur les avances du client.
+                    Le remboursement total concerne uniquement le solde
+                    actuellement disponible.
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    Enregistrer le remboursement
+                </button>
+                <a href="{% url 'produit:p_produit_liste' %}"
+                   class="btn btn-secondary">
+                    Annuler
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const mode = document.getElementById("remboursement");
+    const bloc = document.getElementById("bloc-montant");
+    const montant = document.getElementById("montant_retour");
+
+    function actualiserFormulaire() {
+        const total = mode.value === "TOTAL";
+        bloc.style.display = total ? "none" : "";
+        montant.required = !total;
+        montant.disabled = total;
+    }
+
+    mode.addEventListener("change", actualiserFormulaire);
+    actualiserFormulaire();
+})();
+</script>
+{% endblock %}

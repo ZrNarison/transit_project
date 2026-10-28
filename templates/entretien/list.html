@@ -1,174 +1,148 @@
 {% extends "base.html" %}
+
 {% block content %}
 
-<div class="container mt-4">
+<div class="container-fluid mt-4">
 
+    <!-- MESSAGES -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
 
-<div class="d-flex justify-content-between mb-3">
-
-    <h3>
-        🔧 Entretien véhicules
-    </h3>
-
-    {% if request.session.role == "UserMica" or request.session.role == "UserEntreprise"  %}
-    <a href="{% url 'entretien:create' %}" class="btn btn-primary">+ Ajouter entretien</a>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer">
+                </button>
+            </div>
+        {% endfor %}
     {% endif %}
 
-</div>
+    <!-- EN-TÊTE -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
 
+        <h3 class="mb-0">
+            <i class="fas fa-tools"></i>
+            Entretien véhicules
+        </h3>
 
+        {% if request.session.role == "UserMica" or request.session.role == "UserEntreprise" %}
+            <a href="{% url 'entretien:create' %}"
+               class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Ajouter entretien
+            </a>
+        {% endif %}
 
+    </div>
 
-<div class="card shadow">
+    <!-- TABLEAU -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
 
-<table class="table table-striped table-hover mb-0">
+            <table class="table table-striped table-hover table-bordered mb-0">
 
+                <thead class="table-primary">
+                    <tr>
+                        <th>Véhicule</th>
+                        <th>Pièce</th>
+                        <th>Nombre</th>
+                        <th>Prix unitaire</th>
+                        <th>Total</th>
+                        <th>Observation</th>
+                        <th>Date</th>
+                        <th>Enregistré par</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
 
-<thead class="table-primary">
+                <tbody>
 
-<tr>
+                    {% for e in entretiens %}
 
-<th>Véhicule</th>
+                        <tr>
+                            <td>{{ e.num_vehicule }}</td>
 
-<th>Pièce</th>
+                            <td>{{ e.piece_acheter }}</td>
 
-<th>Nombre</th>
+                            <td>{{ e.nombre }}</td>
 
-<th>Prix</th>
+                            <td>{{ e.prix_du_piece|floatformat:2 }}</td>
 
-<th>Total</th>
+                            <td>
+                                {% widthratio e.nombre 1 e.prix_du_piece %}
+                            </td>
 
-<th>Observation</th>
+                            <td>{{ e.observation|default:"-" }}</td>
 
-<th>Date</th>
+                            <td>{{ e.date_cree|date:"d/m/Y" }}</td>
 
-<th>Enregistré par</th>
+                            <td>
+                                {% if e.enregistrer_par %}
+                                    {{ e.enregistrer_par.username }}
+                                {% else %}
+                                    <span class="text-muted">
+                                        Utilisateur inconnu
+                                    </span>
+                                {% endif %}
+                            </td>
 
-<th>Action</th>
+                            <!-- ACTIONS -->
+                            <td class="text-center">
 
-</tr>
+                                {% if e.enregistrer_par_id and e.enregistrer_par_id|stringformat:"s" == request.session.user_id|stringformat:"s" %}
 
-</thead>
+                                    <div class="btn-group" role="group">
 
+                                        <a href="{% url 'entretien:update' e.id %}"
+                                           class="btn btn-sm btn-warning"
+                                           title="Modifier cet entretien">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
 
+                                        <a href="{% url 'entretien:delete' e.id %}"
+                                           class="btn btn-sm btn-danger"
+                                           title="Supprimer cet entretien">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
 
+                                    </div>
 
-<tbody>
+                                {% else %}
 
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm"
+                                            disabled
+                                            title="Seul l'enregistreur peut modifier ou supprimer">
+                                        <i class="fas fa-lock"></i>
+                                    </button>
 
-{% for e in entretiens %}
+                                {% endif %}
 
+                            </td>
+                        </tr>
 
-<tr>
+                    {% empty %}
 
+                        <tr>
+                            <td colspan="9"
+                                class="text-center text-muted py-4">
+                                <i class="fas fa-info-circle"></i>
+                                Aucun entretien enregistré.
+                            </td>
+                        </tr>
 
-<td>
-{{ e.num_vehicule }}
-</td>
+                    {% endfor %}
 
+                </tbody>
 
+            </table>
 
-<td>
-{{ e.piece_acheter }}
-</td>
-
-
-
-<td>
-{{ e.nombre }}
-</td>
-
-
-
-<td>
-{{ e.prix_du_piece }}
-</td>
-
-
-
-<td>
-{{ e.nombre|add:"0" }}
-</td>
-
-
-
-<td>
-{{ e.observation|default:"-" }}
-</td>
-
-
-
-<td>
-{{ e.date_cree|date:"d/m/Y" }}
-</td>
-
-
-<td>
-    {{ e.enregistrer_par.username }}
-</td>
-
-
-<td>
-
-{% if e.enregistrer_par_id == request.session.user_id %}
-
-<a href="{% url 'entretien:update' e.id %}"
-   class="btn btn-sm btn-warning">
-    ✏️
-</a>
-
-
-<a href="{% url 'entretien:delete' e.id %}"
-   class="btn btn-sm btn-danger">
-    🗑️
-</a>
-
-
-{% else %}
-
-<button class="btn btn-secondary btn-sm"
-        disabled
-        title="Vous n'avez pas le droit">
-    🔒
-</button>
-
-{% endif %}
-
-</td>
-
-
-</tr>
-
-
-
-{% empty %}
-
-
-<tr>
-
-<td colspan="9" class="text-center">
-
-Aucun entretien enregistré
-
-</td>
-
-</tr>
-
-
-
-{% endfor %}
-
-
-
-</tbody>
-
-
-</table>
+        </div>
+    </div>
 
 </div>
-
-
-</div>
-
 
 {% endblock %}

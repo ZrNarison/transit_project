@@ -7,9 +7,7 @@
 
 <div class="container-fluid py-4">
 
-    <!-- =====================================================
-         EN-TÊTE
-    ====================================================== -->
+    <!-- =====================================================EN-TÊTE====================================================== -->
 
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
 
@@ -39,9 +37,7 @@
     </div>
 
 
-    <!-- =====================================================
-         FILTRES
-    ====================================================== -->
+    <!-- =====================================================FILTRES====================================================== -->
 
     <div class="card shadow-sm mb-4">
 
@@ -151,9 +147,7 @@
     </div>
 
 
-    <!-- =====================================================
-         INFORMATIONS
-    ====================================================== -->
+    <!-- =====================================================INFORMATIONS====================================================== -->
 
     <div class="card shadow-sm mb-3">
 
@@ -372,43 +366,17 @@
 
                                     {% if avance.enregistre_par_id == request.session.user_id %}
 
-                                        <a
-                                            href="{% url 'avances:avance_edit' avance.id %}"
-                                            class="btn btn-warning btn-sm"
-                                            title="Modifier"
-                                        >
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-
-                                        <button
-                                            type="button"
-                                            class="btn btn-danger btn-sm"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#delete{{ avance.id }}"
-                                            title="Supprimer"
-                                        >
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
+                                        <a href="{% url 'avances:avance_edit' avance.id %}" class="btn btn-warning btn-sm" title="Modifier"><i class="fas fa-edit"></i></a>
+                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#delete{{ avance.id }}" title="Supprimer"><i class="fas fa-trash-alt"></i></button>
 
                                     {% else %}
 
-                                        <button
-                                            type="button"
-                                            class="btn btn-outline-secondary btn-sm"
-                                            disabled
-                                            title="Seul l'enregistreur peut modifier ou supprimer cette avance"
-                                        >
-                                            <i class="fas fa-lock"></i>
-                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled title="Seul l'enregistreur peut modifier ou supprimer cette avance"><i class="fas fa-lock"></i></button>
 
                                     {% endif %}
-
                                 </td>
-
                             </tr>
-
                         {% empty %}
-
                             <tr>
 
                                 <td colspan="9" class="text-center py-5">

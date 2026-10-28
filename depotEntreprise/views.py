@@ -5,7 +5,7 @@ from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.dateparse import parse_date
-
+from users.decorators import session_login_required
 from audit.utils import enregistrer_action
 from users.models import AppUser, H_AppUser
 
@@ -143,6 +143,7 @@ def _paginer_depots(request, queryset, nombre_par_page=12):
 # ============================================================
 # GALAXY : LISTE DES DÉPÔTS
 # ============================================================
+@session_login_required
 def depot_soc_list(request):
     user = check_session(request)
 
@@ -185,6 +186,7 @@ def depot_soc_list(request):
 # ============================================================
 # GALAXY : AJOUT D'UN DÉPÔT
 # ============================================================
+@session_login_required
 def depot_soc_add(request):
     user = check_session(request)
 
@@ -234,6 +236,7 @@ def depot_soc_add(request):
 # ============================================================
 # GALAXY : DÉTAIL D'UN DÉPÔT
 # ============================================================
+@session_login_required
 def depot_soc_detail(request, id):
     user = check_session(request)
 
@@ -259,6 +262,7 @@ def depot_soc_detail(request, id):
 # ============================================================
 # GALAXY : MODIFICATION D'UN DÉPÔT
 # ============================================================
+@session_login_required
 def depot_soc_edit(request, id):
     user = check_session(request)
 
@@ -311,6 +315,7 @@ def depot_soc_edit(request, id):
 # ============================================================
 # GALAXY : SUPPRESSION D'UN DÉPÔT
 # ============================================================
+@session_login_required
 def depot_soc_delete(request, id):
     user = check_session(request)
 
@@ -356,6 +361,7 @@ def depot_soc_delete(request, id):
 # ============================================================
 # MCCR : LISTE DES DÉPÔTS BANQUE CONSTRUCTION
 # ============================================================
+@session_login_required
 def h_depot_soc_list(request):
     user = _h_depot_soc_user(request)
 
@@ -410,6 +416,7 @@ def h_depot_soc_list(request):
 # ============================================================
 # MCCR : AJOUT D'UN DÉPÔT
 # ============================================================
+@session_login_required
 def h_depot_soc_add(request):
     user = _h_depot_soc_user(request)
 
@@ -463,6 +470,7 @@ def h_depot_soc_add(request):
 # ============================================================
 # MCCR : DÉTAIL D'UN DÉPÔT
 # ============================================================
+@session_login_required
 def h_depot_soc_detail(request, id):
     user = _h_depot_soc_user(request)
 
@@ -492,6 +500,7 @@ def h_depot_soc_detail(request, id):
 # ============================================================
 # MCCR : MODIFICATION D'UN DÉPÔT
 # ============================================================
+@session_login_required
 def h_depot_soc_edit(request, id):
     user = _h_depot_soc_user(request)
 
@@ -554,6 +563,7 @@ def h_depot_soc_edit(request, id):
 # ============================================================
 # MCCR : SUPPRESSION D'UN DÉPÔT
 # ============================================================
+@session_login_required
 def h_depot_soc_delete(request, id):
     user = _h_depot_soc_user(request)
 

@@ -14,12 +14,10 @@ from salaire.models import H_Salaire, Salaire
 from salaire.forms import H_SalaireForm,SalaireForm
 from .forms import AvanceForm, H_AvanceForm
 from .models import Avance, H_Avance
-
+from users.decorators import session_login_required
 # =========================================================
 # OUTIL : QUERYSET PERSONNEL SELON LE RÃ”LE
 # =========================================================
-
-
 def get_personnel_queryset_for_role(role):
 
     queryset = (
@@ -60,8 +58,6 @@ def get_personnel_queryset_for_role(role):
 # =========================================================
 # OUTIL : QUERYSET AVANCE SELON LE RÃ”LE
 # =========================================================
-
-
 def get_avance_queryset_for_role(role):
 
     queryset = (
@@ -104,6 +100,7 @@ def get_avance_queryset_for_role(role):
 # =========================================================
 # AJOUT
 # =========================================================
+@session_login_required
 def avance_add(request):
 
     # -----------------------------------------------------
@@ -221,6 +218,7 @@ def avance_add(request):
 # =========================================================
 # LISTE DES AVANCES
 # =========================================================
+@session_login_required
 def avance_list(request):
 
     # -----------------------------------------------------
@@ -316,6 +314,7 @@ def avance_list(request):
 # =========================================================
 # DETAIL
 # =========================================================
+@session_login_required
 def avance_detail(request, id):
 
     # -----------------------------------------------------
@@ -339,7 +338,7 @@ def avance_detail(request, id):
         "VIEW",
         "Avance",
         id,
-        description=("Consultation dÃ©tail avance personnel"),
+        description=("Consultation détail avance personnel"),
     )
 
     # -----------------------------------------------------
@@ -352,6 +351,7 @@ def avance_detail(request, id):
 # =========================================================
 # MODIFICATION
 # =========================================================
+@session_login_required
 def avance_edit(request, id):
 
     # -----------------------------------------------------
@@ -478,6 +478,7 @@ def avance_edit(request, id):
 # =========================================================
 # SUPPRESSION
 # =========================================================
+@session_login_required
 def avance_delete(request, id):
 
     # -----------------------------------------------------
@@ -548,8 +549,7 @@ def avance_delete(request, id):
 # =============================================================
 # MCCR / ENTREPRISE H â€” SALAIRES SÃ‰PARÃ‰S DE GALAXY
 # =============================================================
-
-
+@session_login_required
 def _h_salaire_utilisateur(request):
     """Récupére exclusivement l'utilisateur de la session MCCR."""
     if request.session.get("h_role") not in ("Dir", "Compta"):
@@ -563,6 +563,8 @@ def _h_salaire_utilisateur(request):
     return H_AppUser.objects.filter(pk=h_user_id).first()
 
 
+
+@session_login_required
 def h_salaire_list(request):
     utilisateur = _h_salaire_utilisateur(request)
 
@@ -625,7 +627,7 @@ def h_salaire_list(request):
         },
     )
 
-
+@session_login_required
 def h_salaire_add(request):
     utilisateur = _h_salaire_utilisateur(request)
 
@@ -666,7 +668,7 @@ def h_salaire_add(request):
         },
     )
 
-
+@session_login_required
 def h_salaire_edit(request, id=None, pk=None):
     utilisateur = _h_salaire_utilisateur(request)
 
@@ -742,6 +744,7 @@ def h_salaire_edit(request, id=None, pk=None):
     )
 
 
+@session_login_required
 def h_salaire_delete(request, id=None, pk=None):
     utilisateur = _h_salaire_utilisateur(request)
 
@@ -793,6 +796,7 @@ def h_salaire_delete(request, id=None, pk=None):
     )
 
 
+@session_login_required
 def recalculer_reste(self):
     reste, trop_percu = self.calculer_situation()
 
@@ -810,7 +814,7 @@ def recalculer_reste(self):
 # =============================================================
 # MCCR / ENTREPRISE H â€” AVANCES
 # =============================================================
-
+@session_login_required
 def _h_avance_utilisateur(request):
     """Vérifie la session et l'utilisateur MCCR."""
     if request.session.get("h_role") not in ("Dir", "Compta"):
@@ -822,7 +826,7 @@ def _h_avance_utilisateur(request):
 
     return H_AppUser.objects.filter(pk=h_user_id).first()
 
-
+@session_login_required
 def h_avance_list(request):
     utilisateur = _h_avance_utilisateur(request)
 
@@ -873,7 +877,7 @@ def h_avance_list(request):
         },
     )
 
-
+@session_login_required
 def h_avance_add(request):
     utilisateur = _h_avance_utilisateur(request)
 
@@ -922,7 +926,7 @@ def h_avance_add(request):
         },
     )
 
-
+@session_login_required
 def h_avance_edit(request, id):
     utilisateur = _h_avance_utilisateur(request)
 
@@ -998,7 +1002,7 @@ def h_avance_edit(request, id):
         },
     )
 
-
+@session_login_required
 def h_avance_delete(request, id):
     utilisateur = _h_avance_utilisateur(request)
 

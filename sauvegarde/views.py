@@ -190,7 +190,7 @@ def _clear_staged_import(request):
 
 
 def _build_fixture():
-    """Construit la fixture de sauvegarde."""
+    """Exporte les modèles Django installés dans une fixture JSON."""
     output = StringIO()
 
     call_command(
@@ -205,6 +205,8 @@ def _build_fixture():
     )
 
     return output.getvalue()
+
+
 
 
 def _make_encrypted_archive():

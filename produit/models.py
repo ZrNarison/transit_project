@@ -51,10 +51,23 @@ class Produit(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     date_paiement = models.DateTimeField(null=True, blank=True)
-
+    
+    montant_deduction_avance = models.DecimalField(
+        max_digits=15,
+        decimal_places=0,
+        default=Decimal("0"),
+        verbose_name="Montant des avances remboursées déduit",
+    )
     @property
     def montant_net(self):
-        return self.montant * self.quantite * self.pourcentage / Decimal("100")
+        montant_initial = (
+            self.montant
+            * self.quantite
+            * self.pourcentage
+            / Decimal("100")
+        )
+
+        return montant_initial - self.montant_deduction_avance
 
     @property
     def montant_avance(self):

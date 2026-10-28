@@ -1,5 +1,4 @@
-
-{% extends "base.html" %}
+ {% extends "base.html" %}
 
 {% block title %}Points de chantier{% endblock %}
 
@@ -16,19 +15,19 @@
                 Points de chantier
             </h2>
             <p class="text-muted mb-0">
-                Projet : <strong>{{ projet| title }}</strong>
+                Projet : <strong>{{ projet|title }}</strong>
             </p>
         </div>
 
         <div class="d-flex flex-wrap gap-2">
-            <!-- RETOUR AU PROJET -->
-            <a href="{% url 'projet:projet_detail' projet.id %}" class="btn btn-outline-secondary">
+            <a href="{% url 'projet:projet_detail' projet.id %}"
+               class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
                 Retour au projet
             </a>
 
-            <!-- NOUVEAU POINT -->
-            <a href="{% url 'projet:point_create' projet.id %}" class="btn btn-primary">
+            <a href="{% url 'projet:point_create' projet.id %}"
+               class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 Ajouter un point
             </a>
@@ -40,10 +39,13 @@
     <!-- ================================================== -->
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
                 {{ message }}
-
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
             </div>
         {% endfor %}
     {% endif %}
@@ -52,7 +54,6 @@
     <!-- FILTRES                                            -->
     <!-- ================================================== -->
     <div class="card border-0 shadow-sm mb-4">
-
         <div class="card-header bg-white py-3">
             <h5 class="mb-0">
                 <i class="fas fa-filter text-primary me-2"></i>
@@ -61,62 +62,81 @@
         </div>
 
         <div class="card-body">
-            <form method="get" action="{% url 'projet:point_list' projet.id %}">
+            <form method="get"
+                  action="{% url 'projet:point_list' projet.id %}">
                 <div class="row g-3 align-items-end">
 
-                    
-                    <!-- FILTRE PAR LOCALISATION -->
                     <div class="col-12 col-md-2">
-                        <label for="filtreLocalisation" class="form-label fw-semibold">Localisation</label>
-                        <input type="text" id="filtreLocalisation" name="localisation" class="form-control" placeholder="Rechercher une localisation..." value="{{ localisation_filtre }}">
+                        <label for="filtreLocalisation"
+                               class="form-label fw-semibold">
+                            Localisation
+                        </label>
+                        <input type="text"
+                               id="filtreLocalisation"
+                               name="localisation"
+                               class="form-control"
+                               placeholder="Rechercher une localisation..."
+                               value="{{ localisation_filtre }}">
                     </div>
 
-                    <!-- DISTANCE MINIMALE -->
                     <div class="col-12 col-md-2">
-                        <label for="distanceMin" class="form-label fw-semibold">Min (km)</label>
-                        <input type="number" id="distanceMin" name="distance_min" class="form-control" min="0" step="0.01" placeholder="Ex. : 5" value="{{ distance_min }}"></div>
+                        <label for="distanceMin"
+                               class="form-label fw-semibold">
+                            Distance minimale (km)
+                        </label>
+                        <input type="number"
+                               id="distanceMin"
+                               name="distance_min"
+                               class="form-control"
+                               min="0"
+                               step="0.01"
+                               placeholder="Ex. : 5"
+                               value="{{ distance_min }}">
+                    </div>
 
-                    <!-- DISTANCE MAXIMALE -->
                     <div class="col-12 col-md-2">
-                        <label for="distanceMax" class="form-label fw-semibold">Max (km)</label>
-                        <input type="number" id="distanceMax" name="distance_max" class="form-control" min="0" step="0.01" placeholder="Ex. : 50" value="{{ distance_max }}"></div>
-                    
-                    <!-- FILTRE PAR OBSERVATION -->
+                        <label for="distanceMax"
+                               class="form-label fw-semibold">
+                            Distance maximale (km)
+                        </label>
+                        <input type="number"
+                               id="distanceMax"
+                               name="distance_max"
+                               class="form-control"
+                               min="0"
+                               step="0.01"
+                               placeholder="Ex. : 50"
+                               value="{{ distance_max }}">
+                    </div>
+
                     <div class="col-12 col-md-4">
-                        <label for="filtreObservation" class="form-label fw-semibold">Observation</label>
-
-                        <input
-                            type="text"
-                            id="filtreObservation"
-                            name="observation"
-                            class="form-control"
-                            placeholder="Rechercher dans les observations..."
-                            value="{{ observation_filtre }}"
-                        >
+                        <label for="filtreObservation"
+                               class="form-label fw-semibold">
+                            Observation
+                        </label>
+                        <input type="text"
+                               id="filtreObservation"
+                               name="observation"
+                               class="form-control"
+                               placeholder="Rechercher dans les observations..."
+                               value="{{ observation_filtre }}">
                     </div>
 
-
-                    <!-- BOUTONS DE FILTRAGE -->
                     <div class="col-12 col-md-2">
                         <div class="d-flex flex-wrap gap-2">
-
-                            <button
-                                type="submit"
-                                class="btn btn-primary flex-grow-1"
-                                title="Appliquer les filtres"
-                            >
+                            <button type="submit"
+                                    class="btn btn-primary flex-grow-1"
+                                    title="Appliquer les filtres">
                                 <i class="fas fa-search me-1"></i>
                                 Filtrer
                             </button>
 
-                            <a
-                                href="{% url 'projet:point_list' projet.id %}"
-                                class="btn btn-outline-secondary"
-                                title="Réinitialiser les filtres"
-                            >
+                            <a href="{% url 'projet:point_list' projet.id %}"
+                               class="btn btn-outline-secondary"
+                               title="Réinitialiser les filtres"
+                               aria-label="Réinitialiser les filtres">
                                 <i class="fas fa-undo"></i>
                             </a>
-
                         </div>
                     </div>
 
@@ -129,9 +149,7 @@
     <!-- TABLEAU DES POINTS                                 -->
     <!-- ================================================== -->
     <div class="card border-0 shadow-sm">
-
         <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-
             <h5 class="mb-0">
                 <i class="fas fa-list text-primary me-2"></i>
                 Liste des points
@@ -140,185 +158,123 @@
             <span class="badge bg-primary">
                 {{ total_points }} point(s)
             </span>
-
         </div>
 
         <div class="card-body p-0">
-
             <div class="table-responsive">
-
                 <table class="table table-striped table-hover table-bordered align-middle mb-0">
 
-                    <thead class="table-dark text-center text-white">
+                    <thead class="table-dark text-center">
                         <tr>
-                            <th class="text-center" style="width: 65px;">
-                                N°
-                            </th>
-
-                            <th style="min-width: 160px;">
-                                Nom
-                            </th>
-
-                            <th style="min-width: 180px;">
-                                Localisation
-                            </th>
-
-                            <th
-                                class="text-end text-nowrap"
-                                style="width: 130px;"
-                            >
+                            <th style="width: 65px;">N°</th>
+                            <th style="min-width: 160px;">Nom</th>
+                            <th style="min-width: 180px;">Localisation</th>
+                            <th class="text-end text-nowrap" style="width: 130px;">
                                 Distance (km)
                             </th>
-
-                            <th style="min-width: 220px;">
-                                Observation
-                            </th>
-
-                            <th
-                                class="text-center text-nowrap"
-                                style="width: 120px;"
-                            >
+                            <th style="min-width: 220px;">Observation</th>
+                            <th class="text-center text-nowrap" style="width: 120px;">
                                 Actions
                             </th>
                         </tr>
                     </thead>
 
                     <tbody>
-
                         {% for point in points %}
                             <tr>
-
-                                <!-- NUMÉRO GLOBAL -->
                                 <td class="text-center">
                                     {{ page_obj.start_index|add:forloop.counter0 }}
                                 </td>
 
-                                <!-- NOM -->
                                 <td>
                                     <i class="fas fa-map-pin text-danger me-1"></i>
                                     <strong>{{ point.nom|title }}</strong>
                                 </td>
 
-                                <!-- LOCALISATION -->
                                 <td>
                                     {% if point.localisation %}
                                         {{ point.localisation|upper }}
                                     {% else %}
-                                        <span class="text-muted">
-                                            Non renseignée
-                                        </span>
+                                        <span class="text-muted">Non renseignée</span>
                                     {% endif %}
                                 </td>
 
-                                <!-- DISTANCE -->
                                 <td class="text-end text-nowrap fw-semibold">
                                     {{ point.distance_km|default_if_none:0|floatformat:2 }}
                                 </td>
 
-                                <!-- OBSERVATION -->
                                 <td>
                                     {% if point.observation %}
                                         {{ point.observation|truncatechars:120 }}
                                     {% else %}
-                                        <span class="text-muted">
-                                            Aucune observation
-                                        </span>
+                                        <span class="text-muted">Aucune observation</span>
                                     {% endif %}
                                 </td>
 
-                                <!-- ACTIONS PAR POINT -->
                                 <td class="text-center text-nowrap">
-
                                     {% if point.peut_gerer %}
-
-                                        <!-- MODIFIER -->
-                                        <a
-                                            href="{% url 'projet:point_update' projet.id point.id %}"
-                                            class="btn btn-sm btn-outline-warning"
-                                            title="Modifier ce point"
-                                            aria-label="Modifier {{ point.nom }}"
-                                        >
+                                        <a href="{% url 'projet:point_update' projet.id point.id %}"
+                                           class="btn btn-sm btn-outline-warning"
+                                           title="Modifier ce point"
+                                           aria-label="Modifier {{ point.nom }}">
                                             <i class="fas fa-edit"></i>
                                         </a>
 
-                                        <!-- SUPPRIMER -->
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-outline-danger"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#deletePoint{{ point.id }}"
-                                            title="Supprimer ce point"
-                                            aria-label="Supprimer {{ point.nom }}"
-                                        >
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deletePoint{{ point.id }}"
+                                                title="Supprimer ce point"
+                                                aria-label="Supprimer {{ point.nom }}">
                                             <i class="fas fa-trash"></i>
                                         </button>
-
                                     {% else %}
-
-                                        <span
-                                            class="text-muted"
-                                            title="Vous ne pouvez pas gérer ce point"
-                                        >
+                                        <span class="text-muted"
+                                              title="Vous ne pouvez pas gérer ce point"
+                                              aria-label="Gestion non autorisée">
                                             <i class="fas fa-lock"></i>
                                         </span>
-
                                     {% endif %}
-
                                 </td>
-
                             </tr>
 
                         {% empty %}
-
                             <tr>
                                 <td colspan="6" class="text-center py-5">
-
                                     <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
 
-                                    <h5 class="text-muted">
-                                        Aucun point trouvé
-                                    </h5>
+                                    <h5 class="text-muted">Aucun point trouvé</h5>
 
                                     <p class="text-muted mb-3">
-                                        Aucun point ne correspond aux critères
-                                        de recherche ou aucun point n'a encore
-                                        été enregistré.
+                                        Aucun point ne correspond aux critères de recherche
+                                        ou aucun point n'a encore été enregistré.
                                     </p>
 
-                                    <a
-                                        href="{% url 'projet:point_create' projet.id %}"
-                                        class="btn btn-primary btn-sm"
-                                    >
+                                    <a href="{% url 'projet:point_create' projet.id %}"
+                                       class="btn btn-primary btn-sm">
                                         <i class="fas fa-plus me-1"></i>
                                         Ajouter un point
                                     </a>
-
                                 </td>
                             </tr>
-
                         {% endfor %}
-
                     </tbody>
 
-                    <!-- TOTAL DES DISTANCES -->
                     {% if points %}
                         <tfoot class="table-light">
                             <tr>
                                 <th colspan="3" class="text-end">
-                                    Distance totale :
+                                    Distance maximale affichée dans les statistiques :
                                 </th>
-
                                 <th class="text-end text-nowrap">
                                     {{ total_distance|floatformat:2 }} km
                                 </th>
-
                                 <th colspan="2"></th>
                             </tr>
                         </tfoot>
                     {% endif %}
 
                 </table>
-
             </div>
         </div>
 
@@ -326,12 +282,9 @@
         <!-- PAGINATION                                         -->
         <!-- ================================================== -->
         {% if page_obj.has_other_pages %}
-
             <div class="card-footer bg-white py-3">
-
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-                    <!-- INFORMATIONS DE PAGINATION -->
                     <div class="text-muted small">
                         Affichage de
                         <strong>{{ page_obj.start_index }}</strong>
@@ -342,172 +295,124 @@
                         point(s)
                     </div>
 
-                    <!-- NAVIGATION -->
                     <nav aria-label="Pagination des points de chantier">
-
                         <ul class="pagination pagination-sm mb-0">
 
                             <!-- PREMIÈRE PAGE -->
                             {% if page_obj.has_previous %}
-
                                 <li class="page-item">
-                                    <a
-                                        class="page-link"
-                                        href="?nom={{ nom_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page=1"
-                                        aria-label="Première page"
-                                        title="Première page"
-                                    >
+                                    <a class="page-link"
+                                       href="?localisation={{ localisation_filtre|urlencode }}&observation={{ observation_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page=1"
+                                       aria-label="Première page"
+                                       title="Première page">
                                         <i class="fas fa-angle-double-left"></i>
                                     </a>
                                 </li>
 
                                 <!-- PAGE PRÉCÉDENTE -->
                                 <li class="page-item">
-                                    <a
-                                        class="page-link"
-                                        href="?nom={{ nom_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page={{ page_obj.previous_page_number }}"
-                                        aria-label="Page précédente"
-                                    >
+                                    <a class="page-link"
+                                       href="?localisation={{ localisation_filtre|urlencode }}&observation={{ observation_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page={{ page_obj.previous_page_number }}"
+                                       aria-label="Page précédente">
                                         <i class="fas fa-angle-left"></i>
                                     </a>
                                 </li>
-
                             {% else %}
-
                                 <li class="page-item disabled">
                                     <span class="page-link">
                                         <i class="fas fa-angle-double-left"></i>
                                     </span>
                                 </li>
-
                                 <li class="page-item disabled">
                                     <span class="page-link">
                                         <i class="fas fa-angle-left"></i>
                                     </span>
                                 </li>
-
                             {% endif %}
 
                             <!-- NUMÉROS DE PAGE -->
                             {% for numero in page_obj.paginator.page_range %}
-
                                 {% if numero == page_obj.number %}
-
                                     <li class="page-item active" aria-current="page">
-                                        <span class="page-link">
-                                            {{ numero }}
-                                        </span>
+                                        <span class="page-link">{{ numero }}</span>
                                     </li>
-
                                 {% elif numero >= page_obj.number|add:"-2" and numero <= page_obj.number|add:"2" %}
-
                                     <li class="page-item">
-                                        <a
-                                            class="page-link"
-                                            href="?nom={{ nom_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page={{ numero }}"
-                                        >
+                                        <a class="page-link"
+                                           href="?localisation={{ localisation_filtre|urlencode }}&observation={{ observation_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page={{ numero }}">
                                             {{ numero }}
                                         </a>
                                     </li>
-
                                 {% endif %}
-
                             {% endfor %}
 
-                            <!-- PAGE SUIVANTE ET DERNIÈRE PAGE -->
+                            <!-- PAGE SUIVANTE -->
                             {% if page_obj.has_next %}
-
                                 <li class="page-item">
-                                    <a
-                                        class="page-link"
-                                        href="?nom={{ nom_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page={{ page_obj.next_page_number }}"
-                                        aria-label="Page suivante"
-                                    >
+                                    <a class="page-link"
+                                       href="?localisation={{ localisation_filtre|urlencode }}&observation={{ observation_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page={{ page_obj.next_page_number }}"
+                                       aria-label="Page suivante">
                                         <i class="fas fa-angle-right"></i>
                                     </a>
                                 </li>
 
+                                <!-- DERNIÈRE PAGE -->
                                 <li class="page-item">
-                                    <a
-                                        class="page-link"
-                                        href="?nom={{ nom_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page={{ paginator.num_pages }}"
-                                        aria-label="Dernière page"
-                                        title="Dernière page"
-                                    >
+                                    <a class="page-link"
+                                       href="?localisation={{ localisation_filtre|urlencode }}&observation={{ observation_filtre|urlencode }}&distance_min={{ distance_min|urlencode }}&distance_max={{ distance_max|urlencode }}&page={{ paginator.num_pages }}"
+                                       aria-label="Dernière page"
+                                       title="Dernière page">
                                         <i class="fas fa-angle-double-right"></i>
                                     </a>
                                 </li>
-
                             {% else %}
-
                                 <li class="page-item disabled">
                                     <span class="page-link">
                                         <i class="fas fa-angle-right"></i>
                                     </span>
                                 </li>
-
                                 <li class="page-item disabled">
                                     <span class="page-link">
                                         <i class="fas fa-angle-double-right"></i>
                                     </span>
                                 </li>
-
                             {% endif %}
 
                         </ul>
                     </nav>
-
                 </div>
             </div>
-
         {% endif %}
-
     </div>
-
 </div>
 
 <!-- ====================================================== -->
 <!-- MODALES DE CONFIRMATION DE SUPPRESSION                 -->
 <!-- ====================================================== -->
 {% for point in points %}
-
     {% if point.peut_gerer %}
-
-        <div
-            class="modal fade"
-            id="deletePoint{{ point.id }}"
-            tabindex="-1"
-            aria-labelledby="deletePointLabel{{ point.id }}"
-            aria-hidden="true"
-        >
+        <div class="modal fade"
+             id="deletePoint{{ point.id }}"
+             tabindex="-1"
+             aria-labelledby="deletePointLabel{{ point.id }}"
+             aria-hidden="true">
 
             <div class="modal-dialog modal-dialog-centered">
-
                 <div class="modal-content">
 
-                    <!-- EN-TÊTE DE LA MODALE -->
                     <div class="modal-header bg-danger text-white">
-
-                        <h5
-                            class="modal-title"
-                            id="deletePointLabel{{ point.id }}"
-                        >
+                        <h5 class="modal-title" id="deletePointLabel{{ point.id }}">
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             Confirmer la suppression
                         </h5>
 
-                        <button
-                            type="button"
-                            class="btn-close btn-close-white"
-                            data-bs-dismiss="modal"
-                            aria-label="Fermer"
-                        ></button>
-
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"
+                                aria-label="Fermer"></button>
                     </div>
 
-                    <!-- CONTENU DE LA MODALE -->
                     <div class="modal-body">
-
                         <p>
                             Voulez-vous vraiment supprimer le point
                             <strong>{{ point.nom }}</strong> ?
@@ -525,47 +430,33 @@
 
                         <div class="alert alert-warning mt-3 mb-0">
                             <i class="fas fa-exclamation-circle me-1"></i>
-                            Si ce point est utilisé par d'autres données du
-                            projet, sa suppression pourra être refusée.
+                            Si ce point est utilisé par d'autres données du projet,
+                            sa suppression pourra être refusée.
                         </div>
-
                     </div>
 
-                    <!-- BOUTONS DE CONFIRMATION -->
                     <div class="modal-footer">
-
-                        <button
-                            type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal"
-                        >
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
                             <i class="fas fa-times me-1"></i>
                             Annuler
                         </button>
 
-                        <form
-                            method="post"
-                            action="{% url 'projet:point_delete' projet.id point.id %}"
-                        >
+                        <form method="post"
+                              action="{% url 'projet:point_delete' projet.id point.id %}">
                             {% csrf_token %}
-
-                            <button
-                                type="submit"
-                                class="btn btn-danger"
-                            >
+                            <button type="submit" class="btn btn-danger">
                                 <i class="fas fa-trash me-1"></i>
                                 Confirmer la suppression
                             </button>
                         </form>
-
                     </div>
 
                 </div>
             </div>
         </div>
-
     {% endif %}
-
 {% endfor %}
 
 {% endblock %}

@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 from .models import Vehicule, ReparationVehicule
 from .forms import VehiculeForm, ReparationVehiculeForm
+from users.decorators import session_login_required
 
 
 # ================================================================
@@ -81,6 +82,7 @@ def groupe_materiel_queryset(nom, typeMat, catMat):
 # ================================================================
 # CALCUL STOCK D'UN MATERIEL
 # ================================================================
+@session_login_required
 def calcul_stock_materiel(materiel):
     """
     Calcule le stock d'un matériel individuel.
@@ -116,6 +118,7 @@ def calcul_stock_materiel(materiel):
 # ================================================================
 # CALCUL STOCK D'UN GROUPE
 # ================================================================
+@session_login_required
 def calcul_stock_groupe(materiels):
     """
     Calcule le stock total d'un groupe de matériels.
@@ -225,6 +228,7 @@ def materiel_visible_pour_role(request, queryset):
 # ================================================================
 # LISTE DES MATERIELS
 # ================================================================
+@session_login_required
 def materiels_list(request):
     """
     Liste principale des matériels.
@@ -402,6 +406,7 @@ def materiels_list(request):
 # ================================================================
 # DETAIL D'UN GROUPE
 # ================================================================
+@session_login_required
 def materiels_mdetail(request, nom, typeMat, catMat):
     """
     Affiche le détail complet d'un groupe de matériels.
@@ -486,6 +491,7 @@ def materiels_mdetail(request, nom, typeMat, catMat):
 # ================================================================
 # DETAIL MATERIEL
 # ================================================================
+@session_login_required
 def materiels_detail(request, nom, typeMat, catMat):
     """
     Affiche le détail classique d'un groupe.
@@ -551,6 +557,7 @@ def materiels_detail(request, nom, typeMat, catMat):
 # ================================================================
 # AJOUT MATERIEL
 # ================================================================
+@session_login_required
 def materiels_add(request):
     """
     Ajout d'un nouveau matériel.
@@ -714,6 +721,7 @@ def materiels_add(request):
 # ================================================================
 # MODIFICATION MATERIEL
 # ================================================================
+@session_login_required
 def materiels_edit(request, pk):
     """
     Modification d'un matériel.
@@ -870,6 +878,7 @@ def materiels_edit(request, pk):
 # ================================================================
 # SUPPRESSION MATERIEL
 # ================================================================
+@session_login_required
 def materiels_delete(request, id):
     """
     Suppression définitive d'un matériel.
@@ -959,6 +968,7 @@ def materiels_delete(request, id):
 # ================================================================
 # SUPPRIMER UNIQUEMENT LE STOCK INITIAL
 # ================================================================
+@session_login_required
 def supprimer_stock_initial(request, id):
     """
     Met uniquement le stock initial à zéro.
@@ -1061,11 +1071,13 @@ def supprimer_stock_initial(request, id):
 # ============================================================
 # AUTORISATION ENTREPRISE H
 # ============================================================
+@session_login_required
 def h_role_autorise(request, roles):
     """Vérifie le rôle de l'utilisateur connecté à Entreprise H."""
     return request.session.get("h_role") in roles
 
 
+@session_login_required
 def h_materiel_audit_data(materiel):
     """Prépare les informations du matériel H pour l'audit."""
     return {
@@ -1080,6 +1092,7 @@ def h_materiel_audit_data(materiel):
 # ============================================================
 # LISTE DES MATÉRIELS H
 # ============================================================
+@session_login_required
 def h_materiels_list(request):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(
@@ -1103,6 +1116,7 @@ def h_materiels_list(request):
 # ============================================================
 # AJOUTER UN MATÉRIEL H
 # ============================================================
+@session_login_required
 def h_materiels_add(request):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Vous n'êtes pas autorisé à ajouter un matériel.")
@@ -1154,6 +1168,7 @@ def h_materiels_add(request):
 # MODIFIER UN MATÉRIEL H
 # Seul l'enregistreur peut modifier
 # ============================================================
+@session_login_required
 def h_materiels_edit(request, pk):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Vous n'êtes pas autorisé à modifier ce matériel.")
@@ -1218,6 +1233,7 @@ def h_materiels_edit(request, pk):
 # ============================================================
 # SUPPRIMER UN MATÉRIEL H
 # ============================================================
+@session_login_required
 def h_materiels_delete(request, pk):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Vous n'êtes pas autorisé à supprimer ce matériel.")
@@ -1265,7 +1281,8 @@ def h_materiels_delete(request, pk):
 
 # ================================================================
 # ENTREPRISE H — GROUPE DE MATÉRIELS
-# ================================================================
+# ===============================================================
+# @session_login_required=
 def h_groupe_materiel_queryset(nom, typeMat, catMat):
     """Récupère les matériels H appartenant au même groupe."""
     return (
@@ -1278,7 +1295,7 @@ def h_groupe_materiel_queryset(nom, typeMat, catMat):
         .order_by("id")
     )
 
-
+@session_login_required
 def h_calcul_stock_materiel(materiel):
     """Calcule le stock restant d'un matériel H."""
     stock_initial = materiel.stock_initial or Decimal("0")
@@ -1322,6 +1339,7 @@ def h_calcul_stock_groupe(materiels):
 # ================================================================
 # ENTREPRISE H — DÉTAIL D'UN GROUPE
 # ================================================================
+@session_login_required
 def h_materiels_mdetail(request, nom, typeMat, catMat):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Accès refusé aux matériels de l'Entreprise H.")
@@ -1368,6 +1386,7 @@ def h_materiels_mdetail(request, nom, typeMat, catMat):
 # ================================================================
 # ENTREPRISE H — DÉTAIL CLASSIQUE
 # ================================================================
+@session_login_required
 def h_materiels_detail(request, nom, typeMat, catMat):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Accès refusé aux matériels de l'Entreprise H.")
@@ -1403,6 +1422,7 @@ def h_materiels_detail(request, nom, typeMat, catMat):
 # ================================================================
 # ENTREPRISE H — SUPPRIMER LE STOCK INITIAL D'UN GROUPE
 # ================================================================
+@session_login_required
 def h_supprimer_stock_initial(request, nom, typeMat, catMat):
     if not h_role_autorise(request, ["Dir", "Compta"]):
         messages.error(request, "Vous n'êtes pas autorisé à modifier le stock initial.")
@@ -1447,7 +1467,6 @@ def h_supprimer_stock_initial(request, nom, typeMat, catMat):
     )
 
 # ============================================================
-
 @login_required_projet
 @require_http_methods(["GET"])
 def Vehicule_list(request):

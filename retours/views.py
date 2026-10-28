@@ -3,7 +3,9 @@ from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.utils import enregistrer_action
-
+from users.decorators import session_login_required
+from django.core.paginator import Paginator
+from .models import Retour
 from .forms import RetourForm
 from .models import Retour
 
@@ -11,34 +13,56 @@ from .models import Retour
 # ==========================================
 # LISTE
 # ==========================================
+@session_login_required
 def retour_list(request):
+    queryset = (
+        Retour.objects
+        .select_related("enregistrer_par")
+        .order_by("-created_at", "-id")
+    )
 
-    queryset = Retour.objects.all()
-
+    # ===============================
+    # FILTRES
+    # ===============================
     montant = request.GET.get("montant", "").strip()
+    user = request.GET.get("user", "").strip()
 
     if montant:
-
         queryset = queryset.filter(montant__icontains=montant)
 
-    # ===============================
-    # TOTAL DES RETOURS
-    # ===============================
+    if user:
+        queryset = queryset.filter(
+            Q(enregistrer_par__username__icontains=user)
+        )
 
-    total_retours = queryset.aggregate(total=Sum("montant"))["total"] or 0
+    total_retours = (
+        queryset.aggregate(total=Sum("montant"))["total"] or 0
+    )
+
+    # ===============================
+    # PAGINATION : 15 RETOURS PAR PAGE
+    # ===============================
+    paginator = Paginator(queryset, 15)
+    page_obj = paginator.get_page(request.GET.get("page"))
 
     context = {
-        "retours": queryset,
+        "retours": page_obj,
+        "page_obj": page_obj,
         "montant": montant,
+        "user": user,
         "total_retours": total_retours,
+        "query_params": request.GET.copy(),
     }
 
-    return render(request, "retours/list.html", context)
+    context["query_params"].pop("page", None)
+    context["query_params"] = context["query_params"].urlencode()
 
+    return render(request, "retours/list.html", context)
 
 # ==========================================
 # DETAIL
 # ==========================================
+@session_login_required
 def retour_detail(request, id):
 
     retour = get_object_or_404(Retour, id=id)
@@ -49,6 +73,7 @@ def retour_detail(request, id):
 # ==========================================
 # AJOUT
 # ==========================================
+@session_login_required
 def retour_add(request):
 
     if request.method == "POST":
@@ -90,6 +115,7 @@ def retour_add(request):
 # ==========================================
 # MODIFICATION
 # ==========================================
+@session_login_required
 def retour_edit(request, id):
 
     retour = get_object_or_404(Retour, id=id)
@@ -128,6 +154,7 @@ def retour_edit(request, id):
 # ==========================================
 # SUPPRESSION
 # ==========================================
+@session_login_required
 def retour_delete(request, id):
 
     retour = get_object_or_404(Retour, id=id)

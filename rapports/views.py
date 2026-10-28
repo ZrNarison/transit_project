@@ -12,7 +12,7 @@ from produit.models import PaiementProduit
 from retours.models import Retour
 from salaire.models import Salaire
 from vehiculesortant.models import VehiculeSortant
-
+from users.decorators import session_login_required
 # ============================================================
 # CONFIGURATION DU RAPPORT
 # ============================================================
@@ -34,8 +34,6 @@ TYPE_TRAVAIL_RAPPORT = "Mica"
 # ============================================================
 # CONSTRUIRE RAPPORT GENERAL
 # ============================================================
-
-
 def construire_rapport(request):
 
     date_debut = request.GET.get("date_debut", "").strip()
@@ -393,8 +391,7 @@ def construire_rapport(request):
 # ============================================================
 # LISTE RAPPORT
 # ============================================================
-
-
+@session_login_required
 def rapport_list(request):
 
     (
@@ -422,8 +419,7 @@ def rapport_list(request):
 # ============================================================
 # IMPRESSION RAPPORT
 # ============================================================
-
-
+@session_login_required
 def rapport_print(request):
 
     (
@@ -450,8 +446,7 @@ def rapport_print(request):
 # ============================================================
 # DETAIL PAR DATE
 # ============================================================
-
-
+@session_login_required
 def rapport_detail(request, date):
 
     # ========================================================

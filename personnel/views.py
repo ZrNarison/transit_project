@@ -11,7 +11,7 @@ from users.models import H_AppUser
 
 from .forms import H_PersonnelForm, PersonnelForm
 from .models import H_Personnel, Personnel
-
+from users.decorators import session_login_required
 
 def h_login_required(view_func):
     """Protège une vue réservée aux utilisateurs d'Entreprise H."""
@@ -88,29 +88,31 @@ def personnel_to_dict(personnel):
 # =========================================================
 # LISTE DU PERSONNEL
 # =========================================================
+@session_login_required
 def personnel_list(request):
     # =====================================================
-    # 1. RÔLE DE L'UTILISATEUR CONNECTÉ
+    # 1. UTILISATEUR ET RÔLE CONNECTÉS
     # =====================================================
     role = request.session.get("role")
+    user_id = request.session.get("user_id")
 
     # =====================================================
     # 2. BASE DE DONNÉES AUTORISÉE SELON LE RÔLE
     # =====================================================
     if role == "Admin":
-        # L'administrateur voit tout le personnel
         queryset = Personnel.objects.all()
 
     elif role in ("SuperviseurMica", "UserMica"):
-        # Mica uniquement
-        queryset = Personnel.objects.filter(typeTravail="Mica")
+        queryset = Personnel.objects.filter(
+            typeTravail="Mica"
+        )
 
     elif role in ("SuperviseurEntreprise", "UserEntreprise"):
-        # Construction uniquement
-        queryset = Personnel.objects.filter(typeTravail="Construction")
+        queryset = Personnel.objects.filter(
+            typeTravail="Construction"
+        )
 
     else:
-        # Aucun accès implicite pour les autres rôles
         queryset = Personnel.objects.none()
 
     # =====================================================
@@ -129,15 +131,18 @@ def personnel_list(request):
 
     # =====================================================
     # 4. FILTRE PAR TYPE DE TRAVAIL
-    # Seul Admin peut choisir le type
     # =====================================================
     type_travail = ""
 
     if role == "Admin":
-        type_travail = request.GET.get("typeTravail", "").strip()
+        type_travail = request.GET.get(
+            "typeTravail", ""
+        ).strip()
 
         if type_travail in ("Mica", "Construction"):
-            queryset = queryset.filter(typeTravail=type_travail)
+            queryset = queryset.filter(
+                typeTravail=type_travail
+            )
         else:
             type_travail = ""
 
@@ -150,7 +155,9 @@ def personnel_list(request):
     # =====================================================
     # 5. FILTRE PAR TYPE DE CONTRAT
     # =====================================================
-    type_contrat = request.GET.get("typeContrat", "").strip()
+    type_contrat = request.GET.get(
+        "typeContrat", ""
+    ).strip()
 
     contrats_valides = (
         "CDI",
@@ -160,7 +167,9 @@ def personnel_list(request):
     )
 
     if type_contrat in contrats_valides:
-        queryset = queryset.filter(typeContrat=type_contrat)
+        queryset = queryset.filter(
+            typeContrat=type_contrat
+        )
     else:
         type_contrat = ""
 
@@ -168,24 +177,23 @@ def personnel_list(request):
     # 6. TRI ET TOTAL
     # =====================================================
     queryset = queryset.order_by("nom", "prenom")
-
     total_personnels = queryset.count()
 
     # =====================================================
     # 7. PAGINATION
     # =====================================================
     paginator = Paginator(queryset, 10)
+    personnels = paginator.get_page(
+        request.GET.get("page")
+    )
 
-    page_number = request.GET.get("page")
-    personnels = paginator.get_page(page_number)
-
-    # Conserver les filtres lors du changement de page
+    # Conserver les filtres lors de la pagination
     params = request.GET.copy()
     params.pop("page", None)
     query_params = params.urlencode()
 
     # =====================================================
-    # 8. AFFICHAGE
+    # 8. CONTEXTE
     # =====================================================
     context = {
         "personnels": personnels,
@@ -194,6 +202,10 @@ def personnel_list(request):
         "typeTravail": type_travail,
         "typeContrat": type_contrat,
         "query_params": query_params,
+
+        # Valeurs utilisées dans le template
+        "role": role,
+        "user_id": user_id,
     }
 
     return render(
@@ -206,6 +218,7 @@ def personnel_list(request):
 # =========================================================
 # AJOUT PERSONNEL
 # =========================================================
+@session_login_required
 def personnel_add(request):
 
     form = PersonnelForm(request.POST or None, request.FILES or None)
@@ -244,6 +257,7 @@ def personnel_add(request):
 # =========================================================
 # DETAIL PERSONNEL
 # =========================================================
+@session_login_required
 def personnel_detail(request, id):
 
     personnel = get_object_or_404(Personnel.objects.select_related("categorie"), id=id)
@@ -260,6 +274,7 @@ def personnel_detail(request, id):
 # =========================================================
 # MODIFICATION PERSONNEL
 # =========================================================
+@session_login_required
 def personnel_edit(request, id):
 
     personnel = get_object_or_404(Personnel, id=id)
@@ -309,42 +324,49 @@ def personnel_edit(request, id):
 # =========================================================
 # SUPPRESSION PERSONNEL
 # =========================================================
+@session_login_required
 def personnel_delete(request, id):
-
-    personnel = get_object_or_404(Personnel, id=id)
-
-    ancienne = personnel_to_dict(personnel)
-
-    nom_personnel = (f"{personnel.nom} {personnel.prenom}").strip()
-
-    if request.method == "POST":
-
-        enregistrer_action(
-            request,
-            "DELETE",
-            "Personnel",
-            personnel.id,
-            ancienne=ancienne,
-            nouvelle=None,
-            description=(f"Suppression du personnel " f"{nom_personnel}"),
-        )
-
-        personnel.delete()
-
-        messages.success(
-            request, f"Le personnel « {nom_personnel} » " "a été supprimé avec succès."
-        )
-
+    # La suppression doit être envoyée par formulaire POST.
+    if request.method != "POST":
         return redirect("personnel:personnel_list")
 
-    return render(
+    # Vérifier le rôle connecté.
+    role = request.session.get("role")
+
+    if role != "Admin":
+        messages.error(
+            request,
+            "Vous n'êtes pas autorisé à supprimer un personnel.",
+        )
+        return redirect("personnel:personnel_list")
+
+    # Récupérer le personnel.
+    personnel = get_object_or_404(Personnel, pk=id)
+
+    # Préparer les informations avant suppression.
+    ancienne = personnel_to_dict(personnel)
+    nom_personnel = f"{personnel.nom} {personnel.prenom}".strip()
+
+    # Enregistrer la trace d'audit.
+    enregistrer_action(
         request,
-        "personnel/confirm_delete.html",
-        {
-            "personnel": personnel,
-        },
+        "DELETE",
+        "Personnel",
+        personnel.pk,
+        ancienne=ancienne,
+        nouvelle=None,
+        description=f"Suppression du personnel {nom_personnel}",
     )
 
+    # Supprimer le personnel.
+    personnel.delete()
+
+    messages.success(
+        request,
+        f"Le personnel « {nom_personnel} » a été supprimé avec succès.",
+    )
+
+    return redirect("personnel:personnel_list")
 
 # ============================================================
 # LISTE ET RECHERCHE DES PERSONNELS DE L'ENTREPRISE H

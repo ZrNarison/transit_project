@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0 fw-bold">🚚 Liste des Véhicules Sortants</h2>
+    <h2 class="mb-0 fw-bold">Liste des Véhicules Sortants</h2>
     {% if request.session.role != "Admin" %}
     <a href="{% url 'vehiculesortant:vehicule_sortant_add' %}" class="btn btn-primary">+ Nouveau</a>
     {% endif %}
@@ -23,8 +23,8 @@
         <input type="text" name="telephone" value="{{ telephone }}" class="form-control" placeholder="Téléphone">
     </div>
     <div class="col-md-3 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">🔎</button>
-        <a href="{% url 'vehiculesortant:vehicule_sortant_list' %}" class="btn btn-secondary">↺</a>
+        <button type="submit" class="btn btn-primary">Recherche</button>
+        <a href="{% url 'vehiculesortant:vehicule_sortant_list' %}" class="btn btn-secondary">Initialiser</a>
     </div>
 </form>
 
@@ -40,10 +40,10 @@
             <div class="card-body">
                 <span class="badge bg-primary">{{ item.chauffeur|upper }}</span>
                 <p class="mb-1 mt-2">🚛 Véhicule : <strong>{{ item.num_vehicule }}</strong></p>
-                <p class="mb-1">📞 {{ item.telephone }}</p>
-                <p class="mb-1">🛞 Remorque : <strong>{{ item.remorque|default:'-' }}</strong></p>
-                <p class="mb-1">🎫 Ticket : <strong>{{ item.ticket|default:'-' }}</strong></p>
-                <p class="mb-1">🎫 Montant : <strong>{{ item.montant|default:'-' }}</strong></p>
+                <p class="mb-1">{{ item.telephone }}</p>
+                <p class="mb-1">Remorque : <strong>{{ item.remorque|default:'-' }}</strong></p>
+                <p class="mb-1">Ticket : <strong>{{ item.ticket|default:'-' }}</strong></p>
+                <p class="mb-1">Montant : <strong>{{ item.montant|default:'-' }}</strong></p>
                 <p class="mb-1">Ticket : <strong>{{ item.ticket|default:'-' }}</strong></p>
                 <p class="small text-muted mb-1">Créé par : {{ item.created_by.username|default:"Ancien" }}</p>
                 <p class="small text-muted">Date : {{ item.created_at|date:"d/m/Y H:i" }}</p>

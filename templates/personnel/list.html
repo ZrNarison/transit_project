@@ -50,12 +50,17 @@
 
     {% with role=request.session.role user_id=request.session.user_id %}
 
+    <!-- MESSAGES -->
     {% if messages %}
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
-        </div>
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Fermer"></button>
+            </div>
         {% endfor %}
     {% endif %}
 
@@ -66,14 +71,17 @@
                 <i class="fas fa-users"></i>
                 Liste du personnel
             </h3>
-            <p class="text-muted mb-0">Gestion et suivi du personnel</p>
+            <p class="text-muted mb-0">
+                Gestion et suivi du personnel
+            </p>
         </div>
 
         {% if role == "Admin" %}
-        <a href="{% url 'personnel:personnel_add' %}" class="btn btn-success">
-            <i class="fas fa-user-plus"></i>
-            Ajouter un personnel
-        </a>
+            <a href="{% url 'personnel:personnel_add' %}"
+               class="btn btn-success">
+                <i class="fas fa-user-plus"></i>
+                Ajouter un personnel
+            </a>
         {% endif %}
     </div>
 
@@ -84,44 +92,75 @@
                 <div class="row g-2">
 
                     <div class="col-md-5">
-                        <label for="searchPersonnel" class="form-label">Recherche</label>
-                        <input
-                            type="text"
-                            id="searchPersonnel"
-                            name="q"
-                            class="form-control"
-                            placeholder="Nom, prénom, téléphone, fonction..."
-                            value="{{ q|default:'' }}"
-                        >
+                        <label for="searchPersonnel" class="form-label">
+                            Recherche
+                        </label>
+                        <input type="text"
+                               id="searchPersonnel"
+                               name="q"
+                               class="form-control"
+                               placeholder="Nom, prénom, téléphone, fonction..."
+                               value="{{ q|default:'' }}">
                     </div>
 
                     {% if role == "Admin" %}
-                    <div class="col-md-3">
-                        <label for="typeTravail" class="form-label">Type de travail</label>
-                        <select name="typeTravail" id="typeTravail" class="form-select">
-                            <option value="">Tous les types</option>
-                            <option value="Mica" {% if typeTravail == "Mica" %}selected{% endif %}>Mica</option>
-                            <option value="Construction" {% if typeTravail == "Construction" %}selected{% endif %}>Construction</option>
-                        </select>
-                    </div>
+                        <div class="col-md-3">
+                            <label for="typeTravail" class="form-label">
+                                Type de travail
+                            </label>
+                            <select name="typeTravail"
+                                    id="typeTravail"
+                                    class="form-select">
+                                <option value="">Tous les types</option>
+                                <option value="Mica"
+                                    {% if typeTravail == "Mica" %}selected{% endif %}>
+                                    Mica
+                                </option>
+                                <option value="Construction"
+                                    {% if typeTravail == "Construction" %}selected{% endif %}>
+                                    Construction
+                                </option>
+                            </select>
+                        </div>
                     {% endif %}
 
                     <div class="col-md-2">
-                        <label for="typeContrat" class="form-label">Type de contrat</label>
-                        <select name="typeContrat" id="typeContrat" class="form-select">
+                        <label for="typeContrat" class="form-label">
+                            Type de contrat
+                        </label>
+                        <select name="typeContrat"
+                                id="typeContrat"
+                                class="form-select">
                             <option value="">Tous</option>
-                            <option value="CDI" {% if typeContrat == "CDI" %}selected{% endif %}>CDI</option>
-                            <option value="CDD" {% if typeContrat == "CDD" %}selected{% endif %}>CDD</option>
-                            <option value="Journalier" {% if typeContrat == "Journalier" %}selected{% endif %}>Journalier</option>
-                            <option value="Stage" {% if typeContrat == "Stage" %}selected{% endif %}>Stage</option>
+                            <option value="CDI"
+                                {% if typeContrat == "CDI" %}selected{% endif %}>
+                                CDI
+                            </option>
+                            <option value="CDD"
+                                {% if typeContrat == "CDD" %}selected{% endif %}>
+                                CDD
+                            </option>
+                            <option value="Journalier"
+                                {% if typeContrat == "Journalier" %}selected{% endif %}>
+                                Journalier
+                            </option>
+                            <option value="Stage"
+                                {% if typeContrat == "Stage" %}selected{% endif %}>
+                                Stage
+                            </option>
                         </select>
                     </div>
 
                     <div class="col-md-2 d-flex align-items-end gap-2">
-                        <button type="submit" class="btn btn-primary flex-grow-1">
-                            <i class="fas fa-search"></i> Filtrer
+                        <button type="submit"
+                                class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-search"></i>
+                            Filtrer
                         </button>
-                        <a href="{% url 'personnel:personnel_list' %}" class="btn btn-outline-secondary" title="Réinitialiser">
+
+                        <a href="{% url 'personnel:personnel_list' %}"
+                           class="btn btn-outline-secondary"
+                           title="Réinitialiser">
                             <i class="fas fa-sync-alt"></i>
                         </a>
                     </div>
@@ -131,11 +170,18 @@
         </div>
     </div>
 
-    <!-- TABLEAU -->
+    <!-- TABLEAU DU PERSONNEL -->
     <div class="card shadow-sm">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <strong><i class="fas fa-list"></i> Personnel enregistré</strong>
-            <span class="badge bg-primary">{{ total_personnels|default:personnels.paginator.count }} résultat(s)</span>
+            <strong>
+                <i class="fas fa-list"></i>
+                Personnel enregistré
+            </strong>
+
+            <span class="badge bg-primary">
+                {{ total_personnels|default:personnels.paginator.count }}
+                résultat(s)
+            </span>
         </div>
 
         <div class="card-body p-0">
@@ -156,8 +202,8 @@
                             <th>Fin</th>
 
                             {% if role == "Admin" %}
-                            <th>Salaire</th>
-                            <th>Catégorie</th>
+                                <th>Salaire</th>
+                                <th>Catégorie</th>
                             {% endif %}
 
                             <th>Actions</th>
@@ -166,115 +212,160 @@
 
                     <tbody>
                         {% for personnel in personnels %}
-                        <tr>
-                            <td class="text-center">
-                                {{ personnels.start_index|add:forloop.counter0 }}
-                            </td>
+                            <tr>
+                                <!-- NUMÉRO -->
+                                <td class="text-center">
+                                    {{ personnels.start_index|add:forloop.counter0 }}
+                                </td>
 
-                            <td class="text-center">
-                                {% if personnel.photo %}
-                                <img src="{{ personnel.photo.url }}" alt="Photo de {{ personnel.nom }}" class="rounded-circle">
-                                {% else %}
-                                <div class="personnel-photo-placeholder rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                {% endif %}
-                            </td>
-
-                            <td>
-                                <strong>{{ personnel.nom|upper }}</strong>
-                                {% if personnel.prenom %}
-                                <br><span class="text-muted">{{ personnel.prenom|title }}</span>
-                                {% endif %}
-                            </td>
-
-                            <td>{{ personnel.telephone|default:"-" }}</td>
-                            <td>{{ personnel.fonction|default:"-" }}</td>
-                            <td>{{ personnel.lieuTravail|default:"-" }}</td>
-
-                            <td class="text-center">
-                                {% if personnel.typeTravail == "Mica" %}
-                                <span class="badge bg-warning text-dark">Mica</span>
-                                {% elif personnel.typeTravail == "Construction" %}
-                                <span class="badge bg-info text-dark">Construction</span>
-                                {% else %}
-                                -
-                                {% endif %}
-                            </td>
-
-                            <td class="text-center">
-                                {% if personnel.typeContrat == "CDI" %}
-                                <span class="badge bg-success">CDI</span>
-                                {% elif personnel.typeContrat == "CDD" %}
-                                <span class="badge bg-primary">CDD</span>
-                                {% elif personnel.typeContrat == "Journalier" %}
-                                <span class="badge bg-warning text-dark">Journalier</span>
-                                {% elif personnel.typeContrat == "Stage" %}
-                                <span class="badge bg-info text-dark">Stage</span>
-                                {% else %}
-                                {{ personnel.typeContrat|default:"-" }}
-                                {% endif %}
-                            </td>
-
-                            <td class="text-center">
-                                {% if personnel.debutContrat %}
-                                {{ personnel.debutContrat|date:"d/m/Y" }}
-                                {% else %}-{% endif %}
-                            </td>
-
-                            <td class="text-center">
-                                {% if personnel.finContrat %}
-                                {{ personnel.finContrat|date:"d/m/Y" }}
-                                {% else %}
-                                <span class="text-success">Indéterminée</span>
-                                {% endif %}
-                            </td>
-
-                            {% if role == "Admin" %}
-                            <td class="text-end">{{ personnel.psalaire|floatformat:2|intcomma }} Ar</td>
-                            <td>
-                                {% if personnel.categorie %}
-                                {{ personnel.categorie.nom }}
-                                {% else %}-{% endif %}
-                            </td>
-                            {% endif %}
-
-                            <td class="text-center">
-                                <div class="btn-group">
-
-                                    {% if request.session.role == "Admin" %}
-                                    <a href="{% url 'personnel:personnel_edit' personnel.id %}"
-                                       class="btn btn-sm btn-warning"
-                                       title="Modifier mon enregistrement">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-
-                                    <button type="button"
-                                            class="btn btn-sm btn-danger"
-                                            title="Supprimer mon enregistrement"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#deletePersonnel{{ personnel.pk }}">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                <!-- PHOTO -->
+                                <td class="text-center">
+                                    {% if personnel.photo %}
+                                        <img src="{{ personnel.photo.url }}"
+                                             alt="Photo de {{ personnel.nom }}"
+                                             class="rounded-circle">
+                                    {% else %}
+                                        <div class="personnel-photo-placeholder rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto">
+                                            <i class="fas fa-user"></i>
+                                        </div>
                                     {% endif %}
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+
+                                <!-- NOM ET PRÉNOM -->
+                                <td>
+                                    <strong>{{ personnel.nom|upper }}</strong>
+
+                                    {% if personnel.prenom %}
+                                        <br>
+                                        <span class="text-muted">
+                                            {{ personnel.prenom|title }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- TÉLÉPHONE -->
+                                <td>{{ personnel.telephone|default:"-" }}</td>
+
+                                <!-- FONCTION -->
+                                <td>{{ personnel.fonction|default:"-" }}</td>
+
+                                <!-- LIEU -->
+                                <td>{{ personnel.lieuTravail|default:"-" }}</td>
+
+                                <!-- TYPE DE TRAVAIL -->
+                                <td class="text-center">
+                                    {% if personnel.typeTravail == "Mica" %}
+                                        <span class="badge bg-warning text-dark">
+                                            Mica
+                                        </span>
+                                    {% elif personnel.typeTravail == "Construction" %}
+                                        <span class="badge bg-info text-dark">
+                                            Construction
+                                        </span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <!-- CONTRAT -->
+                                <td class="text-center">
+                                    {% if personnel.typeContrat == "CDI" %}
+                                        <span class="badge bg-success">CDI</span>
+                                    {% elif personnel.typeContrat == "CDD" %}
+                                        <span class="badge bg-primary">CDD</span>
+                                    {% elif personnel.typeContrat == "Journalier" %}
+                                        <span class="badge bg-warning text-dark">
+                                            Journalier
+                                        </span>
+                                    {% elif personnel.typeContrat == "Stage" %}
+                                        <span class="badge bg-info text-dark">Stage</span>
+                                    {% else %}
+                                        {{ personnel.typeContrat|default:"-" }}
+                                    {% endif %}
+                                </td>
+
+                                <!-- DÉBUT CONTRAT -->
+                                <td class="text-center">
+                                    {% if personnel.debutContrat %}
+                                        {{ personnel.debutContrat|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <!-- FIN CONTRAT -->
+                                <td class="text-center">
+                                    {% if personnel.finContrat %}
+                                        {{ personnel.finContrat|date:"d/m/Y" }}
+                                    {% else %}
+                                        <span class="text-success">
+                                            Indéterminée
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <!-- SALAIRE ET CATÉGORIE -->
+                                {% if role == "Admin" %}
+                                    <td class="text-end">
+                                        {{ personnel.psalaire|floatformat:2|intcomma }} Ar
+                                    </td>
+
+                                    <td>
+                                        {% if personnel.categorie %}
+                                            {{ personnel.categorie.nom }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+
+                                <!-- ACTIONS : UNE SEULE CELLULE TD -->
+                                <td class="text-center">
+                                    {% if role == "Admin" %}
+                                        <div class="btn-group" role="group">
+
+                                            <a href="{% url 'personnel:personnel_edit' personnel.pk %}"
+                                               class="btn btn-sm btn-warning"
+                                               title="Modifier le personnel">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-danger"
+                                                    title="Supprimer le personnel"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deletePersonnel{{ personnel.pk }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+
+                            </tr>
 
                         {% empty %}
-                        <tr>
-                            <td colspan="13" class="text-center text-muted py-5">
-                                <i class="fas fa-users fa-2x mb-3"></i>
-                                <br>
-                                {% if not role %}
-                                <strong>Aucun rôle GALAXY détecté.</strong>
-                                <p class="mb-0">Vérifiez votre session de connexion.</p>
-                                {% else %}
-                                <strong>Aucun personnel trouvé.</strong>
-                                <p class="mb-0">Aucun personnel ne correspond à votre périmètre ou à vos filtres.</p>
-                                {% endif %}
-                            </td>
-                        </tr>
+                            <tr>
+                                <td colspan="{% if role == 'Admin' %}13{% else %}11{% endif %}"
+                                    class="text-center text-muted py-5">
+                                    <i class="fas fa-users fa-2x mb-3"></i>
+                                    <br>
+
+                                    {% if not role %}
+                                        <strong>Aucun rôle GALAXY détecté.</strong>
+                                        <p class="mb-0">
+                                            Vérifiez votre session de connexion.
+                                        </p>
+                                    {% else %}
+                                        <strong>Aucun personnel trouvé.</strong>
+                                        <p class="mb-0">
+                                            Aucun personnel ne correspond à votre périmètre ou à vos filtres.
+                                        </p>
+                                    {% endif %}
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
 
@@ -285,111 +376,156 @@
 
     <!-- PAGINATION -->
     {% if personnels.has_other_pages %}
-    <nav class="mt-4" aria-label="Pagination du personnel">
-        <ul class="pagination justify-content-center flex-wrap">
+        <nav class="mt-4" aria-label="Pagination du personnel">
+            <ul class="pagination justify-content-center flex-wrap">
 
-            {% if personnels.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ personnels.previous_page_number }}">
-                    <i class="fas fa-chevron-left"></i> Précédent
-                </a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">Précédent</span></li>
-            {% endif %}
-
-            {% for num in personnels.paginator.page_range %}
-                {% if personnels.number == num %}
-                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% elif num > personnels.number|add:"-3" and num < personnels.number|add:"3" %}
-                <li class="page-item">
-                    <a class="page-link" href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ num }}">{{ num }}</a>
-                </li>
+                {% if personnels.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ personnels.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i>
+                            Précédent
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Précédent</span>
+                    </li>
                 {% endif %}
-            {% endfor %}
 
-            {% if personnels.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ personnels.next_page_number }}">
-                    Suivant <i class="fas fa-chevron-right"></i>
-                </a>
-            </li>
-            {% else %}
-            <li class="page-item disabled"><span class="page-link">Suivant</span></li>
-            {% endif %}
+                {% for num in personnels.paginator.page_range %}
+                    {% if personnels.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > personnels.number|add:"-3" and num < personnels.number|add:"3" %}
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ num }}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
 
-        </ul>
+                {% if personnels.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ personnels.next_page_number }}">
+                            Suivant
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Suivant</span>
+                    </li>
+                {% endif %}
 
-        <p class="text-center text-muted">
-            Page {{ personnels.number }} sur {{ personnels.paginator.num_pages }}
-        </p>
-    </nav>
+            </ul>
+
+            <p class="text-center text-muted">
+                Page {{ personnels.number }} sur {{ personnels.paginator.num_pages }}
+            </p>
+        </nav>
     {% endif %}
 
+    <!-- TOTAL -->
     <div class="mt-3 text-muted">
         <i class="fas fa-users"></i>
-        Total : <strong>{{ total_personnels|default:personnels.paginator.count }}</strong> personnel(s)
+        Total :
+        <strong>{{ total_personnels|default:personnels.paginator.count }}</strong>
+        personnel(s)
     </div>
 
-    <!-- MODALES DE SUPPRESSION : ENREGISTREUR UNIQUEMENT -->
-    {% for personnel in personnels %}
-        {% if personnel.enregistre_par_id|stringformat:"s" == user_id|stringformat:"s" %}
-        <div class="modal fade"
-             id="deletePersonnel{{ personnel.pk }}"
-             tabindex="-1"
-             aria-labelledby="deletePersonnelLabel{{ personnel.pk }}"
-             aria-hidden="true">
+    <!-- MODALES DE SUPPRESSION -->
+    {% if role == "Admin" %}
+        {% for personnel in personnels %}
+            <div class="modal fade"
+                 id="deletePersonnel{{ personnel.pk }}"
+                 tabindex="-1"
+                 aria-labelledby="deletePersonnelLabel{{ personnel.pk }}"
+                 aria-hidden="true">
 
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
 
-                    <div class="modal-header">
-                        <h5 class="modal-title text-danger" id="deletePersonnelLabel{{ personnel.pk }}">
-                            <i class="fas fa-trash"></i> Confirmation de suppression
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-                    </div>
+                        <!-- EN-TÊTE DE LA MODALE -->
+                        <div class="modal-header">
+                            <h5 class="modal-title text-danger"
+                                id="deletePersonnelLabel{{ personnel.pk }}">
+                                <i class="fas fa-trash"></i>
+                                Confirmation de suppression
+                            </h5>
 
-                    <div class="modal-body text-center">
-                        <div class="modal-delete-icon text-danger mb-3">
-                            <i class="fas fa-user-times"></i>
-                        </div>
-
-                        <p>Voulez-vous vraiment supprimer ce personnel ?</p>
-
-                        <div class="alert alert-warning">
-                            <div class="modal-delete-name">
-                                {{ personnel.nom|upper }} {{ personnel.prenom|title }}
-                            </div>
-                            <small class="text-muted">{{ personnel.fonction }}</small>
-                            <br>
-                            <small class="text-muted">{{ personnel.telephone }}</small>
-                        </div>
-
-                        <div class="alert alert-danger mb-0">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Cette action est irréversible.
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-
-                        <form method="post" action="{% url 'personnel:personnel_delete' personnel.pk %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">
-                                <i class="fas fa-trash"></i> Supprimer
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="modal"
+                                    aria-label="Fermer">
                             </button>
-                        </form>
-                    </div>
+                        </div>
 
+                        <!-- CONTENU -->
+                        <div class="modal-body text-center">
+                            <div class="modal-delete-icon text-danger mb-3">
+                                <i class="fas fa-user-times"></i>
+                            </div>
+
+                            <p>
+                                Voulez-vous vraiment supprimer ce personnel ?
+                            </p>
+
+                            <div class="alert alert-warning">
+                                <div class="modal-delete-name">
+                                    {{ personnel.nom|upper }}
+                                    {{ personnel.prenom|title }}
+                                </div>
+
+                                <small class="text-muted">
+                                    {{ personnel.fonction|default:"Fonction non renseignée" }}
+                                </small>
+
+                                <br>
+
+                                <small class="text-muted">
+                                    {{ personnel.telephone|default:"Téléphone non renseigné" }}
+                                </small>
+                            </div>
+
+                            <div class="alert alert-danger mb-0">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Cette action est irréversible.
+                            </div>
+                        </div>
+
+                        <!-- BOUTONS DE LA MODALE -->
+                        <div class="modal-footer">
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    data-bs-dismiss="modal">
+                                Annuler
+                            </button>
+
+                            <form method="post"
+                                  action="{% url 'personnel:personnel_delete' personnel.pk %}">
+                                {% csrf_token %}
+
+                                <button type="submit"
+                                        class="btn btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                    Supprimer
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-        </div>
-        {% endif %}
-    {% endfor %}
+        {% endfor %}
+    {% endif %}
 
     {% endwith %}
+
 </div>
 
 {% endblock %}

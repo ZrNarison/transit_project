@@ -6,12 +6,13 @@ from users.models import AppUser
 
 from .forms import TransentrantForm
 from .models import Transentrant
+from users.decorators import session_login_required
+
 
 # =========================
 # LISTE
 # =========================
-
-
+@session_login_required
 def t_transentrant_list(request):
 
     queryset = Transentrant.objects.all()
@@ -47,8 +48,7 @@ def t_transentrant_list(request):
 # =========================
 # AJOUT
 # =========================
-
-
+@session_login_required
 def t_transentrant_add(request):
 
     if not request.session.get("user_id"):
@@ -96,8 +96,7 @@ def t_transentrant_add(request):
 # =========================
 # DETAIL
 # =========================
-
-
+@session_login_required
 def t_transentrant_detail(request, id):
 
     client = get_object_or_404(Transentrant, id=id)
@@ -108,8 +107,7 @@ def t_transentrant_detail(request, id):
 # =========================
 # MODIFICATION
 # =========================
-
-
+@session_login_required
 def t_transentrant_edit(request, id):
 
     if not request.session.get("user_id"):
@@ -158,8 +156,7 @@ def t_transentrant_edit(request, id):
 # =========================
 # SUPPRESSION
 # =========================
-
-
+@session_login_required
 def t_transentrant_delete(request, id):
 
     if not request.session.get("user_id"):

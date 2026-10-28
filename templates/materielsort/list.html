@@ -272,7 +272,6 @@
 
                                 {% if request.session.role == "UserEntreprise" or request.session.role == "Superviseur" %}
 
-                                    <!-- MODIFIER -->
                                     {% if peut_gerer %}
                                         <a
                                             href="{% url 'materielsort:materielsort_edit' s.id %}"
@@ -282,9 +281,7 @@
                                             ✏
                                         </a>
 
-
                                         <!-- SUPPRIMER -->
-
                                         <button
                                             type="button"
                                             class="btn btn-danger btn-sm"
@@ -294,8 +291,9 @@
                                         >
                                             🗑
                                         </button>
-                                    {% elif %}
+                                    {% else %}
                                         <button
+                                            type="button"
                                             class="btn btn-secondary btn-sm"
                                             disabled
                                             title="Vous n'avez pas l'autorisation"
@@ -303,6 +301,7 @@
                                             🔒
                                         </button>
                                     {% endif %}
+
 
                                     <!-- ================================================= -->
                                     <!-- MODAL SUPPRESSION -->

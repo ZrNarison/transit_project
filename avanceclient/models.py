@@ -65,6 +65,49 @@ class AvanceClient(models.Model):
         )
 
 
+
+
+class RemboursementAvanceClient(models.Model):
+    TYPE_REMBOURSEMENT = [
+        ("PARTIEL", "Partiel"),
+        ("TOTAL", "Total"),
+    ]
+
+    avance = models.ForeignKey(
+        AvanceClient,
+        on_delete=models.CASCADE,
+        related_name="remboursements",
+        verbose_name="Avance client",
+    )
+
+    type_remboursement = models.CharField(
+        max_length=20,
+        choices=TYPE_REMBOURSEMENT,
+        verbose_name="Type de remboursement",
+    )
+
+    montant = models.DecimalField(
+        max_digits=15,
+        decimal_places=0,
+        verbose_name="Montant remboursé",
+    )
+
+    date_remboursement = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Date de remboursement",
+    )
+
+    class Meta:
+        ordering = ["-date_remboursement", "-id"]
+        verbose_name = "Remboursement d'avance client"
+        verbose_name_plural = "Remboursements des avances clients"
+
+    def __str__(self):
+        return (
+            f"{self.get_type_remboursement_display()} - "
+            f"{self.montant} Ar - Avance {self.avance_id}"
+        )
+
 class UtilisationAvanceClient(models.Model):
 
     avance = models.ForeignKey(

@@ -6,8 +6,9 @@ from users.models import AppUser
 
 from .forms import VehiculeSortantForm
 from .models import VehiculeSortant
+from users.decorators import session_login_required
 
-
+@session_login_required
 def vehicule_sortant_list(request):
     queryset = VehiculeSortant.objects.all()
     chauffeur = request.GET.get("chauffeur", "").strip()
@@ -33,7 +34,7 @@ def vehicule_sortant_list(request):
         },
     )
 
-
+@session_login_required
 def vehicule_sortant_add(request):
     if not request.session.get("user_id"):
         return redirect("users:login")
@@ -67,11 +68,13 @@ def vehicule_sortant_add(request):
     return render(request, "vehiculesortant/form.html", {"form": form})
 
 
+@session_login_required
 def vehicule_sortant_detail(request, id):
     vehicule = get_object_or_404(VehiculeSortant, id=id)
     return render(request, "vehiculesortant/detail.html", {"vehicule": vehicule})
 
 
+@session_login_required
 def vehicule_sortant_edit(request, id):
     if not request.session.get("user_id"):
         return redirect("users:login")
@@ -93,6 +96,7 @@ def vehicule_sortant_edit(request, id):
     return render(request, "vehiculesortant/form.html", {"form": form})
 
 
+@session_login_required
 def vehicule_sortant_delete(request, id):
     if not request.session.get("user_id"):
         return redirect("users:login")

@@ -9,7 +9,7 @@ from materiels.models import H_Materiels, Materiels
 
 from .forms import H_MaterielSortForm, MaterielSortForm
 from .models import H_MaterielSort, MaterielSort
-
+from users.decorators import session_login_required
 # ============================================================
 # OUTIL :
 # RÉCUPÉRER TOUS LES MATÉRIELS DU MÊME GROUPE
@@ -80,8 +80,7 @@ def get_stock_groupe(materiel):
 # ============================================================
 # AJOUT SORTIE
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def materielsort_add(request):
 
@@ -161,8 +160,7 @@ def materielsort_add(request):
 # ============================================================
 # LISTE
 # ============================================================
-
-
+@session_login_required
 def materielsort_list(request):
 
     queryset = (
@@ -216,8 +214,7 @@ def materielsort_list(request):
 # ============================================================
 # DETAIL
 # ============================================================
-
-
+@session_login_required
 def materielsort_detail(request, id):
 
     materielsort = get_object_or_404(
@@ -237,8 +234,7 @@ def materielsort_detail(request, id):
 # ============================================================
 # MODIFICATION
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def materielsort_edit(request, id):
 
@@ -357,8 +353,7 @@ def materielsort_edit(request, id):
 # ============================================================
 # SUPPRESSION
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def materielsort_delete(request, id):
 
@@ -400,8 +395,7 @@ def materielsort_delete(request, id):
 #
 # Groupe = NOM + TYPE + CATÉGORIE
 # ============================================================
-
-
+@session_login_required
 def h_get_materiels_du_groupe(materiel):
     return H_Materiels.objects.filter(
         nom__iexact=materiel.nom.strip(),
@@ -417,8 +411,7 @@ def h_get_materiels_du_groupe(materiel):
 # - sorties totales
 # + entrées/remises totales
 # ============================================================
-
-
+@session_login_required
 def h_get_stock_groupe(materiel):
 
     materiels = get_materiels_du_groupe(materiel)
@@ -464,8 +457,7 @@ def h_get_stock_groupe(materiel):
 # ============================================================
 # AJOUT SORTIE
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def h_materielsort_add(request):
 
@@ -545,8 +537,7 @@ def h_materielsort_add(request):
 # ============================================================
 # LISTE
 # ============================================================
-
-
+@session_login_required
 def h_materielsort_list(request):
 
     queryset = (
@@ -600,8 +591,7 @@ def h_materielsort_list(request):
 # ============================================================
 # DETAIL
 # ============================================================
-
-
+@session_login_required
 def h_materielsort_detail(request, id):
 
     materielsort = get_object_or_404(
@@ -623,8 +613,7 @@ def h_materielsort_detail(request, id):
 # ============================================================
 # MODIFICATION
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def h_materielsort_edit(request, id):
 
@@ -745,8 +734,7 @@ def h_materielsort_edit(request, id):
 # ============================================================
 # SUPPRESSION
 # ============================================================
-
-
+@session_login_required
 @transaction.atomic
 def h_materielsort_delete(request, id):
 

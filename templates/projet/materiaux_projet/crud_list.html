@@ -1,12 +1,9 @@
-
 {% extends "base.html" %}
 
 {% block content %}
 <div class="container-fluid py-4">
 
-    <!-- =====================================================
-         EN-TÊTE
-    ====================================================== -->
+    <!-- EN-TÊTE -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h2 class="mb-1">
@@ -17,7 +14,7 @@
             <p class="text-muted mb-0">
                 Gestion des mouvements de matériaux du projet
                 {% if projet %}
-                    <strong>{{ projet }}</strong>
+                    <strong>{{ projet.titre|title }}</strong>
                 {% endif %}
             </p>
         </div>
@@ -26,21 +23,31 @@
             <a href="{% url 'projet:dashboard_materiaux' projet.id %}"
                class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                Retour
+                Retour au tableau de bord
             </a>
 
-            {% if url_ajout %}
+            {% comment %} {% if url_ajout %}
                 <a href="{{ url_ajout }}" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
-                    Ajouter
+                    {% if type_objet == "reception" %}
+                        Nouvelle réception
+                    {% elif type_objet == "achat" %}
+                        Nouvel achat
+                    {% elif type_objet == "distribution" %}
+                        Nouvelle distribution
+                    {% elif type_objet == "consommation" %}
+                        Nouvelle consommation
+                    {% elif type_objet == "retour" %}
+                        Nouveau retour
+                    {% else %}
+                        Ajouter
+                    {% endif %}
                 </a>
-            {% endif %}
+            {% endif %} {% endcomment %}
         </div>
     </div>
 
-    <!-- =====================================================
-         NOTIFICATIONS DJANGO FLOTTANTES
-    ====================================================== -->
+    <!-- MESSAGES DJANGO -->
     {% if messages %}
         <div id="messagesFlottants"
              class="position-fixed top-0 end-0 p-3"
@@ -75,18 +82,41 @@
                     <button type="button"
                             class="btn-close"
                             data-bs-dismiss="alert"
-                            aria-label="Fermer">
-                    </button>
+                            aria-label="Fermer"></button>
                 </div>
             {% endfor %}
         </div>
     {% endif %}
 
-    <!-- =====================================================
-         TABLEAU DES OPÉRATIONS
-    ====================================================== -->
-    <div class="card border-0 shadow-sm">
+    <!-- INFORMATIONS DU PROJET -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">
+                        <i class="fas fa-folder-open me-1"></i>
+                        Projet concerné
+                    </div>
+                    <div class="fw-semibold">
+                        {{ projet.titre }}
+                    </div>
+                </div>
 
+                <div class="col-md-6">
+                    <div class="text-muted small">
+                        <i class="fas fa-tasks me-1"></i>
+                        Type d'opération
+                    </div>
+                    <div class="fw-semibold">
+                        {{ titre_page }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU DES OPÉRATIONS -->
+    <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <h5 class="mb-0">
@@ -102,22 +132,19 @@
         </div>
 
         <div class="card-body p-0">
-
             {% if lignes %}
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped align-middle mb-0"
-                           style="width: 100%;">
-
+                    <table class="table table-hover table-striped align-middle mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th class="text-center text-nowrap">N°</th>
                                 <th>Matériau</th>
                                 <th class="text-end text-nowrap">Quantité</th>
+                                <th class="text-nowrap">Unité</th>
                                 <th class="text-nowrap">Date</th>
-                                <th>Destinataire (Point)</th>
+                                <th>Point / Destination</th>
                                 <th>Observation</th>
                                 <th class="text-nowrap">Enregistré le</th>
-                                <th>Enregistré par</th>
                                 <th class="text-center">Actions</th>
                             </tr>
                         </thead>
@@ -126,50 +153,31 @@
                             {% for ligne in lignes %}
                                 {% with objet=ligne.objet %}
                                     <tr>
-
                                         <!-- NUMÉRO -->
                                         <td class="text-center">
                                             {{ forloop.counter }}
                                         </td>
 
-                                        <!-- MATÉRIAU ET UNITÉ -->
+                                        <!-- MATÉRIAU -->
                                         <td>
-                                            <div class="d-flex flex-column align-items-start">
-                                                <span class="fw-semibold">
-                                                    {% if ligne.materiau %}
-                                                        {{ ligne.materiau|title }}
-                                                    {% elif objet.materiau_projet %}
-                                                        {{ objet.materiau_projet.materiau }}
-                                                    {% elif objet.distribution and objet.distribution.materiau_projet %}
-                                                        {{ objet.distribution.materiau_projet.materiau }}
-                                                    {% elif objet.reception_directe and objet.reception_directe.materiau_projet %}
-                                                        {{ objet.reception_directe.materiau_projet.materiau }}
-                                                    {% else %}
-                                                        {{ objet }}
-                                                    {% endif %}
-                                                </span>
-
-                                                <small class="text-muted">
-                                                    {% if ligne.unite %}
-                                                        {{ ligne.unite }}
-                                                    {% elif objet.materiau_projet %}
-                                                        {{ objet.materiau_projet.unite }}
-                                                    {% elif objet.distribution and objet.distribution.materiau_projet %}
-                                                        {{ objet.distribution.materiau_projet.unite }}
-                                                    {% elif objet.reception_directe and objet.reception_directe.materiau_projet %}
-                                                        {{ objet.reception_directe.materiau_projet.unite }}
-                                                    {% endif %}
-                                                </small>
-                                            </div>
+                                            <span class="fw-semibold">
+                                                {% if ligne.materiau %}
+                                                    {{ ligne.materiau }}
+                                                {% elif objet.materiau_projet %}
+                                                    {{ objet.materiau_projet.materiau }}
+                                                {% elif objet.distribution and objet.distribution.materiau_projet %}
+                                                    {{ objet.distribution.materiau_projet.materiau }}
+                                                {% elif objet.reception_directe and objet.reception_directe.materiau_projet %}
+                                                    {{ objet.reception_directe.materiau_projet.materiau }}
+                                                {% else %}
+                                                    {{ objet }}
+                                                {% endif %}
+                                            </span>
                                         </td>
 
                                         <!-- QUANTITÉ -->
                                         <td class="text-end text-nowrap">
-                                            {% if objet.quantite_recue != None %}
-                                                <span class="fw-bold text-success">
-                                                    {{ objet.quantite_recue|floatformat:2 }}
-                                                </span>
-                                            {% elif ligne.quantite != None %}
+                                            {% if ligne.quantite != None %}
                                                 <span class="fw-bold text-success">
                                                     {{ ligne.quantite|floatformat:2 }}
                                                 </span>
@@ -178,60 +186,52 @@
                                             {% endif %}
                                         </td>
 
-                                        <!-- DATE DE L'OPÉRATION -->
+                                        <!-- UNITÉ -->
                                         <td class="text-nowrap">
-                                            {% if ligne.date_operation %}
-                                                {{ ligne.date_operation|date:"d/m/Y" }}
-                                            {% elif objet.date_reception %}
-                                                {{ objet.date_reception|date:"d/m/Y" }}
-                                            {% elif objet.date_achat %}
-                                                {{ objet.date_achat|date:"d/m/Y" }}
-                                            {% elif objet.date_distribution %}
-                                                {{ objet.date_distribution|date:"d/m/Y" }}
-                                            {% elif objet.date_consommation %}
-                                                {{ objet.date_consommation|date:"d/m/Y" }}
-                                            {% elif objet.date_retour %}
-                                                {{ objet.date_retour|date:"d/m/Y" }}
+                                            {% if ligne.unite %}
+                                                {{ ligne.unite }}
+                                            {% elif objet.materiau_projet %}
+                                                {{ objet.materiau_projet.unite }}
+                                            {% elif objet.distribution and objet.distribution.materiau_projet %}
+                                                {{ objet.distribution.materiau_projet.unite }}
+                                            {% elif objet.reception_directe and objet.reception_directe.materiau_projet %}
+                                                {{ objet.reception_directe.materiau_projet.unite }}
                                             {% else %}
                                                 <span class="text-muted">—</span>
                                             {% endif %}
                                         </td>
 
-                                        <!-- DESTINATAIRE / POINT -->
+                                        <!-- DATE -->
+                                        <td class="text-nowrap">
+                                            {% if ligne.date_operation %}
+                                                {{ ligne.date_operation|date:"d/m/Y" }}
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+
+                                        <!-- POINT -->
                                         <td>
                                             {% if ligne.point %}
                                                 <span class="badge bg-light text-dark border">
                                                     <i class="fas fa-location-dot text-danger me-1"></i>
                                                     {{ ligne.point }}
                                                 </span>
-                                            {% elif objet.point %}
-                                                <span class="badge bg-light text-dark border">
-                                                    <i class="fas fa-location-dot text-danger me-1"></i>
-                                                    {{ objet.point }}
-                                                </span>
-                                            {% elif objet.distribution and objet.distribution.point %}
-                                                <span class="badge bg-light text-dark border">
-                                                    <i class="fas fa-location-dot text-danger me-1"></i>
-                                                    {{ objet.distribution.point }}
-                                                </span>
-                                            {% elif objet.reception_directe and objet.reception_directe.point %}
-                                                <span class="badge bg-light text-dark border">
-                                                    <i class="fas fa-location-dot text-danger me-1"></i>
-                                                    {{ objet.reception_directe.point }}
-                                                </span>
                                             {% else %}
-                                                <span class="text-muted">Magasin de dépôt</span>
+                                                <span class="text-muted">
+                                                    Magasin du projet
+                                                </span>
                                             {% endif %}
                                         </td>
 
                                         <!-- OBSERVATION -->
-                                        <td style="max-width: 350px; overflow-wrap: anywhere;">
+                                        <td style="min-width: 160px; max-width: 350px; overflow-wrap: anywhere;">
                                             {% if ligne.observation %}
                                                 {{ ligne.observation|linebreaksbr }}
-                                            {% elif objet.observation %}
-                                                {{ objet.observation|linebreaksbr }}
                                             {% else %}
-                                                <span class="text-muted">Aucune observation</span>
+                                                <span class="text-muted">
+                                                    Aucune observation
+                                                </span>
                                             {% endif %}
                                         </td>
 
@@ -239,89 +239,56 @@
                                         <td class="text-nowrap">
                                             {% if ligne.enregistre_le %}
                                                 {{ ligne.enregistre_le|date:"d/m/Y H:i" }}
-                                            {% elif objet.created_at %}
-                                                {{ objet.created_at|date:"d/m/Y H:i" }}
-                                            {% elif objet.date_creation %}
-                                                {{ objet.date_creation|date:"d/m/Y H:i" }}
-                                            {% elif objet.enregistre_le %}
-                                                {{ objet.enregistre_le|date:"d/m/Y H:i" }}
                                             {% else %}
                                                 <span class="text-muted">—</span>
-                                            {% endif %}
-                                        </td>
-
-                                        <!-- ENREGISTRÉ PAR -->
-                                        <td>
-                                            {% if ligne.enregistreur %}
-                                                <span class="text-nowrap">
-                                                    <i class="fas fa-user text-primary me-1"></i>
-                                                    {{ ligne.enregistreur }}
-                                                </span>
-                                            {% elif objet.enregistre_par %}
-                                                <span class="text-nowrap">
-                                                    <i class="fas fa-user text-primary me-1"></i>
-                                                    {{ objet.enregistre_par }}
-                                                </span>
-                                            {% elif objet.enregistreur %}
-                                                <span class="text-nowrap">
-                                                    <i class="fas fa-user text-primary me-1"></i>
-                                                    {{ objet.enregistreur }}
-                                                </span>
-                                            {% elif objet.created_by %}
-                                                <span class="text-nowrap">
-                                                    <i class="fas fa-user text-primary me-1"></i>
-                                                    {{ objet.created_by }}
-                                                </span>
-                                            {% else %}
-                                                <span class="text-muted">Non renseigné</span>
                                             {% endif %}
                                         </td>
 
                                         <!-- ACTIONS -->
                                         <td class="text-center text-nowrap">
                                             <div class="d-inline-flex justify-content-center gap-1">
-
-                                                {% if ligne.peut_modifier and ligne.modifier_url %}
+                                                {% comment %} {% if ligne.peut_modifier and ligne.modifier_url %}
                                                     <a href="{{ ligne.modifier_url }}"
                                                        class="btn btn-sm btn-outline-primary"
                                                        title="Modifier"
                                                        aria-label="Modifier">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
+                                                {% endif %} {% endcomment %}
 
-                                                    {% if ligne.supprimer_url %}
-                                                        <button type="button"
-                                                                class="btn btn-sm btn-outline-danger"
-                                                                title="Supprimer"
-                                                                aria-label="Supprimer"
-                                                                onclick="confirmerSuppressionMateriau('{{ ligne.supprimer_url|escapejs }}')">
-                                                            <i class="fas fa-trash-alt"></i>
-                                                        </button>
-                                                    {% endif %}
-                                                {% else %}
+                                                {% comment %} {% if ligne.supprimer_url %} {% endcomment %}
+                                                {% if ligne.peut_modifier and ligne.modifier_url %}
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            title="Supprimer"
+                                                            aria-label="Supprimer"
+                                                            onclick="confirmerSuppressionMateriau('{{ ligne.supprimer_url|escapejs }}')">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                {% endif %}
+
+                                                {% if not ligne.peut_modifier and not ligne.supprimer_url %}
                                                     <span class="text-muted"
-                                                          title="Vous n'êtes pas autorisé à modifier ou supprimer cette opération."
-                                                          aria-label="Modification et suppression interdites">
+                                                          title="Aucune action autorisée">
                                                         <i class="fas fa-lock"></i>
                                                     </span>
                                                 {% endif %}
-
                                             </div>
                                         </td>
-
                                     </tr>
                                 {% endwith %}
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-
             {% else %}
                 <!-- AUCUNE OPÉRATION -->
                 <div class="text-center py-5 px-3">
                     <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
 
-                    <h5 class="text-muted">Aucune opération enregistrée</h5>
+                    <h5 class="text-muted">
+                        Aucune opération enregistrée
+                    </h5>
 
                     <p class="text-muted mb-3">
                         Aucune donnée n'est disponible pour cette catégorie
@@ -347,24 +314,19 @@
     </div>
 </div>
 
-<!-- =====================================================
-     FOND ASSOMBRI
-====================================================== -->
+<!-- FOND DE CONFIRMATION -->
 <div id="fondConfirmationSuppression"
      class="position-fixed top-0 start-0 w-100 h-100"
-     style="display: none; background: rgba(0, 0, 0, 0.45); z-index: 1190;">
+     style="display: none; background: rgba(0,0,0,.45); z-index: 1190;">
 </div>
 
-<!-- =====================================================
-     CONFIRMATION DE SUPPRESSION AU MILIEU DE L'ÉCRAN
-====================================================== -->
+<!-- FENÊTRE DE CONFIRMATION -->
 <div id="confirmationSuppressionMateriau"
      class="position-fixed top-50 start-50 translate-middle"
      style="display: none; z-index: 1200; width: min(420px, 95vw);">
 
     <div class="card border-0 shadow-lg rounded-4">
         <div class="card-body p-4">
-
             <div class="text-center mb-3">
                 <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10"
                      style="width: 80px; height: 80px;">
@@ -380,7 +342,9 @@
             <p class="text-muted text-center mb-4">
                 Voulez-vous vraiment supprimer cet enregistrement ?
                 <br>
-                <strong class="text-danger">Cette action est irréversible.</strong>
+                <strong class="text-danger">
+                    Cette action est irréversible.
+                </strong>
             </p>
 
             <div class="d-flex justify-content-center gap-2">
@@ -399,17 +363,12 @@
                     Supprimer
                 </button>
             </div>
-
         </div>
     </div>
 </div>
 
-<!-- =====================================================
-     FORMULAIRE POST AVEC PROTECTION CSRF
-====================================================== -->
-<form id="formSuppressionMateriau"
-      method="post"
-      style="display: none;">
+<!-- FORMULAIRE DE SUPPRESSION EN POST -->
+<form id="formSuppressionMateriau" method="post" style="display: none;">
     {% csrf_token %}
 </form>
 
@@ -422,71 +381,73 @@
     const panneau = document.getElementById(
         "confirmationSuppressionMateriau"
     );
-
     const fond = document.getElementById(
         "fondConfirmationSuppression"
     );
-
     const formulaire = document.getElementById(
         "formSuppressionMateriau"
     );
-
     const boutonConfirmer = document.getElementById(
         "confirmerSuppressionMateriauBtn"
     );
 
-    // Ouvrir la confirmation au centre de l'écran.
     window.confirmerSuppressionMateriau = function (url) {
-        if (!url) {
-            console.error("URL de suppression absente.");
+        if (!url || !panneau || !fond) {
+            console.error("URL ou fenêtre de confirmation absente.");
             return;
         }
 
         urlSuppressionMateriau = url;
-
         panneau.style.display = "block";
         fond.style.display = "block";
 
-        boutonConfirmer.disabled = false;
-        boutonConfirmer.innerHTML =
-            '<i class="fas fa-trash-alt me-1"></i> Supprimer';
+        if (boutonConfirmer) {
+            boutonConfirmer.disabled = false;
+            boutonConfirmer.innerHTML =
+                '<i class="fas fa-trash-alt me-1"></i> Supprimer';
+        }
     };
 
-    // Fermer la fenêtre de confirmation.
     window.annulerSuppressionMateriau = function () {
-        panneau.style.display = "none";
-        fond.style.display = "none";
+        if (panneau) {
+            panneau.style.display = "none";
+        }
+
+        if (fond) {
+            fond.style.display = "none";
+        }
+
         urlSuppressionMateriau = null;
     };
 
-    // Confirmer et envoyer le formulaire en POST.
     window.executerSuppressionMateriau = function () {
-        if (!urlSuppressionMateriau) {
+        if (!urlSuppressionMateriau || !formulaire) {
             return;
         }
 
-        boutonConfirmer.disabled = true;
-        boutonConfirmer.innerHTML =
-            '<span class="spinner-border spinner-border-sm me-1" ' +
-            'role="status" aria-hidden="true"></span> Suppression...';
+        if (boutonConfirmer) {
+            boutonConfirmer.disabled = true;
+            boutonConfirmer.innerHTML =
+                '<span class="spinner-border spinner-border-sm me-1" ' +
+                'role="status" aria-hidden="true"></span> Suppression...';
+        }
 
         formulaire.action = urlSuppressionMateriau;
         formulaire.submit();
     };
 
-    // Cliquer sur le fond ferme la fenêtre.
-    fond.addEventListener("click", function () {
-        window.annulerSuppressionMateriau();
-    });
+    if (fond) {
+        fond.addEventListener("click", function () {
+            window.annulerSuppressionMateriau();
+        });
+    }
 
-    // La touche Échap ferme la fenêtre.
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
             window.annulerSuppressionMateriau();
         }
     });
 
-    // Fermeture automatique des notifications après 5 secondes.
     document.querySelectorAll("#messagesFlottants .alert").forEach(
         function (alerte) {
             window.setTimeout(function () {

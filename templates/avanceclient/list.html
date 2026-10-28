@@ -1,95 +1,253 @@
+
 {% extends "base.html" %}
 {% load humanize %}
+
 {% block content %}
 <div class="container-fluid mt-4">
+
     <h2 class="text-center mb-4">Liste des avances clients</h2>
+
+    <!-- RECHERCHE -->
     <div class="card shadow-sm mb-3">
         <div class="card-body">
             <form method="get">
                 <div class="row align-items-end">
                     <div class="col-md-5 mb-2">
-                        <label class="form-label fw-bold">Client</label>
-                        <input type="text" name="client" value="{{ client }}" class="form-control" placeholder="Nom ou prénom du client" >
+                        <label for="client" class="form-label fw-bold">
+                            Client
+                        </label>
+                        <input
+                            type="text"
+                            id="client"
+                            name="client"
+                            value="{{ client }}"
+                            class="form-control"
+                            placeholder="Nom ou prénom du client"
+                        >
                     </div>
-                    <div class="col-md-7 mb-2 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary" >🔍</button>
-                        <a href="{% url 'avanceclient:list' %}" class="btn btn-secondary" >Reset</a>
-                        <a href="{% url 'avanceclient:add' %}" class="btn btn-success" >+ Nouveau</a>
+
+                    <div class="col-md-7 mb-2 d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Rechercher
+                        </button>
+
+                        <a href="{% url 'avanceclient:list' %}"
+                           class="btn btn-secondary">
+                            <i class="fas fa-redo"></i> Reset
+                        </a>
+                        {% if request.session.role == "UserMica" or request.session.role == "SuperviseurMica"  %}
+                            <a href="{% url 'avanceclient:add' %}"
+                            class="btn btn-success">
+                                <i class="fas fa-plus"></i> Nouveau
+                            </a>
+                        {% endif %}
+                        
                     </div>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- NOMBRE D'AVANCES -->
     <div class="mb-3">
-        <strong>Nombre d'avances :{{ avances|length }}</strong>
+        <strong>
+            Nombre d'avances : {{ page_obj.paginator.count }}
+        </strong>
     </div>
-    <!-- Tableau -->
+
+    <!-- TABLEAU -->
     <div class="table-responsive">
         <table class="table table-bordered table-striped table-hover align-middle">
+
             <thead class="table-dark text-center text-white">
                 <tr>
                     <th>N°</th>
                     <th>Client</th>
-                    <th>Montant</th>
-                    <th>Motif</th>
+                    <th>Montant de l'avance</th>
                     <th>Reste</th>
-                    <th width="200">Actions</th>
+                    <th>Type de remboursement</th>
+                    <th>Montant remboursé</th>
+                    <th>Date de remboursement</th>
+                    <th style="min-width: 150px;">Actions</th>
                 </tr>
             </thead>
+
             <tbody>
-            {% for avance in avances %}
-                <tr>
-                    <td class="text-center">{{ avance.id }}</td>
-                    <td><strong>{{ avance.client.nom|upper }}</strong>{{ avance.client.prenom|title }}</td>
-                    <td class="text-end fw-bold">{{ avance.montant|intcomma }} Ar</td>
-                    <td class="text-start">{{ avance.motif |title}}</td>
-                    <td class="text-end fw-bold">
-                        {% if avance.reste > 0 %}
-                            <span class="text-success">
-                                {{ avance.reste|intcomma }} Ar
-                            </span>
-                        {% else %}
-                            <span class="text-danger">
-                                0 Ar
-                            </span>
-                        {% endif %}
-                    </td>
-                    <td class="text-center">
-                        <a href="{% url 'avanceclient:detail' avance.id %}" class="btn btn-info btn-sm" title="Voir">👁</a>
-                        {% if depense.enregistre_par_id == request.session.user_id %}
-                        <a href="{% url 'avanceclient:edit' avance.id %}"class="btn btn-warning btn-sm" title="Modifier" >✏</a>
-                        <a href="{% url 'avanceclient:delete' avance.id %}" class="btn btn-danger btn-sm" title="Supprimer" >🗑</a>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center text-muted">Aucune avance client trouvée</td>
-                </tr>
-            {% endfor %}
+                {% for avance in avances %}
+                    <tr>
+                        <!-- NUMERO -->
+                        <td class="text-center">
+                            {{ avance.id }}
+                        </td>
+
+                        <!-- CLIENT -->
+                        <td>
+                            <strong>{{ avance.client.nom|upper }}</strong>
+                            {{ avance.client.prenom|title }}
+                        </td>
+
+                        <!-- MONTANT DE L'AVANCE -->
+                        <td class="text-end fw-bold">
+                            {{ avance.montant|intcomma }} Ar
+                        </td>
+
+                        <!-- RESTE DISPONIBLE -->
+                        <td class="text-end fw-bold">
+                            {% if avance.reste > 0 %}
+                                <span class="text-success">
+                                    {{ avance.reste|intcomma }} Ar
+                                </span>
+                            {% else %}
+                                <span class="text-danger">0 Ar</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- TYPE DE REMBOURSEMENT -->
+                        <td>
+                            {% for remboursement in avance.remboursements.all %}
+                                <div class="mb-1">
+                                    {{ remboursement.get_type_remboursement_display }}
+                                </div>
+                            {% empty %}
+                                <span class="text-muted">—</span>
+                            {% endfor %}
+                        </td>
+
+                        <!-- MONTANT REMBOURSE -->
+                        <td class="text-end">
+                            {% for remboursement in avance.remboursements.all %}
+                                <div class="mb-1">
+                                    {{ remboursement.montant|intcomma }} Ar
+                                </div>
+                            {% empty %}
+                                <span class="text-muted">—</span>
+                            {% endfor %}
+                        </td>
+
+                        <!-- DATE DE REMBOURSEMENT -->
+                        <td>
+                            {% for remboursement in avance.remboursements.all %}
+                                <div class="mb-1">
+                                    {{ remboursement.date_remboursement|date:"d/m/Y H:i" }}
+                                </div>
+                            {% empty %}
+                                <span class="text-muted">—</span>
+                            {% endfor %}
+                        </td>
+
+                        <!-- ACTIONS -->
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center gap-1 flex-wrap">
+
+                                <!-- DETAIL : toujours accessible -->
+                                <a
+                                    href="{% url 'avanceclient:detail' avance.id %}"
+                                    class="btn btn-info btn-sm"
+                                    title="Voir le détail"
+                                >
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
+                                <!-- MODIFICATION ET SUPPRESSION -->
+                                {% if avance.modifiable %}
+                                    <a
+                                        href="{% url 'avanceclient:edit' avance.id %}"
+                                        class="btn btn-warning btn-sm"
+                                        title="Modifier"
+                                    >
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <a
+                                        href="{% url 'avanceclient:delete' avance.id %}"
+                                        class="btn btn-danger btn-sm"
+                                        title="Supprimer"
+                                    >
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                {% elif avance.enregistrer_par_id|stringformat:"s" == request.session.user_id|stringformat:"s" %}
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary btn-sm"
+                                        disabled
+                                        title="Modification et suppression interdites après utilisation ou remboursement"
+                                    >
+                                        <i class="fas fa-lock"></i>
+                                    </button>
+                                {% endif %}
+
+                            </div>
+                        </td>
+                    </tr>
+
+                {% empty %}
+                    <tr>
+                        <td colspan="8"
+                            class="text-center text-muted py-4">
+                            Aucune avance client trouvée.
+                        </td>
+                    </tr>
+                {% endfor %}
             </tbody>
+
         </table>
     </div>
-    
 
-    {% if page_obj %}
-    <nav>
-        <ul class="pagination justify-content-center">
-            {% if page_obj.has_previous %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ query_params }}" >Précédent</a>
-            </li>
-            {% endif %}
-            <li class="page-item active">
-                <span class="page-link">{{ page_obj.number }}</span>
-            </li>
-            {% if page_obj.has_next %}
-            <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ query_params }}">Suivant</a>
-            </li>
-            {% endif %}
-        </ul>
-    </nav>
+    <!-- PAGINATION -->
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav aria-label="Pagination des avances clients">
+            <ul class="pagination justify-content-center flex-wrap">
+
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?{% if query_params %}{{ query_params }}&{% endif %}page=1"
+                        >
+                            Première
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.previous_page_number }}"
+                        >
+                            Précédent
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Page {{ page_obj.number }}
+                        / {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.next_page_number }}"
+                        >
+                            Suivant
+                        </a>
+                    </li>
+
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?{% if query_params %}{{ query_params }}&{% endif %}page={{ page_obj.paginator.num_pages }}"
+                        >
+                            Dernière
+                        </a>
+                    </li>
+                {% endif %}
+
+            </ul>
+        </nav>
     {% endif %}
+
 </div>
 {% endblock %}

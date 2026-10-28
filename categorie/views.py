@@ -2,15 +2,14 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.utils import enregistrer_action
-
+from users.decorators import session_login_required
 from .forms import CategorieForm
 from .models import Categorie
 
 # ============================================================
 # LISTE DES CATÉGORIES
 # ============================================================
-
-
+@session_login_required
 def categorie_liste(request):
 
     categories = Categorie.objects.all().order_by("nom")
@@ -33,8 +32,7 @@ def categorie_liste(request):
 # ============================================================
 # AJOUT D'UNE CATÉGORIE
 # ============================================================
-
-
+@session_login_required
 def categorie_add(request):
 
     form = CategorieForm(request.POST or None)
@@ -69,8 +67,7 @@ def categorie_add(request):
 # ============================================================
 # MODIFICATION D'UNE CATÉGORIE
 # ============================================================
-
-
+@session_login_required
 def categorie_edit(request, id):
 
     categorie = get_object_or_404(Categorie, id=id)
@@ -121,8 +118,7 @@ def categorie_edit(request, id):
 # ============================================================
 # SUPPRESSION D'UNE CATÉGORIE
 # ============================================================
-
-
+@session_login_required
 def categorie_delete(request, id):
 
     categorie = get_object_or_404(Categorie, id=id)

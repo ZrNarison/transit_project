@@ -11,7 +11,7 @@ from datetime import datetime
 from audit.utils import enregistrer_action
 from personnel.models import Personnel
 from users.models import AppUser
-
+from users.decorators import session_login_required
 from .forms import DepotForm, DistributionForm
 from .models import Depot, Distribution
 
@@ -31,8 +31,6 @@ DistributionFormSet = inlineformset_factory(
 # ============================================================
 # UTILITAIRES
 # ============================================================
-
-
 def get_depot_user(request):
     """
     Retourne l'utilisateur connecté à partir de la session GALAXY.
@@ -99,8 +97,7 @@ def depot_donnees_audit(depot):
 # ============================================================
 # LISTE DES DÉPÔTS
 # ============================================================
-
-
+@session_login_required
 def depot_list(request):
     """
     Affiche les dépôts avec filtres et totaux.
@@ -164,6 +161,7 @@ def depot_list(request):
 # ============================================================
 # IMPRESSION DES DÉPÔTS
 # ============================================================
+@session_login_required
 def depot_print(request):
     """
     Prépare l'impression des dépôts en conservant les filtres
@@ -239,8 +237,7 @@ def depot_print(request):
 # ============================================================
 # AJOUT D'UN DÉPÔT
 # ============================================================
-
-
+@session_login_required
 def depot_add(request):
     """
     Crée un dépôt et ses distributions.
@@ -339,8 +336,7 @@ def depot_add(request):
 # ============================================================
 # MODIFICATION D'UN DÉPÔT
 # ============================================================
-
-
+@session_login_required
 def depot_edit(request, pk):
     """
     Seul l'utilisateur qui a enregistré le dépôt peut le modifier.
@@ -475,8 +471,7 @@ def depot_edit(request, pk):
 # ============================================================
 # SUPPRESSION D'UN DÉPÔT
 # ============================================================
-
-
+@session_login_required
 @require_POST
 def depot_delete(request, id):
     depot = get_object_or_404(Depot, pk=id)

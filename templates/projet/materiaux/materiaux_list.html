@@ -4,9 +4,6 @@
 
 <div class="container-fluid py-4">
 
-    <!-- =====================================================
-         EN-TÊTE
-    ====================================================== -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h3 class="fw-bold mb-1">
@@ -19,11 +16,24 @@
             </div>
         </div>
 
-        <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+
             <a href="{% url 'projet:dashboard_materiaux' projet_id=projet.pk %}"
                class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
                 Retour
+            </a>
+
+            <a href="{% url 'projet:reception_materiau_projet_list' projet_id=projet.pk %}"
+               class="btn btn-outline-success">
+                <i class="fas fa-arrow-down me-1"></i>
+                Entrées du magasin
+            </a>
+
+            <a href="{% url 'projet:distribution_materiau_projet_list' projet_id=projet.pk %}"
+               class="btn btn-outline-primary">
+                <i class="fas fa-arrow-up me-1"></i>
+                Sorties du magasin
             </a>
 
             {% if peut_ajouter_materiau %}
@@ -33,16 +43,17 @@
                     Ajouter un matériau
                 </a>
             {% endif %}
+
         </div>
     </div>
 
     <!-- =====================================================
-         NOTIFICATIONS FLOTTANTES
+         NOTIFICATIONS
     ====================================================== -->
     {% if messages %}
         <div id="messagesFlottants"
              class="position-fixed top-0 end-0 p-3"
-             style="z-index: 1100; width: min(420px, 95vw);">
+             style="z-index:1100;width:min(420px,95vw);">
 
             {% for message in messages %}
                 <div class="alert
@@ -73,8 +84,7 @@
                     <button type="button"
                             class="btn-close"
                             data-bs-dismiss="alert"
-                            aria-label="Fermer">
-                    </button>
+                            aria-label="Fermer"></button>
                 </div>
             {% endfor %}
         </div>
@@ -92,7 +102,7 @@
                         Nombre de matériaux
                     </div>
                     <div class="fs-3 fw-bold">
-                        {{ total_materiaux }}
+                        {{ total_materiaux|default:0 }}
                     </div>
                     <div class="small text-muted">
                         Références enregistrées
@@ -108,7 +118,7 @@
                         Quantité totale prévue
                     </div>
                     <div class="fs-3 fw-bold text-primary">
-                        {{ total_quantite_prevue|floatformat:2 }}
+                        {{ total_quantite_prevue|default:0|floatformat:2 }}
                     </div>
                     <div class="small text-muted">
                         Toutes unités confondues
@@ -121,13 +131,18 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body">
                     <div class="text-muted small mb-2">
-                        Stockage
+                        Stock du magasin de chantier
                     </div>
-                    <div class="fs-3 fw-bold text-success">
-                        {{ total_stock_magasin|floatformat:2 }}
+                    <div class="fs-3 fw-bold
+                        {% if total_stock_magasin < 0 %}
+                            text-danger
+                        {% else %}
+                            text-success
+                        {% endif %}">
+                        {{ total_stock_magasin|default:0|floatformat:2 }}
                     </div>
                     <div class="small text-muted">
-                        Solde calculé du magasin de chantier
+                        Solde calculé du magasin
                     </div>
                 </div>
             </div>
@@ -140,7 +155,7 @@
                         Total distribué
                     </div>
                     <div class="fs-3 fw-bold text-info">
-                        {{ total_distribue|floatformat:2 }}
+                        {{ total_distribue|default:0|floatformat:2 }}
                     </div>
                     <div class="small text-muted">
                         Quantité brute distribuée aux équipes
@@ -152,12 +167,58 @@
     </div>
 
     <!-- =====================================================
+         RECHERCHE
+    ====================================================== -->
+    <form method="get"
+          action="{% url 'projet:materiau_list' projet_id=projet.pk %}"
+          class="card border-0 shadow-sm mb-3">
+
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+
+                <div class="col-12 col-md-6 col-lg-7">
+                    <label for="rechercheMateriau"
+                           class="form-label fw-semibold">
+                        Rechercher un matériau
+                    </label>
+
+                    <input type="search"
+                           id="rechercheMateriau"
+                           name="q"
+                           class="form-control"
+                           placeholder="Saisir le nom du matériau..."
+                           value="{{ recherche_materiau }}"
+                           maxlength="100">
+                </div>
+
+                <div class="col-6 col-md-3 col-lg-2">
+                    <button type="submit"
+                            class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i>
+                        Rechercher
+                    </button>
+                </div>
+
+                <div class="col-6 col-md-3 col-lg-2">
+                    <a href="{% url 'projet:materiau_list' projet_id=projet.pk %}"
+                       class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-times me-1"></i>
+                        Réinitialiser
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </form>
+
+    <!-- =====================================================
          TABLEAU DES MATÉRIAUX
     ====================================================== -->
     <div class="card border-0 shadow-sm">
 
         <div class="card-header bg-white py-3">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+
                 <h5 class="mb-0 fw-bold">
                     <i class="fas fa-list me-2"></i>
                     Liste des matériaux
@@ -167,14 +228,14 @@
                     {{ materiaux|length }}
                     matériau{{ materiaux|length|pluralize }}
                 </span>
+
             </div>
         </div>
 
         <div class="card-body p-0">
             <div class="table-responsive">
 
-                <table class="table table-hover table-striped align-middle mb-0"
-                       style="width: 100%; table-layout: auto;">
+                <table class="table table-hover table-striped align-middle mb-0">
 
                     <thead class="table-light">
                         <tr>
@@ -191,6 +252,7 @@
                     </thead>
 
                     <tbody>
+
                         {% for materiau in materiaux %}
                             <tr>
 
@@ -215,22 +277,22 @@
 
                                 <!-- QUANTITÉ PRÉVUE -->
                                 <td class="text-end text-nowrap">
-                                    {{ materiau.quantite_prevue_affichee|floatformat:2 }}
+                                    {{ materiau.quantite_prevue_affichee|default:0|floatformat:2 }}
                                 </td>
 
-                                <!-- STOCK MAGASIN : DÉPÔT 2 -->
+                                <!-- STOCK MAGASIN -->
                                 <td class="text-end text-nowrap
                                     {% if materiau.stock_magasin < 0 %}
                                         text-danger fw-bold
                                     {% else %}
                                         text-success
                                     {% endif %}">
-                                    {{ materiau.stock_magasin|floatformat:2 }}
+                                    {{ materiau.stock_magasin|default:0|floatformat:2 }}
                                 </td>
 
                                 <!-- TOTAL DISTRIBUÉ -->
                                 <td class="text-end text-nowrap">
-                                    {{ materiau.total_distribue|floatformat:2 }}
+                                    {{ materiau.total_distribue|default:0|floatformat:2 }}
                                 </td>
 
                                 <!-- DATE D'ENREGISTREMENT -->
@@ -261,38 +323,36 @@
                                     {% endif %}
                                 </td>
 
-                                <!-- ACTIONS :
-                                     SEUL L'ENREGISTREUR PEUT AGIR -->
+                                <!-- ACTIONS -->
                                 <td class="text-center text-nowrap">
                                     <div class="d-inline-flex justify-content-center align-items-center gap-1">
 
                                         {% if current_user and materiau.enregistre_par_id == current_user.id %}
 
-                                            <!-- MODIFIER -->
                                             <a href="{% url 'projet:materiau_update' projet_id=projet.pk pk=materiau.pk %}"
                                                class="btn btn-sm btn-outline-primary"
                                                title="Modifier"
-                                               aria-label="Modifier">
+                                               aria-label="Modifier le matériau">
                                                 <i class="fas fa-edit"></i>
                                             </a>
 
-                                            <!-- SUPPRIMER -->
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-danger"
                                                     title="Supprimer"
-                                                    aria-label="Supprimer"
+                                                    aria-label="Supprimer le matériau"
+                                                    data-url="{% url 'projet:materiau_delete' projet_id=projet.pk pk=materiau.pk %}"
+                                                    data-nom="{{ materiau.materiau }}"
                                                     onclick="confirmerSuppressionMateriau(
-                                                        '{% url 'projet:materiau_delete' projet_id=projet.pk pk=materiau.pk %}',
-                                                        '{{ materiau.materiau|escapejs }}'
+                                                        this.dataset.url,
+                                                        this.dataset.nom
                                                     )">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
 
                                         {% else %}
 
-                                            <!-- ACTIONS VERROUILLÉES -->
                                             <span class="text-muted px-2"
-                                                  title="Seul l'enregistreur peut modifier ou supprimer ce matériau, s'il n'est pas utilisé."
+                                                  title="Seul l'enregistreur initial peut modifier ou supprimer ce matériau, sous réserve des protections de stock."
                                                   aria-label="Modification et suppression interdites">
                                                 <i class="fas fa-lock"></i>
                                             </span>
@@ -310,10 +370,14 @@
                                     <i class="fas fa-box-open fa-2x text-muted mb-3"></i>
 
                                     <p class="text-muted mb-0">
-                                        Aucun matériau n'est enregistré pour ce projet.
+                                        {% if recherche_materiau %}
+                                            Aucun matériau ne correspond à votre recherche.
+                                        {% else %}
+                                            Aucun matériau n'est enregistré pour ce projet.
+                                        {% endif %}
                                     </p>
 
-                                    {% if peut_ajouter_materiau %}
+                                    {% if peut_ajouter_materiau and not recherche_materiau %}
                                         <a href="{% url 'projet:materiau_create' projet_id=projet.pk %}"
                                            class="btn btn-primary btn-sm mt-3">
                                             <i class="fas fa-plus me-1"></i>
@@ -323,6 +387,7 @@
                                 </td>
                             </tr>
                         {% endfor %}
+
                     </tbody>
 
                     <!-- TOTAUX -->
@@ -334,7 +399,7 @@
                                 </td>
 
                                 <td class="text-end text-nowrap">
-                                    {{ total_quantite_prevue|floatformat:2 }}
+                                    {{ total_quantite_prevue|default:0|floatformat:2 }}
                                 </td>
 
                                 <td class="text-end text-nowrap
@@ -343,11 +408,11 @@
                                     {% else %}
                                         text-success
                                     {% endif %}">
-                                    {{ total_stock_magasin|floatformat:2 }}
+                                    {{ total_stock_magasin|default:0|floatformat:2 }}
                                 </td>
 
                                 <td class="text-end text-nowrap">
-                                    {{ total_distribue|floatformat:2 }}
+                                    {{ total_distribue|default:0|floatformat:2 }}
                                 </td>
 
                                 <td colspan="3"></td>
@@ -363,11 +428,11 @@
 </div>
 
 <!-- =====================================================
-     FOND ASSOMBRI DE LA CONFIRMATION
+     FOND DE LA CONFIRMATION
 ====================================================== -->
 <div id="fondConfirmationMateriau"
      class="position-fixed top-0 start-0 w-100 h-100"
-     style="display: none; z-index: 1190; background: rgba(0, 0, 0, 0.45);">
+     style="display:none;z-index:1190;background:rgba(0,0,0,.45);">
 </div>
 
 <!-- =====================================================
@@ -375,20 +440,24 @@
 ====================================================== -->
 <div id="confirmationSuppressionMateriau"
      class="position-fixed top-50 start-50 translate-middle"
-     style="display: none; z-index: 1200; width: min(430px, 95vw);">
+     style="display:none;z-index:1200;width:min(430px,95vw);"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="titreConfirmationMateriau">
 
     <div class="card border-0 shadow-lg rounded-4">
         <div class="card-body p-4">
 
             <div class="text-center mb-3">
                 <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10"
-                     style="width: 80px; height: 80px;">
+                     style="width:80px;height:80px;">
                     <i class="fas fa-triangle-exclamation text-danger"
-                       style="font-size: 2.5rem;"></i>
+                       style="font-size:2.5rem;"></i>
                 </div>
             </div>
 
-            <h5 class="text-center fw-bold mb-3">
+            <h5 id="titreConfirmationMateriau"
+                class="text-center fw-bold mb-3">
                 Confirmer la suppression
             </h5>
 
@@ -403,12 +472,13 @@
             <div class="alert alert-warning small">
                 <i class="fas fa-exclamation-triangle me-1"></i>
                 La suppression sera refusée si des mouvements de stock
-                sont liés à ce matériau.
+                sont liés à ce matériau. L'historique doit être conservé.
             </div>
 
             <div class="d-flex justify-content-center gap-2 mt-3">
 
                 <button type="button"
+                        id="boutonAnnulerSuppressionMateriau"
                         class="btn btn-light border"
                         onclick="annulerSuppressionMateriau()">
                     <i class="fas fa-times me-1"></i>
@@ -430,11 +500,11 @@
 </div>
 
 <!-- =====================================================
-     FORMULAIRE POST CSRF
+     FORMULAIRE POST AVEC CSRF
 ====================================================== -->
 <form id="formSuppressionMateriau"
       method="post"
-      style="display: none;">
+      style="display:none;">
     {% csrf_token %}
 </form>
 
@@ -467,6 +537,10 @@
         "boutonConfirmerSuppressionMateriau"
     );
 
+    const boutonAnnuler = document.getElementById(
+        "boutonAnnulerSuppressionMateriau"
+    );
+
     // Afficher la confirmation.
     window.confirmerSuppressionMateriau = function (url, nom) {
         if (!url) {
@@ -483,8 +557,12 @@
         fond.style.display = "block";
 
         boutonConfirmer.disabled = false;
+        boutonAnnuler.disabled = false;
+
         boutonConfirmer.innerHTML =
             '<i class="fas fa-trash-alt me-1"></i> Supprimer';
+
+        boutonAnnuler.focus();
     };
 
     // Annuler la suppression.
@@ -496,11 +574,13 @@
 
     // Envoyer la suppression par POST.
     window.executerSuppressionMateriau = function () {
-        if (!urlSuppression) {
+        if (!urlSuppression || boutonConfirmer.disabled) {
             return;
         }
 
         boutonConfirmer.disabled = true;
+        boutonAnnuler.disabled = true;
+
         boutonConfirmer.innerHTML =
             '<span class="spinner-border spinner-border-sm me-1" ' +
             'role="status" aria-hidden="true"></span> Suppression...';
@@ -514,9 +594,9 @@
         window.annulerSuppressionMateriau();
     });
 
-    // Fermer avec la touche Échap.
+    // Fermer avec Échap.
     document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
+        if (event.key === "Escape" && urlSuppression) {
             window.annulerSuppressionMateriau();
         }
     });
