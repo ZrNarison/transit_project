@@ -109,11 +109,14 @@ class MateriauxEntree(models.Model):
         verbose_name="Véhicule",
     )
 
+    
     enregistreur = models.ForeignKey(
         H_AppUser,
         on_delete=models.PROTECT,
-        related_name="materiaux_entrees",
-        verbose_name="Enregistrée par",
+        related_name="entrees_materiaux_mccr",
+        null=True,
+        blank=True,
+        verbose_name="Enregistré par",
     )
 
     date_creation = models.DateTimeField(
@@ -170,8 +173,6 @@ class MateriauxEntree(models.Model):
 # ============================================================
 # DIVISION ENTREPOT DU MAGASIN
 # ============================================================
-
-
 class MateriauxDivision(models.Model):
     entree = models.ForeignKey(
         MateriauxEntree,
@@ -195,15 +196,19 @@ class MateriauxDivision(models.Model):
         verbose_name="Date de division",
     )
 
-    enregistreur = models.ForeignKey(
-        H_AppUser,
-        on_delete=models.PROTECT,
-        related_name="materiaux_divisions",
-        verbose_name="Enregistr├® par",
-    )
 
     date_creation = models.DateTimeField(
         auto_now_add=True,
+    )
+
+    
+    enregistreur = models.ForeignKey(
+        H_AppUser,
+        on_delete=models.PROTECT,
+        related_name="materiaux_entrees",
+        null=True,
+        blank=True,
+        verbose_name="Enregistrée par",
     )
 
     class Meta:
@@ -230,7 +235,7 @@ class MateriauxDivision(models.Model):
             raise ValidationError(
                 {
                     "quantite": (
-                        f"Quantit├® insuffisante dans l'entrep├┤t. "
+                        f"Quantit├® insuffisante dans l'entrepôt. "
                         f"Disponible : {disponible} "
                         f"{self.entree.materiau.unite}."
                     )
@@ -451,8 +456,6 @@ class CategorieDepense(models.Model):
 # ============================================================
 # ACTIVIT├ë DE TRANSPORT
 # ============================================================
-
-
 class ActiviteTransport(models.Model):
 
     PERSONNEL = "PERSONNEL"
@@ -693,10 +696,8 @@ class ActiviteTransport(models.Model):
 
 
 # ============================================================
-# R├ëCEPTION DES MAT├ëRIAUX AU POINT DE CHANTIER
+# RECEPTION DES MATERIAUX AU POINT DE CHANTIER
 # ============================================================
-
-
 class ReceptionMateriau(models.Model):
 
     transport = models.ForeignKey(
@@ -745,6 +746,8 @@ class ReceptionMateriau(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
+
+
 
     class Meta:
         ordering = ["-date_reception", "-id"]
@@ -815,8 +818,6 @@ class ReceptionMateriau(models.Model):
 # ============================================================
 # UTILISATION DES MAT├ëRIAUX SUR LE CHANTIER
 # ============================================================
-
-
 class UtilisationMateriau(models.Model):
 
     reception = models.ForeignKey(
@@ -903,8 +904,6 @@ class UtilisationMateriau(models.Model):
 # ============================================================
 # RETOUR DU RELIQUAT AU MAGASIN
 # ============================================================
-
-
 class MateriauxRetour(models.Model):
 
     sortie = models.ForeignKey(
@@ -1686,6 +1685,15 @@ class MouvementMateriauMCCR(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True,
         verbose_name="Dernière modification",
+    )
+
+    enregistreur = models.ForeignKey(
+        H_AppUser,
+        on_delete=models.PROTECT,
+        related_name="mouvements_materiaux_mccr",
+        null=True,
+        blank=True,
+        verbose_name="Enregistré par",
     )
 
     class Meta:
