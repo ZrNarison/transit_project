@@ -14,7 +14,10 @@ from salaire.models import H_Salaire, Salaire
 from salaire.forms import H_SalaireForm,SalaireForm
 from .forms import AvanceForm, H_AvanceForm
 from .models import Avance, H_Avance
-from users.decorators import session_login_required
+from users.decorators import (
+    session_login_required,
+    h_session_login_required,
+)
 # =========================================================
 # OUTIL : QUERYSET PERSONNEL SELON LE RÃ”LE
 # =========================================================
@@ -564,7 +567,6 @@ def _h_salaire_utilisateur(request):
 
 
 
-@session_login_required
 def h_salaire_list(request):
     utilisateur = _h_salaire_utilisateur(request)
 
@@ -627,7 +629,6 @@ def h_salaire_list(request):
         },
     )
 
-@session_login_required
 def h_salaire_add(request):
     utilisateur = _h_salaire_utilisateur(request)
 
@@ -668,7 +669,6 @@ def h_salaire_add(request):
         },
     )
 
-@session_login_required
 def h_salaire_edit(request, id=None, pk=None):
     utilisateur = _h_salaire_utilisateur(request)
 
@@ -744,7 +744,6 @@ def h_salaire_edit(request, id=None, pk=None):
     )
 
 
-@session_login_required
 def h_salaire_delete(request, id=None, pk=None):
     utilisateur = _h_salaire_utilisateur(request)
 
@@ -812,9 +811,8 @@ def recalculer_reste(self):
 
 
 # =============================================================
-# MCCR / ENTREPRISE H â€” AVANCES
+# MCCR / ENTREPRISE H AVANCES
 # =============================================================
-@session_login_required
 def _h_avance_utilisateur(request):
     """Vérifie la session et l'utilisateur MCCR."""
     if request.session.get("h_role") not in ("Dir", "Compta"):
@@ -826,7 +824,6 @@ def _h_avance_utilisateur(request):
 
     return H_AppUser.objects.filter(pk=h_user_id).first()
 
-@session_login_required
 def h_avance_list(request):
     utilisateur = _h_avance_utilisateur(request)
 
@@ -877,7 +874,6 @@ def h_avance_list(request):
         },
     )
 
-@session_login_required
 def h_avance_add(request):
     utilisateur = _h_avance_utilisateur(request)
 
@@ -926,7 +922,6 @@ def h_avance_add(request):
         },
     )
 
-@session_login_required
 def h_avance_edit(request, id):
     utilisateur = _h_avance_utilisateur(request)
 
@@ -1002,7 +997,6 @@ def h_avance_edit(request, id):
         },
     )
 
-@session_login_required
 def h_avance_delete(request, id):
     utilisateur = _h_avance_utilisateur(request)
 

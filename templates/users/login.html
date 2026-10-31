@@ -43,6 +43,10 @@
                         <select name="entreprise" id="entreprise" class="form-select" required>
                             <option value="entreprise"
                                 {% if request.POST.entreprise != "H" %}selected{% endif %}>
+                                E-Commerce
+                            </option>
+                            <option value="entreprise"
+                                {% if request.POST.entreprise != "H" %}selected{% endif %}>
                                 E-Loong
                             </option>
                             <option value="entreprise"
@@ -53,6 +57,14 @@
                             <option value="H"
                                 {% if request.POST.entreprise == "H" %}selected{% endif %}>
                                 M.C.C.R
+                            </option>
+                            <option value="H"
+                                {% if request.POST.entreprise == "H" %}selected{% endif %}>
+                                Ménuiserie
+                            </option>
+                            <option value="H"
+                                {% if request.POST.entreprise == "H" %}selected{% endif %}>
+                                P.P.N
                             </option>
                         </select>
                     </div>

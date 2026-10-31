@@ -19,7 +19,10 @@ from materiaux.models import (
     PaiementDocker,
     MouvementMateriauMCCR,
 )
-from users.decorators import session_login_required
+from users.decorators import (
+    session_login_required,
+    h_session_login_required,
+)
 # ============================================================
 # CONSTRUCTION DU RAPPORT DE TRÉSORERIE SOCIÉTÉ
 # ============================================================
@@ -478,7 +481,6 @@ def rapport_tresorerie_print(request):
 # ============================================================
 # CONSTRUCTION DU RAPPORT DE TRÉSORERIE MCCR
 # ============================================================
-@session_login_required
 def h_construire_rapport_tresorerie(request):
     """
     Construit le rapport de trésorerie de MCCR exclusivement
@@ -983,7 +985,6 @@ def h_construire_rapport_tresorerie(request):
 # ============================================================
 # RAPPORT DE TRÉSORERIE MCCR — AFFICHAGE
 # ============================================================
-@session_login_required
 def h_rapport_tresorerie(request):
     context = h_construire_rapport_tresorerie(request)
 
@@ -997,7 +998,6 @@ def h_rapport_tresorerie(request):
 # ============================================================
 # RAPPORT DE TRÉSORERIE MCCR — IMPRESSION
 # ============================================================
-@session_login_required
 def h_rapport_tresorerie_print(request):
     context = h_construire_rapport_tresorerie(request)
 

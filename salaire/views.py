@@ -9,7 +9,11 @@ from personnel.models import Personnel, H_Personnel
 from .forms import SalaireForm, H_SalaireForm
 from .models import Salaire, H_Salaire, recalculer_situation_personnel,h_recalculer_situation_personnel
 from django.views.decorators.http import require_http_methods
-from users.decorators import session_login_required
+from users.decorators import (
+    session_login_required,
+    h_session_login_required,
+)
+
 # =============================================================
 # UTILISATEUR CONNECTÉ
 # =============================================================
@@ -516,7 +520,6 @@ def _get_h_salaire_user(request):
 # ===========================================================
 # LISTE DES SALAIRES MCCR
 # ===========================================================
-@session_login_required
 def h_salaire_list(request):
     utilisateur = _get_h_salaire_user(request)
 
@@ -633,7 +636,6 @@ def h_salaire_list(request):
 # ===========================================================
 # AJOUT SALAIRE MCCR
 # ===========================================================
-@session_login_required
 def h_salaire_add(request):
     utilisateur = _get_h_salaire_user(request)
 
@@ -683,7 +685,6 @@ def h_salaire_add(request):
 # ===========================================================
 # MODIFICATION SALAIRE MCCR
 # ===========================================================
-@session_login_required
 def h_salaire_edit(request, id=None, pk=None):
     utilisateur = _get_h_salaire_user(request)
 
@@ -773,7 +774,6 @@ def h_salaire_edit(request, id=None, pk=None):
 # SUPPRESSION SALAIRE MCCR
 # Compatible avec id et pk
 # ===========================================================
-@session_login_required
 @require_http_methods(["GET", "POST"])
 def h_salaire_delete(request, id=None, pk=None):
     # -------------------------------------------------------

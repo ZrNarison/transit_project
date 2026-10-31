@@ -1,13 +1,14 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
-
 from users.models import AppUser,H_AppUser
-
 from .forms import DepenseSocForm,H_DepenseSocForm
 from .models import DepenseSoc,H_DepenseSoc
 from django.core.paginator import Paginator
 from django.shortcuts import render
-from users.decorators import session_login_required
+from users.decorators import (
+    session_login_required,
+    h_session_login_required,
+)
 # ============================================================
 # LISTE DES DÉPENSES SOC
 # ============================================================
@@ -143,7 +144,7 @@ def soc_depense_delete(request, id):
 # ============================================================
 # ENTREPRISE H
 # ============================================================
-@session_login_required
+@h_session_login_required
 def h_soc_depense_list(request):
     depenses = H_DepenseSoc.objects.select_related("enregistre_par").all()
 
@@ -179,7 +180,7 @@ def h_soc_depense_list(request):
 # ============================================================
 # AJOUTER
 # ============================================================
-@session_login_required
+@h_session_login_required
 def h_soc_depense_add(request):
     if request.method == "POST":
         form = H_DepenseSocForm(request.POST)
@@ -207,7 +208,7 @@ def h_soc_depense_add(request):
 # ============================================================
 # MODIFIER
 # ============================================================
-@session_login_required
+@h_session_login_required
 def h_soc_depense_edit(request, id):
 
     depense = get_object_or_404(H_DepenseSoc, id=id)
@@ -245,7 +246,7 @@ def h_soc_depense_edit(request, id):
 # ============================================================
 # SUPPRIMER
 # ============================================================
-@session_login_required
+@h_session_login_required
 def h_soc_depense_delete(request, id):
 
     depense = get_object_or_404(H_DepenseSoc, id=id)

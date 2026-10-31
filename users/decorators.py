@@ -10,6 +10,44 @@ from django.views.decorators.cache import never_cache
 from users.models import AppUser
 
 from .models import H_AppUser
+from users.models import H_AppUser
+
+
+def h_session_login_required(view_func):
+    """
+    Authentification exclusivement MCCR.
+    Vérifie h_user_id et charge H_AppUser.
+    """
+
+    @wraps(view_func)
+    @never_cache
+    def wrapper(request, *args, **kwargs):
+
+        h_user_id = request.session.get("h_user_id")
+
+        if not h_user_id:
+            messages.warning(
+                request,
+                "Votre session MCCR a expiré. Veuillez vous reconnecter."
+            )
+            return redirect("users:login")
+
+        h_user = H_AppUser.objects.filter(pk=h_user_id).first()
+
+        if not h_user:
+            request.session.flush()
+            messages.warning(
+                request,
+                "Votre session MCCR a expiré. Veuillez vous reconnecter."
+            )
+            return redirect("users:login")
+
+        request.h_current_user = h_user
+
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
 
 # ============================================================
 # RÔLES AUTORISÉS À GÉRER LES PROJETS GALAXY
