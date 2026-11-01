@@ -9,7 +9,8 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
-
+from django.db import IntegrityError, transaction
+from django.db.models.deletion import ProtectedError
 from users.models import H_AppUser
 
 from .forms import (
@@ -107,10 +108,11 @@ def _form_save(request, form):
     return obj
 
 
-
 def _crud_list(request, model, template, context_name, title):
     qs = _qs(model)
+
     q = request.GET.get("q", "").strip()
+
     if q:
         searchable = [
             f.name
@@ -118,15 +120,28 @@ def _crud_list(request, model, template, context_name, title):
             if getattr(f, "get_internal_type", lambda: "")()
             in ("CharField", "TextField")
         ]
+
         query = Q()
+
         for field in searchable:
             query |= Q(**{f"{field}__icontains": q})
+
         if searchable:
             qs = qs.filter(query)
-    return render(
-        request, template, {context_name: qs, "objets": qs, "q": q, "titre": title}
-    )
 
+    return render(
+        request,
+        template,
+        {
+            context_name: qs,
+            "objets": qs,
+            "q": q,
+            "titre": title,
+
+            # Utilisateur actuellement connecté dans MCCR
+            "h_user": request.h_current_user,
+        },
+    )
 
 def _crud_form(request, model, form_class, template, list_url_name, pk=None, title=""):
     instance = get_object_or_404(_qs(model), pk=pk) if pk is not None else None
@@ -144,7 +159,7 @@ def _crud_form(request, model, form_class, template, list_url_name, pk=None, tit
                 else:
                     raise
             else:
-                messages.success(request, "Enregistrement MCCR effectuÃ© avec succÃ¨s.")
+                messages.success(request, "Enregistrement MCCR effectué avec succées.")
                 return redirect(f"materiaux:{list_url_name}")
     else:
         form = form_class(instance=instance)
@@ -162,19 +177,49 @@ def _crud_form(request, model, form_class, template, list_url_name, pk=None, tit
 
 def _crud_delete(request, model, pk, list_url_name, label):
     obj = get_object_or_404(_qs(model), pk=pk)
+
     if request.method == "POST":
         try:
             obj.delete()
-            messages.success(request, f"{label} supprimÃ© avec succÃ¨s.")
-        except Exception as exc:
-            messages.error(request, f"Suppression impossible : {exc}")
+
+            messages.success(
+                request,
+                f"{label} supprimé avec succès.",
+            )
+
+        except ProtectedError as exc:
+            objets_protecteurs = [
+                str(objet)
+                for objet in exc.protected_objects
+            ]
+
+            details = " ; ".join(objets_protecteurs[:5])
+
+            messages.error(
+                request,
+                "Suppression impossible : cet élément est encore "
+                "utilisé par une ou plusieurs opérations protégées. "
+                f"Détails : {details}",
+            )
+
+        except IntegrityError:
+            messages.error(
+                request,
+                "Suppression impossible à cause d'une contrainte "
+                "d'intégrité de la base de données.",
+            )
+
         return redirect(f"materiaux:{list_url_name}")
+
     return render(
         request,
         "materiaux/confirm_delete.html",
-        {"objet": obj, "object": obj, "titre": f"Supprimer {label.lower()}"},
-    )
-
+        {
+            "objet": obj,
+            "object": obj,
+            "titre": f"Supprimer {label.lower()}",
+        },
+    )    
 
 @mccr_required
 def dashboard(request):
@@ -430,9 +475,10 @@ depense_delete = _make_delete(Depense, "depenses_list", "dépense")
 depenses_gasoil_list = _make_list(
     DepenseGasoil,
     "materiaux/gasoil_list.html",
-    "depenses_gasoil",
-    "DÃ©penses gasoil MCCR",
+    "gasoils",
+    "Dépenses gasoil MCCR",
 )
+
 depense_gasoil_add = _make_add(
     DepenseGasoil,
     DepenseGasoilForm,

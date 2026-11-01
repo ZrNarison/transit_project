@@ -1,541 +1,534 @@
-{% extends "base.html" %}
 
+{% extends "base.html" %}
 {% block content %}
 
 <div class="container-fluid py-3">
 
-<!-- ==========================================================
-     EN-TÊTE
-=========================================================== -->
+    <!-- ======================================================
+         EN-TÊTE
+    ======================================================= -->
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
 
-<div>
-    <h2 class="mb-1">
-        ⛽ Dépenses gasoil
-    </h2>
+        <div>
+            <h2 class="mb-1">
+                Dépenses gasoil
+            </h2>
 
-    <small class="text-muted">
-        Suivi de la consommation de gasoil des véhicules
-    </small>
-</div>
+            <small class="text-muted">
+                Suivi de la consommation de gasoil des véhicules
+            </small>
+        </div>
 
-<a
-    href="{% url 'materiaux:depense_gasoil_add' %}"
-    class="btn btn-primary">
-    ➕ Nouveau gasoil
-</a>
-
-
-</div>
-
-<!-- ==========================================================
-     MESSAGES
-=========================================================== -->
-
-{% if messages %}
-
-
-{% for message in messages %}
-
-    <div
-        class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
-        role="alert">
-
-        {{ message }}
-
-        <button
-            type="button"
-            class="btn-close"
-            data-bs-dismiss="alert">
-        </button>
+        <a
+            href="{% url 'materiaux:depense_gasoil_add' %}"
+            class="btn btn-primary">
+            Nouveau gasoil
+        </a>
 
     </div>
 
-{% endfor %}
 
-{% endif %}
+    <!-- ======================================================
+         MESSAGES
+    ======================================================= -->
 
-<!-- ==========================================================
-     RÉSUMÉ
-=========================================================== -->
+    {% if messages %}
 
-<div class="row mb-4">
+        {% for message in messages %}
 
-<!-- TOTAL LITRES -->
+            <div
+                class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+                role="alert">
 
-<div class="col-md-6 mb-3">
+                {{ message }}
 
-    <div class="card shadow-sm border-primary h-100">
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Fermer">
+                </button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+
+    <!-- ======================================================
+         RÉSUMÉ
+    ======================================================= -->
+
+    <div class="row mb-4">
+
+        <!-- TOTAL LITRES -->
+
+        <div class="col-md-6 mb-3">
+
+            <div class="card shadow-sm border-primary h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <h6 class="text-primary mb-2">
+                                ⛽ Total litres
+                            </h6>
+
+                            <h3 class="mb-0">
+
+                                {{ total_litres|default:"0"|floatformat:3 }}
+
+                                <small class="text-muted">
+                                    L
+                                </small>
+
+                            </h3>
+
+                        </div>
+
+                        <div class="fs-1 opacity-25">
+                            ⛽
+                        </div>
+
+                    </div>
+
+                    <small class="text-muted">
+                        Quantité totale de gasoil enregistrée
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- NOMBRE D'ENREGISTREMENTS -->
+
+        <div class="col-md-6 mb-3">
+
+            <div class="card shadow-sm border-secondary h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <h6 class="text-secondary mb-2">
+                                📋 Enregistrements
+                            </h6>
+
+                            <h3 class="mb-0">
+                                {{ gasoils|length }}
+                            </h3>
+
+                        </div>
+
+                        <div class="fs-1 opacity-25">
+                            📋
+                        </div>
+
+                    </div>
+
+                    <small class="text-muted">
+                        Nombre de dépenses gasoil affichées
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ======================================================
+         FILTRES
+    ======================================================= -->
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-header bg-light">
+
+            <strong>
+                Filtrer
+            </strong>
+
+        </div>
 
         <div class="card-body">
 
-            <div class="d-flex justify-content-between align-items-center">
+            <form method="get">
 
-                <div>
+                <div class="row g-3 align-items-end">
 
-                    <h6 class="text-primary mb-2">
-                        ⛽ Total litres
-                    </h6>
+                    <!-- VÉHICULE -->
 
-                    <h3 class="mb-0">
+                    <div class="col-md-4">
 
-                        {{ total_litres|default:"0"|floatformat:3 }}
+                        <label
+                            for="vehicule"
+                            class="form-label fw-bold">
 
-                        <small class="text-muted">
-                            L
-                        </small>
+                            Véhicule
 
-                    </h3>
+                        </label>
 
-                </div>
+                        <select
+                            name="vehicule"
+                            id="vehicule"
+                            class="form-select">
 
-                <div class="fs-1 opacity-25">
-                    ⛽
-                </div>
+                            <option value="">
+                                Tous les véhicules
+                            </option>
 
-            </div>
+                            {% for vehicule in vehicules %}
 
-            <small class="text-muted">
-                Quantité totale de gasoil enregistrée
-            </small>
+                                <option
+                                    value="{{ vehicule.id }}"
+                                    {% if vehicule_id == vehicule.id|stringformat:"s" %}
+                                        selected
+                                    {% endif %}>
 
-        </div>
+                                    {{ vehicule.immatriculation }}
 
-    </div>
+                                    {% if vehicule.marque or vehicule.modele %}
+                                        —
+                                        {{ vehicule.marque|default:"" }}
+                                        {{ vehicule.modele|default:"" }}
+                                    {% endif %}
 
-</div>
+                                </option>
 
+                            {% endfor %}
 
-<!-- NOMBRE D'ENREGISTREMENTS -->
+                        </select>
 
-<div class="col-md-6 mb-3">
+                    </div>
 
-    <div class="card shadow-sm border-secondary h-100">
 
-        <div class="card-body">
+                    <!-- DATE DÉBUT -->
 
-            <div class="d-flex justify-content-between align-items-center">
+                    <div class="col-md-3">
 
-                <div>
+                        <label
+                            for="date_debut"
+                            class="form-label fw-bold">
 
-                    <h6 class="text-secondary mb-2">
-                        📋 Enregistrements
-                    </h6>
+                            Date début
 
-                    <h3 class="mb-0">
+                        </label>
 
-                        {{ gasoils|length }}
+                        <input
+                            type="date"
+                            name="date_debut"
+                            id="date_debut"
+                            class="form-control"
+                            value="{{ date_debut|default:'' }}">
 
-                    </h3>
+                    </div>
 
-                </div>
 
-                <div class="fs-1 opacity-25">
-                    📋
-                </div>
+                    <!-- DATE FIN -->
 
-            </div>
+                    <div class="col-md-3">
 
-            <small class="text-muted">
-                Nombre de dépenses gasoil enregistrées
-            </small>
+                        <label
+                            for="date_fin"
+                            class="form-label fw-bold">
 
-        </div>
+                            Date fin
 
-    </div>
+                        </label>
 
-</div>
+                        <input
+                            type="date"
+                            name="date_fin"
+                            id="date_fin"
+                            class="form-control"
+                            value="{{ date_fin|default:'' }}">
 
+                    </div>
 
-</div>
 
-<!-- ==========================================================
-     TABLEAU + FILTRE
-=========================================================== -->
-<div class="card shadow-sm mb-4">
-<div class="card-header bg-light">
-    <strong>
-        🔎 Filtrer les dépenses gasoil
-    </strong>
-</div>
+                    <!-- BOUTONS -->
 
-<div class="card-body">
+                    <div class="col-md-2">
 
-    <form method="get">
-
-        <div class="row g-3 align-items-end">
-
-            <!-- VÉHICULE -->
-
-            <div class="col-md-4">
-
-                <label
-                    for="vehicule"
-                    class="form-label fw-bold">
-
-                    🚚 Véhicule
-
-                </label>
-
-                <select
-                    name="vehicule"
-                    id="vehicule"
-                    class="form-select">
-
-                    <option value="">
-                        Tous les véhicules
-                    </option>
-
-                    {% for vehicule in vehicules %}
-
-                        <option
-                            value="{{ vehicule.id }}"
-                            {% if vehicule_id == vehicule.id|stringformat:"s" %}
-                                selected
-                            {% endif %}
-                        >
-
-                            {{ vehicule.immatriculation }}
-
-                            {% if vehicule.marque or vehicule.modele %}
-                                —
-                                {{ vehicule.marque|default:"" }}
-                                {{ vehicule.modele|default:"" }}
-                            {% endif %}
-
-                        </option>
-
-                    {% endfor %}
-
-                </select>
-
-            </div>
-
-
-            <!-- DATE DÉBUT -->
-
-            <div class="col-md-3">
-
-                <label
-                    for="date_debut"
-                    class="form-label fw-bold">
-
-                    📅 Date début
-
-                </label>
-
-                <input
-                    type="date"
-                    name="date_debut"
-                    id="date_debut"
-                    class="form-control"
-                    value="{{ date_debut }}">
-
-            </div>
-
-
-            <!-- DATE FIN -->
-
-            <div class="col-md-3">
-
-                <label
-                    for="date_fin"
-                    class="form-label fw-bold">
-
-                    📅 Date fin
-
-                </label>
-
-                <input
-                    type="date"
-                    name="date_fin"
-                    id="date_fin"
-                    class="form-control"
-                    value="{{ date_fin }}">
-
-            </div>
-
-
-            <!-- BOUTONS -->
-
-            <div class="col-md-2">
-
-                <div class="d-grid gap-2">
-
-                    <button
-                        type="submit"
-                        class="btn btn-primary">
-
-                        🔎 Filtrer
-
-                    </button>
-
-                    <a
-                        href="{% url 'materiaux:depenses_gasoil_list' %}"
-                        class="btn btn-outline-secondary">
-
-                        ↻ Réinitialiser
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </form>
-
-</div>
-
-</div>
-
-
-<div class="card shadow-sm w-100">
-
-<div class="card-header d-flex justify-content-between align-items-center">
-
-    <strong>
-        ⛽ DÉPENSES GASOIL
-    </strong>
-
-    <span class="badge bg-secondary">
-
-        {{ gasoils|length }}
-
-        enregistrement{{ gasoils|length|pluralize }}
-
-    </span>
-
-</div>
-
-
-<div class="table-responsive">
-
-    <table class="table table-hover table-bordered align-middle mb-0">
-
-        <thead class="table-dark">
-
-            <tr>
-
-                <th class="text-center text-nowrap">
-                    Date
-                </th>
-
-                <th class="text-center">
-                    Véhicule
-                </th>
-
-                <th class="text-center">
-                    Quantité
-                </th>
-
-                <th class="text-center">
-                    Date enregistrement
-                </th>
-
-                <th class="text-center">
-                    Enregistreur
-                </th>
-
-                <th class="text-center">
-                    Actions
-                </th>
-
-            </tr>
-
-        </thead>
-
-
-        <!-- ==================================================
-             CORPS
-        =================================================== -->
-
-        <tbody>
-
-            {% for gasoil in gasoils %}
-
-            <tr>
-
-                <!-- DATE -->
-
-                <td class="text-nowrap">
-
-                    {{ gasoil.date_gasoil|date:"d/m/Y" }}
-
-                </td>
-
-
-                <!-- VEHICULE -->
-
-                <td>
-
-                    <strong>
-
-                        {{ gasoil.vehicule.immatriculation }}
-
-                    </strong>
-
-                    {% if gasoil.vehicule.marque or gasoil.vehicule.modele %}
-
-                        <br>
-
-                        <small class="text-muted">
-
-                            {{ gasoil.vehicule.marque|default:"" }}
-
-                            {{ gasoil.vehicule.modele|default:"" }}
-
-                        </small>
-
-                    {% endif %}
-
-                </td>
-
-
-                <!-- QUANTITE -->
-
-                <td class="text-end text-nowrap">
-
-                    <strong>
-
-                        {{ gasoil.quantite_litre|default:"0"|floatformat:3 }}
-
-                    </strong>
-
-                    L
-
-                </td>
-
-
-                <!-- DATE ENREGISTREMENT -->
-
-                <td class="text-center text-nowrap">
-
-                    {% if gasoil.date_creation %}
-
-                        {{ gasoil.date_creation|date:"d/m/Y H:i" }}
-
-                    {% else %}
-
-                        -
-
-                    {% endif %}
-
-                </td>
-
-
-                <!-- ENREGISTREUR -->
-
-                <td>
-
-                    {% if gasoil.enregistreur %}
-
-                        {{ gasoil.enregistreur.username }}
-
-                    {% else %}
-
-                        -
-
-                    {% endif %}
-
-                </td>
-
-
-                <!-- ACTIONS -->
-
-                <td class="text-center text-nowrap">
-
-                    {% if gasoil.enregistreur_id == user.id %}
-
-                        <a
-                            href="{% url 'materiaux:depense_gasoil_edit' gasoil.pk %}"
-                            class="btn btn-sm btn-warning"
-                            title="Modifier mon enregistrement">
-
-                            ✏️
-
-                        </a>
-
-
-                        <form
-                            method="post"
-                            action="{% url 'materiaux:depense_gasoil_delete' gasoil.pk %}"
-                            class="d-inline">
-
-                            {% csrf_token %}
+                        <div class="d-grid gap-2">
 
                             <button
                                 type="submit"
-                                class="btn btn-sm btn-danger"
-                                title="Supprimer mon enregistrement"
-                                onclick="return confirm('Voulez-vous vraiment supprimer cette dépense gasoil ?');">
+                                class="btn btn-primary">
 
-                                🗑️
+                                Filtrer
 
                             </button>
 
-                        </form>
+                            <a
+                                href="{% url 'materiaux:depenses_gasoil_list' %}"
+                                class="btn btn-outline-secondary">
 
-                    {% else %}
+                                ↻ Réinitialiser
 
-                        <span
-                            class="badge bg-secondary"
-                            title="Seul l'enregistreur peut modifier ou supprimer cet enregistrement">
+                            </a>
 
-                            🔒 Lecture seule
+                        </div>
 
-                        </span>
-
-                    {% endif %}
-
-                </td>
-
-            </tr>
-
-
-            {% empty %}
-
-            <!-- ==================================================
-                 AUCUNE DONNÉE
-            =================================================== -->
-
-            <tr>
-
-                <td
-                    colspan="6"
-                    class="text-center text-muted py-5">
-
-                    <div class="fs-1 mb-2">
-                        ⛽
                     </div>
 
-                    <strong>
-                        Aucune dépense gasoil enregistrée.
-                    </strong>
+                </div>
 
-                    <br>
+            </form>
 
-                    <small>
-                        Cliquez sur « Nouveau gasoil »
-                        pour enregistrer une consommation.
-                    </small>
+        </div>
 
-                </td>
-
-            </tr>
-
-            {% endfor %}
-
-        </tbody>
-
-    </table>
-
-</div>
+    </div>
 
 
-</div>
+    <!-- ======================================================
+         TABLEAU DES DÉPENSES
+    ======================================================= -->
+
+    <div class="card shadow-sm w-100">
+
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+            <strong>
+                DÉPENSES GASOIL
+            </strong>
+
+            <span class="badge bg-secondary">
+
+                {{ gasoils|length }}
+
+                enregistrement{{ gasoils|length|pluralize }}
+
+            </span>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table table-hover table-bordered align-middle mb-0">
+
+                <thead class="table-dark text-white">
+
+                    <tr>
+
+                        <th class="text-center text-nowrap">
+                            Date
+                        </th>
+
+                        <th class="text-center">
+                            Véhicule
+                        </th>
+
+                        <th class="text-center">
+                            Quantité
+                        </th>
+
+                        <th class="text-center text-nowrap">
+                            Date enregistrement
+                        </th>
+
+                        <th class="text-center">
+                            Enregistreur
+                        </th>
+
+                        <th class="text-center">
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for gasoil in gasoils %}
+
+                        <tr>
+
+                            <!-- DATE -->
+
+                            <td class="text-nowrap">
+
+                                {{ gasoil.date_gasoil|date:"d/m/Y" }}
+
+                            </td>
+
+
+                            <!-- VÉHICULE -->
+
+                            <td>
+
+                                <strong>
+                                    {{ gasoil.vehicule.immatriculation }}
+                                </strong>
+
+                                {% if gasoil.vehicule.marque or gasoil.vehicule.modele %}
+
+                                    <br>
+
+                                    <small class="text-muted">
+
+                                        {{ gasoil.vehicule.marque|default:"" }}
+
+                                        {{ gasoil.vehicule.modele|default:"" }}
+
+                                    </small>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- QUANTITÉ -->
+
+                            <td class="text-end text-nowrap">
+
+                                <strong>
+                                    {{ gasoil.quantite_litre|default:"0"|floatformat:3 }}
+                                </strong>
+
+                                L
+
+                            </td>
+
+
+                            <!-- DATE ENREGISTREMENT -->
+
+                            <td class="text-center text-nowrap">
+
+                                {% if gasoil.date_creation %}
+
+                                    {{ gasoil.date_creation|date:"d/m/Y H:i" }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- ENREGISTREUR -->
+
+                            <td>
+
+                                {% if gasoil.enregistreur %}
+
+                                    {{ gasoil.enregistreur.username }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- ACTIONS -->
+
+                            <td class="text-center text-nowrap">
+
+                                {% if h_user and gasoil.enregistreur_id == h_user.id %}
+
+                                    <a
+                                        href="{% url 'materiaux:depense_gasoil_edit' gasoil.pk %}"
+                                        class="btn btn-sm btn-warning"
+                                        title="Modifier mon enregistrement">
+
+                                        ✏️
+
+                                    </a>
+
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'materiaux:depense_gasoil_delete' gasoil.pk %}"
+                                        class="d-inline">
+
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="btn btn-sm btn-danger"
+                                            title="Supprimer mon enregistrement"
+                                            onclick="return confirm('Voulez-vous vraiment supprimer cette dépense gasoil ?');">
+
+                                            🗑️
+
+                                        </button>
+
+                                    </form>
+
+                                {% else %}
+
+                                    <span
+                                        class="badge bg-secondary"
+                                        title="Seul l'enregistreur peut modifier ou supprimer cet enregistrement">
+
+                                        🔒 Lecture seule
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td
+                                colspan="6"
+                                class="text-center text-muted py-5">
+
+                                <div class="fs-1 mb-2">
+                                    ⛽
+                                </div>
+
+                                <strong>
+                                    Aucune dépense gasoil enregistrée.
+                                </strong>
+
+                                <br>
+
+                                <small>
+                                    Cliquez sur « Nouveau gasoil »
+                                    pour enregistrer une consommation.
+                                </small>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
 
 </div>
 

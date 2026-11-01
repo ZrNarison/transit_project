@@ -23,8 +23,6 @@ from .models import MateriauMCCR, MouvementMateriauMCCR
 # ============================================================
 # AUTHENTIFICATION MCCR
 # ============================================================
-
-
 def mccr_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
@@ -715,38 +713,58 @@ def Vehicule_update(request, id):
         "action": "Modifier",
     })
 
-
 # ============================================================
 # SUPPRIMER VÉHICULE MCCR
 # ============================================================
 
+@mccr_required
 @require_http_methods(["GET", "POST"])
 def Vehicule_delete(request, id):
-    if not _h_current_user(request):
-        return redirect("users:login")
-
     vehicule = get_object_or_404(H_Vehicule, pk=id)
 
     if request.method == "POST":
         try:
-            vehicule.delete()
-        except Exception:
+            with transaction.atomic():
+                vehicule.delete()
+
+        except ProtectedError as exc:
+            objets_protecteurs = []
+
+            for objets in exc.protected_objects:
+                objets_protecteurs.append(str(objets))
+
+            details = " ; ".join(objets_protecteurs[:5])
+
             messages.error(
                 request,
-                "Suppression impossible : ce véhicule est peut-être "
-                "utilisé par des réparations ou d'autres opérations.",
+                "Suppression impossible : ce véhicule est encore "
+                "utilisé par une ou plusieurs opérations. "
+                f"Détails : {details}",
             )
+
+        except IntegrityError:
+            messages.error(
+                request,
+                "Suppression impossible à cause d'une contrainte "
+                "d'intégrité de la base de données.",
+            )
+
         else:
-            messages.success(request, "Véhicule supprimé avec succès.")
+            messages.success(
+                request,
+                "Véhicule supprimé avec succès.",
+            )
 
         return redirect("materiels:Vehicule_list")
 
-    return render(request, "materiels/vehicule_confirm_delete.html", {
-        "vehicule": vehicule,
-        "titre": "Supprimer un véhicule MCCR",
-    })
-
-
+    return render(
+        request,
+        "materiels/vehicule_confirm_delete.html",
+        {
+            "vehicule": vehicule,
+            "titre": "Supprimer un véhicule MCCR",
+        },
+    )
 # ============================================================
 # LISTE RÉPARATIONS MCCR
 # ============================================================

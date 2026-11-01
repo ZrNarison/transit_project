@@ -1191,8 +1191,6 @@ class Depense(models.Model):
 # ============================================================
 # GASOIL
 # ============================================================
-
-
 class DepenseGasoil(models.Model):
 
     date_gasoil = models.DateField(
@@ -1203,22 +1201,13 @@ class DepenseGasoil(models.Model):
         "materiaux.H_Vehicule",
         on_delete=models.PROTECT,
         related_name="depenses_gasoil",
-        verbose_name="V├®hicule",
-    )
-
-    projet = models.ForeignKey(
-        "projet.Projet",
-        on_delete=models.PROTECT,
-        related_name="depenses_gasoil",
-        blank=True,
-        null=True,
-        verbose_name="Projet",
+        verbose_name="Véhicule",
     )
 
     quantite_litre = models.DecimalField(
         max_digits=12,
         decimal_places=3,
-        verbose_name="Quantit├® (litres)",
+        verbose_name="Quantité (litres)",
     )
 
     prix_unitaire = models.DecimalField(
@@ -1240,7 +1229,7 @@ class DepenseGasoil(models.Model):
         H_AppUser,
         on_delete=models.PROTECT,
         related_name="depenses_gasoil",
-        verbose_name="Enregistr├® par",
+        verbose_name="Enregistré par",
     )
 
     date_creation = models.DateTimeField(
@@ -1249,19 +1238,19 @@ class DepenseGasoil(models.Model):
 
     class Meta:
         ordering = ["-date_gasoil", "-id"]
-        verbose_name = "D├®pense gasoil"
-        verbose_name_plural = "D├®penses gasoil"
+        verbose_name = "Dépense gasoil"
+        verbose_name_plural = "Dépenses gasoil"
 
     def clean(self):
         errors = {}
 
         if self.quantite_litre is None or self.quantite_litre <= 0:
             errors["quantite_litre"] = (
-                "La quantit├® de gasoil doit ├¬tre " "sup├®rieure ├á z├®ro."
+                "La quantité de gasoil doit être " "supérieure à zéro."
             )
 
         if self.prix_unitaire is None or self.prix_unitaire < 0:
-            errors["prix_unitaire"] = "Le prix unitaire ne peut pas ├¬tre n├®gatif."
+            errors["prix_unitaire"] = "Le prix unitaire ne peut pas être négatif."
 
         if errors:
             raise ValidationError(errors)

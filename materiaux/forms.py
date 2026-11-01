@@ -231,7 +231,7 @@ class DepenseGasoilForm(BootstrapModelForm):
         fields = [
             "date_gasoil",
             "vehicule",
-            "projet",
+            # "projet",
             "quantite_litre",
             "prix_unitaire",
         ]

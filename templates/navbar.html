@@ -37,14 +37,14 @@
                             <li>
                                 <a class="dropdown-item" href="{% url 'depensesoc:h_soc_depense_list' %}">Dépenses</a>
                             </li>
-                            <li>
+                            {% comment %} <li>
                                 <a class="dropdown-item"
                                    href="{% url 'materiaux:activites_transport_list' %}">Transport</a>
                             </li>
                             <li>
                                 <a class="dropdown-item"
                                    href="{% url 'materiaux:depenses_gasoil_list' %}">Carburant</a>
-                            </li>
+                            </li> {% endcomment %}
                             <li>
                                 <a class="dropdown-item"
                                    href="{% url 'materiaux:reparations_list' %}">Entretien / Réparation</a>
