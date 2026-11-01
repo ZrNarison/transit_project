@@ -75,10 +75,8 @@ class Materiaux(models.Model):
 
 
 # ============================================================
-# ENTR├ëE ENTREP├öT
+# ENTREE ENTREPOT
 # ============================================================
-
-
 class MateriauxEntree(models.Model):
     materiau = models.ForeignKey(
         Materiaux,
@@ -1023,8 +1021,6 @@ class MateriauxRetour(models.Model):
 # ============================================================
 # PAIEMENT DOCKER
 # ============================================================
-
-
 class PaiementDocker(models.Model):
 
     date_activite = models.DateField(
@@ -1653,18 +1649,20 @@ class MouvementMateriauMCCR(models.Model):
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
         verbose_name="Prix unitaire (Ar)",
-        help_text=(
-            "Entrée : prix d'achat. "
-            "Sortie : prix de vente. "
-            "Retour : prix unitaire du mouvement."
-        ),
+        # help_text=(
+        #     "Entrée : prix d'achat. "
+        #     "Sortie : prix de vente. "
+        #     "Retour : prix unitaire du mouvement."
+        # ),
     )
 
-    motif = models.CharField(
-        max_length=255,
+    vehicule = models.ForeignKey(
+        "materiaux.H_Vehicule",
+        on_delete=models.PROTECT,
+        related_name="mouvements_materiaux_mccr",
+        null=True,
         blank=True,
-        default="",
-        verbose_name="Motif",
+        verbose_name="Véhicule",
     )
 
     date_mouvement = models.DateField(

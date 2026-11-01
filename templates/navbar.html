@@ -282,7 +282,7 @@
                                     <!-- AVANCES ENTREPRISE -->
                                     {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" or fonction_projet == "INGENIEUR" or fonction_projet == "CHEF_CHANTIER" %}
                                         <li>
-                                            <a class="dropdown-item"   href="{% url 'avances:avance_list' %}">Avances</a>
+                                            <a class="dropdown-item"   href="{% url 'avances:avance_list' %}">Avances Personnels</a>
                                         </li>
                                     {% elif request.session.role == "Dir" or request.session.role == "Compta" %}
                                         <li>
@@ -333,7 +333,7 @@
                                     <!-- BANQUE + SALAIRE ENTREPRISE -->
                                     {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "SuperviseurEntreprise" %}
                                         <li>
-                                            <a class="dropdown-item"   href="{% url 'depotSoc:depot_soc_list' %}">Banque Construction</a>
+                                            <a class="dropdown-item"   href="{% url 'depotSoc:depot_soc_list' %}">Banque Entreprise</a>
                                         </li>
                                         <li>
                                             <a class="dropdown-item"   href="{% url 'salaire:salaire_list' %}">Salaire</a>
@@ -342,13 +342,13 @@
                                     <!-- RETOUR MICA -->
                                     {% if request.session.role == "UserMica" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                                         <li>
-                                            <a class="dropdown-item"   href="{% url 'retours:retour_list' %}">Retour</a>
+                                            <a class="dropdown-item"   href="{% url 'retours:retour_list' %}">Retour Mica</a>
                                         </li>
                                     {% endif %}
                                     <!-- RECETTE ENTREPRISE -->
                                     {% if request.session.role == "UserEntreprise" or request.session.role == "Admin" or request.session.role == "Superviseur" %}
                                         <li>
-                                            <a class="dropdown-item"   href="{% url 'recette:recette_list' %}">Recette</a>
+                                            <a class="dropdown-item"   href="{% url 'recette:recette_list' %}">Recette Entreprise</a>
                                         </li>
                                     {% endif %}
                                 </ul>

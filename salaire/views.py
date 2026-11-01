@@ -502,20 +502,23 @@ def salaire_delete(request,id=None,pk=None,):
         },
     )
 
-
 # ===========================================================
-#  SALAIRE ENTREPRISE H
+#  SALAIRE ENTREPRISE H / MCCR
 # ===========================================================
-@session_login_required
 def _get_h_salaire_user(request):
-    """Récupère exclusivement l'utilisateur MCCR connecté."""
+    """
+    Récupère exclusivement l'utilisateur MCCR connecté.
+    Ne doit pas être décorée par session_login_required.
+    """
+
     h_user_id = request.session.get("h_user_id")
 
     if not h_user_id:
         return None
 
-    return H_AppUser.objects.filter(pk=h_user_id).first()
-
+    return H_AppUser.objects.filter(
+        pk=h_user_id,
+    ).first()
 
 # ===========================================================
 # LISTE DES SALAIRES MCCR

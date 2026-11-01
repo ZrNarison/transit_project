@@ -1,7 +1,7 @@
 
 {% extends "materiaux/base.html" %}
 
-{% block title %}Mouvements de stock MCCR{% endblock %}
+{% comment %} {% block title %}Mouvements de stock MCCR{% endblock %} {% endcomment %}
 {% block page_title %}Entrées, sorties et retours{% endblock %}
 
 {% block page_actions %}
@@ -125,6 +125,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Date</th>
+                        <th>Véhicule</th>
                         <th>Matériau</th>
                         <th>Type</th>
                         <th>Quantité</th>
@@ -141,6 +142,11 @@
                         <!-- DATE -->
                         <td class="text-nowrap">
                             {{ mouvement.date_mouvement|date:"d/m/Y" }}
+                        </td>
+
+                        <!-- VÉHICULE -->
+                        <td>
+                            {{ mouvement.vehicule|default:"—" }}
                         </td>
 
                         <!-- MATÉRIAU -->
@@ -183,7 +189,7 @@
 
                         <!-- MOTIF ET OBSERVATION -->
                         <td>
-                            {{ mouvement.motif|default:"—" }}
+                            {{ mouvement.observation|default:"—" }}
 
                             {% if mouvement.observation %}
                                 <div class="small text-muted mt-1">

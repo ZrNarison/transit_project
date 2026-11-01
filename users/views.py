@@ -8,7 +8,10 @@ from django.forms import modelform_factory
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
-
+from users.decorators import (
+    session_login_required,
+    h_session_login_required,
+)
 from users.decorators import h_role_required
 from audit.utils import enregistrer_action, h_enregistrer_action
 from logs.utils import enregistrer_log, h_enregistrer_log
@@ -724,7 +727,7 @@ def users_add(request):
 # ============================================================
 
 
-@role_required("Admin", "Superviseur")
+# @role_required("Admin", "Superviseur")
 def users_edit(request, id):
     user = get_object_or_404(AppUser, pk=id)
 
@@ -803,7 +806,7 @@ def users_edit(request, id):
 # ============================================================
 
 
-@role_required("Admin")
+# @role_required("Admin")
 @require_http_methods(["GET", "POST"])
 def users_delete(request, id):
     user = get_object_or_404(AppUser, pk=id)

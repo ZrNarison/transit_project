@@ -1,7 +1,10 @@
 from django import forms
 
 from .models import MateriauMCCR, MouvementMateriauMCCR
-
+from .models import (
+    MouvementMateriauMCCR,
+    H_Vehicule,
+)
 
 class MateriauxMCCRForm(forms.ModelForm):
     class Meta:
@@ -39,7 +42,7 @@ class MouvementMateriauMCCRForm(forms.ModelForm):
             "type_mouvement",
             "quantite",
             "prix_unitaire",
-            "motif",
+            "vehicule",
             "date_mouvement",
             "observation",
         ]
@@ -72,11 +75,8 @@ class MouvementMateriauMCCRForm(forms.ModelForm):
                     "placeholder": "Prix d'achat ou de vente en Ar",
                 }
             ),
-            "motif": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Motif du mouvement",
-                }
+            "vehicule": forms.Select(
+                attrs={"class": "form-select"}
             ),
             "date_mouvement": forms.DateInput(
                 attrs={
@@ -127,3 +127,13 @@ class MouvementMateriauMCCRForm(forms.ModelForm):
             raise forms.ValidationError("La quantité doit être supérieure à zéro.")
 
         return quantite
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["vehicule"].queryset = H_Vehicule.objects.filter(
+            actif=True
+        ).order_by("immatriculation")
+
+        self.fields["vehicule"].required = True
+        self.fields["vehicule"].label = "Véhicule utilisé"
